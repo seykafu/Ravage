@@ -11,6 +11,7 @@
 // All paths are relative to /public, served at /<path>.
 
 import type { ClassKind } from "../combat/types";
+import { PORTRAIT_EXPRESSIONS } from "./expressions";
 
 // --------- Asset specs (sizes, frame counts) ---------------------------------
 //
@@ -70,14 +71,29 @@ export interface ManifestEntry {
 // uncomment / register here to swap in the real version.
 const PORTRAIT_IDS = [
   "amar", "lucian", "ning", "maya", "leo", "ranatoli", "selene",
-  "kian", "ndari", "nebu", "narrator"
+  "kian", "ndari", "nebu",
+  "dawn", "fergus", "ndara", "archbold", "khione", "mira", "tali",
+  "narrator"
 ] as const;
 
-const portraitEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => ({
+const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => ({
   id: `portrait:${id}`,
   path: `assets/portraits/${id}.png`,
   kind: "image"
 }));
+
+// Expression variants — `<character>_<expression>.png`. Loaded as
+// `portrait:<id>:<expression>`. Missing files silently 404 and the dialog
+// falls back to the default portrait.
+const expressionEntries: ManifestEntry[] = Object.entries(PORTRAIT_EXPRESSIONS).flatMap(
+  ([id, exprs]) => exprs.map((expr) => ({
+    id: `portrait:${id}:${expr}`,
+    path: `assets/portraits/${id}_${expr}.png`,
+    kind: "image" as const
+  }))
+);
+
+const portraitEntries: ManifestEntry[] = [...baseEntries, ...expressionEntries];
 
 // Per-class animation strips. We register the full set per class; if a file
 // doesn't exist on disk Vite's loader will simply 404 and Phaser will skip it

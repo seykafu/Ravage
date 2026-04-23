@@ -35,7 +35,11 @@ const arcMusic: Record<string, MusicKey> = {
   adventure1: MUSIC.adventure1,
   lifeInGrude: MUSIC.lifeInGrude,
   danger: MUSIC.danger,
-  battlePrep: MUSIC.battlePrep
+  battlePrep: MUSIC.battlePrep,
+  mainTheme: MUSIC.mainTheme,
+  emotional: MUSIC.emotional,
+  everydayLife: MUSIC.everydayLife,
+  trailer: MUSIC.trailer
 };
 
 interface StoryArgs { arcId: string; }
@@ -163,13 +167,8 @@ export class StoryScene extends Phaser.Scene {
     // Portrait
     if (this.portrait) { this.portrait.destroy(); this.portrait = undefined; }
     if (beat.portraitId && beat.portraitId !== "narrator") {
-      const meta = PORTRAIT_TABLE[beat.portraitId];
-      if (meta) {
-        const key = ensurePortraitTexture(this, {
-          id: beat.portraitId,
-          ...meta,
-          artSeed: meta.seed
-        });
+      const key = this.resolvePortraitKey(beat.portraitId, beat.expression);
+      if (key) {
         const panelX = 120;
         const panelY = GAME_HEIGHT - 240;
         // Bottom-center of the portrait region sits just above the dialog panel.
@@ -203,6 +202,23 @@ export class StoryScene extends Phaser.Scene {
       }
     };
     reveal();
+  }
+
+  private resolvePortraitKey(id: string, expression?: string): string | null {
+    // 1) Expression variant from disk (e.g., portrait:amar:resolute).
+    if (expression) {
+      const exprKey = `portrait:${id}:${expression}`;
+      if (this.textures.exists(exprKey)) return exprKey;
+    }
+    // 2) Default real portrait from disk (e.g., portrait:amar).
+    const realKey = `portrait:${id}`;
+    if (this.textures.exists(realKey)) return realKey;
+    // 3) Procedural fallback for characters with palette metadata.
+    const meta = PORTRAIT_TABLE[id];
+    if (meta) {
+      return ensurePortraitTexture(this, { id, ...meta, artSeed: meta.seed }, expression);
+    }
+    return null;
   }
 
   private advance(): void {

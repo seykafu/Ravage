@@ -1,9 +1,19 @@
 // Story beats: dialog cards bracketing each battle. Each beat is a single screen
 // with a portrait (or none), a speaker name, a body, and an optional ambient color.
 
+export type PortraitId =
+  | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
+  | "kian" | "ndari" | "nebu"
+  | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
+  | "narrator";
+
 export interface DialogBeat {
   speaker?: string;
-  portraitId?: "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene" | "kian" | "ndari" | "nebu" | "narrator";
+  portraitId?: PortraitId;
+  // Optional expression slug. If omitted, the default portrait is used.
+  // The slug must match a file at public/assets/portraits/<id>_<expression>.png
+  // and be registered in src/assets/expressions.ts.
+  expression?: string;
   body: string;
   ambient?: number;
 }
@@ -15,7 +25,9 @@ export interface StoryArc {
   beats: DialogBeat[];
   // After the arc, where to go next: "battle:<id>" | "overworld" | "credits".
   next: string;
-  music: "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep";
+  music:
+    | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
+    | "mainTheme" | "emotional" | "everydayLife" | "trailer";
 }
 
 const N = (body: string, ambient?: number): DialogBeat => ({ portraitId: "narrator", body, ambient });
@@ -26,7 +38,7 @@ export const ARCS: Record<string, StoryArc> = {
     id: "pre_palace",
     title: "Year 2640 of the Anthros Monarch",
     subtitle: "Para — the night of the coup",
-    music: "adventure1",
+    music: "trailer",
     next: "prep:b01_palace_coup",
     beats: [
       N(
@@ -37,7 +49,7 @@ export const ARCS: Record<string, StoryArc> = {
       ),
       { speaker: "Selene", portraitId: "selene", body: "If we don't break the line in the first minute, we don't break it at all. Hold to the right." },
       { speaker: "Ranatoli", portraitId: "ranatoli", body: "Steel up, Amar. We bleed together or we feast together — anything in between is shame." },
-      { speaker: "Amar", portraitId: "amar", body: "Then bleed only what you can spare. We are taking a country tonight." }
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then bleed only what you can spare. We are taking a country tonight." }
     ]
   },
   // -------- Post-Battle 1 --------
@@ -45,13 +57,13 @@ export const ARCS: Record<string, StoryArc> = {
     id: "post_palace",
     title: "A day later",
     subtitle: "A hospital outside the palace",
-    music: "everydayAnthros",
+    music: "emotional",
     next: "story:thuling_arrival",
     beats: [
       N("You wake in white sheets. There is no pain. There is no memory."),
       { speaker: "Kian", portraitId: "kian", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
       { speaker: "Kian", portraitId: "kian", body: "You're a key man, Amar. The harvest plan, the steel quotas — His Majesty has spent ten years on what you carry. We need you back on your feet." },
-      { speaker: "Amar", portraitId: "amar", body: "...The harvest." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...The harvest." },
       N("You smile because Kian is watching. You do not say that the word means nothing.")
     ]
   },
@@ -60,13 +72,13 @@ export const ARCS: Record<string, StoryArc> = {
     id: "thuling_arrival",
     title: "Thuling",
     subtitle: "A factory town at the foot of the eastern range",
-    music: "everydayAnthros",
+    music: "everydayLife",
     next: "prep:b02_farmland",
     beats: [
       N("Within a single day you are working both farmland and forge. Your hands know things your mouth does not."),
-      { speaker: "Lucian", portraitId: "lucian", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
       { speaker: "Lucian", portraitId: "lucian", body: "...You already knew that." },
-      { speaker: "Amar", portraitId: "amar", body: "Lucky guess." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Lucky guess." },
       { speaker: "Lucian", portraitId: "lucian", body: "Sure. Lucky guess." },
       N("Kian shadows you between shifts. He smiles. He always smiles."),
       N("On the morning of the third day, bandits come for the wagons in the eastern field.")
@@ -76,7 +88,7 @@ export const ARCS: Record<string, StoryArc> = {
   post_farmland: {
     id: "post_farmland",
     title: "After the field",
-    music: "everydayAnthros",
+    music: "emotional",
     next: "story:before_mountain",
     beats: [
       { speaker: "Lucian", portraitId: "lucian", body: "Hand." },
@@ -98,23 +110,23 @@ export const ARCS: Record<string, StoryArc> = {
       { speaker: "Leo", portraitId: "leo", body: "My father wants me to go with you. Do not argue. He doesn't argue twice." },
       { speaker: "Maya", portraitId: "maya", body: "Mountain bandits. A village they already burned. Their leader's name is Ndari." },
       { speaker: "Ning", portraitId: "ning", body: "Ndari. Like the queen Madame Dawn — that Ndari?" },
-      { speaker: "Maya", portraitId: "maya", body: "Different woman. Same kind of trouble." },
-      { speaker: "Lucian", portraitId: "lucian", body: "Bring everything. We won't be picking over bodies — they'll be picking over ours." }
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Different woman. Same kind of trouble." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Bring everything. We won't be picking over bodies — they'll be picking over ours." }
     ]
   },
   // -------- Post-Battle 5 (Ndari escapes) --------
   post_mountain: {
     id: "post_mountain",
     title: "On the path home",
-    music: "everydayAnthros",
+    music: "emotional",
     next: "credits",
     beats: [
       N("Ndari escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
       { speaker: "Ndari", portraitId: "ndari", body: "Why are you fighting on King Nebu's side, Amar?" },
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
-      { speaker: "Lucian", portraitId: "lucian", body: "She didn't mistake you for anyone. And you've known that since she said it." },
-      { speaker: "Amar", portraitId: "amar", body: "Lucian — " },
-      { speaker: "Lucian", portraitId: "lucian", body: "Not tonight. The rest can wait. But for the first time, Amar — you have a witness." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "Lucian — " },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Not tonight. The rest can wait. But for the first time, Amar — you have a witness." },
       N("(End of the playable vertical slice. The remaining sixteen battles are scaffolded — the full story continues across the Caravan, the Monastery, the cliffs of Para, the year of travel in Gruge, and the Ravage Fleet at the end of the world.)")
     ]
   }

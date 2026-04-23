@@ -177,7 +177,7 @@ export class CreditsScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-ENTER", () => this.exit());
     this.input.keyboard?.on("keydown-ESC", () => this.exit());
 
-    getMusic(this).play(MUSIC.lifeInGrude, { fadeMs: 1400 });
+    getMusic(this).play(MUSIC.trailer, { fadeMs: 1400 });
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
     // Mark the final-boss music as "credits sting" — quick fade-in near the end.

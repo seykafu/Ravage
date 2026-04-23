@@ -109,8 +109,8 @@ export class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.tweens.add({ targets: hint, alpha: { from: 0.5, to: 1 }, yoyo: true, repeat: -1, duration: 1600 });
 
-    // Music — opening adventure track
-    getMusic(this).play(MUSIC.adventure1, { fadeMs: 1200 });
+    // Music — Spine of the World, the main leitmotif
+    getMusic(this).play(MUSIC.mainTheme, { fadeMs: 1200 });
 
     // Suppress unused vars (TS strict)
     void playBtn; void resumeBtn;

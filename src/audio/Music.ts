@@ -6,12 +6,20 @@ export const MUSIC = {
   enteringStronghold: "music_entering_stronghold", // Battle 1: Palace Coup
   strongholdMemories: "music_stronghold_memories", // First boss (Battle 3 Ndari)
   finalBoss: "music_final_boss",                   // Final battle
-  adventure1: "music_adventure_1",                 // Title / opening adventure
+  adventure1: "music_adventure_1",                 // Opening adventure flashback
   adventureAnthros: "music_adventure_anthros",     // Overworld / world map (Anthros side)
   battlePrep: "music_battle_prep",                 // Battle preparation screen
   danger: "music_danger",                          // Battle 2 (farmland) and ambushes
-  everydayAnthros: "music_everyday_anthros",       // Story scenes in Thuling
-  lifeInGrude: "music_life_grude"                  // Act 2 (Gruge sections, placeholders)
+  everydayAnthros: "music_everyday_anthros",       // Story scenes in Thuling (legacy)
+  lifeInGrude: "music_life_grude",                 // Act 2 (Gruge sections, placeholders)
+
+  // Spine of the World — original theme suite, recurring leitmotif
+  mainTheme: "music_spine_main",                   // Title screen — the leitmotif
+  battleTheme: "music_spine_battle",               // Non-boss battle (variant A)
+  battleTheme2: "music_spine_battle2",             // Non-boss battle (variant B)
+  emotional: "music_spine_emotional",              // Heavy story moments
+  everydayLife: "music_spine_everyday",            // Light everyday story scenes
+  trailer: "music_spine_trailer"                   // Epic story openings + credits finale
 } as const;
 export type MusicKey = (typeof MUSIC)[keyof typeof MUSIC];
 
@@ -25,7 +33,13 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.battlePrep,         src: "audio/battle_preparation.mp3" },
   { key: MUSIC.danger,             src: "audio/danger.mp3" },
   { key: MUSIC.everydayAnthros,    src: "audio/everyday_in_anthros.mp3" },
-  { key: MUSIC.lifeInGrude,        src: "audio/life_in_grude.mp3" }
+  { key: MUSIC.lifeInGrude,        src: "audio/life_in_grude.mp3" },
+  { key: MUSIC.mainTheme,          src: "audio/Spine of the World - Main Game Theme.mp3" },
+  { key: MUSIC.battleTheme,        src: "audio/Spine of the World - Battle.mp3" },
+  { key: MUSIC.battleTheme2,       src: "audio/Spine of the World - Battle 2.mp3" },
+  { key: MUSIC.emotional,          src: "audio/Spine of the World - Emotional Scenes.mp3" },
+  { key: MUSIC.everydayLife,       src: "audio/Spine of the World - Everyday.mp3" },
+  { key: MUSIC.trailer,            src: "audio/Spine of the World - Trailer.mp3" }
 ];
 
 // Singleton-ish music manager. Lives across scenes via game.registry.
