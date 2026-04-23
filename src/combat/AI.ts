@@ -38,7 +38,8 @@ const scoreAttackFromTile = (
   const originalPos = unit.state.position;
   unit.state.position = fromTile;
   const tile = state.grid.tileAt(target.state.position);
-  const preview = previewAttack(unit, target, tile, false);
+  // Pass full unit list so Aide / BossFighter modifiers are reflected in the AI's score.
+  const preview = previewAttack(unit, target, tile, false, state.units);
   unit.state.position = originalPos;
   // expected damage
   const expectedDamage = (preview.hitRate / 100) * preview.damage * (1 + preview.critRate / 100);

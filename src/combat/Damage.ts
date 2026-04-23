@@ -1,4 +1,5 @@
 import type { AttackPreview, Tile, Unit, WeaponKind } from "./types";
+import { hasAbility } from "./Unit";
 import { clamp } from "../util/math";
 
 // Weapon triangle: 1.15× favored, 0.85× unfavored, 1.0× neutral.
@@ -15,6 +16,10 @@ export const weaponModifier = (attacker: WeaponKind, defender: WeaponKind): numb
   return 1.0;
 };
 
+// True if `attacker` weapon-triangle-favors `defender` (the attacker has the better matchup).
+export const hasWeaponAdvantage = (attacker: WeaponKind, defender: WeaponKind): boolean =>
+  FAVORED[attacker] === defender;
+
 // Stance modifiers as documented in spec.
 export const attackerStanceModifier = (attacker: Unit, isCounter: boolean): number => {
   if (isCounter && attacker.state.stance === "ready") return 1.25;
@@ -23,6 +28,31 @@ export const attackerStanceModifier = (attacker: Unit, isCounter: boolean): numb
 
 export const defenderStanceModifier = (defender: Unit): number => {
   if (defender.state.stance === "defensive") return 0.5;
+  return 1.0;
+};
+
+// Whether `defender` has at least one adjacent ally (same faction, within 4-neighbour distance).
+const hasAdjacentAlly = (defender: Unit, allUnits: Unit[]): boolean => {
+  for (const u of allUnits) {
+    if (u === defender) continue;
+    if (!u.state.alive) continue;
+    if (u.faction !== defender.faction) continue;
+    const dx = Math.abs(u.state.position.x - defender.state.position.x);
+    const dy = Math.abs(u.state.position.y - defender.state.position.y);
+    if (dx + dy === 1) return true;
+  }
+  return false;
+};
+
+// Defender ability modifier: Aide halves incoming damage when adjacent to an ally.
+export const defenderAbilityModifier = (defender: Unit, allUnits: Unit[]): number => {
+  if (hasAbility(defender, "Aide") && hasAdjacentAlly(defender, allUnits)) return 0.5;
+  return 1.0;
+};
+
+// Attacker ability modifier: BossFighter doubles damage vs. boss-class enemies.
+export const attackerAbilityModifier = (attacker: Unit, defender: Unit): number => {
+  if (hasAbility(attacker, "BossFighter") && defender.classKind === "boss") return 2.0;
   return 1.0;
 };
 
@@ -41,17 +71,26 @@ const baseHitForWeapon = (w: WeaponKind): number => {
   }
 };
 
+// Set when a counter is being thrown by a defender that weapon-triangle-favors
+// the attacker. Damage gets a flat 1.5× kicker on top of the regular weapon mod.
+const ADVANTAGE_COUNTER_MULT = 1.5;
+
 export const previewAttack = (
   attacker: Unit,
   defender: Unit,
   defenderTile: Tile,
-  isCounter = false
+  isCounter = false,
+  allUnits: Unit[] = [],
+  isAdvantageCounter = false
 ): AttackPreview => {
   const weaponMod = weaponModifier(attacker.weapon, defender.weapon);
   const terrainMod = defenderTile.defendBonus;
   const stanceMod = attackerStanceModifier(attacker, isCounter) * defenderStanceModifier(defender);
+  const abilityMod = attackerAbilityModifier(attacker, defender) * defenderAbilityModifier(defender, allUnits);
+  const advantageMod = isAdvantageCounter ? ADVANTAGE_COUNTER_MULT : 1.0;
   const baseDamage =
-    attacker.stats.power * weaponMod * terrainMod * stanceMod - defender.stats.armor;
+    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * advantageMod -
+    defender.stats.armor;
   const damage = Math.max(1, Math.round(baseDamage));
 
   let hit = baseHitForWeapon(attacker.weapon) + (attacker.stats.speed - defender.stats.speed) * 2;

@@ -51,6 +51,23 @@ export class Initiative {
     return this.current();
   }
 
+  // Move the given unit to the cursor position so it becomes current().
+  // Only valid if u is in the queue at or after the cursor (i.e., hasn't been processed).
+  // Returns true on success, false if u isn't a valid swap target.
+  setCurrent(u: Unit): boolean {
+    for (let i = this.cursor; i < this.order.length; i++) {
+      if (this.order[i]!.id === u.id) {
+        if (i !== this.cursor) {
+          const tmp = this.order[this.cursor]!;
+          this.order[this.cursor] = u;
+          this.order[i] = tmp;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Get the upcoming N turns for the initiative bar UI. Reseeds virtually if needed.
   upcoming(allUnits: Unit[], count: number): Unit[] {
     const out: Unit[] = [];

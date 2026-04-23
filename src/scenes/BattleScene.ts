@@ -5,7 +5,7 @@ import { ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
-import { beginUnitTurn, createUnit, isAlive } from "../combat/Unit";
+import { beginUnitTurn, createUnit, hasAbility, isAlive, useItem } from "../combat/Unit";
 import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
@@ -13,6 +13,7 @@ import { battleById } from "../data/battles";
 import {
   BattleState,
   checkVictory,
+  effectiveMovement,
   enterStance,
   moveUnit,
   performAttack,
@@ -65,7 +66,8 @@ interface UnitView {
   stanceIcon: Phaser.GameObjects.Text;
 }
 
-type Mode = "idle" | "move" | "attack";
+// "roam" is a free single-Move granted by the Roam ability after AP runs out.
+type Mode = "idle" | "move" | "attack" | "roam";
 
 const PANEL_W = 280;
 
@@ -81,6 +83,8 @@ export class BattleScene extends Phaser.Scene {
   private cursorG!: Phaser.GameObjects.Graphics;
   private actionButtons: Button[] = [];
   private activeUnitText!: Phaser.GameObjects.Text;
+  private activeRibbon!: Phaser.GameObjects.Graphics;
+  private activeRibbonText!: Phaser.GameObjects.Text;
   private inspectTag!: Phaser.GameObjects.Text;
   private apText!: Phaser.GameObjects.Text;
   private statText!: Phaser.GameObjects.Text;
@@ -225,26 +229,33 @@ export class BattleScene extends Phaser.Scene {
     drawPanel(apg, GAME_WIDTH - PANEL_W - 12, 80, PANEL_W, GAME_HEIGHT - 100);
     const px = GAME_WIDTH - PANEL_W;
     const panelTextW = PANEL_W - 24; // inner width with margin
-    this.activeUnitText = this.add.text(px, 96, "", {
+    // Active-unit ribbon: highlights the currently-acting character above the name.
+    this.activeRibbon = this.add.graphics();
+    this.activeRibbonText = this.add.text(px, 84, "", {
+      fontFamily: "Cinzel, serif",
+      fontSize: "10px",
+      color: "#0a0c12"
+    });
+    this.activeUnitText = this.add.text(px, 100, "", {
       fontFamily: "Cinzel, serif",
       fontSize: "18px",
       color: "#f4d999",
       wordWrap: { width: panelTextW }
     });
-    this.inspectTag = this.add.text(px, 122, "", {
+    this.inspectTag = this.add.text(px, 126, "", {
       fontFamily: "Georgia, serif",
       fontSize: "11px",
       color: "#c9b07a",
       fontStyle: "italic",
       wordWrap: { width: panelTextW }
     });
-    this.apText = this.add.text(px, 140, "", {
+    this.apText = this.add.text(px, 144, "", {
       fontFamily: "Georgia, serif",
       fontSize: "14px",
       color: "#dad3bd",
       wordWrap: { width: panelTextW }
     });
-    this.statText = this.add.text(px, 164, "", {
+    this.statText = this.add.text(px, 168, "", {
       fontFamily: "Consolas, Menlo, monospace",
       fontSize: "12px",
       color: "#9da7b8",
@@ -523,15 +534,50 @@ export class BattleScene extends Phaser.Scene {
 
   private refreshSidePanel(u: Unit): void {
     this.apText.setText(`AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`);
-    this.statText.setText(
-      [
-        `HP   ${u.state.hp}/${u.stats.hp}`,
-        `PWR  ${u.stats.power}    ARM  ${u.stats.armor}`,
-        `SPD  ${u.stats.speed}    MOV  ${u.stats.movement}`,
-        `WPN  ${u.weapon}`,
-        `STN  ${u.state.stance}`
-      ].join("\n")
-    );
+    const mov = effectiveMovement(u);
+    const movStr = mov !== u.stats.movement ? `${u.stats.movement}+${mov - u.stats.movement}` : `${u.stats.movement}`;
+    const lines = [
+      `HP   ${u.state.hp}/${u.stats.hp}`,
+      `PWR  ${u.stats.power}    ARM  ${u.stats.armor}`,
+      `SPD  ${u.stats.speed}    MOV  ${movStr}`,
+      `WPN  ${u.weapon}`,
+      `STN  ${u.state.stance}`
+    ];
+    if (u.abilities && u.abilities.length > 0) {
+      lines.push(`ABL  ${u.abilities.join(", ")}`);
+    }
+    if (u.state.inventory.length > 0) {
+      lines.push(`INV  ${u.state.inventory.map((it) => it.name).join(", ")}`);
+    }
+    this.statText.setText(lines.join("\n"));
+    this.refreshActiveRibbon(u);
+  }
+
+  // The ribbon at the top of the side panel: "▶ ACTIVE TURN" when the panel
+  // shows the unit whose turn it currently is, or "○ INSPECTING" when the
+  // player is peeking at a different unit.
+  private refreshActiveRibbon(panelUnit: Unit): void {
+    this.activeRibbon.clear();
+    const cur = this.initiative.current();
+    const isActive = cur ? cur.id === panelUnit.id : false;
+    const px = GAME_WIDTH - PANEL_W;
+    const w = PANEL_W - 24;
+    const h = 14;
+    if (isActive) {
+      const isPlayer = panelUnit.faction === "player" || panelUnit.faction === "ally";
+      const fill = isPlayer ? 0xf4d999 : 0xd05a4a;
+      this.activeRibbon.fillStyle(fill, 0.95);
+      this.activeRibbon.fillRect(px - 4, 82, w, h);
+      this.activeRibbonText.setText(isPlayer ? "\u25B6 ACTIVE TURN" : "\u25B6 ENEMY TURN");
+      this.activeRibbonText.setColor("#0a0c12");
+      this.activeRibbonText.setVisible(true);
+    } else {
+      this.activeRibbon.fillStyle(0x2b2418, 0.9);
+      this.activeRibbon.fillRect(px - 4, 82, w, h);
+      this.activeRibbonText.setText("\u25CB INSPECTING");
+      this.activeRibbonText.setColor("#c9b07a");
+      this.activeRibbonText.setVisible(true);
+    }
   }
 
   private endCurrentTurn(): void {
@@ -579,39 +625,85 @@ export class BattleScene extends Phaser.Scene {
     const px = GAME_WIDTH - PANEL_W;
     const top = 250;
     const w = 240;
-    const h = 38;
-    const gap = 8;
+    const h = 32;
+    const gap = 6;
+    let row = 0;
     const make = (
       label: string,
-      i: number,
       primary: boolean,
       enabled: boolean,
       onClick: () => void
     ) => {
       const b = new Button(this, {
         x: px,
-        y: top + i * (h + gap),
+        y: top + row * (h + gap),
         w,
         h,
         label,
         primary,
         enabled,
-        fontSize: 14,
+        fontSize: 13,
         onClick
       });
       this.actionButtons.push(b);
+      row++;
     };
-    const canMove = u.state.apRemaining >= 1 && reachableForUnit(this.state, u).length > 0;
-    const canAttack = u.state.apRemaining >= 1 && targetsForUnit(this.state, u).length > 0;
-    const canStance = u.state.apRemaining >= 1;
-    make("Move (1 AP)", 0, false, canMove, () => this.enterMoveMode(u));
-    make("Attack (1 AP)", 1, true, canAttack, () => this.enterAttackMode(u));
-    make("Ready (1 AP)", 2, false, canStance && u.weapon !== "bow", () => this.applyStance(u, "ready"));
-    make("Defend (1 AP)", 3, false, canStance, () => this.applyStance(u, "defensive"));
-    make("End Turn", 4, false, true, () => {
+    const hasAP = u.state.apRemaining >= 1;
+    const canMove = hasAP && reachableForUnit(this.state, u).length > 0;
+    const canAttack = hasAP && targetsForUnit(this.state, u).length > 0;
+    const hasPotion = u.state.inventory.some((it) => it.kind === "potion");
+    const canPotion = hasAP && hasPotion && u.state.hp < u.stats.hp;
+    const canRoam = u.state.apRemaining === 0 && hasAbility(u, "Roam") && !u.state.roamUsedThisTurn
+      && reachableForUnit(this.state, u).length > 0;
+    make("Move (1 AP)", false, canMove, () => this.enterMoveMode(u));
+    make("Attack (1 AP)", true, canAttack, () => this.enterAttackMode(u));
+    make("Ready (1 AP)", false, hasAP && u.weapon !== "bow", () => this.applyStance(u, "ready"));
+    make("Defend (1 AP)", false, hasAP, () => this.applyStance(u, "defensive"));
+    make("Use Potion (1 AP)", false, canPotion, () => this.useFirstPotion(u));
+    if (canRoam) {
+      make("Roam: free move", false, true, () => this.enterRoamMode(u));
+    }
+    make("End Turn", false, true, () => {
       sfxClick();
       this.endCurrentTurn();
     });
+  }
+
+  // After a player action consumes AP, decide whether to keep showing buttons
+  // or auto-end the turn. Roam units get to see their free-move offer at AP=0.
+  private continueOrEnd(u: Unit): void {
+    if (!isAlive(u)) { this.endCurrentTurn(); return; }
+    const hasRoamLeft = hasAbility(u, "Roam") && !u.state.roamUsedThisTurn;
+    if (u.state.apRemaining > 0 || hasRoamLeft) this.buildActionButtons(u);
+    else this.endCurrentTurn();
+  }
+
+  private useFirstPotion(u: Unit): void {
+    const item = u.state.inventory.find((it) => it.kind === "potion");
+    if (!item) return;
+    sfxClick();
+    const result = useItem(u, item.id);
+    if (!result.ok) return;
+    u.state.apRemaining -= 1;
+    this.pushLog(`${u.name} drinks a ${result.itemName} (+${result.healed} HP).`);
+    const view = this.unitViews.get(u.id);
+    if (view) this.spawnDamageNumber(view.sprite.x, view.sprite.y, `+${result.healed}`, 0x6dffb2);
+    this.refreshUnitView(u);
+    this.refreshSidePanel(u);
+    this.clearActionButtons();
+    this.continueOrEnd(u);
+  }
+
+  private enterRoamMode(u: Unit): void {
+    sfxClick();
+    // Grant a single throwaway AP that's only usable for one Move.
+    u.state.roamUsedThisTurn = true;
+    u.state.apRemaining = 1;
+    this.pushLog(`${u.name} roams onward.`);
+    this.mode = "roam";
+    const reach = reachableForUnit(this.state, u);
+    this.moveTiles = reach.filter((t) => !unitAt(this.state, t));
+    this.drawOverlay();
   }
 
   private enterMoveMode(u: Unit): void {
@@ -640,8 +732,7 @@ export class BattleScene extends Phaser.Scene {
     this.refreshUnitView(u);
     this.refreshSidePanel(u);
     this.clearActionButtons();
-    if (u.state.apRemaining > 0) this.buildActionButtons(u);
-    else this.endCurrentTurn();
+    this.continueOrEnd(u);
   }
 
   private clearOverlays(): void {
@@ -657,13 +748,15 @@ export class BattleScene extends Phaser.Scene {
   private drawOverlay(): void {
     this.overlayG.clear();
     this.threatG.clear();
-    if (this.mode === "move") {
-      this.overlayG.fillStyle(COLORS.moveTile, 0.28);
+    if (this.mode === "move" || this.mode === "roam") {
+      const tint = this.mode === "roam" ? 0xffd45a : COLORS.moveTile;
+      const fillA = this.mode === "roam" ? 0.32 : 0.28;
+      this.overlayG.fillStyle(tint, fillA);
       for (const t of this.moveTiles) {
         const px = tileToPixel(t, this.originX, this.originY);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
       }
-      this.overlayG.lineStyle(1, COLORS.moveTile, 0.75);
+      this.overlayG.lineStyle(1, tint, 0.85);
       for (const t of this.moveTiles) {
         const px = tileToPixel(t, this.originX, this.originY);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
@@ -698,7 +791,7 @@ export class BattleScene extends Phaser.Scene {
     if (!u || u.faction !== "player") return;
     const tile = this.screenToTile(p.x, p.y);
     if (!tile) return;
-    if (this.mode === "move") {
+    if (this.mode === "move" || this.mode === "roam") {
       const ok = this.moveTiles.some((t) => t.x === tile.x && t.y === tile.y);
       if (!ok) return;
       this.acting = true;
@@ -714,12 +807,22 @@ export class BattleScene extends Phaser.Scene {
       const occ = unitAt(this.state, tile);
       const cur = this.initiative.current();
       if (occ && cur && occ.id !== cur.id) {
-        // Sticky inspect: show this unit's details until the player clicks
-        // the active unit (or empty ground) to clear the inspection.
-        this.inspectedUnitId = occ.id;
-        this.activeUnitText.setText(occ.name);
-        this.inspectTag.setText(`viewing — ${cur.name}'s turn`);
-        this.refreshSidePanel(occ);
+        // Click on a fresh player unit during player phase: swap control to them.
+        const swappable =
+          occ.faction === "player" &&
+          isAlive(occ) &&
+          !occ.state.hasActedThisRound &&
+          this.initiative.setCurrent(occ);
+        if (swappable) {
+          this.beginCurrentTurn();
+        } else {
+          // Sticky inspect: show this unit's details until the player clicks
+          // the active unit (or empty ground) to clear the inspection.
+          this.inspectedUnitId = occ.id;
+          this.activeUnitText.setText(occ.name);
+          this.inspectTag.setText(`viewing — ${cur.name}'s turn`);
+          this.refreshSidePanel(occ);
+        }
       } else {
         // Clicked the active unit or empty terrain: restore active focus.
         this.inspectedUnitId = null;
@@ -750,7 +853,7 @@ export class BattleScene extends Phaser.Scene {
       const target = u && this.targetUnits.find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
       if (u && target) {
         const tileDef = this.state.grid.tileAt(target.state.position);
-        const pre = previewAttack(u, target, tileDef, false);
+        const pre = previewAttack(u, target, tileDef, false, this.state.units);
         const txt = this.hoverPreview.getData("txt") as Phaser.GameObjects.Text;
         txt.setText(
           [
@@ -832,8 +935,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.checkEnd()) return;
     // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
     if (u.faction !== "player") return;
-    if (u.state.apRemaining > 0 && isAlive(u)) this.buildActionButtons(u);
-    else this.endCurrentTurn();
+    this.continueOrEnd(u);
   }
 
   private flashSprite(s: Phaser.GameObjects.Sprite, color: number): void {
@@ -925,6 +1027,16 @@ export class BattleScene extends Phaser.Scene {
     const result = performAttack(this.state, u, target);
     u.state.apRemaining -= 1;
     this.applyAttackEffects(u, target, result);
+    if (result.destructTriggered && result.attackerKilled) {
+      // Destruct: defender's death pulled the attacker down too.
+      const av = this.unitViews.get(u.id);
+      if (av) {
+        sfxDeath();
+        playUnitState(this, av.sprite, u, "death");
+        this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
+      }
+      this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
+    }
     if (result.counterTriggered && result.counterResult) {
       await this.delay(260);
       await this.lunge(target, u);
@@ -939,8 +1051,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.checkEnd()) return;
     // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
     if (u.faction !== "player") return;
-    if (u.state.apRemaining > 0 && isAlive(u)) this.buildActionButtons(u);
-    else this.endCurrentTurn();
+    this.continueOrEnd(u);
   }
 
   // ---- Enemy turn ----

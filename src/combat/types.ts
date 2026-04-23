@@ -18,6 +18,26 @@ export type ClassKind =
 
 export type Stance = "none" | "defensive" | "ready";
 
+// Special abilities. A unit may have at most MAX_ABILITIES (2).
+//   BossFighter: 2× damage vs. boss-class enemies.
+//   Aide:        2× defense (incoming dmg ×0.5) when adjacent to another ally.
+//   Destruct:    on death, the killing blow's attacker also dies.
+//   Roam:        once per turn, after AP is spent, the unit may consume 1 extra
+//                AP to make a single additional Move.
+export type Ability = "BossFighter" | "Aide" | "Destruct" | "Roam";
+export const MAX_ABILITIES = 2;
+
+// Battle inventory. Capped at MAX_INVENTORY (5) per unit.
+export type ItemKind = "potion";
+export interface Item {
+  id: string;       // unique per-unit instance id
+  kind: ItemKind;
+  name: string;
+  uses: number;     // remaining uses (potion = 1)
+}
+export const MAX_INVENTORY = 5;
+export const POTION_HEAL = 10;
+
 export interface UnitStats {
   hp: number;
   power: number;
@@ -43,6 +63,8 @@ export interface UnitDef {
   portrait?: boolean;
   // Optional tag set used by AI scoring (e.g., "boss" forces the AI to be more aggressive).
   tags?: ReadonlySet<string>;
+  // Up to MAX_ABILITIES special abilities granted at unit creation.
+  abilities?: Ability[];
 }
 
 export interface UnitState {
@@ -54,6 +76,9 @@ export interface UnitState {
   position: TilePos;
   facingX: 1 | -1;
   alive: boolean;
+  inventory: Item[];
+  // Roam tracks per-turn use: reset at the start of each turn.
+  roamUsedThisTurn: boolean;
 }
 
 export type Unit = UnitDef & { state: UnitState };
@@ -128,4 +153,7 @@ export interface AttackResult {
   defenderKilled: boolean;
   counterTriggered: boolean;
   counterResult?: AttackResult;
+  // Destruct ability: defender's death also killed the attacker.
+  destructTriggered?: boolean;
+  attackerKilled?: boolean;
 }

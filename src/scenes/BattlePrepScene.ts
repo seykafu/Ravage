@@ -116,14 +116,14 @@ export class BattlePrepScene extends Phaser.Scene {
     const primer = [
       "• Phase-based: your units act first, then enemies.",
       "• Within a phase, units act in Speed order.",
-      "• Each unit has Action Points (AP) to spend.",
-      "• Move · Attack · Ready · Defend (1 AP each).",
-      "• Ready: counter first melee attacker (+25% dmg).",
-      "• Defend: halve incoming damage this round.",
+      "• Each unit spends Action Points (AP).",
+      "• Move · Attack · Ready · Defend · Potion (1 AP).",
       "• Weapon triangle: Sword > Spear > Shield > Sword.",
-      "• Terrain modifies damage and hit rate.",
-      "• Click any unit to inspect; click active to clear.",
-      "• Tab toggles the debug overlay."
+      "• Triangle advantage = passive 1.5× counter.",
+      "• Mounted units (Knight, Dactyl) get +2 move.",
+      "• Items: 5 max per battle; start with 3 Potions.",
+      "• Abilities: Boss Fighter, Aide, Destruct, Roam.",
+      "• Click a unit to inspect; click active to clear."
     ];
     this.add.text(primerX + 24, primerY + 50, primer.join("\n"), {
       fontFamily: "Georgia, serif",
@@ -147,27 +147,76 @@ export class BattlePrepScene extends Phaser.Scene {
     });
 
     const players: UnitDef[] = node.buildPlayers ? node.buildPlayers() : [];
-    let py = rosterY + 50;
+
+    // Scrollable roster region — clip rows to the panel interior.
+    const listTop = rosterY + 50;
+    const listBottom = rosterY + rosterH - 16;
+    const listH = listBottom - listTop;
+    const listLeft = rosterX + 12;
+    const listW = rosterW - 24;
+    const rowH = 80;
+    const contentH = players.length * rowH;
+    const maxScroll = Math.max(0, contentH - listH);
+
+    const rowsContainer = this.add.container(0, 0);
+    let py = 0;
     for (const def of players) {
       const u = createUnit(def, { x: 0, y: 0 });
       const tex = ensureUnitTexture(this, u);
-      this.add.image(rosterX + 40, py + 26, tex).setDisplaySize(48, 60);
-      this.add.text(rosterX + 80, py, def.name, {
+      const portrait = this.add.image(rosterX + 40, listTop + py + 26, tex).setDisplaySize(48, 60);
+      const nameTxt = this.add.text(rosterX + 80, listTop + py, def.name, {
         fontFamily: "Cinzel, Trajan Pro, serif",
         fontSize: "16px",
         color: "#f8f0d8"
       });
-      this.add.text(rosterX + 80, py + 22, `${classLabel(def.classKind)} · ${weaponLabel(def.weapon)}`, {
+      const classTxt = this.add.text(rosterX + 80, listTop + py + 22, `${classLabel(def.classKind)} · ${weaponLabel(def.weapon)}`, {
         fontFamily: "Georgia, serif",
         fontSize: "12px",
         color: "#c9b07a"
       });
-      this.add.text(rosterX + 80, py + 40, statLine(def), {
+      const statTxt = this.add.text(rosterX + 80, listTop + py + 40, statLine(def), {
         fontFamily: "Consolas, Menlo, monospace",
         fontSize: "12px",
         color: "#9da7b8"
       });
-      py += 80;
+      rowsContainer.add([portrait, nameTxt, classTxt, statTxt]);
+      py += rowH;
+    }
+
+    const maskShape = this.make.graphics({ x: 0, y: 0 }, false);
+    maskShape.fillStyle(0xffffff);
+    maskShape.fillRect(listLeft, listTop, listW, listH);
+    rowsContainer.setMask(maskShape.createGeometryMask());
+
+    if (maxScroll > 0) {
+      // Track scroll position via container y offset.
+      let scroll = 0;
+      const trackX = rosterX + rosterW - 12;
+      const trackG = this.add.graphics();
+      const drawTrack = (): void => {
+        trackG.clear();
+        trackG.fillStyle(0x1a0e04, 0.6);
+        trackG.fillRect(trackX - 3, listTop, 6, listH);
+        const thumbH = Math.max(24, (listH / contentH) * listH);
+        const thumbY = listTop + (scroll / maxScroll) * (listH - thumbH);
+        trackG.fillStyle(0xc9b07a, 0.85);
+        trackG.fillRect(trackX - 3, thumbY, 6, thumbH);
+      };
+      drawTrack();
+
+      const hitZone = this.add.zone(rosterX + rosterW / 2, listTop + listH / 2, rosterW, listH).setInteractive();
+      hitZone.on("wheel", (_p: Phaser.Input.Pointer, _dx: number, dy: number) => {
+        scroll = Phaser.Math.Clamp(scroll + dy * 0.5, 0, maxScroll);
+        rowsContainer.y = -scroll;
+        drawTrack();
+      });
+      this.input.on("wheel", (p: Phaser.Input.Pointer, _objs: unknown, _dx: number, dy: number) => {
+        if (p.x < rosterX || p.x > rosterX + rosterW) return;
+        if (p.y < listTop || p.y > listBottom) return;
+        scroll = Phaser.Math.Clamp(scroll + dy * 0.5, 0, maxScroll);
+        rowsContainer.y = -scroll;
+        drawTrack();
+      });
     }
 
     // Buttons

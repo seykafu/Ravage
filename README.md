@@ -34,16 +34,26 @@ npm run preview      # preview the built bundle on :4173
 
 ## Combat — what to know
 
-- **Speed-based initiative.** No phase alternation. The unit with the highest speed acts next; everyone has 2 AP per turn.
-- **Move (1 AP) + Attack (1 AP).** Or two attacks. Or one move, one stance.
-- **Stances cost the rest of your turn.**
+- **Phase-based initiative.** Player + ally units act first, then enemies. Within a phase units act in Speed order.
+- **Action Points (AP).** Move / Attack / Ready / Defend / Use Potion all cost 1 AP. AP per unit is set per-stat-block (2 or 3).
+- **Stances cost an AP and last until your next turn.**
   - **Ready** — first melee attacker entering your reach takes a counter at +25% damage / +5% crit. Archers do not counter; speartons cover 1–2 range.
   - **Defensive** — incoming damage halved.
 - **Weapon triangle.** Sword > Spear > Shield > Sword (×1.15 / ×0.85).
+  - If your weapon advantages the attacker's, you **passively counter at 1.5× damage** when struck — no Ready stance required.
+- **Items.** Each unit may carry up to **5 items** per battle. Players start every battle with **3 Potions** (+10 HP, 1 AP).
+- **Mounted classes** (`knight`, `wyvern_rider`) get **+2 movement** above their base stat.
+- **Special abilities** (max 2 per character):
+  - **Boss Fighter** — 2× damage vs. boss-class enemies. *(Amar)*
+  - **Aide** — incoming damage halved while adjacent to any ally. *(Lucian, Ning, Maya)*
+  - **Destruct** — when slain, the killing blow's attacker also dies. *(Leo, Ranatoli)*
+  - **Roam** — once per turn, after AP is spent, may take one **free Move**. *(Leo and any future Knight / Dactyl)*
 - **Hit clamped 50–99.** Crit varies by class.
 - **Hover any tile or enemy** for a damage preview.
 - **Tab** toggles a debug overlay (unit IDs, AP, threat).
 - **Esc** cancels the current targeting mode.
+
+> Names from the full script not yet in the slice — `Dawn` (Boss Fighter), `Kian` (Destruct) — will get their abilities wired when their data entries are added.
 
 ## Story files
 

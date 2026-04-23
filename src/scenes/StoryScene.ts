@@ -40,13 +40,16 @@ const arcMusic: Record<string, MusicKey> = {
 
 interface StoryArgs { arcId: string; }
 
+// Portrait display area — anchored above the dialog panel, sized per image.
+const PORTRAIT_AREA_W = 220;
+const PORTRAIT_AREA_H = 280;
+
 export class StoryScene extends Phaser.Scene {
   private arcId!: string;
   private idx = 0;
   private bodyText!: Phaser.GameObjects.Text;
   private speakerText!: Phaser.GameObjects.Text;
   private portrait?: Phaser.GameObjects.Image;
-  private portraitFrame!: Phaser.GameObjects.Graphics;
   private continueBtn!: Button;
   private skipBtn!: Button;
   private bgImage!: Phaser.GameObjects.Image;
@@ -105,21 +108,21 @@ export class StoryScene extends Phaser.Scene {
     const pg = this.add.graphics();
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
-    // Portrait frame
-    this.portraitFrame = this.add.graphics();
-    drawPanel(this.portraitFrame, panelX + 16, panelY - 16 - PORTRAIT_H, PORTRAIT_W + 16, PORTRAIT_H + 16);
+    // Reserve a region to the left of the dialog text for the speaker portrait.
+    // Portrait floats above the dialog panel, no frame — sized per image (see showBeat).
+    const textLeft = panelX + 24 + PORTRAIT_AREA_W + 16;
 
-    this.speakerText = this.add.text(panelX + 24 + PORTRAIT_W + 16, panelY + 20, "", {
+    this.speakerText = this.add.text(textLeft, panelY + 20, "", {
       fontFamily: "Cinzel, Trajan Pro, serif",
       fontSize: "20px",
       color: "#f4d999"
     });
 
-    this.bodyText = this.add.text(panelX + 24 + PORTRAIT_W + 16, panelY + 52, "", {
+    this.bodyText = this.add.text(textLeft, panelY + 52, "", {
       fontFamily: "Georgia, serif",
       fontSize: "18px",
       color: "#e6e0d0",
-      wordWrap: { width: panelW - PORTRAIT_W - 64 },
+      wordWrap: { width: panelW - PORTRAIT_AREA_W - 64 },
       lineSpacing: 6
     });
 
@@ -169,8 +172,15 @@ export class StoryScene extends Phaser.Scene {
         });
         const panelX = 120;
         const panelY = GAME_HEIGHT - 240;
-        this.portrait = this.add.image(panelX + 24 + PORTRAIT_W / 2, panelY - 16 - PORTRAIT_H + PORTRAIT_H / 2, key);
-        this.portrait.setDisplaySize(PORTRAIT_W, PORTRAIT_H);
+        // Bottom-center of the portrait region sits just above the dialog panel.
+        const areaCenterX = panelX + 24 + PORTRAIT_AREA_W / 2;
+        const areaBottomY = panelY - 8;
+        this.portrait = this.add.image(areaCenterX, areaBottomY, key).setOrigin(0.5, 1);
+        const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+        const srcW = tex.width || PORTRAIT_W;
+        const srcH = tex.height || PORTRAIT_H;
+        const scale = Math.min(PORTRAIT_AREA_W / srcW, PORTRAIT_AREA_H / srcH);
+        this.portrait.setScale(scale);
       }
     }
 

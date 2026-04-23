@@ -9,10 +9,12 @@ export const PLAYERS = {
     faction: "player",
     classKind: "swordsman",
     weapon: "sword",
-    stats: { hp: 32, power: 10, armor: 4, speed: 8, movement: 4, ap: 3 },
+    // Hero-of-the-story bump: a touch more HP, hit, and footwork than the rest.
+    stats: { hp: 38, power: 12, armor: 5, speed: 9, movement: 5, ap: 3 },
     artSeed: 1,
     palette: PLAYER_PALETTES.amar,
-    portrait: true
+    portrait: true,
+    abilities: ["BossFighter"]
   }),
   amarHidden: (): UnitDef => ({
     // Same Amar, but with the "true" combat statline (used in Battle 1 — pre-amnesia).
@@ -22,10 +24,11 @@ export const PLAYERS = {
     faction: "player",
     classKind: "swordmaster",
     weapon: "sword",
-    stats: { hp: 38, power: 13, armor: 5, speed: 10, movement: 4, ap: 3 },
+    stats: { hp: 44, power: 15, armor: 6, speed: 11, movement: 5, ap: 3 },
     artSeed: 1,
     palette: PLAYER_PALETTES.amar,
-    portrait: true
+    portrait: true,
+    abilities: ["BossFighter"]
   }),
   lucian: (): UnitDef => ({
     id: "lucian",
@@ -37,7 +40,8 @@ export const PLAYERS = {
     stats: { hp: 36, power: 11, armor: 6, speed: 5, movement: 3, ap: 2 },
     artSeed: 2,
     palette: PLAYER_PALETTES.lucian,
-    portrait: true
+    portrait: true,
+    abilities: ["Aide"]
   }),
   ning: (): UnitDef => ({
     id: "ning",
@@ -49,7 +53,8 @@ export const PLAYERS = {
     stats: { hp: 22, power: 9, armor: 3, speed: 9, movement: 4, ap: 2 },
     artSeed: 3,
     palette: PLAYER_PALETTES.ning,
-    portrait: true
+    portrait: true,
+    abilities: ["Aide"]
   }),
   maya: (): UnitDef => ({
     id: "maya",
@@ -61,7 +66,8 @@ export const PLAYERS = {
     stats: { hp: 26, power: 10, armor: 3, speed: 11, movement: 5, ap: 3 },
     artSeed: 4,
     palette: PLAYER_PALETTES.maya,
-    portrait: true
+    portrait: true,
+    abilities: ["Aide"]
   }),
   leo: (): UnitDef => ({
     id: "leo",
@@ -73,7 +79,8 @@ export const PLAYERS = {
     stats: { hp: 30, power: 11, armor: 5, speed: 8, movement: 5, ap: 3 },
     artSeed: 5,
     palette: PLAYER_PALETTES.leo,
-    portrait: true
+    portrait: true,
+    abilities: ["Destruct", "Roam"]
   }),
   ranatoli: (): UnitDef => ({
     id: "ranatoli",
@@ -85,7 +92,8 @@ export const PLAYERS = {
     stats: { hp: 40, power: 8, armor: 8, speed: 4, movement: 3, ap: 2 },
     artSeed: 6,
     palette: PLAYER_PALETTES.ranatoli,
-    portrait: true
+    portrait: true,
+    abilities: ["Destruct"]
   }),
   selene: (): UnitDef => ({
     id: "selene",
