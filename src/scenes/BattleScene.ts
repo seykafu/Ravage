@@ -81,6 +81,7 @@ export class BattleScene extends Phaser.Scene {
   private cursorG!: Phaser.GameObjects.Graphics;
   private actionButtons: Button[] = [];
   private activeUnitText!: Phaser.GameObjects.Text;
+  private inspectTag!: Phaser.GameObjects.Text;
   private apText!: Phaser.GameObjects.Text;
   private statText!: Phaser.GameObjects.Text;
   private logText!: Phaser.GameObjects.Text;
@@ -223,34 +224,45 @@ export class BattleScene extends Phaser.Scene {
     const apg = this.add.graphics();
     drawPanel(apg, GAME_WIDTH - PANEL_W - 12, 80, PANEL_W, GAME_HEIGHT - 100);
     const px = GAME_WIDTH - PANEL_W;
+    const panelTextW = PANEL_W - 24; // inner width with margin
     this.activeUnitText = this.add.text(px, 96, "", {
       fontFamily: "Cinzel, serif",
-      fontSize: "20px",
-      color: "#f4d999"
+      fontSize: "18px",
+      color: "#f4d999",
+      wordWrap: { width: panelTextW }
     });
-    this.apText = this.add.text(px, 124, "", {
+    this.inspectTag = this.add.text(px, 122, "", {
+      fontFamily: "Georgia, serif",
+      fontSize: "11px",
+      color: "#c9b07a",
+      fontStyle: "italic",
+      wordWrap: { width: panelTextW }
+    });
+    this.apText = this.add.text(px, 140, "", {
       fontFamily: "Georgia, serif",
       fontSize: "14px",
-      color: "#dad3bd"
+      color: "#dad3bd",
+      wordWrap: { width: panelTextW }
     });
-    this.statText = this.add.text(px, 148, "", {
+    this.statText = this.add.text(px, 164, "", {
       fontFamily: "Consolas, Menlo, monospace",
       fontSize: "12px",
       color: "#9da7b8",
-      lineSpacing: 4
+      lineSpacing: 4,
+      wordWrap: { width: panelTextW }
     });
 
-    // Battle log
-    this.add.text(px, 470, "BATTLE LOG", {
+    // Battle log — moved below the End Turn button (last action button bottoms at y=472)
+    this.add.text(px, 500, "BATTLE LOG", {
       fontFamily: "Cinzel, serif",
       fontSize: "11px",
       color: "#c9b07a"
     });
-    this.logText = this.add.text(px, 488, "", {
+    this.logText = this.add.text(px, 518, "", {
       fontFamily: "Georgia, serif",
       fontSize: "12px",
       color: "#c0c5cf",
-      wordWrap: { width: PANEL_W - 24 },
+      wordWrap: { width: panelTextW },
       lineSpacing: 3
     });
 
@@ -361,10 +373,13 @@ export class BattleScene extends Phaser.Scene {
       const tex = ensureUnitTexture(this, u);
       const portrait = this.add.image(x + 18, 22, tex).setDisplaySize(28, 36);
       if (u.faction === "enemy") portrait.setFlipX(true);
-      const name = this.add.text(x + 36, 6, u.name, {
+      const nameMax = slot - 6 - 36 - 2; // available pixels between portrait and slot right edge
+      const displayName = u.name.length > 7 ? u.name.slice(0, 6) + "\u2026" : u.name;
+      const name = this.add.text(x + 36, 6, displayName, {
         fontFamily: "Cinzel, serif",
         fontSize: "10px",
-        color: i === 0 ? "#fff7c4" : "#dccfa8"
+        color: i === 0 ? "#fff7c4" : "#dccfa8",
+        wordWrap: { width: nameMax }
       });
       const sp = this.add.text(x + 36, 22, `SPD ${u.stats.speed}`, {
         fontFamily: "Consolas, Menlo, monospace",
@@ -406,6 +421,7 @@ export class BattleScene extends Phaser.Scene {
     this.lastActorFaction = u.faction;
     beginUnitTurn(u);
     this.inspectedUnitId = null;
+    this.inspectTag.setText("");
     this.activeUnitText.setText(u.name);
     this.refreshSidePanel(u);
     this.refreshInitiativeBar();
@@ -701,12 +717,13 @@ export class BattleScene extends Phaser.Scene {
         // Sticky inspect: show this unit's details until the player clicks
         // the active unit (or empty ground) to clear the inspection.
         this.inspectedUnitId = occ.id;
-        const tag = occ.faction === "player" ? "" : " (enemy)";
-        this.activeUnitText.setText(`${occ.name}${tag} · inspecting`);
+        this.activeUnitText.setText(occ.name);
+        this.inspectTag.setText(`viewing — ${cur.name}'s turn`);
         this.refreshSidePanel(occ);
       } else {
         // Clicked the active unit or empty terrain: restore active focus.
         this.inspectedUnitId = null;
+        this.inspectTag.setText("");
         if (cur) {
           this.activeUnitText.setText(cur.name);
           this.refreshSidePanel(cur);
@@ -813,6 +830,8 @@ export class BattleScene extends Phaser.Scene {
     this.clearOverlays();
     this.acting = false;
     if (this.checkEnd()) return;
+    // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
+    if (u.faction !== "player") return;
     if (u.state.apRemaining > 0 && isAlive(u)) this.buildActionButtons(u);
     else this.endCurrentTurn();
   }
@@ -918,6 +937,8 @@ export class BattleScene extends Phaser.Scene {
     this.clearOverlays();
     this.acting = false;
     if (this.checkEnd()) return;
+    // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
+    if (u.faction !== "player") return;
     if (u.state.apRemaining > 0 && isAlive(u)) this.buildActionButtons(u);
     else this.endCurrentTurn();
   }
