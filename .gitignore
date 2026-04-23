@@ -2,6 +2,8 @@ node_modules/
 dist/
 .vercel/
 .vite/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
 *.log
 .DS_Store
 .env
