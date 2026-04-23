@@ -114,13 +114,14 @@ export class BattlePrepScene extends Phaser.Scene {
       color: "#f4d999"
     });
     const primer = [
-      "• Initiative is Speed-sorted, not phase-based.",
+      "• Phase-based: your units act first (Speed order), then the enemy phase.",
       "• Each unit has Action Points (AP). Spend them to act.",
       "• Move (1 AP) · Attack (1 AP) · Ready (1 AP) · Defend (1 AP).",
       "• Ready stance counters the first melee attacker. +25% damage, +5% crit.",
       "• Defensive stance halves incoming damage until your next turn.",
       "• Weapon triangle: Sword > Spear > Shield > Sword (×1.15 / ×0.85).",
       "• Terrain modifies damage and hit rate.",
+      "• Click an enemy or ally to inspect their stats. Click your active unit to return.",
       "• Tab key (in battle) toggles the debug overlay."
     ];
     this.add.text(primerX + 24, primerY + 50, primer.join("\n"), {

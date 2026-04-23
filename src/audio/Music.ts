@@ -56,27 +56,38 @@ export class MusicManager {
     return this.currentKey === key && !!this.current && this.current.isPlaying;
   }
 
-  play(key: MusicKey, opts: { loop?: boolean; fadeMs?: number } = {}): void {
-    const { loop = true, fadeMs = 700 } = opts;
-    if (this.currentKey === key && this.current?.isPlaying) return;
-    const sound = this.scene.sound.add(key, { loop, volume: 0 });
-    sound.play();
-    // crossfade
-    if (this.current) {
-      const old = this.current;
+  // Force-destroy a sound. Safe to call repeatedly. Survives scene shutdown
+  // because it doesn't rely on the bound scene's tween manager.
+  private retireSound(s: Phaser.Sound.BaseSound, fadeMs: number): void {
+    // Tween fade for smoothness — may die if the bound scene shuts down.
+    try {
       this.scene.tweens.addCounter({
         from: this.targetVolume,
         to: 0,
         duration: fadeMs,
         onUpdate: (t: Phaser.Tweens.Tween) => {
-          if ("setVolume" in old) (old as Phaser.Sound.WebAudioSound).setVolume(t.getValue() ?? 0);
-        },
-        onComplete: () => {
-          old.stop();
-          old.destroy();
+          try {
+            if ("setVolume" in s) (s as Phaser.Sound.WebAudioSound).setVolume(t.getValue() ?? 0);
+          } catch { /* sound already destroyed */ }
         }
       });
-    }
+    } catch { /* scene without tweens */ }
+    // setTimeout backup — runs even if the scene is gone.
+    setTimeout(() => {
+      try {
+        if ("setVolume" in s) (s as Phaser.Sound.WebAudioSound).setVolume(0);
+        s.stop();
+        s.destroy();
+      } catch { /* already cleaned up */ }
+    }, fadeMs + 120);
+  }
+
+  play(key: MusicKey, opts: { loop?: boolean; fadeMs?: number } = {}): void {
+    const { loop = true, fadeMs = 700 } = opts;
+    if (this.currentKey === key && this.current?.isPlaying) return;
+    const sound = this.scene.sound.add(key, { loop, volume: 0 });
+    sound.play();
+    if (this.current) this.retireSound(this.current, fadeMs);
     this.scene.tweens.addCounter({
       from: 0,
       to: this.targetVolume,
@@ -94,18 +105,7 @@ export class MusicManager {
     const old = this.current;
     this.current = null;
     this.currentKey = null;
-    this.scene.tweens.addCounter({
-      from: this.targetVolume,
-      to: 0,
-      duration: fadeMs,
-      onUpdate: (t: Phaser.Tweens.Tween) => {
-        if ("setVolume" in old) (old as Phaser.Sound.WebAudioSound).setVolume(t.getValue() ?? 0);
-      },
-      onComplete: () => {
-        old.stop();
-        old.destroy();
-      }
-    });
+    this.retireSound(old, fadeMs);
   }
 }
 

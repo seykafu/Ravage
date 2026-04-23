@@ -1,17 +1,18 @@
 import type { Faction, Unit } from "./types";
 import { isAlive } from "./Unit";
 
-// Speed-based initiative with stable tie-breaks (player first, then deployment order).
+// Phase-based initiative: all player+ally units act first (in speed order),
+// then all enemy units act (in speed order). Ties break by deployment order.
 export const sortInitiative = (units: Unit[]): Unit[] => {
+  const factionOrder: Record<Faction, number> = { player: 0, ally: 1, enemy: 2 };
   return [...units]
     .filter(isAlive)
     .map((u, idx) => ({ u, idx }))
     .sort((a, b) => {
-      if (b.u.stats.speed !== a.u.stats.speed) return b.u.stats.speed - a.u.stats.speed;
-      const factionOrder: Record<Faction, number> = { player: 0, ally: 1, enemy: 2 };
       const fa = factionOrder[a.u.faction];
       const fb = factionOrder[b.u.faction];
-      if (fa !== fb) return fa - fb;
+      if (fa !== fb) return fa - fb;                                          // phase first
+      if (b.u.stats.speed !== a.u.stats.speed) return b.u.stats.speed - a.u.stats.speed; // speed within phase
       return a.idx - b.idx;
     })
     .map((p) => p.u);

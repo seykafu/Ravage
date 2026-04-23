@@ -95,6 +95,12 @@ export class BattleScene extends Phaser.Scene {
   private acting = false;
   private ended = false;
   private roundText!: Phaser.GameObjects.Text;
+  private activeRing!: Phaser.GameObjects.Graphics;
+  private activeArrow!: Phaser.GameObjects.Text;
+  private activeRingTween?: Phaser.Tweens.Tween;
+  private activeArrowTween?: Phaser.Tweens.Tween;
+  private inspectedUnitId: string | null = null;
+  private phaseBanner?: Phaser.GameObjects.Container;
 
   constructor() { super("BattleScene"); }
 
@@ -164,7 +170,15 @@ export class BattleScene extends Phaser.Scene {
 
     this.overlayG = this.add.graphics();
     this.threatG = this.add.graphics();
+    this.activeRing = this.add.graphics();
     this.cursorG = this.add.graphics();
+    this.activeArrow = this.add.text(0, 0, "\u25BC", {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "20px",
+      color: "#ffd45a",
+      stroke: "#000",
+      strokeThickness: 3
+    }).setOrigin(0.5, 1).setVisible(false);
 
     // Units
     for (const u of units) {
@@ -328,6 +342,8 @@ export class BattleScene extends Phaser.Scene {
 
   private refreshAllUnits(): void {
     for (const u of this.state.units) this.refreshUnitView(u);
+    const cur = this.initiative.current();
+    if (cur) this.drawActiveMarker(cur);
   }
 
   private refreshInitiativeBar(): void {
@@ -386,21 +402,107 @@ export class BattleScene extends Phaser.Scene {
       u = this.initiative.advance(this.state.units);
     }
     if (!u) return;
+    const isNewPhase = !this.lastActorFaction || this.lastActorFaction !== u.faction;
+    this.lastActorFaction = u.faction;
     beginUnitTurn(u);
+    this.inspectedUnitId = null;
     this.activeUnitText.setText(u.name);
     this.refreshSidePanel(u);
     this.refreshInitiativeBar();
     this.refreshAllUnits();
+    this.drawActiveMarker(u);
     this.refreshDebug();
     this.clearActionButtons();
     this.clearOverlays();
     this.drawOverlay();
 
-    if (u.faction === "player" && isAlive(u)) {
-      this.buildActionButtons(u);
-    } else {
-      this.time.delayedCall(450, () => this.runEnemyTurn(u));
+    const startTurn = () => {
+      if (this.ended) return;
+      if (u.faction === "player" && isAlive(u)) {
+        this.buildActionButtons(u);
+      } else {
+        this.time.delayedCall(450, () => this.runEnemyTurn(u));
+      }
+    };
+    if (isNewPhase) this.showPhaseBanner(u.faction, startTurn);
+    else startTurn();
+  }
+
+  private lastActorFaction: Unit["faction"] | null = null;
+
+  private showPhaseBanner(faction: Unit["faction"], onDone: () => void): void {
+    if (this.phaseBanner) {
+      this.phaseBanner.destroy();
+      this.phaseBanner = undefined;
     }
+    const isPlayer = faction === "player" || faction === "ally";
+    const label = isPlayer ? "PLAYER PHASE" : "ENEMY PHASE";
+    const accent = isPlayer ? "#f4d999" : "#d05a4a";
+    const stroke = isPlayer ? "#1a0e04" : "#1a0404";
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.55);
+    bg.fillRect(0, GAME_HEIGHT / 2 - 50, GAME_WIDTH, 100);
+    const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, label, {
+      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontSize: "56px",
+      color: accent,
+      stroke,
+      strokeThickness: 6
+    }).setOrigin(0.5);
+    const banner = this.add.container(0, 0, [bg, txt]);
+    banner.setDepth(1000);
+    banner.setAlpha(0);
+    this.phaseBanner = banner;
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      duration: 180,
+      yoyo: true,
+      hold: 450,
+      onComplete: () => {
+        banner.destroy();
+        if (this.phaseBanner === banner) this.phaseBanner = undefined;
+        onDone();
+      }
+    });
+  }
+
+  private drawActiveMarker(u: Unit): void {
+    const view = this.unitViews.get(u.id);
+    this.activeRing.clear();
+    if (this.activeRingTween) { this.activeRingTween.stop(); this.activeRingTween = undefined; }
+    if (this.activeArrowTween) { this.activeArrowTween.stop(); this.activeArrowTween = undefined; }
+    if (!view || !isAlive(u)) {
+      this.activeArrow.setVisible(false);
+      return;
+    }
+    const px = view.sprite.x;
+    const py = view.sprite.y;
+    const ringColor = u.faction === "player" ? 0x6db2ff : 0xff7a4d;
+    const ringY = py + TILE_SIZE / 2 - 3;
+    this.activeRing.lineStyle(2, ringColor, 0.95);
+    this.activeRing.strokeEllipse(px, ringY, TILE_SIZE - 6, 10);
+    this.activeRing.lineStyle(1, 0xffffff, 0.6);
+    this.activeRing.strokeEllipse(px, ringY, TILE_SIZE - 12, 6);
+    this.activeRingTween = this.tweens.add({
+      targets: this.activeRing,
+      alpha: { from: 1, to: 0.45 },
+      duration: 700,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+    this.activeArrow.setColor(u.faction === "player" ? "#ffd45a" : "#ff8a8a");
+    this.activeArrow.setPosition(px, py - 28);
+    this.activeArrow.setVisible(true);
+    this.activeArrowTween = this.tweens.add({
+      targets: this.activeArrow,
+      y: py - 22,
+      duration: 480,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
   }
 
   private refreshSidePanel(u: Unit): void {
@@ -443,6 +545,7 @@ export class BattleScene extends Phaser.Scene {
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "defeat" } };
     }
     writeSave(save);
+    getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.scene.start("EndScene", { battleId: this.battleId, outcome: v });
@@ -593,18 +696,21 @@ export class BattleScene extends Phaser.Scene {
       void this.animateAttack(u, target);
     } else {
       const occ = unitAt(this.state, tile);
-      if (occ) {
-        // peek at unit info via the side panel
-        this.activeUnitText.setText(`${occ.name}`);
+      const cur = this.initiative.current();
+      if (occ && cur && occ.id !== cur.id) {
+        // Sticky inspect: show this unit's details until the player clicks
+        // the active unit (or empty ground) to clear the inspection.
+        this.inspectedUnitId = occ.id;
+        const tag = occ.faction === "player" ? "" : " (enemy)";
+        this.activeUnitText.setText(`${occ.name}${tag} · inspecting`);
         this.refreshSidePanel(occ);
-        this.time.delayedCall(2400, () => {
-          if (this.ended) return;
-          const cur = this.initiative.current();
-          if (cur) {
-            this.activeUnitText.setText(cur.name);
-            this.refreshSidePanel(cur);
-          }
-        });
+      } else {
+        // Clicked the active unit or empty terrain: restore active focus.
+        this.inspectedUnitId = null;
+        if (cur) {
+          this.activeUnitText.setText(cur.name);
+          this.refreshSidePanel(cur);
+        }
       }
     }
   }
@@ -674,6 +780,7 @@ export class BattleScene extends Phaser.Scene {
     playUnitState(this, view.sprite, u, "walk");
     // Walk the visual sprite along path
     let lastY = view.baseY;
+    const isActive = this.initiative.current() === u;
     for (const step of path) {
       const dx = step.x - (prev.x);
       if (dx !== 0) {
@@ -690,6 +797,7 @@ export class BattleScene extends Phaser.Scene {
           y: lastY,
           duration: 110,
           ease: "Sine.easeInOut",
+          onUpdate: () => { if (isActive) this.drawActiveMarker(u); },
           onComplete: () => res()
         });
       });
