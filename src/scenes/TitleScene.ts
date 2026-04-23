@@ -4,7 +4,8 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
-import { defaultSave, loadSave, writeSave } from "../util/save";
+import { getCurrentSlot } from "../util/save";
+import { isAuthEnabled } from "../auth/session";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -49,42 +50,46 @@ export class TitleScene extends Phaser.Scene {
       ease: "Sine.easeInOut"
     });
 
-    // CTA buttons
-    const save = loadSave();
-    const hasProgress = save.completedBattles.length > 0;
+    // CTA buttons. The actual save-slot picking and (optional) auth happens
+    // in the next scenes — Title is just a single "Play" button now.
+    const hasActiveSlot = getCurrentSlot() !== null;
     const cy = 470;
     const btnW = 280;
     const btnH = 56;
     const gap = 18;
     const startY = cy;
 
-    const newGameBtn = new Button(this, {
+    const playBtn = new Button(this, {
       x: GAME_WIDTH / 2 - btnW / 2,
       y: startY,
       w: btnW,
       h: btnH,
-      label: hasProgress ? "Begin a New Story" : "Begin",
+      label: "Play",
       primary: true,
       fontSize: 22,
       onClick: () => {
         sfxConfirm();
         unlockAudio();
-        writeSave(defaultSave());
         this.cameras.main.fadeOut(450, 0, 0, 0);
-        this.cameras.main.once("camerafadeoutcomplete", () =>
-          this.scene.start("StoryScene", { arcId: "pre_palace" })
-        );
+        this.cameras.main.once("camerafadeoutcomplete", () => {
+          // If Supabase is configured and the user isn't signed in, AuthScene
+          // handles routing. If unconfigured, AuthScene immediately forwards
+          // to SaveSlotScene.
+          this.scene.start(isAuthEnabled() ? "AuthScene" : "SaveSlotScene");
+        });
       }
     });
 
-    const continueBtn = new Button(this, {
+    // "Resume" only appears when a slot is currently active (loaded into the
+    // active mirror). It skips the slot picker.
+    const resumeBtn = new Button(this, {
       x: GAME_WIDTH / 2 - btnW / 2,
       y: startY + btnH + gap,
       w: btnW,
       h: btnH,
-      label: "Continue",
+      label: "Resume Last Slot",
       primary: false,
-      enabled: hasProgress,
+      enabled: hasActiveSlot,
       fontSize: 18,
       onClick: () => {
         sfxConfirm();
@@ -108,6 +113,6 @@ export class TitleScene extends Phaser.Scene {
     getMusic(this).play(MUSIC.adventure1, { fadeMs: 1200 });
 
     // Suppress unused vars (TS strict)
-    void newGameBtn; void continueBtn;
+    void playBtn; void resumeBtn;
   }
 }

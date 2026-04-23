@@ -7,6 +7,8 @@ import { BattlePrepScene } from "./scenes/BattlePrepScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { EndScene } from "./scenes/EndScene";
 import { CreditsScene } from "./scenes/CreditsScene";
+import { AuthScene } from "./scenes/AuthScene";
+import { SaveSlotScene } from "./scenes/SaveSlotScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -26,6 +28,8 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [
     BootScene,
     TitleScene,
+    AuthScene,
+    SaveSlotScene,
     StoryScene,
     OverworldScene,
     BattlePrepScene,

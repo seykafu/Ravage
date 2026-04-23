@@ -93,4 +93,30 @@ src/
 
 ## Save data
 
-`localStorage["ravage:save:v1"]` holds completed/unlocked battle IDs and a small `flags` map for narrative branching. Clear it via the **New Game** button on the title screen, or by clearing site data.
+The game has **three save slots per account**, with cloud sync via Supabase.
+
+- **Authenticated:** slots live in a Supabase `saves` table (one row per `user_id × slot`). Row-Level Security ensures each user only sees their own.
+- **Offline:** if no Supabase env vars are set, the game runs entirely on `localStorage` — three slots, but tied to the device.
+
+`localStorage["ravage:save:v1"]` is the active mirror of the currently selected slot. Per-slot caches at `ravage:save:v1:slot{1,2,3}` keep the slot picker accurate when offline.
+
+## Supabase setup
+
+1. **Create a project** at https://supabase.com/dashboard.
+2. **Run the schema.** Open the SQL editor and paste in [supabase/schema.sql](supabase/schema.sql), then Run.
+3. **Get your keys** from *Project Settings → API*:
+   - Project URL
+   - `anon` public key (NOT `service_role` — never put that in the client)
+4. **Local dev:** copy `.env.example` to `.env.local` and fill in the keys:
+   ```bash
+   cp .env.example .env.local
+   ```
+5. **Vercel deploy:** in the Vercel project dashboard, go to *Settings → Environment Variables* and add:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+   Add them for **Production**, **Preview**, and **Development** environments. Redeploy after adding.
+
+6. **Email confirmations:** by default Supabase sends a confirmation email on signup. To skip that during dev, go to *Authentication → Providers → Email* and disable "Confirm email". For production you probably want it on.
+
+If env vars are missing the game still runs — it falls back to localStorage-only, single-device saves. The Auth screen short-circuits to the slot picker.
