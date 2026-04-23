@@ -105,7 +105,7 @@ export class BattlePrepScene extends Phaser.Scene {
     const primerX = 60;
     const primerY = 280;
     const primerW = 380;
-    const primerH = 320;
+    const primerH = 360;
     const primerG = this.add.graphics();
     drawPanel(primerG, primerX, primerY, primerW, primerH);
     this.add.text(primerX + 24, primerY + 18, "Tactical Reminder", {
@@ -114,28 +114,30 @@ export class BattlePrepScene extends Phaser.Scene {
       color: "#f4d999"
     });
     const primer = [
-      "• Phase-based: your units act first (Speed order), then the enemy phase.",
-      "• Each unit has Action Points (AP). Spend them to act.",
-      "• Move (1 AP) · Attack (1 AP) · Ready (1 AP) · Defend (1 AP).",
-      "• Ready stance counters the first melee attacker. +25% damage, +5% crit.",
-      "• Defensive stance halves incoming damage until your next turn.",
-      "• Weapon triangle: Sword > Spear > Shield > Sword (×1.15 / ×0.85).",
+      "• Phase-based: your units act first, then enemies.",
+      "• Within a phase, units act in Speed order.",
+      "• Each unit has Action Points (AP) to spend.",
+      "• Move · Attack · Ready · Defend (1 AP each).",
+      "• Ready: counter first melee attacker (+25% dmg).",
+      "• Defend: halve incoming damage this round.",
+      "• Weapon triangle: Sword > Spear > Shield > Sword.",
       "• Terrain modifies damage and hit rate.",
-      "• Click an enemy or ally to inspect their stats. Click your active unit to return.",
-      "• Tab key (in battle) toggles the debug overlay."
+      "• Click any unit to inspect; click active to clear.",
+      "• Tab toggles the debug overlay."
     ];
     this.add.text(primerX + 24, primerY + 50, primer.join("\n"), {
       fontFamily: "Georgia, serif",
-      fontSize: "14px",
+      fontSize: "13px",
       color: "#dad3bd",
-      lineSpacing: 6
+      lineSpacing: 6,
+      wordWrap: { width: primerW - 48 }
     });
 
     // Roster panel
     const rosterX = 460;
     const rosterY = 280;
     const rosterW = GAME_WIDTH - rosterX - 60;
-    const rosterH = 320;
+    const rosterH = 360;
     const rosterG = this.add.graphics();
     drawPanel(rosterG, rosterX, rosterY, rosterW, rosterH);
     this.add.text(rosterX + 24, rosterY + 18, "Your Vanguard", {
