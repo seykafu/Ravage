@@ -1,0 +1,121 @@
+// Story beats: dialog cards bracketing each battle. Each beat is a single screen
+// with a portrait (or none), a speaker name, a body, and an optional ambient color.
+
+export interface DialogBeat {
+  speaker?: string;
+  portraitId?: "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene" | "kian" | "ndari" | "nebu" | "narrator";
+  body: string;
+  ambient?: number;
+}
+
+export interface StoryArc {
+  id: string;
+  title: string;        // banner shown at top of the story screen
+  subtitle?: string;    // smaller subline
+  beats: DialogBeat[];
+  // After the arc, where to go next: "battle:<id>" | "overworld" | "credits".
+  next: string;
+  music: "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep";
+}
+
+const N = (body: string, ambient?: number): DialogBeat => ({ portraitId: "narrator", body, ambient });
+
+export const ARCS: Record<string, StoryArc> = {
+  // -------- Pre-Battle 1 (Palace Coup) --------
+  pre_palace: {
+    id: "pre_palace",
+    title: "Year 2640 of the Anthros Monarch",
+    subtitle: "Para — the night of the coup",
+    music: "adventure1",
+    next: "prep:b01_palace_coup",
+    beats: [
+      N(
+        "Anthros: a hundred million people pressed against the spine of the world. One king. One palace. One harvest, year after year, that does not feed them."
+      ),
+      N(
+        "You have planned this for ten months. Tonight your seven comrades are scattered through the back corridors. You and the vanguard reached the throne hall first."
+      ),
+      { speaker: "Selene", portraitId: "selene", body: "If we don't break the line in the first minute, we don't break it at all. Hold to the right." },
+      { speaker: "Ranatoli", portraitId: "ranatoli", body: "Steel up, Amar. We bleed together or we feast together — anything in between is shame." },
+      { speaker: "Amar", portraitId: "amar", body: "Then bleed only what you can spare. We are taking a country tonight." }
+    ]
+  },
+  // -------- Post-Battle 1 --------
+  post_palace: {
+    id: "post_palace",
+    title: "A day later",
+    subtitle: "A hospital outside the palace",
+    music: "everydayAnthros",
+    next: "story:thuling_arrival",
+    beats: [
+      N("You wake in white sheets. There is no pain. There is no memory."),
+      { speaker: "Kian", portraitId: "kian", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
+      { speaker: "Kian", portraitId: "kian", body: "You're a key man, Amar. The harvest plan, the steel quotas — His Majesty has spent ten years on what you carry. We need you back on your feet." },
+      { speaker: "Amar", portraitId: "amar", body: "...The harvest." },
+      N("You smile because Kian is watching. You do not say that the word means nothing.")
+    ]
+  },
+  // -------- Story interlude: arriving in Thuling --------
+  thuling_arrival: {
+    id: "thuling_arrival",
+    title: "Thuling",
+    subtitle: "A factory town at the foot of the eastern range",
+    music: "everydayAnthros",
+    next: "prep:b02_farmland",
+    beats: [
+      N("Within a single day you are working both farmland and forge. Your hands know things your mouth does not."),
+      { speaker: "Lucian", portraitId: "lucian", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
+      { speaker: "Lucian", portraitId: "lucian", body: "...You already knew that." },
+      { speaker: "Amar", portraitId: "amar", body: "Lucky guess." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Sure. Lucky guess." },
+      N("Kian shadows you between shifts. He smiles. He always smiles."),
+      N("On the morning of the third day, bandits come for the wagons in the eastern field.")
+    ]
+  },
+  // -------- Post-Battle 2 --------
+  post_farmland: {
+    id: "post_farmland",
+    title: "After the field",
+    music: "everydayAnthros",
+    next: "story:before_mountain",
+    beats: [
+      { speaker: "Lucian", portraitId: "lucian", body: "Hand." },
+      N("He hands you a rag. He doesn't ask where the wound came from. He doesn't ask why it was so easy for you to drop the second bandit when his back was open."),
+      { speaker: "Kian", portraitId: "kian", body: "You handled yourself well. Some of that looked... rehearsed." },
+      { speaker: "Amar", portraitId: "amar", body: "Anyone bleeds when you cut them right. I think I just got lucky." },
+      N("You show him the cut on your waist. You opened it yourself this morning, with the kind of precision a farmer should not have. He believes you. For now.")
+    ]
+  },
+  // -------- Pre-Battle 5 (Mountain Bandits / Ndari) --------
+  before_mountain: {
+    id: "before_mountain",
+    title: "Two months later",
+    subtitle: "The eastern range, above the snowline",
+    music: "adventureAnthros",
+    next: "prep:b05_mountain_ndari",
+    beats: [
+      N("General Fergus has work for your squad. The kind of work that pays in gold and uses up the men who do it."),
+      { speaker: "Leo", portraitId: "leo", body: "My father wants me to go with you. Do not argue. He doesn't argue twice." },
+      { speaker: "Maya", portraitId: "maya", body: "Mountain bandits. A village they already burned. Their leader's name is Ndari." },
+      { speaker: "Ning", portraitId: "ning", body: "Ndari. Like the queen Madame Dawn — that Ndari?" },
+      { speaker: "Maya", portraitId: "maya", body: "Different woman. Same kind of trouble." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Bring everything. We won't be picking over bodies — they'll be picking over ours." }
+    ]
+  },
+  // -------- Post-Battle 5 (Ndari escapes) --------
+  post_mountain: {
+    id: "post_mountain",
+    title: "On the path home",
+    music: "everydayAnthros",
+    next: "credits",
+    beats: [
+      N("Ndari escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
+      { speaker: "Ndari", portraitId: "ndari", body: "Why are you fighting on King Nebu's side, Amar?" },
+      N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
+      { speaker: "Lucian", portraitId: "lucian", body: "She didn't mistake you for anyone. And you've known that since she said it." },
+      { speaker: "Amar", portraitId: "amar", body: "Lucian — " },
+      { speaker: "Lucian", portraitId: "lucian", body: "Not tonight. The rest can wait. But for the first time, Amar — you have a witness." },
+      N("(End of the playable vertical slice. The remaining sixteen battles are scaffolded — the full story continues across the Caravan, the Monastery, the cliffs of Para, the year of travel in Gruge, and the Ravage Fleet at the end of the world.)")
+    ]
+  }
+};

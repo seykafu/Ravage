@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ravage</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #05060a;
+        color: #e8eaf2;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        overflow: hidden;
+        height: 100%;
+      }
+      #app {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(ellipse at 50% 35%, rgba(96, 60, 40, 0.30), transparent 60%),
+          radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.55), transparent 70%),
+          linear-gradient(180deg, #06080f 0%, #02030a 100%);
+      }
+      /* Pixel-perfect scaling: keep crisp edges. */
+      #app canvas {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        /* "3D feel" — soft chromatic aberration + faint scanlines + warm bloom */
+        filter:
+          drop-shadow(0 14px 30px rgba(0, 0, 0, 0.55))
+          drop-shadow(0 0 12px rgba(220, 170, 90, 0.08))
+          contrast(1.04)
+          saturate(1.06);
+        box-shadow: 0 0 0 1px rgba(255, 220, 160, 0.05) inset;
+      }
+      /* Subtle moving vignette overlay for depth */
+      #app::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%),
+          repeating-linear-gradient(
+            180deg,
+            rgba(255,255,255,0.012) 0 1px,
+            transparent 1px 3px
+          );
+        mix-blend-mode: multiply;
+        z-index: 2;
+      }
+      #loader {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        z-index: 3;
+        font-size: 14px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #c9b07a;
+        text-shadow: 0 0 12px rgba(201, 176, 122, 0.5);
+        pointer-events: none;
+      }
+      #loader.hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="loader">Ravage — loading…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
