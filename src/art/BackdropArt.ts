@@ -138,8 +138,10 @@ const drawFireGlow = (px: PixelCanvas): void => {
 export const ensureBackdropTexture = (
   scene: Phaser.Scene,
   key: string,
-  spec: MountainSpec
+  spec: MountainSpec,
+  manifestId?: string  // optional: e.g. "backdrop:palaceCoup" — uses real PNG if loaded
 ): string => {
+  if (manifestId && scene.textures.exists(manifestId)) return manifestId;
   if (scene.textures.exists(key)) return key;
   const w = GAME_WIDTH;
   const h = GAME_HEIGHT;

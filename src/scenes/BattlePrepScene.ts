@@ -59,8 +59,9 @@ export class BattlePrepScene extends Phaser.Scene {
     const node = battleById(this.battleId);
     if (!node) { this.scene.start("OverworldScene"); return; }
 
-    const bdSpec = BACKDROPS[BACKDROP_LOOKUP[node.backdropKey] ?? "thuling"];
-    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec);
+    const camel = BACKDROP_LOOKUP[node.backdropKey] ?? "thuling";
+    const bdSpec = BACKDROPS[camel];
+    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec, `backdrop:${camel}`);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     const v = this.add.graphics();
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.55, 0.55, 0.85, 0.85);

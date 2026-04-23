@@ -194,6 +194,14 @@ export const ensureTileTexture = (
   obstacle: ObstacleKind,
   seed: number
 ): string => {
+  // If a real terrain tile is loaded AND there's no obstacle overlay needed,
+  // use it directly. Procedural still wins when an obstacle is present, since
+  // we draw obstacles atop the base tile in code.
+  if (obstacle === "none") {
+    const realKey = `tile:${terrain}`;
+    if (scene.textures.exists(realKey)) return realKey;
+  }
+
   const key = tileTextureKey(terrain, obstacle, seed);
   if (scene.textures.exists(key)) return key;
   const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);

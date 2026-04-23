@@ -38,6 +38,7 @@ import {
 import { completeBattle, loadSave, unlockBattle, writeSave } from "../util/save";
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
+import { playUnitState } from "../assets/unitAnim";
 
 const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
   bg_palace_coup: "palaceCoup",
@@ -57,7 +58,8 @@ interface BattleArgs { battleId: string; }
 
 interface UnitView {
   unit: Unit;
-  sprite: Phaser.GameObjects.Image;
+  sprite: Phaser.GameObjects.Sprite;
+  baseY: number;  // origin Y for idle bob; updates after every move
   hpBg: Phaser.GameObjects.Graphics;
   hpBar: Phaser.GameObjects.Graphics;
   stanceIcon: Phaser.GameObjects.Text;
@@ -117,8 +119,9 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Backdrop
-    const bdSpec = BACKDROPS[BACKDROP_LOOKUP[node.backdropKey] ?? "thuling"];
-    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec);
+    const camel = BACKDROP_LOOKUP[node.backdropKey] ?? "thuling";
+    const bdSpec = BACKDROPS[camel];
+    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec, `backdrop:${camel}`);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     const v = this.add.graphics();
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0.45, 0.78, 0.78);
@@ -167,7 +170,8 @@ export class BattleScene extends Phaser.Scene {
     for (const u of units) {
       const tex = ensureUnitTexture(this, u);
       const px = tileToPixel(u.state.position, this.originX, this.originY);
-      const sprite = this.add.image(px.x, px.y - 4, tex).setDisplaySize(40, 50);
+      const baseY = px.y - 4;
+      const sprite = this.add.sprite(px.x, baseY, tex).setDisplaySize(40, 50);
       if (u.faction === "enemy") sprite.setFlipX(true);
       const hpBg = this.add.graphics();
       const hpBar = this.add.graphics();
@@ -178,8 +182,9 @@ export class BattleScene extends Phaser.Scene {
         stroke: "#000",
         strokeThickness: 2
       }).setOrigin(0.5, 0);
-      this.unitViews.set(u.id, { unit: u, sprite, hpBg, hpBar, stanceIcon });
+      this.unitViews.set(u.id, { unit: u, sprite, baseY, hpBg, hpBar, stanceIcon });
       this.refreshUnitView(u);
+      playUnitState(this, sprite, u, "idle");
     }
 
     // Top initiative bar
@@ -666,7 +671,9 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     let prev: TilePos = u.state.position; // already updated to dest, but path walks visually
+    playUnitState(this, view.sprite, u, "walk");
     // Walk the visual sprite along path
+    let lastY = view.baseY;
     for (const step of path) {
       const dx = step.x - (prev.x);
       if (dx !== 0) {
@@ -674,12 +681,13 @@ export class BattleScene extends Phaser.Scene {
         view.sprite.setFlipX(u.state.facingX === -1);
       }
       const px = tileToPixel(step, this.originX, this.originY);
+      lastY = px.y - 4;
       sfxStep();
       await new Promise<void>((res) => {
         this.tweens.add({
           targets: view.sprite,
           x: px.x,
-          y: px.y - 4,
+          y: lastY,
           duration: 110,
           ease: "Sine.easeInOut",
           onComplete: () => res()
@@ -687,6 +695,8 @@ export class BattleScene extends Phaser.Scene {
       });
       prev = step;
     }
+    view.baseY = lastY;
+    playUnitState(this, view.sprite, u, "idle");
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} moves.`);
     this.refreshUnitView(u);
@@ -699,7 +709,7 @@ export class BattleScene extends Phaser.Scene {
     else this.endCurrentTurn();
   }
 
-  private flashSprite(s: Phaser.GameObjects.Image, color: number): void {
+  private flashSprite(s: Phaser.GameObjects.Sprite, color: number): void {
     s.setTintFill(color);
     this.time.delayedCall(120, () => s.clearTint());
   }
@@ -730,6 +740,7 @@ export class BattleScene extends Phaser.Scene {
     const tx = tv.sprite.x;
     const ty = tv.sprite.y;
     av.sprite.setFlipX(tx < sx);
+    playUnitState(this, av.sprite, attacker, "attack");
     return new Promise((res) => {
       this.tweens.add({
         targets: av.sprite,
@@ -738,7 +749,10 @@ export class BattleScene extends Phaser.Scene {
         duration: 130,
         ease: "Cubic.easeOut",
         yoyo: true,
-        onComplete: () => res()
+        onComplete: () => {
+          playUnitState(this, av.sprite, attacker, "idle");
+          res();
+        }
       });
     });
   }
@@ -757,6 +771,7 @@ export class BattleScene extends Phaser.Scene {
       if (result.crit) sfxCrit();
       else sfxAttackHit();
       this.flashSprite(tv.sprite, 0xff5a4d);
+      playUnitState(this, tv.sprite, defender, "hit");
       this.spawnDamageNumber(tx, ty, result.crit ? `CRIT ${result.damage}` : `${result.damage}`, result.crit ? 0xffd45a : 0xff8a8a);
       this.pushLog(`${attacker.name} hits ${defender.name} for ${result.damage}${result.crit ? " (crit!)" : ""}.`);
     } else {
@@ -768,6 +783,7 @@ export class BattleScene extends Phaser.Scene {
     if (result.defenderKilled) {
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
+      playUnitState(this, tv.sprite, defender, "death");
       this.tweens.add({
         targets: tv.sprite,
         alpha: 0.18,

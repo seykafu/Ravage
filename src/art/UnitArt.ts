@@ -179,6 +179,11 @@ const drawWeapon = (px: PixelCanvas, kind: ClassKind, weapon: WeaponKind, p: Pal
 const unitTexKey = (u: Unit): string => `unit-${u.id}`;
 
 export const ensureUnitTexture = (scene: Phaser.Scene, u: Unit): string => {
+  // If a real idle spritesheet exists for this class, prefer it. The first
+  // frame becomes the static texture used by code paths that don't animate.
+  const realKey = `unit:${u.classKind}:idle`;
+  if (scene.textures.exists(realKey)) return realKey;
+
   const key = unitTexKey(u);
   if (scene.textures.exists(key)) return key;
   const px = new PixelCanvas(SW, SH);

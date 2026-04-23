@@ -157,6 +157,10 @@ const drawPortrait = (px: PixelCanvas, p: PortraitInput): void => {
 };
 
 export const ensurePortraitTexture = (scene: Phaser.Scene, p: PortraitInput): string => {
+  // If a real portrait was loaded by BootScene, use it instead of procedural.
+  const realKey = `portrait:${p.id}`;
+  if (scene.textures.exists(realKey)) return realKey;
+
   const key = `portrait-${p.id}`;
   if (scene.textures.exists(key)) return key;
   const px = new PixelCanvas(PW, PH);
