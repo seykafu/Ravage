@@ -44,9 +44,13 @@ const arcMusic: Record<string, MusicKey> = {
 
 interface StoryArgs { arcId: string; }
 
-// Portrait display area — anchored above the dialog panel, sized per image.
-const PORTRAIT_AREA_W = 220;
-const PORTRAIT_AREA_H = 280;
+// Portrait display area — anchored above the dialog panel.
+// Uses cover-fit (Math.max) + top-anchor so faces stay legible regardless of
+// source aspect (square / 2:3 portrait / 3:2 landscape). A bottom gradient
+// fade hides the crop seam where the portrait meets the dialog panel.
+const PORTRAIT_AREA_W = 300;
+const PORTRAIT_AREA_H = 360;
+const PORTRAIT_MASK_KEY = "story_portrait_fade_mask";
 
 export class StoryScene extends Phaser.Scene {
   private arcId!: string;
@@ -137,7 +141,7 @@ export class StoryScene extends Phaser.Scene {
       stroke: "#000",
       strokeThickness: 2,
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true },
-      wordWrap: { width: panelW - PORTRAIT_AREA_W - 64 },
+      wordWrap: { width: panelW - PORTRAIT_AREA_W - 80 },
       lineSpacing: 10
     }).setLetterSpacing(0.3);
 
@@ -182,15 +186,21 @@ export class StoryScene extends Phaser.Scene {
       if (key) {
         const panelX = 120;
         const panelY = GAME_HEIGHT - 240;
-        // Bottom-center of the portrait region sits just above the dialog panel.
+        // Top-center of the portrait region; the image extends downward and
+        // overlaps the dialog panel by ~24px, hidden by the gradient mask.
         const areaCenterX = panelX + 24 + PORTRAIT_AREA_W / 2;
-        const areaBottomY = panelY - 8;
-        this.portrait = this.add.image(areaCenterX, areaBottomY, key).setOrigin(0.5, 1);
+        const areaTopY = panelY - PORTRAIT_AREA_H + 24;
+        this.portrait = this.add.image(areaCenterX, areaTopY, key).setOrigin(0.5, 0);
         const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
         const srcW = tex.width || PORTRAIT_W;
         const srcH = tex.height || PORTRAIT_H;
-        const scale = Math.min(PORTRAIT_AREA_W / srcW, PORTRAIT_AREA_H / srcH);
+        // Cover fit: fill the entire area, cropping overflow. Faces stay
+        // large and consistent across square / portrait / landscape sources.
+        const scale = Math.max(PORTRAIT_AREA_W / srcW, PORTRAIT_AREA_H / srcH);
         this.portrait.setScale(scale);
+        // Mask the bottom edge with a vertical gradient so the cropped
+        // boundary feathers into the dialog panel instead of cutting hard.
+        this.portrait.setMask(this.ensurePortraitMask(areaCenterX, areaTopY).createBitmapMask());
       }
     }
 
@@ -213,6 +223,29 @@ export class StoryScene extends Phaser.Scene {
       }
     };
     reveal();
+  }
+
+  // Returns a positioned Image whose alpha runs from 1.0 at the top to 0 at
+  // the bottom 30% — used as a BitmapMask for the portrait so its bottom
+  // crop fades into the dialog panel.
+  private ensurePortraitMask(centerX: number, topY: number): Phaser.GameObjects.Image {
+    if (!this.textures.exists(PORTRAIT_MASK_KEY)) {
+      const tex = this.textures.createCanvas(PORTRAIT_MASK_KEY, PORTRAIT_AREA_W, PORTRAIT_AREA_H);
+      if (tex) {
+        const ctx = tex.getContext();
+        const grad = ctx.createLinearGradient(0, 0, 0, PORTRAIT_AREA_H);
+        grad.addColorStop(0, "rgba(255,255,255,1)");
+        grad.addColorStop(0.70, "rgba(255,255,255,1)");
+        grad.addColorStop(0.92, "rgba(255,255,255,0.35)");
+        grad.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, PORTRAIT_AREA_W, PORTRAIT_AREA_H);
+        tex.refresh();
+      }
+    }
+    const mask = this.add.image(centerX, topY, PORTRAIT_MASK_KEY).setOrigin(0.5, 0);
+    mask.setVisible(false);
+    return mask;
   }
 
   private resolvePortraitKey(id: string, expression?: string): string | null {

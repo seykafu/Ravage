@@ -73,6 +73,10 @@ export interface UnitState {
   stance: Stance;
   hasUsedRepositionStep: boolean;
   hasActedThisRound: boolean;
+  // Set true the first time beginUnitTurn runs for this unit in a round, and
+  // cleared on round advance. Guards against AP being refilled when the
+  // player swaps off a partially-used unit and clicks back to it.
+  hasStartedTurnThisRound: boolean;
   position: TilePos;
   facingX: 1 | -1;
   alive: boolean;

@@ -18,6 +18,7 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
     stance: "none",
     hasUsedRepositionStep: false,
     hasActedThisRound: false,
+    hasStartedTurnThisRound: false,
     position: { ...position },
     facingX: def.faction === "enemy" ? -1 : 1,
     alive: true,
@@ -28,6 +29,10 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
 };
 
 export const beginUnitTurn = (u: Unit): void => {
+  // Idempotent within a round: re-entering this unit (e.g., the player
+  // clicks away and back during the player phase) must not refill AP.
+  if (u.state.hasStartedTurnThisRound) return;
+  u.state.hasStartedTurnThisRound = true;
   u.state.apRemaining = u.stats.ap;
   u.state.hasUsedRepositionStep = false;
   u.state.roamUsedThisTurn = false;

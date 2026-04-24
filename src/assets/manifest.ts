@@ -11,7 +11,7 @@
 // All paths are relative to /public, served at /<path>.
 
 import type { ClassKind } from "../combat/types";
-import { DEFAULT_USES_NEUTRAL_VARIANT, PORTRAIT_EXPRESSIONS } from "./expressions";
+import { DEFAULT_VARIANT_FOR, PORTRAIT_EXPRESSIONS } from "./expressions";
 
 // --------- Asset specs (sizes, frame counts) ---------------------------------
 //
@@ -76,15 +76,19 @@ const PORTRAIT_IDS = [
   "narrator"
 ] as const;
 
-const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => ({
-  id: `portrait:${id}`,
-  // For characters with a curated `<id>_neutral.png`, prefer it over the
-  // legacy base file (older test render).
-  path: DEFAULT_USES_NEUTRAL_VARIANT.has(id)
-    ? `assets/portraits/${id}_neutral.png`
-    : `assets/portraits/${id}.png`,
-  kind: "image"
-}));
+const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => {
+  // For characters with a curated default variant, prefer it over the legacy
+  // base file. The variant slug usually resolves to `<id>_neutral.png`, but
+  // it can be any expression file (e.g., maya → "guarded_neutral").
+  const variant = DEFAULT_VARIANT_FOR.get(id);
+  return {
+    id: `portrait:${id}`,
+    path: variant
+      ? `assets/portraits/${id}_${variant}.png`
+      : `assets/portraits/${id}.png`,
+    kind: "image" as const
+  };
+});
 
 // Expression variants — `<character>_<expression>.png`. Loaded as
 // `portrait:<id>:<expression>`. Missing files silently 404 and the dialog

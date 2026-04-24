@@ -47,7 +47,11 @@ export class Initiative {
     }
     this.round++;
     this.reseed(allUnits);
-    for (const u of allUnits) if (isAlive(u)) u.state.hasActedThisRound = false;
+    for (const u of allUnits) {
+      if (!isAlive(u)) continue;
+      u.state.hasActedThisRound = false;
+      u.state.hasStartedTurnThisRound = false;
+    }
     return this.current();
   }
 

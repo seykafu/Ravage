@@ -29,10 +29,17 @@ export const FONT_UI = '600 14px "Segoe UI", "Helvetica Neue", Arial, sans-serif
 export const FONT_MONO = '12px "Consolas", "Menlo", monospace';
 
 // Font families — bake the full fallback stack once so every scene matches.
+//
+// Display + Heading stay Cinzel for banner moments where the calligraphic
+// look earns its keep. Everything else is "Pixelify Sans" — a variable
+// pixel-art font designed to render crisply on a canvas with
+// `image-rendering: pixelated`. The previous Garamond/Inter stack rendered
+// antialiased glyphs that looked blurry once the canvas was nearest-neighbor
+// scaled to the window. Pixel fonts dodge that conflict entirely.
 export const FAMILY_DISPLAY = '"Cinzel Decorative", "Cinzel", "Trajan Pro", "Times New Roman", serif';
 export const FAMILY_HEADING = '"Cinzel", "Trajan Pro", "Times New Roman", serif';
-export const FAMILY_BODY    = '"EB Garamond", "Georgia", "Times New Roman", serif';
-export const FAMILY_UI      = '"Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+export const FAMILY_BODY    = '"Pixelify Sans", "EB Garamond", "Georgia", "Times New Roman", serif';
+export const FAMILY_UI      = '"Pixelify Sans", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 export const FAMILY_MONO    = '"Consolas", "Menlo", monospace';
 
 // Typography scale — single source of truth for Phaser TextStyle objects.

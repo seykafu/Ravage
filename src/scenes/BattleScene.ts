@@ -61,10 +61,18 @@ interface BattleArgs { battleId: string; }
 interface UnitView {
   unit: Unit;
   sprite: Phaser.GameObjects.Sprite;
+  // Soft cast-shadow ellipse drawn at the unit's feet. Tweened independently
+  // of the sprite during moves/lunges so the body can lean while the shadow
+  // stays planted on the tile.
+  shadow: Phaser.GameObjects.Ellipse;
   baseY: number;  // origin Y for idle bob; updates after every move
   hpBg: Phaser.GameObjects.Graphics;
   hpBar: Phaser.GameObjects.Graphics;
   stanceIcon: Phaser.GameObjects.Text;
+  // Slow ±1px y-bob that simulates breathing while idle. Killed before any
+  // explicit move/lunge tween (which also targets sprite.y) and restarted
+  // afterward to avoid two tweens fighting over the same property.
+  breathTween?: Phaser.Tweens.Tween;
 }
 
 // "roam" is a free single-Move granted by the Roam ability after AP runs out.
@@ -213,6 +221,8 @@ export class BattleScene extends Phaser.Scene {
       const tex = ensureUnitTexture(this, u);
       const px = tileToPixel(u.state.position, this.originX, this.originY);
       const baseY = px.y - 4;
+      // Cast-shadow first so the sprite is drawn on top of it.
+      const shadow = this.add.ellipse(px.x, baseY + 22, 30, 9, 0x000000, 0.42);
       const sprite = this.add.sprite(px.x, baseY, tex).setDisplaySize(40, 50);
       if (u.faction === "enemy") sprite.setFlipX(true);
       const hpBg = this.add.graphics();
@@ -224,9 +234,11 @@ export class BattleScene extends Phaser.Scene {
         stroke: "#000",
         strokeThickness: 2
       }).setOrigin(0.5, 0);
-      this.unitViews.set(u.id, { unit: u, sprite, baseY, hpBg, hpBar, stanceIcon });
+      const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon };
+      this.unitViews.set(u.id, view);
       this.refreshUnitView(u);
       playUnitState(this, sprite, u, "idle");
+      this.startBreathing(view);
     }
 
     // Top initiative bar
@@ -1067,6 +1079,49 @@ export class BattleScene extends Phaser.Scene {
     return new Promise((res) => this.time.delayedCall(ms, res));
   }
 
+  // Idle breathing — a slow ±1px y-bob with a randomized period per unit so
+  // the army doesn't pulse in unison. Always re-target sprite.y around
+  // view.baseY (not the current y) so multiple kill/restart cycles don't
+  // accumulate drift.
+  private startBreathing(view: UnitView): void {
+    view.breathTween?.stop();
+    view.sprite.y = view.baseY;
+    view.breathTween = this.tweens.add({
+      targets: view.sprite,
+      y: view.baseY - 1,
+      duration: 1200 + Math.floor(Math.random() * 700),
+      ease: "Sine.easeInOut",
+      yoyo: true,
+      repeat: -1
+    });
+  }
+
+  private stopBreathing(view: UnitView): void {
+    view.breathTween?.stop();
+    view.breathTween = undefined;
+    view.sprite.y = view.baseY;
+  }
+
+  // Three small puffs at the unit's foot — fan upward + outward, fade out.
+  // Sells the push-off without spamming particles per step.
+  private spawnDust(x: number, y: number): void {
+    for (let i = 0; i < 3; i++) {
+      const dir = (i - 1) * 0.7; // -0.7, 0, +0.7 radians of horizontal spread
+      const dist = 10 + Math.random() * 6;
+      const puff = this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55);
+      this.tweens.add({
+        targets: puff,
+        x: x + Math.sin(dir) * dist,
+        y: y - 4 - Math.random() * 4,
+        alpha: 0,
+        scale: 0.3,
+        duration: 360 + Math.random() * 120,
+        ease: "Cubic.easeOut",
+        onComplete: () => puff.destroy()
+      });
+    }
+  }
+
   private async animateMove(u: Unit, dest: TilePos): Promise<void> {
     // Capture the start tile BEFORE moveUnit mutates u.state.position — needed
     // so the first-step facing flip is computed from the actual origin tile.
@@ -1087,6 +1142,11 @@ export class BattleScene extends Phaser.Scene {
     }
     let prev: TilePos = startTile;
     playUnitState(this, view.sprite, u, "walk");
+    // Pause idle breathing for the duration of the walk so it doesn't fight
+    // with the per-step y tween. Restarted on the final step.
+    this.stopBreathing(view);
+    // Push-off dust at the starting tile's foot position.
+    this.spawnDust(view.sprite.x, view.baseY + 22);
     // Walk the visual sprite along path
     let lastY = view.baseY;
     const isActive = this.initiative.current() === u;
@@ -1099,6 +1159,16 @@ export class BattleScene extends Phaser.Scene {
       const px = tileToPixel(step, this.originX, this.originY);
       lastY = px.y - 4;
       sfxStep();
+      // Shadow tweens in parallel — same x as the sprite, but its own y so
+      // it stays planted at foot height (baseY + 22) rather than the sprite's
+      // chest level.
+      this.tweens.add({
+        targets: view.shadow,
+        x: px.x,
+        y: lastY + 22,
+        duration: 110,
+        ease: "Sine.easeInOut"
+      });
       await new Promise<void>((res) => {
         this.tweens.add({
           targets: view.sprite,
@@ -1114,6 +1184,7 @@ export class BattleScene extends Phaser.Scene {
     }
     view.baseY = lastY;
     playUnitState(this, view.sprite, u, "idle");
+    this.startBreathing(view);
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} moves.`);
     this.refreshUnitView(u);
@@ -1161,6 +1232,17 @@ export class BattleScene extends Phaser.Scene {
     const ty = tv.sprite.y;
     av.sprite.setFlipX(tx < sx);
     playUnitState(this, av.sprite, attacker, "attack");
+    // Halt breathing — lunge owns sprite.y for the duration.
+    this.stopBreathing(av);
+    // Shadow only follows the horizontal lunge — the body leans in but feet
+    // stay on the same tile.
+    this.tweens.add({
+      targets: av.shadow,
+      x: sx + (tx - sx) * 0.32,
+      duration: 130,
+      ease: "Cubic.easeOut",
+      yoyo: true
+    });
     return new Promise((res) => {
       this.tweens.add({
         targets: av.sprite,
@@ -1171,6 +1253,7 @@ export class BattleScene extends Phaser.Scene {
         yoyo: true,
         onComplete: () => {
           playUnitState(this, av.sprite, attacker, "idle");
+          this.startBreathing(av);
           res();
         }
       });
@@ -1197,7 +1280,9 @@ export class BattleScene extends Phaser.Scene {
       } else {
         sfxAttackHit();
       }
-      this.flashSprite(tv.sprite, 0xff5a4d);
+      // Crisp white impact flash — reads instantly as "got hit", regardless
+      // of unit palette. Red tint blended in with enemy reds before.
+      this.flashSprite(tv.sprite, 0xffffff);
       playUnitState(this, tv.sprite, defender, "hit");
       this.spawnDamageNumber(tx, ty, result.crit ? `CRIT ${result.damage}` : `${result.damage}`, result.crit ? 0xffd45a : 0xff8a8a);
       this.pushLog(`${attacker.name} hits ${defender.name} for ${result.damage}${result.crit ? " (crit!)" : ""}.`);
@@ -1211,10 +1296,20 @@ export class BattleScene extends Phaser.Scene {
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
       playUnitState(this, tv.sprite, defender, "death");
+      this.stopBreathing(tv);
       this.tweens.add({
         targets: tv.sprite,
         alpha: 0.18,
         angle: 90,
+        duration: 420
+      });
+      // Shadow shrinks and fades with the body so the corpse doesn't sit on
+      // a still-vivid black puddle.
+      this.tweens.add({
+        targets: tv.shadow,
+        alpha: 0,
+        scaleX: 0.5,
+        scaleY: 0.5,
         duration: 420
       });
     }
@@ -1235,7 +1330,9 @@ export class BattleScene extends Phaser.Scene {
       if (av) {
         sfxDeath();
         playUnitState(this, av.sprite, u, "death");
+        this.stopBreathing(av);
         this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
+        this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
       }
       this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
     }

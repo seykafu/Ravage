@@ -16,13 +16,36 @@
 // (e.g., "military_neutral", "guarded_neutral"), it's a distinct emotional
 // register that writers can opt into deliberately — those ARE listed.
 //
-// Exception: when a refined `<character>_neutral.png` exists alongside an
-// older base file, list the character in DEFAULT_USES_NEUTRAL_VARIANT below.
-// The manifest will then load `<character>_neutral.png` whenever code asks
-// for `portrait:<character>` (the default).
+// Exception: when a refined variant should stand in for the legacy base file,
+// register it in DEFAULT_VARIANT_FOR below. The manifest will then load
+// `<character>_<variant>.png` whenever code asks for `portrait:<character>`
+// (the default). This is how we retire the old square 1024×1024 base renders
+// without changing every beat's metadata. The variant must already exist as
+// a real file on disk — usually it's also listed in PORTRAIT_EXPRESSIONS.
 
-export const DEFAULT_USES_NEUTRAL_VARIANT: ReadonlySet<string> = new Set([
-  "amar", "leo", "lucian", "ranatoli"
+export const DEFAULT_VARIANT_FOR: ReadonlyMap<string, string> = new Map([
+  ["amar", "neutral"],
+  ["leo", "neutral"],
+  ["lucian", "neutral"],
+  ["ranatoli", "neutral"],
+  // Second wave: characters with refined `<id>_neutral.png` files added
+  // alongside the original square 1024×1024 base renders.
+  ["archbold", "neutral"],
+  ["fergus", "neutral"],
+  ["khione", "neutral"],
+  ["kian", "neutral"],
+  ["ndara", "neutral"],
+  ["nebu", "neutral"],
+  ["tali", "neutral"],
+  ["ning", "neutral"],
+  // Third wave: no plain `_neutral.png` exists, so we point the default at
+  // an existing named-neutral expression file instead.
+  ["maya", "guarded_neutral"],
+  ["ndari", "regal_neutral"],
+  // Dawn never had a base file shipped — her default routes to the canonical
+  // mask-on expression so any future beat that omits her expression still
+  // renders correctly.
+  ["dawn", "measured_neutral"]
 ]);
 
 export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
