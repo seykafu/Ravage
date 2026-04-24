@@ -71,12 +71,13 @@ export class TitleScene extends Phaser.Scene {
       onClick: () => {
         sfxConfirm();
         unlockAudio();
-        this.cameras.main.fadeOut(450, 0, 0, 0);
+        // Longer fade so the title music + image gracefully recede into the
+        // black frame the intro video opens on.
+        this.cameras.main.fadeOut(700, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
-          // If Supabase is configured and the user isn't signed in, AuthScene
-          // handles routing. If unconfigured, AuthScene immediately forwards
-          // to SaveSlotScene.
-          this.scene.start(isAuthEnabled() ? "AuthScene" : "SaveSlotScene");
+          // Title → Intro Video → Menu (auth or save slot picker).
+          const next = isAuthEnabled() ? "AuthScene" : "SaveSlotScene";
+          this.scene.start("IntroVideoScene", { next });
         });
       }
     });

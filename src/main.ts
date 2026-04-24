@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
 import { TitleScene } from "./scenes/TitleScene";
+import { IntroVideoScene } from "./scenes/IntroVideoScene";
 import { StoryScene } from "./scenes/StoryScene";
 import { OverworldScene } from "./scenes/OverworldScene";
 import { BattlePrepScene } from "./scenes/BattlePrepScene";
@@ -28,6 +29,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [
     BootScene,
     TitleScene,
+    IntroVideoScene,
     AuthScene,
     SaveSlotScene,
     StoryScene,
