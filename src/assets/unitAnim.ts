@@ -20,6 +20,8 @@ const stopIdleFallback = (sprite: Phaser.GameObjects.Sprite): void => {
     t.tween.stop();
     t.tween = undefined;
   }
+  // The walk fallback wobbles `angle`; reset it so the next state starts clean.
+  sprite.angle = 0;
 };
 
 export const playUnitState = (
@@ -53,12 +55,14 @@ export const playUnitState = (
       break;
     }
     case "walk": {
-      // Faster bob while moving — animateMove handles position; this just adds gait.
-      const baseY = sprite.y;
+      // Tilt-wobble while moving. We CANNOT tween `y` here — animateMove owns
+      // sprite.x/sprite.y and a competing y-tween causes the sprite to flicker
+      // back-and-forth between the bob target and the per-step move target.
+      sprite.angle = 0;
       const tween = scene.tweens.add({
         targets: sprite,
-        y: baseY - 3,
-        duration: 140,
+        angle: 4,
+        duration: 130,
         yoyo: true,
         repeat: -1,
         ease: "Sine.easeInOut"

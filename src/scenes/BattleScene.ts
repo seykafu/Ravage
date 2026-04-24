@@ -494,6 +494,24 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  // Cheap per-frame variant: just reposition the existing ring/arrow without
+  // tearing down and recreating their pulsing tweens. Used during animateMove.
+  private followActiveMarker(u: Unit): void {
+    const view = this.unitViews.get(u.id);
+    if (!view || !isAlive(u)) return;
+    const px = view.sprite.x;
+    const py = view.sprite.y;
+    const ringY = py + TILE_SIZE / 2 - 3;
+    this.activeRing.clear();
+    const ringColor = u.faction === "player" ? 0x6db2ff : 0xff7a4d;
+    this.activeRing.lineStyle(2, ringColor, 0.95);
+    this.activeRing.strokeEllipse(px, ringY, TILE_SIZE - 6, 10);
+    this.activeRing.lineStyle(1, 0xffffff, 0.6);
+    this.activeRing.strokeEllipse(px, ringY, TILE_SIZE - 12, 6);
+    // The arrow's bob tween animates its y; offset by the sprite delta only.
+    this.activeArrow.x = px;
+  }
+
   private drawActiveMarker(u: Unit): void {
     const view = this.unitViews.get(u.id);
     this.activeRing.clear();
@@ -884,7 +902,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private async animateMove(u: Unit, dest: TilePos): Promise<void> {
-    const path = this.state.grid.pathTo(u.state.position, dest, (p) => {
+    // Capture the start tile BEFORE moveUnit mutates u.state.position — needed
+    // so the first-step facing flip is computed from the actual origin tile.
+    const startTile: TilePos = { x: u.state.position.x, y: u.state.position.y };
+    const path = this.state.grid.pathTo(startTile, dest, (p) => {
       const occ = unitAt(this.state, p);
       return occ !== null && occ !== u && occ.faction !== u.faction;
     });
@@ -898,13 +919,13 @@ export class BattleScene extends Phaser.Scene {
       this.acting = false;
       return;
     }
-    let prev: TilePos = u.state.position; // already updated to dest, but path walks visually
+    let prev: TilePos = startTile;
     playUnitState(this, view.sprite, u, "walk");
     // Walk the visual sprite along path
     let lastY = view.baseY;
     const isActive = this.initiative.current() === u;
     for (const step of path) {
-      const dx = step.x - (prev.x);
+      const dx = step.x - prev.x;
       if (dx !== 0) {
         u.state.facingX = dx > 0 ? 1 : -1;
         view.sprite.setFlipX(u.state.facingX === -1);
@@ -919,7 +940,7 @@ export class BattleScene extends Phaser.Scene {
           y: lastY,
           duration: 110,
           ease: "Sine.easeInOut",
-          onUpdate: () => { if (isActive) this.drawActiveMarker(u); },
+          onUpdate: () => { if (isActive) this.followActiveMarker(u); },
           onComplete: () => res()
         });
       });
@@ -931,6 +952,8 @@ export class BattleScene extends Phaser.Scene {
     this.pushLog(`${u.name} moves.`);
     this.refreshUnitView(u);
     this.refreshSidePanel(u);
+    // Rebuild the active marker's pulse tweens at the new sprite position.
+    if (isActive) this.drawActiveMarker(u);
     this.clearActionButtons();
     this.clearOverlays();
     this.acting = false;
