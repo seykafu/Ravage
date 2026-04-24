@@ -371,14 +371,10 @@ export class BattleScene extends Phaser.Scene {
       this.refreshDebug();
     });
     this.input.keyboard?.on("keydown-ESC", () => {
-      if (this.mode !== "idle") {
-        this.clearOverlays();
-        const cur = this.initiative.current();
-        if (cur && cur.faction === "player") {
-          this.clearActionButtons();
-          this.buildActionButtons(cur);
-        }
-      }
+      if (this.mode === "idle") return;
+      const cur = this.initiative.current();
+      if (cur && cur.faction === "player") this.cancelTargetingMode(cur);
+      else this.clearOverlays();
     });
 
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.handlePointerDown(p));
@@ -960,46 +956,69 @@ export class BattleScene extends Phaser.Scene {
     if (!tile) return;
     if (this.mode === "move" || this.mode === "roam") {
       const ok = this.moveTiles.some((t) => t.x === tile.x && t.y === tile.y);
-      if (!ok) return;
-      this.acting = true;
-      void this.animateMove(u, tile);
+      if (ok) {
+        this.acting = true;
+        void this.animateMove(u, tile);
+        return;
+      }
+      // Invalid click while in move mode: auto-cancel and fall through to
+      // the idle-mode handler so a click on another unit actually registers.
+      // Without this, clicks were silently dropped and players had no visible
+      // way to back out without knowing the ESC shortcut.
+      this.cancelTargetingMode(u);
     } else if (this.mode === "attack") {
       const target = this.targetUnits.find(
         (t) => t.state.position.x === tile.x && t.state.position.y === tile.y
       );
-      if (!target) return;
-      this.acting = true;
-      void this.animateAttack(u, target);
-    } else {
-      const occ = unitAt(this.state, tile);
-      const cur = this.initiative.current();
-      if (occ && cur && occ.id !== cur.id) {
-        // Click on a fresh player unit during player phase: swap control to them.
-        const swappable =
-          occ.faction === "player" &&
-          isAlive(occ) &&
-          !occ.state.hasActedThisRound &&
-          this.initiative.setCurrent(occ);
-        if (swappable) {
-          this.beginCurrentTurn();
-        } else {
-          // Sticky inspect: show this unit's details until the player clicks
-          // the active unit (or empty ground) to clear the inspection.
-          this.inspectedUnitId = occ.id;
-          this.activeUnitText.setText(occ.name);
-          this.inspectTag.setText(`viewing — ${cur.name}'s turn`);
-          this.refreshSidePanel(occ);
-        }
+      if (target) {
+        this.acting = true;
+        void this.animateAttack(u, target);
+        return;
+      }
+      this.cancelTargetingMode(u);
+    }
+    // Idle-mode selection logic (also reached after an auto-cancel above).
+    const occ = unitAt(this.state, tile);
+    const cur = this.initiative.current();
+    if (occ && cur && occ.id !== cur.id) {
+      // Click on a fresh player unit during player phase: swap control to them.
+      const swappable =
+        occ.faction === "player" &&
+        isAlive(occ) &&
+        !occ.state.hasActedThisRound &&
+        this.initiative.setCurrent(occ);
+      if (swappable) {
+        this.beginCurrentTurn();
       } else {
-        // Clicked the active unit or empty terrain: restore active focus.
-        this.inspectedUnitId = null;
-        this.inspectTag.setText("");
-        if (cur) {
-          this.activeUnitText.setText(cur.name);
-          this.refreshSidePanel(cur);
-        }
+        // Sticky inspect: show this unit's details until the player clicks
+        // the active unit (or empty ground) to clear the inspection.
+        this.inspectedUnitId = occ.id;
+        this.activeUnitText.setText(occ.name);
+        this.inspectTag.setText(`viewing — ${cur.name}'s turn`);
+        this.refreshSidePanel(occ);
+      }
+    } else {
+      // Clicked the active unit or empty terrain: restore active focus.
+      this.inspectedUnitId = null;
+      this.inspectTag.setText("");
+      if (cur) {
+        this.activeUnitText.setText(cur.name);
+        this.refreshSidePanel(cur);
       }
     }
+  }
+
+  // Bail out of move/attack/roam targeting and restore the action menu.
+  // Roam is special: entering it consumed the free AP and flagged the unit
+  // as having roamed, so canceling has to give those back.
+  private cancelTargetingMode(u: Unit): void {
+    if (this.mode === "roam") {
+      u.state.roamUsedThisTurn = false;
+      u.state.apRemaining = 0;
+    }
+    this.clearOverlays();
+    this.clearActionButtons();
+    this.buildActionButtons(u);
   }
 
   private handlePointerMove(p: Phaser.Input.Pointer): void {
