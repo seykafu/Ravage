@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { FAMILY_BODY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { Button } from "../ui/Button";
+import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { getMusic } from "../audio/Music";
 import { sfxClick } from "../audio/Sfx";
 
@@ -18,7 +17,8 @@ export class IntroVideoScene extends Phaser.Scene {
   private nextScene = "AuthScene";
   private finished = false;
   private videoEl?: HTMLVideoElement;
-  private hintText?: Phaser.GameObjects.Text;
+  private skipWrap?: HTMLDivElement;
+  private skipTimers: number[] = [];
 
   constructor() { super("IntroVideoScene"); }
 
@@ -72,59 +72,105 @@ export class IntroVideoScene extends Phaser.Scene {
       void vid.play().catch(() => this.finish());
     });
 
-    // Cinematic fade-in for the Phaser layer (just the black backdrop + skip UI).
+    // Cinematic fade-in for the Phaser layer (just the black backdrop).
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
-    // "Skip Intro" button — Netflix-style: top-right, visible for ~4s then fades.
-    // Wrapped in a Phaser container so the button + its hint can fade together.
-    const skipW = 168;
-    const skipH = 44;
-    const skipX = GAME_WIDTH - skipW - 32;
-    const skipY = 32;
-    const skipBtn = new Button(this, {
-      x: skipX,
-      y: skipY,
-      w: skipW, h: skipH,
-      label: "Skip Intro \u23ED",
-      primary: true,
-      fontSize: 16,
-      onClick: () => { sfxClick(); this.finish(); }
-    });
-    skipBtn.setAlpha(0);
-    skipBtn.setScrollFactor(0);
-    skipBtn.setDepth(100);
-
-    // Subtle keyboard hint sits just under the button.
-    this.hintText = this.add.text(skipX + skipW / 2, skipY + skipH + 10, "or press space", {
-      fontFamily: FAMILY_BODY,
-      fontSize: "11px",
-      color: "#c9b07a",
-      fontStyle: "italic"
-    }).setOrigin(0.5, 0).setLetterSpacing(1).setAlpha(0).setDepth(100);
-
-    // Visible for 4 seconds total: 300ms fade-in, 3.4s hold, 300ms fade-out.
-    this.tweens.add({ targets: [skipBtn, this.hintText], alpha: 1, duration: 300, delay: 200 });
-    this.tweens.add({ targets: [skipBtn, this.hintText], alpha: 0, duration: 300, delay: 3900 });
-
-    // After fading out, disable the button so it doesn't intercept stray clicks
-    // on whatever's playing on screen.
-    this.time.delayedCall(4250, () => {
-      skipBtn.setEnabled(false);
-      skipBtn.disableInteractive();
-    });
+    // "Skip Intro" button — built as an HTML overlay so it sits ABOVE the video
+    // element. The Phaser canvas is at z-index 0 and the video at z-index 5, so a
+    // Phaser GameObject would be hidden behind the video.
+    this.mountSkipUI(app);
 
     this.input.keyboard?.on("keydown-ESC", () => this.finish());
     this.input.keyboard?.on("keydown-ENTER", () => this.finish());
     this.input.keyboard?.on("keydown-SPACE", () => this.finish());
 
-    // Cleanup safety — if the scene is shut down for any reason, remove the video.
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardownVideo());
-    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.teardownVideo());
+    // Cleanup safety — if the scene is shut down for any reason, remove the video
+    // and skip overlay.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.teardownVideo(); this.teardownSkipUI(); });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => { this.teardownVideo(); this.teardownSkipUI(); });
+  }
+
+  private mountSkipUI(host: HTMLElement): void {
+    const wrap = document.createElement("div");
+    wrap.style.position = "absolute";
+    wrap.style.top = "32px";
+    wrap.style.right = "32px";
+    wrap.style.zIndex = "10"; // above the video (z-index 5)
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "center";
+    wrap.style.gap = "10px";
+    wrap.style.opacity = "0";
+    wrap.style.transition = "opacity 300ms ease";
+    wrap.style.pointerEvents = "none"; // re-enabled on the button itself
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "Skip Intro \u23ED";
+    btn.style.width = "168px";
+    btn.style.height = "44px";
+    btn.style.border = "1px solid rgba(212, 175, 55, 0.85)";
+    btn.style.outline = "none";
+    btn.style.background = "linear-gradient(180deg, #131724 0%, #0a0c14 100%)";
+    btn.style.color = "#fff2c0";
+    btn.style.fontFamily = "Cinzel, serif";
+    btn.style.fontSize = "16px";
+    btn.style.letterSpacing = "0.5px";
+    btn.style.textShadow = "0 2px 4px #000";
+    btn.style.cursor = "pointer";
+    btn.style.boxShadow = "inset 0 0 0 1px rgba(255, 217, 122, 0.25), 0 4px 14px rgba(0,0,0,0.55)";
+    btn.style.pointerEvents = "auto";
+    btn.style.transition = "background 120ms ease, box-shadow 120ms ease";
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "linear-gradient(180deg, #1c2032 0%, #0a0c14 100%)";
+      btn.style.boxShadow = "inset 0 0 0 1px rgba(255, 217, 122, 0.6), 0 4px 14px rgba(0,0,0,0.55)";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "linear-gradient(180deg, #131724 0%, #0a0c14 100%)";
+      btn.style.boxShadow = "inset 0 0 0 1px rgba(255, 217, 122, 0.25), 0 4px 14px rgba(0,0,0,0.55)";
+    });
+    btn.addEventListener("click", () => { sfxClick(); this.finish(); });
+
+    const hint = document.createElement("span");
+    hint.textContent = "or press space";
+    hint.style.fontFamily = "Inter, system-ui, sans-serif";
+    hint.style.fontSize = "11px";
+    hint.style.fontStyle = "italic";
+    hint.style.color = "#c9b07a";
+    hint.style.letterSpacing = "1px";
+
+    wrap.appendChild(btn);
+    wrap.appendChild(hint);
+    host.appendChild(wrap);
+    this.skipWrap = wrap;
+
+    // Fade in after a tiny delay so it appears alongside the video, then hold
+    // for ~3.4s, then fade out. Total visible window: ~4 seconds.
+    this.skipTimers.push(window.setTimeout(() => { wrap.style.opacity = "1"; }, 200));
+    this.skipTimers.push(window.setTimeout(() => { wrap.style.opacity = "0"; }, 3900));
+    // After fade-out, drop pointer events so the (now-invisible) button can't
+    // intercept clicks meant for stray UI behind it.
+    this.skipTimers.push(window.setTimeout(() => {
+      btn.style.pointerEvents = "none";
+      btn.disabled = true;
+    }, 4250));
+  }
+
+  private teardownSkipUI(): void {
+    for (const id of this.skipTimers) clearTimeout(id);
+    this.skipTimers = [];
+    if (this.skipWrap) {
+      this.skipWrap.remove();
+      this.skipWrap = undefined;
+    }
   }
 
   private finish(): void {
     if (this.finished) return;
     this.finished = true;
+
+    // Hide the skip UI immediately so it doesn't linger over the fade.
+    if (this.skipWrap) this.skipWrap.style.opacity = "0";
 
     // Fade the video out in parallel with the camera fade so the transition into
     // the next scene feels like one motion rather than two.
@@ -134,6 +180,7 @@ export class IntroVideoScene extends Phaser.Scene {
     this.cameras.main.fadeOut(550, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.teardownVideo();
+      this.teardownSkipUI();
       this.scene.start(this.nextScene);
     });
   }

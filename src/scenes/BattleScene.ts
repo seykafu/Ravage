@@ -71,6 +71,23 @@ type Mode = "idle" | "move" | "attack" | "roam";
 
 const PANEL_W = 280;
 
+// Tooltip copy. Weapon entries cover the triangle math + base hit so a player
+// hovering "WPN sword" can see why their numbers shift against a shield-user.
+const WEAPON_INFO: Record<string, { title: string; body: string }> = {
+  sword:  { title: "Sword",  body: "Beats Spear  (\u00d71.15)\nLoses to Shield (\u00d70.85)\nBase hit 85%   Range 1\nMelee — can counter and be countered." },
+  spear:  { title: "Spear",  body: "Beats Shield (\u00d71.15)\nLoses to Sword  (\u00d70.85)\nBase hit 80%   Range 1\nMelee — can counter and be countered." },
+  shield: { title: "Shield", body: "Beats Sword  (\u00d71.15)\nLoses to Spear  (\u00d70.85)\nBase hit 80%   Range 1\nDurable — strong with Defend stance." },
+  bow:    { title: "Bow",    body: "Range 2 only — outranges all melee.\nCannot Ready stance counter.\nBase hit 75%.\nSafe at distance, weak up close." },
+  wyvern: { title: "Wyvern", body: "Mounted melee. Range 1.\nNo weapon-triangle bonus or penalty.\nBase hit 80%.\nFast and resilient — boss-tier mount." }
+};
+
+const ABILITY_INFO: Record<string, { title: string; body: string }> = {
+  BossFighter: { title: "Boss Fighter", body: "+100% damage when attacking a boss-class enemy.\nThe finisher you build a strategy around." },
+  Aide:        { title: "Aide",         body: "Take half damage while adjacent to a friendly unit.\nReward for keeping your line tight." },
+  Destruct:    { title: "Destruct",     body: "On death, the unit that landed the killing blow also dies.\nMakes finishing this unit very expensive." },
+  Roam:        { title: "Roam",         body: "Once per turn after AP is spent, pay 1 extra AP to make a single Move.\nClosing distance or repositioning out of danger." }
+};
+
 export class BattleScene extends Phaser.Scene {
   private battleId!: string;
   private state!: BattleState;
@@ -106,6 +123,11 @@ export class BattleScene extends Phaser.Scene {
   private activeArrowTween?: Phaser.Tweens.Tween;
   private inspectedUnitId: string | null = null;
   private phaseBanner?: Phaser.GameObjects.Container;
+  // Hover tooltips for weapon and ability rows in the side panel.
+  private infoTooltip!: Phaser.GameObjects.Container;
+  private wpnZone!: Phaser.GameObjects.Zone;
+  private ablZone!: Phaser.GameObjects.Zone;
+  private panelUnit?: Unit;
 
   constructor() { super("BattleScene"); }
 
@@ -299,6 +321,43 @@ export class BattleScene extends Phaser.Scene {
     });
     this.hoverPreview.add([hpBg2, hpTxt]);
     this.hoverPreview.setData("txt", hpTxt);
+
+    // Side-panel info tooltip — opens to the LEFT of the panel when the player
+    // hovers a weapon or ability row, explaining what the stat actually does.
+    this.infoTooltip = this.add.container(0, 0).setVisible(false).setDepth(50);
+    const ttBg = this.add.graphics();
+    ttBg.fillStyle(0x05060a, 0.96);
+    ttBg.fillRect(0, 0, 280, 116);
+    ttBg.lineStyle(1, COLORS.gold, 0.8);
+    ttBg.strokeRect(0.5, 0.5, 279, 115);
+    const ttTitle = this.add.text(12, 8, "", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "14px",
+      color: "#f4d999"
+    }).setLetterSpacing(1);
+    const ttBody = this.add.text(12, 30, "", {
+      fontFamily: FAMILY_BODY,
+      fontSize: "12px",
+      color: "#dad3bd",
+      lineSpacing: 4,
+      wordWrap: { width: 256 }
+    });
+    this.infoTooltip.add([ttBg, ttTitle, ttBody]);
+    this.infoTooltip.setData("title", ttTitle);
+    this.infoTooltip.setData("body", ttBody);
+    this.infoTooltip.setData("bg", ttBg);
+
+    // Hover zones over the WPN and ABL rows of statText. Position is recomputed
+    // in refreshSidePanel() each time the panel updates.
+    this.wpnZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    this.ablZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    this.wpnZone.on("pointerover", () => this.showInfoFor("weapon"));
+    this.wpnZone.on("pointerout", () => this.infoTooltip.setVisible(false));
+    this.ablZone.on("pointerover", () => this.showInfoFor("ability"));
+    this.ablZone.on("pointerout", () => this.infoTooltip.setVisible(false));
+    // Hidden until a unit is selected.
+    this.wpnZone.disableInteractive();
+    this.ablZone.disableInteractive();
 
     // Debug overlay
     this.debugText = this.add.text(20, GAME_HEIGHT - 22, "", {
@@ -568,14 +627,78 @@ export class BattleScene extends Phaser.Scene {
       `WPN  ${u.weapon}`,
       `STN  ${u.state.stance}`
     ];
+    const wpnIdx = 3;
+    let ablIdx = -1;
     if (u.abilities && u.abilities.length > 0) {
+      ablIdx = lines.length;
       lines.push(`ABL  ${u.abilities.join(", ")}`);
     }
     if (u.state.inventory.length > 0) {
       lines.push(`INV  ${u.state.inventory.map((it) => it.name).join(", ")}`);
     }
     this.statText.setText(lines.join("\n"));
+    this.panelUnit = u;
+    // Position the hover zones over the WPN and (optional) ABL rows. Use the
+    // measured height per line so we stay pixel-aligned regardless of font.
+    const lineH = lines.length > 0 ? this.statText.height / lines.length : 17;
+    const panelTextW = PANEL_W - 24;
+    const sx = this.statText.x;
+    const sy = this.statText.y;
+    this.wpnZone.setPosition(sx, sy + wpnIdx * lineH).setSize(panelTextW, lineH);
+    this.wpnZone.setInteractive();
+    if (ablIdx >= 0) {
+      this.ablZone.setPosition(sx, sy + ablIdx * lineH).setSize(panelTextW, lineH);
+      this.ablZone.setInteractive();
+    } else {
+      this.ablZone.disableInteractive();
+      this.infoTooltip.setVisible(false);
+    }
     this.refreshActiveRibbon(u);
+  }
+
+  // Shows the info tooltip anchored to the LEFT of the side panel, aligned
+  // with whichever row the player is hovering. Content comes from the static
+  // WEAPON_INFO / ABILITY_INFO tables at the top of this file.
+  private showInfoFor(kind: "weapon" | "ability"): void {
+    const u = this.panelUnit;
+    if (!u) return;
+    const title = this.infoTooltip.getData("title") as Phaser.GameObjects.Text;
+    const body = this.infoTooltip.getData("body") as Phaser.GameObjects.Text;
+    const bg = this.infoTooltip.getData("bg") as Phaser.GameObjects.Graphics;
+    if (kind === "weapon") {
+      const info = WEAPON_INFO[u.weapon];
+      if (!info) return;
+      title.setText(info.title);
+      body.setText(info.body);
+    } else {
+      if (!u.abilities || u.abilities.length === 0) return;
+      const blocks = u.abilities
+        .map((a) => ABILITY_INFO[a])
+        .filter((info): info is { title: string; body: string } => Boolean(info))
+        .map((info) => `${info.title}\n${info.body}`);
+      title.setText(u.abilities.length === 1 ? (ABILITY_INFO[u.abilities[0]!]?.title ?? "Ability") : "Abilities");
+      body.setText(blocks.join("\n\n"));
+    }
+    // Resize the background to fit the text dynamically — multi-ability blocks
+    // can be tall, single-line tooltips can be short.
+    const padX = 12;
+    const padY = 8;
+    const gap = 6;
+    const w = 280;
+    const h = padY + title.height + gap + body.height + padY;
+    bg.clear();
+    bg.fillStyle(0x05060a, 0.96);
+    bg.fillRect(0, 0, w, h);
+    bg.lineStyle(1, COLORS.gold, 0.8);
+    bg.strokeRect(0.5, 0.5, w - 1, h - 1);
+    void padX;
+    // Anchor: open to the LEFT of the panel, vertically centred on the
+    // hovered row (clamped to the visible play area).
+    const zone = kind === "weapon" ? this.wpnZone : this.ablZone;
+    const zy = zone.y + zone.height / 2 - h / 2;
+    const x = (GAME_WIDTH - PANEL_W) - w - 12;
+    const y = Phaser.Math.Clamp(zy, 80, GAME_HEIGHT - h - 12);
+    this.infoTooltip.setPosition(x, y).setVisible(true);
   }
 
   // The ribbon at the top of the side panel: "▶ ACTIVE TURN" when the panel
@@ -1042,8 +1165,15 @@ export class BattleScene extends Phaser.Scene {
     const tx = tv.sprite.x;
     const ty = tv.sprite.y;
     if (result.hit) {
-      if (result.crit) sfxCrit();
-      else sfxAttackHit();
+      if (result.crit) {
+        sfxCrit();
+        // Crit kicker: short camera shake to sell the impact. The hit-pause
+        // (a brief scene-wide freeze) is sequenced in animateAttack so it
+        // doesn't fight with this frame's tweens.
+        this.cameras.main.shake(180, 0.012);
+      } else {
+        sfxAttackHit();
+      }
       this.flashSprite(tv.sprite, 0xff5a4d);
       playUnitState(this, tv.sprite, defender, "hit");
       this.spawnDamageNumber(tx, ty, result.crit ? `CRIT ${result.damage}` : `${result.damage}`, result.crit ? 0xffd45a : 0xff8a8a);
@@ -1072,6 +1202,10 @@ export class BattleScene extends Phaser.Scene {
     const result = performAttack(this.state, u, target);
     u.state.apRemaining -= 1;
     this.applyAttackEffects(u, target, result);
+    // Hit-pause: on a crit, freeze the action for ~90ms so the camera shake
+    // and the CRIT damage number have a moment to land before the chain
+    // continues. Cheap "this hit mattered" feedback.
+    if (result.crit) await this.delay(90);
     if (result.destructTriggered && result.attackerKilled) {
       // Destruct: defender's death pulled the attacker down too.
       const av = this.unitViews.get(u.id);
@@ -1086,6 +1220,7 @@ export class BattleScene extends Phaser.Scene {
       await this.delay(260);
       await this.lunge(target, u);
       this.applyAttackEffects(target, u, result.counterResult);
+      if (result.counterResult.crit) await this.delay(90);
     }
     await this.delay(280);
     this.refreshAllUnits();
