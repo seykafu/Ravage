@@ -1,14 +1,36 @@
 import Phaser from "phaser";
 
 // Procedurally generated SFX via WebAudio. Cheap and self-contained — no audio asset needed.
+//
+// Routing: every sound's gain feeds into a shared MASTER gain node, which
+// feeds the destination. The Settings UI manipulates the master gain to
+// scale all SFX uniformly without touching individual call sites.
 
 let ctxRef: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+let masterVolume = 1.0;
+
 const audioCtx = (): AudioContext => {
   if (!ctxRef) {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     ctxRef = new AC();
   }
   return ctxRef!;
+};
+
+const sfxBus = (): GainNode => {
+  if (!masterGain) {
+    const ctx = audioCtx();
+    masterGain = ctx.createGain();
+    masterGain.gain.value = masterVolume;
+    masterGain.connect(ctx.destination);
+  }
+  return masterGain!;
+};
+
+export const setMasterSfxVolume = (v: number): void => {
+  masterVolume = Math.max(0, Math.min(1, v));
+  if (masterGain) masterGain.gain.value = masterVolume;
 };
 
 const beep = (
@@ -25,7 +47,7 @@ const beep = (
   osc.type = type;
   osc.frequency.value = freq;
   osc.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(sfxBus());
   const now = ctx.currentTime;
   gain.gain.setValueAtTime(0, now);
   gain.gain.linearRampToValueAtTime(vol, now + attack);
@@ -49,7 +71,7 @@ const noiseBurst = (duration: number, vol: number, filterFreq = 1500): void => {
   gain.gain.value = vol;
   src.connect(filter);
   filter.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(sfxBus());
   const now = ctx.currentTime;
   gain.gain.setValueAtTime(vol, now);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);

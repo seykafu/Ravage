@@ -9,6 +9,7 @@ import type { ClassKind, UnitDef, WeaponKind } from "../combat/types";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import { sfxClick } from "../audio/Sfx";
+import { SettingsButton } from "../ui/SettingsButton";
 
 interface PrepArgs { battleId: string; }
 
@@ -243,6 +244,8 @@ export class BattlePrepScene extends Phaser.Scene {
 
     getMusic(this).play(node.prepMusic, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
+
+    new SettingsButton(this, GAME_WIDTH - 32, 32);
   }
 }
 

@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ravage</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,6 +23,15 @@
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
         overflow: hidden;
         height: 100%;
+        /* Touch hardening: stop the page from scrolling, zooming, or showing
+           the long-press text-selection UI when the player drags a unit on
+           the battle grid. */
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
       }
       #app {
         position: fixed;
@@ -30,6 +42,7 @@
           radial-gradient(ellipse at 50% 35%, rgba(96, 60, 40, 0.30), transparent 60%),
           radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.55), transparent 70%),
           linear-gradient(180deg, #06080f 0%, #02030a 100%);
+        touch-action: none;
       }
       /* Pixel-perfect scaling: keep crisp edges. */
       #app canvas {

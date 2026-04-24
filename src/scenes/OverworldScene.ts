@@ -7,6 +7,7 @@ import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
 import { loadSave } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
+import { SettingsButton } from "../ui/SettingsButton";
 
 // World map / battle log. Lists all 21 battle nodes; lit-up = playable & unlocked.
 export class OverworldScene extends Phaser.Scene {
@@ -183,5 +184,7 @@ export class OverworldScene extends Phaser.Scene {
 
     getMusic(this).play(MUSIC.adventureAnthros, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
+
+    new SettingsButton(this, GAME_WIDTH - 32, 32);
   }
 }

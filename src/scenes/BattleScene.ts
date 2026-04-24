@@ -9,6 +9,7 @@ import { beginUnitTurn, createUnit, endUnitTurn, hasAbility, isAlive, useItem } 
 import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
+import { SettingsButton } from "../ui/SettingsButton";
 import { battleById } from "../data/battles";
 import {
   BattleState,
@@ -385,6 +386,9 @@ export class BattleScene extends Phaser.Scene {
 
     getMusic(this).play(node.music, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
+
+    // Settings opener — sits on the top bar so it doesn't overlap the side panel.
+    new SettingsButton(this, GAME_WIDTH - 32, 35);
 
     this.pushLog(`${node.subtitle} begins.`);
     this.refreshInitiativeBar();

@@ -7,6 +7,7 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { loadSave } from "../util/save";
+import { SettingsButton } from "../ui/SettingsButton";
 
 interface EndArgs {
   battleId: string;
@@ -229,5 +230,7 @@ export class EndScene extends Phaser.Scene {
         );
       }
     });
+
+    new SettingsButton(this, GAME_WIDTH - 32, 32);
   }
 }

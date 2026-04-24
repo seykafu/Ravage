@@ -3,6 +3,7 @@ import { MUSIC_FILES } from "../audio/Music";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { MANIFEST, markFailed, markLoaded } from "../assets/manifest";
 import { registerUnitAnimations } from "../assets/animations";
+import { applySettings } from "../util/settings";
 
 // Loads music + any manifest assets that exist on disk, then hands off to TitleScene.
 //
@@ -88,6 +89,8 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     // Build animations from any spritesheets that successfully loaded.
     registerUnitAnimations(this);
+    // Apply persisted audio preferences before any music plays.
+    applySettings(this);
     this.scene.start("TitleScene");
   }
 }

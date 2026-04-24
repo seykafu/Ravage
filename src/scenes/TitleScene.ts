@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { Button } from "../ui/Button";
+import { SettingsButton } from "../ui/SettingsButton";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
@@ -114,6 +115,9 @@ export class TitleScene extends Phaser.Scene {
 
     // Music — Spine of the World, the main leitmotif
     getMusic(this).play(MUSIC.mainTheme, { fadeMs: 1200 });
+
+    // Settings opener (top-right gear icon)
+    new SettingsButton(this, GAME_WIDTH - 32, 32);
 
     // Suppress unused vars (TS strict)
     void playBtn; void resumeBtn;
