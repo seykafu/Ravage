@@ -15,6 +15,15 @@
 // don't register a "neutral" slug. When a character has a *named* neutral
 // (e.g., "military_neutral", "guarded_neutral"), it's a distinct emotional
 // register that writers can opt into deliberately — those ARE listed.
+//
+// Exception: when a refined `<character>_neutral.png` exists alongside an
+// older base file, list the character in DEFAULT_USES_NEUTRAL_VARIANT below.
+// The manifest will then load `<character>_neutral.png` whenever code asks
+// for `portrait:<character>` (the default).
+
+export const DEFAULT_USES_NEUTRAL_VARIANT: ReadonlySet<string> = new Set([
+  "amar", "leo", "lucian", "ranatoli"
+]);
 
 export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   amar:     ["quiet_rage", "resolute", "shocked", "warm_half_smile", "wounded"],

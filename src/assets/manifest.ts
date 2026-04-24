@@ -11,7 +11,7 @@
 // All paths are relative to /public, served at /<path>.
 
 import type { ClassKind } from "../combat/types";
-import { PORTRAIT_EXPRESSIONS } from "./expressions";
+import { DEFAULT_USES_NEUTRAL_VARIANT, PORTRAIT_EXPRESSIONS } from "./expressions";
 
 // --------- Asset specs (sizes, frame counts) ---------------------------------
 //
@@ -78,7 +78,11 @@ const PORTRAIT_IDS = [
 
 const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => ({
   id: `portrait:${id}`,
-  path: `assets/portraits/${id}.png`,
+  // For characters with a curated `<id>_neutral.png`, prefer it over the
+  // legacy base file (older test render).
+  path: DEFAULT_USES_NEUTRAL_VARIANT.has(id)
+    ? `assets/portraits/${id}_neutral.png`
+    : `assets/portraits/${id}.png`,
   kind: "image"
 }));
 

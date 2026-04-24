@@ -61,8 +61,8 @@ export const ARCS: Record<string, StoryArc> = {
     next: "story:thuling_arrival",
     beats: [
       N("You wake in white sheets. There is no pain. There is no memory."),
-      { speaker: "Kian", portraitId: "kian", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
-      { speaker: "Kian", portraitId: "kian", body: "You're a key man, Amar. The harvest plan, the steel quotas — His Majesty has spent ten years on what you carry. We need you back on your feet." },
+      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
+      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You're a key man, Amar. The harvest plan, the steel quotas — His Majesty has spent ten years on what you carry. We need you back on your feet." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...The harvest." },
       N("You smile because Kian is watching. You do not say that the word means nothing.")
     ]
@@ -100,7 +100,7 @@ export const ARCS: Record<string, StoryArc> = {
     beats: [
       { speaker: "Lucian", portraitId: "lucian", body: "Hand." },
       N("He hands you a rag. He doesn't ask where the wound came from. He doesn't ask why it was so easy for you to drop the second bandit when his back was open."),
-      { speaker: "Kian", portraitId: "kian", body: "You handled yourself well. Some of that looked... rehearsed." },
+      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You handled yourself well. Some of that looked... rehearsed." },
       { speaker: "Amar", portraitId: "amar", body: "Anyone bleeds when you cut them right. I think I just got lucky." },
       N("You show him the cut on your waist. You opened it yourself this morning, with the kind of precision a farmer should not have. He believes you. For now."),
       { speaker: "Lucian", portraitId: "lucian", body: "Amar." },
@@ -120,7 +120,7 @@ export const ARCS: Record<string, StoryArc> = {
     beats: [
       N("General Fergus has work for your squad. The kind of work that pays in gold and uses up the men who do it."),
       { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father wants me to go with you. Do not argue. He doesn't argue twice." },
-      { speaker: "Maya", portraitId: "maya", body: "Mountain bandits. A village they already burned. The leaders are siblings — Ndara, who plans, and her brother Ndari, who breaks things in front of her." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Mountain bandits. A village they already burned. The leaders are siblings — Ndara, who plans, and her brother Ndari, who breaks things in front of her." },
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "Ndara. Like the queen Madame Dawn — that Ndara?" },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Different woman. Same kind of trouble. The brother is the one you'll see first — he likes the front of a fight. The sister is the one you have to actually catch." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Bring everything. We won't be picking over bodies — they'll be picking over ours." }
@@ -134,9 +134,9 @@ export const ARCS: Record<string, StoryArc> = {
     next: "credits",
     beats: [
       N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had always known the math."),
-      { speaker: "Ndari", portraitId: "ndari", body: "Tell her I held it. Tell her she owes me a drink." },
+      { speaker: "Ndari", portraitId: "ndari", expression: "scornful", body: "Tell her I held it. Tell her she owes me a drink." },
       N("Ndara escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
-      { speaker: "Ndara", portraitId: "ndara", body: "Why are you fighting on King Nebu's side, Amar?" },
+      { speaker: "Ndara", portraitId: "ndara", expression: "grim", body: "Why are you fighting on King Nebu's side, Amar?" },
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "Lucian — " },
