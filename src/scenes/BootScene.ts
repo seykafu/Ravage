@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { MUSIC_FILES } from "../audio/Music";
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { MANIFEST, markFailed, markLoaded } from "../assets/manifest";
 import { registerUnitAnimations } from "../assets/animations";
 
@@ -22,7 +22,7 @@ export class BootScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
     this.add.text(cx, cy - 60, "RAVAGE", {
-      fontFamily: "Cinzel, Trajan Pro, Times New Roman, serif",
+      fontFamily: FAMILY_DISPLAY,
       fontSize: "72px",
       color: "#c9b07a",
       stroke: "#1a1208",
@@ -30,7 +30,7 @@ export class BootScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.add.text(cx, cy + 4, "loading the spine of the world…", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "16px",
       color: "#7a7165"
     }).setOrigin(0.5);

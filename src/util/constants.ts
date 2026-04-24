@@ -28,4 +28,113 @@ export const FONT_BODY = '400 16px "Georgia", "Times New Roman", serif';
 export const FONT_UI = '600 14px "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 export const FONT_MONO = '12px "Consolas", "Menlo", monospace';
 
+// Font families — bake the full fallback stack once so every scene matches.
+export const FAMILY_DISPLAY = '"Cinzel Decorative", "Cinzel", "Trajan Pro", "Times New Roman", serif';
+export const FAMILY_HEADING = '"Cinzel", "Trajan Pro", "Times New Roman", serif';
+export const FAMILY_BODY    = '"EB Garamond", "Georgia", "Times New Roman", serif';
+export const FAMILY_UI      = '"Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+export const FAMILY_MONO    = '"Consolas", "Menlo", monospace';
+
+// Typography scale — single source of truth for Phaser TextStyle objects.
+// All scenes should pull from this rather than hand-rolling fontFamily/fontSize.
+import type Phaser from "phaser";
+type TS = Phaser.Types.GameObjects.Text.TextStyle;
+
+const SHADOW_DEEP = { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true, stroke: true };
+const SHADOW_SOFT = { offsetX: 0, offsetY: 2, color: "#000", blur: 6,  fill: true, stroke: false };
+
+export const TYPO = {
+  display: {
+    fontFamily: FAMILY_DISPLAY,
+    fontSize: "120px",
+    color: "#f4d999",
+    stroke: "#1a0e04",
+    strokeThickness: 8,
+    shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 18, fill: true, stroke: true }
+  } as TS,
+  title: {
+    fontFamily: FAMILY_DISPLAY,
+    fontSize: "32px",
+    color: "#f4d999",
+    stroke: "#1a0e04",
+    strokeThickness: 5,
+    shadow: SHADOW_DEEP
+  } as TS,
+  h1: {
+    fontFamily: FAMILY_HEADING,
+    fontSize: "26px",
+    color: "#f4d999",
+    stroke: "#1a0e04",
+    strokeThickness: 4,
+    shadow: SHADOW_SOFT
+  } as TS,
+  h2: {
+    fontFamily: FAMILY_HEADING,
+    fontSize: "20px",
+    color: "#e8c97c",
+    stroke: "#1a0e04",
+    strokeThickness: 3,
+    shadow: SHADOW_SOFT
+  } as TS,
+  speaker: {
+    fontFamily: FAMILY_HEADING,
+    fontSize: "22px",
+    color: "#f4d999",
+    stroke: "#000",
+    strokeThickness: 3,
+    shadow: SHADOW_SOFT
+  } as TS,
+  body: {
+    fontFamily: FAMILY_BODY,
+    fontSize: "20px",
+    color: "#f3ecd9",
+    stroke: "#000",
+    strokeThickness: 2,
+    shadow: SHADOW_SOFT
+  } as TS,
+  bodyItalic: {
+    fontFamily: FAMILY_BODY,
+    fontSize: "20px",
+    color: "#dccfa8",
+    fontStyle: "italic",
+    stroke: "#000",
+    strokeThickness: 2,
+    shadow: SHADOW_SOFT
+  } as TS,
+  caption: {
+    fontFamily: FAMILY_BODY,
+    fontSize: "16px",
+    color: "#c9b07a",
+    stroke: "#000",
+    strokeThickness: 2
+  } as TS,
+  ui: {
+    fontFamily: FAMILY_UI,
+    fontSize: "14px",
+    color: "#dde6ef",
+    stroke: "#000",
+    strokeThickness: 2
+  } as TS,
+  uiBold: {
+    fontFamily: FAMILY_UI,
+    fontSize: "14px",
+    fontStyle: "600",
+    color: "#f4e4b0",
+    stroke: "#000",
+    strokeThickness: 2
+  } as TS,
+  micro: {
+    fontFamily: FAMILY_UI,
+    fontSize: "11px",
+    color: "#a0a8b8",
+    stroke: "#000",
+    strokeThickness: 2
+  } as TS,
+  mono: {
+    fontFamily: FAMILY_MONO,
+    fontSize: "12px",
+    color: "#aab2c0"
+  } as TS
+} as const;
+
 export const GAME_STATE_KEY = "ravage:save:v1";

@@ -1,11 +1,11 @@
 import Phaser from "phaser";
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../util/constants";
+import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
-import { beginUnitTurn, createUnit, hasAbility, isAlive, useItem } from "../combat/Unit";
+import { beginUnitTurn, createUnit, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
 import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
@@ -195,7 +195,7 @@ export class BattleScene extends Phaser.Scene {
       const hpBg = this.add.graphics();
       const hpBar = this.add.graphics();
       const stanceIcon = this.add.text(px.x, px.y - TILE_SIZE / 2 + 2, "", {
-        fontFamily: "Cinzel, serif",
+        fontFamily: FAMILY_HEADING,
         fontSize: "12px",
         color: "#ffd45a",
         stroke: "#000",
@@ -213,12 +213,12 @@ export class BattleScene extends Phaser.Scene {
     topG.lineStyle(1, COLORS.gold, 0.5);
     topG.strokeRect(0.5, 0.5, GAME_WIDTH - 1, 69);
     this.add.text(16, 8, "INITIATIVE", {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     });
     this.roundText = this.add.text(16, 24, "", {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#f4d999"
     });
@@ -232,31 +232,31 @@ export class BattleScene extends Phaser.Scene {
     // Active-unit ribbon: highlights the currently-acting character above the name.
     this.activeRibbon = this.add.graphics();
     this.activeRibbonText = this.add.text(px, 84, "", {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "10px",
       color: "#0a0c12"
     });
     this.activeUnitText = this.add.text(px, 100, "", {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "18px",
       color: "#f4d999",
       wordWrap: { width: panelTextW }
     });
     this.inspectTag = this.add.text(px, 126, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "11px",
       color: "#c9b07a",
       fontStyle: "italic",
       wordWrap: { width: panelTextW }
     });
     this.apText = this.add.text(px, 144, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#dad3bd",
       wordWrap: { width: panelTextW }
     });
     this.statText = this.add.text(px, 168, "", {
-      fontFamily: "Consolas, Menlo, monospace",
+      fontFamily: FAMILY_MONO,
       fontSize: "12px",
       color: "#9da7b8",
       lineSpacing: 4,
@@ -265,12 +265,12 @@ export class BattleScene extends Phaser.Scene {
 
     // Battle log — moved below the End Turn button (last action button bottoms at y=472)
     this.add.text(px, 500, "BATTLE LOG", {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     });
     this.logText = this.add.text(px, 518, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "12px",
       color: "#c0c5cf",
       wordWrap: { width: panelTextW },
@@ -285,7 +285,7 @@ export class BattleScene extends Phaser.Scene {
     hpBg2.lineStyle(1, COLORS.gold, 0.7);
     hpBg2.strokeRect(0.5, 0.5, 219, 99);
     const hpTxt = this.add.text(10, 8, "", {
-      fontFamily: "Consolas, Menlo, monospace",
+      fontFamily: FAMILY_MONO,
       fontSize: "12px",
       color: "#dad3bd",
       lineSpacing: 4
@@ -295,7 +295,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Debug overlay
     this.debugText = this.add.text(20, GAME_HEIGHT - 22, "", {
-      fontFamily: "Consolas, Menlo, monospace",
+      fontFamily: FAMILY_MONO,
       fontSize: "11px",
       color: "#9aa5b8"
     });
@@ -387,13 +387,13 @@ export class BattleScene extends Phaser.Scene {
       const nameMax = slot - 6 - 36 - 2; // available pixels between portrait and slot right edge
       const displayName = u.name.length > 7 ? u.name.slice(0, 6) + "\u2026" : u.name;
       const name = this.add.text(x + 36, 6, displayName, {
-        fontFamily: "Cinzel, serif",
+        fontFamily: FAMILY_HEADING,
         fontSize: "10px",
         color: i === 0 ? "#fff7c4" : "#dccfa8",
         wordWrap: { width: nameMax }
       });
       const sp = this.add.text(x + 36, 22, `SPD ${u.stats.speed}`, {
-        fontFamily: "Consolas, Menlo, monospace",
+        fontFamily: FAMILY_MONO,
         fontSize: "9px",
         color: "#9da7b8"
       });
@@ -470,7 +470,7 @@ export class BattleScene extends Phaser.Scene {
     bg.fillStyle(0x000000, 0.55);
     bg.fillRect(0, GAME_HEIGHT / 2 - 50, GAME_WIDTH, 100);
     const txt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, label, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "56px",
       color: accent,
       stroke,
@@ -581,6 +581,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private endCurrentTurn(): void {
+    const cur = this.initiative.current();
+    if (cur) endUnitTurn(cur);
     this.clearActionButtons();
     this.clearOverlays();
     if (this.checkEnd()) return;
@@ -945,7 +947,7 @@ export class BattleScene extends Phaser.Scene {
 
   private spawnDamageNumber(x: number, y: number, text: string, color: number): void {
     const t = this.add.text(x, y - 12, text, {
-      fontFamily: "Cinzel, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: `#${color.toString(16).padStart(6, "0")}`,
       stroke: "#000",

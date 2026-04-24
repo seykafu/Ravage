@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { Button } from "../ui/Button";
 import { TextInput } from "../ui/TextInput";
 import { drawPanel } from "../ui/Panel";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { isAuthEnabled, signIn, signUp, currentUser } from "../auth/session";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
@@ -54,7 +54,7 @@ export class AuthScene extends Phaser.Scene {
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
     this.titleText = this.add.text(GAME_WIDTH / 2, panelY + 36, "Welcome", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "32px",
       color: "#f4d999",
       stroke: "#1a0e04",
@@ -62,14 +62,14 @@ export class AuthScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.subtitleText = this.add.text(GAME_WIDTH / 2, panelY + 78, "Sign in to sync your saves", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "15px",
       color: "#c9b07a"
     }).setOrigin(0.5);
 
     // Email label + input
     this.add.text(panelX + 36, panelY + 116, "Email", {
-      fontFamily: "Georgia, serif", fontSize: "13px", color: "#c9b07a"
+      fontFamily: FAMILY_BODY, fontSize: "13px", color: "#c9b07a"
     });
     this.emailInput = new TextInput(this, {
       x: panelX + 36,
@@ -82,7 +82,7 @@ export class AuthScene extends Phaser.Scene {
 
     // Password label + input
     this.add.text(panelX + 36, panelY + 188, "Password", {
-      fontFamily: "Georgia, serif", fontSize: "13px", color: "#c9b07a"
+      fontFamily: FAMILY_BODY, fontSize: "13px", color: "#c9b07a"
     });
     this.passwordInput = new TextInput(this, {
       x: panelX + 36,
@@ -96,7 +96,7 @@ export class AuthScene extends Phaser.Scene {
 
     // Status (errors / info)
     this.statusText = this.add.text(GAME_WIDTH / 2, panelY + 264, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#d05a4a",
       align: "center",

@@ -79,7 +79,14 @@ export const ARCS: Record<string, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
       { speaker: "Lucian", portraitId: "lucian", body: "...You already knew that." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Lucky guess." },
-      { speaker: "Lucian", portraitId: "lucian", body: "Sure. Lucky guess." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Sure. Lucky guess." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Either you've held a hammer before, or your mother was a smith." },
+      { speaker: "Amar", portraitId: "amar", body: "She wasn't a smith." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Mm. Was she?" },
+      { speaker: "Amar", portraitId: "amar", body: "She was a teacher." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Of?" },
+      { speaker: "Amar", portraitId: "amar", body: "Of children." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Of children who learn how to swing hammers, apparently." },
       N("Kian shadows you between shifts. He smiles. He always smiles."),
       N("On the morning of the third day, bandits come for the wagons in the eastern field.")
     ]
@@ -95,7 +102,12 @@ export const ARCS: Record<string, StoryArc> = {
       N("He hands you a rag. He doesn't ask where the wound came from. He doesn't ask why it was so easy for you to drop the second bandit when his back was open."),
       { speaker: "Kian", portraitId: "kian", body: "You handled yourself well. Some of that looked... rehearsed." },
       { speaker: "Amar", portraitId: "amar", body: "Anyone bleeds when you cut them right. I think I just got lucky." },
-      N("You show him the cut on your waist. You opened it yourself this morning, with the kind of precision a farmer should not have. He believes you. For now.")
+      N("You show him the cut on your waist. You opened it yourself this morning, with the kind of precision a farmer should not have. He believes you. For now."),
+      { speaker: "Lucian", portraitId: "lucian", body: "Amar." },
+      { speaker: "Amar", portraitId: "amar", body: "Yes?" },
+      { speaker: "Lucian", portraitId: "lucian", body: "Next time you cut yourself for show, do it on the off-hand. People notice when you favor the wrong arm." },
+      { speaker: "Amar", portraitId: "amar", body: "...Thank you." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Don't thank me. Buy me a drink." }
     ]
   },
   // -------- Pre-Battle 5 (Mountain Bandits / Ndari) --------

@@ -39,7 +39,7 @@ export class TextInput {
     el.style.color = "#e6e0d0";
     el.style.padding = "0 12px";
     el.style.outline = "none";
-    el.style.fontFamily = opts.fontFamily ?? "Georgia, serif";
+    el.style.fontFamily = opts.fontFamily ?? '"EB Garamond", "Georgia", serif';
     el.style.borderRadius = "4px";
     el.style.zIndex = "50";
     el.addEventListener("focus", () => {

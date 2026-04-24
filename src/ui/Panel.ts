@@ -33,9 +33,12 @@ export const drawPanel = (
   g.fillRect(x, y, w, h);
   g.lineStyle(1, style.edge, 1);
   g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-  // Inner highlight
-  g.lineStyle(1, style.edgeBright, 0.30);
+  // Inner highlight — slightly stronger gold rule for chrome polish.
+  g.lineStyle(1, style.edgeBright, 0.45);
   g.strokeRect(x + 2.5, y + 2.5, w - 5, h - 5);
+  // Hairline gold inset — adds a subtle "framed" look.
+  g.lineStyle(1, style.edgeBright, 0.18);
+  g.strokeRect(x + 5.5, y + 5.5, w - 11, h - 11);
   // Corner accents
   const ci = style.cornerInset;
   g.lineStyle(1, style.edgeBright, 1);

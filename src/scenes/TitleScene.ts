@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Button } from "../ui/Button";
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
@@ -25,20 +25,21 @@ export class TitleScene extends Phaser.Scene {
 
     // Title typography
     const title = this.add.text(GAME_WIDTH / 2, 200, "RAVAGE", {
-      fontFamily: "Cinzel, Trajan Pro, Times New Roman, serif",
-      fontSize: "120px",
+      fontFamily: FAMILY_DISPLAY,
+      fontSize: "132px",
       color: "#f4d999",
       stroke: "#1a0e04",
-      strokeThickness: 8,
-      shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 16, fill: true }
-    }).setOrigin(0.5);
+      strokeThickness: 10,
+      shadow: { offsetX: 0, offsetY: 6, color: "#000", blur: 22, fill: true, stroke: true }
+    }).setOrigin(0.5).setLetterSpacing(8);
 
-    this.add.text(GAME_WIDTH / 2, 286, "A Tactical Story of Anthros", {
-      fontFamily: "Georgia, serif",
-      fontSize: "20px",
-      color: "#c9b07a",
-      letterSpacing: 4
-    }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, 296, "A Tactical Story of Anthros", {
+      fontFamily: FAMILY_BODY,
+      fontSize: "22px",
+      color: "#d9bf85",
+      fontStyle: "italic",
+      shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 8, fill: true }
+    }).setOrigin(0.5).setLetterSpacing(6);
 
     // Soft pulsing glow under the title
     this.tweens.add({
@@ -103,10 +104,11 @@ export class TitleScene extends Phaser.Scene {
 
     // Tap-to-start hint
     const hint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, "click anywhere — and the world begins to listen", {
-      fontFamily: "Georgia, serif",
-      fontSize: "13px",
-      color: "#7a7165"
-    }).setOrigin(0.5);
+      fontFamily: FAMILY_BODY,
+      fontSize: "14px",
+      color: "#8a7d68",
+      fontStyle: "italic"
+    }).setOrigin(0.5).setLetterSpacing(1);
     this.tweens.add({ targets: hint, alpha: { from: 0.5, to: 1 }, yoyo: true, repeat: -1, duration: 1600 });
 
     // Music — Spine of the World, the main leitmotif

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { Button } from "../ui/Button";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm } from "../audio/Sfx";
@@ -106,38 +106,48 @@ export class CreditsScene extends Phaser.Scene {
       switch (line.kind) {
         case "title":
           style = {
-            fontFamily: "Cinzel, Trajan Pro, serif",
-            fontSize: "72px",
+            fontFamily: FAMILY_DISPLAY,
+            fontSize: "78px",
             color: "#f4d999",
             stroke: "#1a0e04",
-            strokeThickness: 6
+            strokeThickness: 7,
+            shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 16, fill: true, stroke: true }
           };
-          lineHeight = 96;
+          lineHeight = 102;
           break;
         case "header":
           style = {
-            fontFamily: "Cinzel, Trajan Pro, serif",
-            fontSize: "26px",
-            color: "#c9b07a"
+            fontFamily: FAMILY_HEADING,
+            fontSize: "28px",
+            color: "#e8c97c",
+            stroke: "#1a0e04",
+            strokeThickness: 3,
+            shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 8, fill: true }
           };
-          lineHeight = 46;
+          lineHeight = 50;
           break;
         case "name":
           style = {
-            fontFamily: "Georgia, serif",
-            fontSize: "18px",
-            color: "#e6e0d0"
+            fontFamily: FAMILY_BODY,
+            fontSize: "20px",
+            color: "#f3ecd9",
+            stroke: "#000",
+            strokeThickness: 2,
+            shadow: { offsetX: 0, offsetY: 1, color: "#000", blur: 4, fill: true }
           };
-          lineHeight = 30;
+          lineHeight = 32;
           break;
         case "quote":
           style = {
-            fontFamily: "Georgia, serif",
-            fontSize: "16px",
-            color: "#a89a78",
-            fontStyle: "italic"
+            fontFamily: FAMILY_BODY,
+            fontSize: "17px",
+            color: "#c0b290",
+            fontStyle: "italic",
+            stroke: "#000",
+            strokeThickness: 1,
+            shadow: { offsetX: 0, offsetY: 1, color: "#000", blur: 4, fill: true }
           };
-          lineHeight = 28;
+          lineHeight = 30;
           break;
         case "spacer":
         default:

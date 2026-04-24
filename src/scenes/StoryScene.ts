@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ARCS, type DialogBeat } from "../story/beats";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
@@ -89,19 +89,22 @@ export class StoryScene extends Phaser.Scene {
 
     // Title banner
     this.add.text(GAME_WIDTH / 2, 60, arc.title, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
-      fontSize: "30px",
+      fontFamily: FAMILY_DISPLAY,
+      fontSize: "34px",
       color: "#f4d999",
       stroke: "#1a0e04",
-      strokeThickness: 4
-    }).setOrigin(0.5);
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 12, fill: true, stroke: true }
+    }).setOrigin(0.5).setLetterSpacing(2);
 
     if (arc.subtitle) {
-      this.add.text(GAME_WIDTH / 2, 96, arc.subtitle, {
-        fontFamily: "Georgia, serif",
-        fontSize: "16px",
-        color: "#c9b07a"
-      }).setOrigin(0.5);
+      this.add.text(GAME_WIDTH / 2, 100, arc.subtitle, {
+        fontFamily: FAMILY_BODY,
+        fontSize: "17px",
+        color: "#c9b07a",
+        fontStyle: "italic",
+        shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
+      }).setOrigin(0.5).setLetterSpacing(1);
     }
 
     // Dialog panel
@@ -116,19 +119,25 @@ export class StoryScene extends Phaser.Scene {
     // Portrait floats above the dialog panel, no frame — sized per image (see showBeat).
     const textLeft = panelX + 24 + PORTRAIT_AREA_W + 16;
 
-    this.speakerText = this.add.text(textLeft, panelY + 20, "", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
-      fontSize: "20px",
-      color: "#f4d999"
-    });
+    this.speakerText = this.add.text(textLeft, panelY + 18, "", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "22px",
+      color: "#f4d999",
+      stroke: "#000",
+      strokeThickness: 3,
+      shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
+    }).setLetterSpacing(1);
 
-    this.bodyText = this.add.text(textLeft, panelY + 52, "", {
-      fontFamily: "Georgia, serif",
-      fontSize: "18px",
-      color: "#e6e0d0",
+    this.bodyText = this.add.text(textLeft, panelY + 56, "", {
+      fontFamily: FAMILY_BODY,
+      fontSize: "21px",
+      color: "#f3ecd9",
+      stroke: "#000",
+      strokeThickness: 2,
+      shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true },
       wordWrap: { width: panelW - PORTRAIT_AREA_W - 64 },
-      lineSpacing: 6
-    });
+      lineSpacing: 10
+    }).setLetterSpacing(0.3);
 
     this.continueBtn = new Button(this, {
       x: GAME_WIDTH - 200,

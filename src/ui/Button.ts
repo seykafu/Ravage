@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS } from "../util/constants";
+import { COLORS, FAMILY_HEADING } from "../util/constants";
 import { sfxClick, sfxHover } from "../audio/Sfx";
 
 export interface ButtonOpts {
@@ -28,12 +28,13 @@ export class Button extends Phaser.GameObjects.Container {
     this.enabledFlag = opts.enabled ?? true;
     this.bg = scene.add.graphics();
     this.text = scene.add.text(opts.w / 2, opts.h / 2, opts.label, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: `${opts.fontSize ?? 16}px`,
       color: "#f4e4b0",
       stroke: "#000",
-      strokeThickness: 2
-    }).setOrigin(0.5);
+      strokeThickness: 2,
+      shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 4, fill: true }
+    }).setOrigin(0.5).setLetterSpacing(0.5);
     this.add([this.bg, this.text]);
 
     this.setSize(opts.w, opts.h);

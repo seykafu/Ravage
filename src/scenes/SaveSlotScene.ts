@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { Button } from "../ui/Button";
 import { drawPanel } from "../ui/Panel";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import {
   activateSlot,
@@ -32,7 +32,7 @@ export class SaveSlotScene extends Phaser.Scene {
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     this.add.text(GAME_WIDTH / 2, 80, "Save Slots", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "44px",
       color: "#f4d999",
       stroke: "#1a0e04",
@@ -40,19 +40,19 @@ export class SaveSlotScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.add.text(GAME_WIDTH / 2, 124, "Choose a slot. Up to three concurrent stories.", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "16px",
       color: "#c9b07a"
     }).setOrigin(0.5);
 
     this.statusText = this.add.text(GAME_WIDTH / 2, 160, "Loading…", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#7a7165"
     }).setOrigin(0.5);
 
     this.accountText = this.add.text(GAME_WIDTH - 24, 24, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#a89a78"
     }).setOrigin(1, 0);
@@ -121,7 +121,7 @@ export class SaveSlotScene extends Phaser.Scene {
     drawPanel(g, x, y, w, h);
 
     this.add.text(x + w / 2, y + 24, `Slot ${p.slot}`, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "26px",
       color: "#f4d999"
     }).setOrigin(0.5);
@@ -130,20 +130,20 @@ export class SaveSlotScene extends Phaser.Scene {
       const node = p.lastBattleId ? battleById(p.lastBattleId) : null;
       const lastLabel = node ? `Last: Battle ${node.index} — ${node.subtitle}` : "In progress";
       this.add.text(x + 24, y + 76, lastLabel, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "15px",
         color: "#e6e0d0",
         wordWrap: { width: w - 48 }
       });
       this.add.text(x + 24, y + 134, `Battles completed: ${p.completedCount}`, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "14px",
         color: "#c9b07a"
       });
       if (p.updatedAt) {
         const when = formatRelative(p.updatedAt);
         this.add.text(x + 24, y + 158, `Saved ${when}`, {
-          fontFamily: "Georgia, serif",
+          fontFamily: FAMILY_BODY,
           fontSize: "12px",
           color: "#7a7165"
         });
@@ -161,7 +161,7 @@ export class SaveSlotScene extends Phaser.Scene {
       });
     } else {
       this.add.text(x + w / 2, y + h / 2 - 20, "Empty", {
-        fontFamily: "Georgia, serif", fontSize: "18px", color: "#7a7165",
+        fontFamily: FAMILY_BODY, fontSize: "18px", color: "#7a7165",
         fontStyle: "italic"
       }).setOrigin(0.5);
 

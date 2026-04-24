@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { Button } from "../ui/Button";
 import { drawPanel } from "../ui/Panel";
 import { battleById, BATTLES } from "../data/battles";
@@ -67,7 +67,7 @@ export class EndScene extends Phaser.Scene {
     const stroke = isVictory ? "#1a0e04" : "#1a0404";
 
     const banner = this.add.text(GAME_WIDTH / 2, 180, word, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "96px",
       color: accent,
       stroke,
@@ -80,7 +80,7 @@ export class EndScene extends Phaser.Scene {
     // Battle subtitle
     if (node) {
       this.add.text(GAME_WIDTH / 2, 280, `${node.title} — ${node.subtitle}`, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "20px",
         color: "#c9b07a"
       }).setOrigin(0.5);
@@ -99,7 +99,7 @@ export class EndScene extends Phaser.Scene {
       : "The line broke. You wake to the smell of damp stone and someone else's bandages. Try again — the harvest will not wait.";
 
     this.add.text(panelX + 28, panelY + 22, outroText, {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "18px",
       color: "#e6e0d0",
       wordWrap: { width: panelW - 56 },
@@ -111,7 +111,7 @@ export class EndScene extends Phaser.Scene {
     const completedCount = save.completedBattles.length;
     const totalPlayable = BATTLES.filter(b => b.playable).length;
     this.add.text(GAME_WIDTH / 2, panelY + panelH + 24, `Battles completed: ${completedCount} / ${totalPlayable} playable`, {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#7a7165"
     }).setOrigin(0.5);

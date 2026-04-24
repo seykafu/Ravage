@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getMusic } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
@@ -69,14 +69,14 @@ export class BattlePrepScene extends Phaser.Scene {
 
     // Title block
     this.add.text(GAME_WIDTH / 2, 50, `${node.title} — ${node.subtitle}`, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "30px",
       color: "#f4d999",
       stroke: "#1a0e04",
       strokeThickness: 4
     }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 88, node.difficultyLabel, {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#c9b07a"
     }).setOrigin(0.5);
@@ -89,12 +89,12 @@ export class BattlePrepScene extends Phaser.Scene {
     const introG = this.add.graphics();
     drawPanel(introG, introX, introY, introW, introH);
     this.add.text(introX + 24, introY + 18, "Field Brief", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#f4d999"
     });
     this.add.text(introX + 24, introY + 44, node.intro, {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "15px",
       color: "#dad3bd",
       wordWrap: { width: introW - 48 },
@@ -109,7 +109,7 @@ export class BattlePrepScene extends Phaser.Scene {
     const primerG = this.add.graphics();
     drawPanel(primerG, primerX, primerY, primerW, primerH);
     this.add.text(primerX + 24, primerY + 18, "Tactical Reminder", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#f4d999"
     });
@@ -126,7 +126,7 @@ export class BattlePrepScene extends Phaser.Scene {
       "• Click a unit to inspect; click active to clear."
     ];
     this.add.text(primerX + 24, primerY + 50, primer.join("\n"), {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#dad3bd",
       lineSpacing: 6,
@@ -141,7 +141,7 @@ export class BattlePrepScene extends Phaser.Scene {
     const rosterG = this.add.graphics();
     drawPanel(rosterG, rosterX, rosterY, rosterW, rosterH);
     this.add.text(rosterX + 24, rosterY + 18, "Your Vanguard", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#f4d999"
     });
@@ -165,17 +165,17 @@ export class BattlePrepScene extends Phaser.Scene {
       const tex = ensureUnitTexture(this, u);
       const portrait = this.add.image(rosterX + 40, listTop + py + 26, tex).setDisplaySize(48, 60);
       const nameTxt = this.add.text(rosterX + 80, listTop + py, def.name, {
-        fontFamily: "Cinzel, Trajan Pro, serif",
+        fontFamily: FAMILY_HEADING,
         fontSize: "16px",
         color: "#f8f0d8"
       });
       const classTxt = this.add.text(rosterX + 80, listTop + py + 22, `${classLabel(def.classKind)} · ${weaponLabel(def.weapon)}`, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "12px",
         color: "#c9b07a"
       });
       const statTxt = this.add.text(rosterX + 80, listTop + py + 40, statLine(def), {
-        fontFamily: "Consolas, Menlo, monospace",
+        fontFamily: FAMILY_MONO,
         fontSize: "12px",
         color: "#9da7b8"
       });

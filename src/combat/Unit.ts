@@ -30,7 +30,6 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
 export const beginUnitTurn = (u: Unit): void => {
   u.state.apRemaining = u.stats.ap;
   u.state.hasUsedRepositionStep = false;
-  u.state.hasActedThisRound = true;
   u.state.roamUsedThisTurn = false;
   // Stances expire at the start of this unit's next turn.
   if (u.state.stance === "ready" || u.state.stance === "defensive") {
@@ -40,6 +39,7 @@ export const beginUnitTurn = (u: Unit): void => {
 
 export const endUnitTurn = (u: Unit): void => {
   u.state.apRemaining = 0;
+  u.state.hasActedThisRound = true;
 };
 
 export const isAlive = (u: Unit): boolean => u.state.alive && u.state.hp > 0;

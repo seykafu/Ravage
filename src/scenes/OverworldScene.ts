@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getMusic, MUSIC } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
@@ -20,7 +20,7 @@ export class OverworldScene extends Phaser.Scene {
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     this.add.text(GAME_WIDTH / 2, 50, "ANTHROS — Chronicle of Battles", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "32px",
       color: "#f4d999",
       stroke: "#1a0e04",
@@ -28,7 +28,7 @@ export class OverworldScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.add.text(GAME_WIDTH / 2, 92, "Pick a battle to enter. Lit nodes are playable in this build; the rest scaffold the full story.", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#c9b07a"
     }).setOrigin(0.5);
@@ -52,17 +52,17 @@ export class OverworldScene extends Phaser.Scene {
     drawPanel(detailG, detailX, detailY, detailW, detailH);
 
     const detailTitle = this.add.text(detailX + 24, detailY + 18, "", {
-      fontFamily: "Cinzel, Trajan Pro, serif",
+      fontFamily: FAMILY_HEADING,
       fontSize: "22px",
       color: "#f4d999"
     });
     const detailSub = this.add.text(detailX + 24, detailY + 50, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#c9b07a"
     });
     const detailBody = this.add.text(detailX + 24, detailY + 80, "", {
-      fontFamily: "Georgia, serif",
+      fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#dad3bd",
       wordWrap: { width: detailW - 220 }
@@ -87,7 +87,7 @@ export class OverworldScene extends Phaser.Scene {
         } else {
           // Show "not yet playable" floater
           const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "This battle is scaffolded for the full story — not yet playable.", {
-            fontFamily: "Georgia, serif",
+            fontFamily: FAMILY_BODY,
             fontSize: "16px",
             color: "#ff9c7a"
           }).setOrigin(0.5);
@@ -124,32 +124,32 @@ export class OverworldScene extends Phaser.Scene {
 
       // index badge
       const badge = this.add.text(x + 8, y + 6, `#${b.index}`, {
-        fontFamily: "Cinzel, Trajan Pro, serif",
+        fontFamily: FAMILY_HEADING,
         fontSize: "12px",
         color: playable ? "#f4d999" : "#6a6a72"
       });
       // title
       const t1 = this.add.text(x + cardW / 2, y + 26, b.title, {
-        fontFamily: "Cinzel, Trajan Pro, serif",
+        fontFamily: FAMILY_HEADING,
         fontSize: "13px",
         color: playable ? "#dccfa8" : "#76747a"
       }).setOrigin(0.5, 0);
       const t2 = this.add.text(x + cardW / 2, y + 46, b.subtitle, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "13px",
         color: playable ? "#f8f0d8" : "#9a9aa0",
         wordWrap: { width: cardW - 16 },
         align: "center"
       }).setOrigin(0.5, 0);
       const t3 = this.add.text(x + cardW / 2, y + cardH - 22, b.difficultyLabel, {
-        fontFamily: "Georgia, serif",
+        fontFamily: FAMILY_BODY,
         fontSize: "11px",
         color: playable ? "#c9b07a" : "#5a5a62"
       }).setOrigin(0.5, 0);
 
       if (completed) {
         const dot = this.add.text(x + cardW - 18, y + 4, "✓", {
-          fontFamily: "Cinzel, Trajan Pro, serif",
+          fontFamily: FAMILY_HEADING,
           fontSize: "18px",
           color: "#a4d36a"
         });
