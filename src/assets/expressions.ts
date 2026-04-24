@@ -11,22 +11,27 @@
 //   public/assets/portraits/amar_resolute.png    ← expression: "resolute"
 //   public/assets/portraits/amar_shocked.png     ← expression: "shocked"
 
+// Convention: the base file `<character>.png` IS the neutral portrait, so we
+// don't register a "neutral" slug. When a character has a *named* neutral
+// (e.g., "military_neutral", "guarded_neutral"), it's a distinct emotional
+// register that writers can opt into deliberately — those ARE listed.
+
 export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   amar:     ["quiet_rage", "resolute", "shocked", "warm_half_smile", "wounded"],
   lucian:   ["dying", "fatherly_smile", "grim_resolve"],
   ning:     ["eager_grin", "exhausted", "focused_bow", "startled"],
-  maya:     ["calculating_side_glance", "soft_genuine_smile", "steel_cold_confession_face", "tearful"],
+  maya:     ["calculating_side_glance", "guarded_neutral", "soft_genuine_smile", "steel_cold_confession_face", "tearful"],
   leo:      ["cocky_smirk", "fury", "wide-eyed_horror", "wounded_pride"],
   ranatoli: ["alarmed", "dry_skeptical", "lecturing", "satisfied"],
   selene:   ["breaking", "cold_contempt"],
-  kian:     [],
-  ndari:    [],
-  nebu:     [],
-  dawn:     [],
-  fergus:   [],
-  ndara:    [],
-  archbold: [],
-  khione:   [],
+  kian:     ["knowing_smile", "pure_menace"],
+  ndari:    ["regal_neutral", "scornful", "surprised"],
+  nebu:     ["cruel_amusement", "fury"],
+  dawn:     ["charismatic_warm_smile", "ideologue_intensity", "mask_slipping", "measured_neutral"],
+  fergus:   ["false_sincerity", "unmasked_treachery"],
+  ndara:    ["commanding", "grim", "military_neutral"],
+  archbold: ["offering_peace", "righteous_fury"],
+  khione:   ["ancient_sadness", "revelation", "serene_neutral"],
   mira:     [],
   tali:     []
 };
