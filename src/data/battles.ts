@@ -101,11 +101,11 @@ export const BATTLES: BattleNode[] = [
     id: "b05_mountain_ndari",
     index: 5,
     title: "Fifth Battle",
-    subtitle: "The Mountain Bandits — Ndari",
+    subtitle: "The Mountain Bandits — Ndara & Ndari",
     intro:
-      "General Fergus has sent your squad against marauders led by a woman named Ndari. The village is already ruined. Snow falls on broken roofs. Leo, Fergus's son and a Wyvern Rider, asks to ride with you. Why a father would send his own son into this fight, you cannot guess. Set it aside. Climb.",
+      "General Fergus has sent your squad against marauders led by a brother and sister: Ndari at the front, Ndara behind him. The village is already ruined. Snow falls on broken roofs. Leo, Fergus's son and a Wyvern Rider, asks to ride with you. Why a father would send his own son into this fight, you cannot guess. Set it aside. Climb.",
     outro:
-      "Ndari escapes on a Wyvern. Her last question — Why are you fighting on Nebu's side? — hangs in the cold air. Lucian sees you flinch. He says nothing tonight, and everything tomorrow.",
+      "Ndari falls. Ndara escapes on a Wyvern. Her last question — Why are you fighting on Nebu's side? — hangs in the cold air. Lucian sees you flinch. He says nothing tonight, and everything tomorrow.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",

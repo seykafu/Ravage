@@ -259,17 +259,24 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: FAMILY_MONO,
       fontSize: "12px",
       color: "#9da7b8",
-      lineSpacing: 4,
+      lineSpacing: 5,
       wordWrap: { width: panelTextW }
     });
 
-    // Battle log — moved below the End Turn button (last action button bottoms at y=472)
-    this.add.text(px, 500, "BATTLE LOG", {
+    // Subtle divider + ACTIONS label sit just above the action button block.
+    this.add.text(px, 304, "ACTIONS", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
-    });
-    this.logText = this.add.text(px, 518, "", {
+    }).setLetterSpacing(2);
+
+    // Battle log lives below the (now compacter) action button block.
+    this.add.text(px, 484, "BATTLE LOG", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "11px",
+      color: "#c9b07a"
+    }).setLetterSpacing(2);
+    this.logText = this.add.text(px, 502, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "12px",
       color: "#c0c5cf",
@@ -643,31 +650,41 @@ export class BattleScene extends Phaser.Scene {
 
   private buildActionButtons(u: Unit): void {
     const px = GAME_WIDTH - PANEL_W;
-    const top = 250;
-    const w = 240;
-    const h = 32;
-    const gap = 6;
+    const top = 322;             // sits just under the ACTIONS label at y=304
+    const fullW = 256;           // panel inner width usable for buttons
+    const colW = 126;            // two columns with a small gap
+    const colGap = 4;
+    const h = 30;
+    const rowGap = 4;
     let row = 0;
-    const make = (
-      label: string,
-      primary: boolean,
-      enabled: boolean,
-      onClick: () => void
-    ) => {
-      const b = new Button(this, {
-        x: px,
-        y: top + row * (h + gap),
-        w,
-        h,
-        label,
-        primary,
-        enabled,
-        fontSize: 13,
-        onClick
-      });
-      this.actionButtons.push(b);
+    const placeRow = (left: { label: string; primary: boolean; enabled: boolean; onClick: () => void } | null,
+                      right: { label: string; primary: boolean; enabled: boolean; onClick: () => void } | null): void => {
+      const y = top + row * (h + rowGap);
+      if (left) {
+        this.actionButtons.push(new Button(this, {
+          x: px, y, w: colW, h,
+          label: left.label, primary: left.primary, enabled: left.enabled,
+          fontSize: 12, onClick: left.onClick
+        }));
+      }
+      if (right) {
+        this.actionButtons.push(new Button(this, {
+          x: px + colW + colGap, y, w: colW, h,
+          label: right.label, primary: right.primary, enabled: right.enabled,
+          fontSize: 12, onClick: right.onClick
+        }));
+      }
       row++;
     };
+    const placeFull = (label: string, primary: boolean, enabled: boolean, onClick: () => void): void => {
+      const y = top + row * (h + rowGap);
+      this.actionButtons.push(new Button(this, {
+        x: px, y, w: fullW, h,
+        label, primary, enabled, fontSize: 13, onClick
+      }));
+      row++;
+    };
+
     const hasAP = u.state.apRemaining >= 1;
     const canMove = hasAP && reachableForUnit(this.state, u).length > 0;
     const canAttack = hasAP && targetsForUnit(this.state, u).length > 0;
@@ -675,18 +692,21 @@ export class BattleScene extends Phaser.Scene {
     const canPotion = hasAP && hasPotion && u.state.hp < u.stats.hp;
     const canRoam = u.state.apRemaining === 0 && hasAbility(u, "Roam") && !u.state.roamUsedThisTurn
       && reachableForUnit(this.state, u).length > 0;
-    make("Move (1 AP)", false, canMove, () => this.enterMoveMode(u));
-    make("Attack (1 AP)", true, canAttack, () => this.enterAttackMode(u));
-    make("Ready (1 AP)", false, hasAP && u.weapon !== "bow", () => this.applyStance(u, "ready"));
-    make("Defend (1 AP)", false, hasAP, () => this.applyStance(u, "defensive"));
-    make("Use Potion (1 AP)", false, canPotion, () => this.useFirstPotion(u));
-    if (canRoam) {
-      make("Roam: free move", false, true, () => this.enterRoamMode(u));
-    }
-    make("End Turn", false, true, () => {
-      sfxClick();
-      this.endCurrentTurn();
-    });
+
+    // Pair related actions side-by-side. Primary actions on the right column.
+    placeRow(
+      { label: "Move  1AP",   primary: false, enabled: canMove,   onClick: () => this.enterMoveMode(u) },
+      { label: "Attack  1AP", primary: true,  enabled: canAttack, onClick: () => this.enterAttackMode(u) }
+    );
+    placeRow(
+      { label: "Ready  1AP",  primary: false, enabled: hasAP && u.weapon !== "bow", onClick: () => this.applyStance(u, "ready") },
+      { label: "Defend  1AP", primary: false, enabled: hasAP,                       onClick: () => this.applyStance(u, "defensive") }
+    );
+    placeRow(
+      { label: "Potion  1AP", primary: false, enabled: canPotion, onClick: () => this.useFirstPotion(u) },
+      canRoam ? { label: "Roam (free)", primary: false, enabled: true, onClick: () => this.enterRoamMode(u) } : null
+    );
+    placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
   }
 
   // After a player action consumes AP, decide whether to keep showing buttons

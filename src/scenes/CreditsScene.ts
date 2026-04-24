@@ -28,7 +28,8 @@ const CREDITS: CreditLine[] = [
   { kind: "name", text: "Leo — Wyvern Rider, Talon his mount" },
   { kind: "name", text: "Ranatoli — exile, scholar, blade" },
   { kind: "name", text: "Kian — the Counsellor who watches" },
-  { kind: "name", text: "Ndari — first to ask the question that mattered" },
+  { kind: "name", text: "Ndara — first to ask the question that mattered" },
+  { kind: "name", text: "Ndari — her brother, who held the gate" },
   { kind: "name", text: "King Nebu — and the harvest he could not see" },
   { kind: "name", text: "Madame Dawn — Seren Vashti, by an older name" },
   { kind: "spacer", text: "" },
@@ -40,7 +41,7 @@ const CREDITS: CreditLine[] = [
 
   { kind: "header", text: "Music" },
   { kind: "name", text: "Entering the Stronghold — Battle 1" },
-  { kind: "name", text: "Stronghold of Memories — Battle 5 (Ndari)" },
+  { kind: "name", text: "Stronghold of Memories — Battle 5 (Ndara & Ndari)" },
   { kind: "name", text: "Adventure 1 — Title screen" },
   { kind: "name", text: "Danger — Battles 2 and beyond" },
   { kind: "name", text: "Battle Prep — between battles" },

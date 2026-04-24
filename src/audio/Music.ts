@@ -4,7 +4,7 @@ import Phaser from "phaser";
 // Every track in the user's Music folder is referenced at least once across the game.
 export const MUSIC = {
   enteringStronghold: "music_entering_stronghold", // Battle 1: Palace Coup
-  strongholdMemories: "music_stronghold_memories", // First boss (Battle 3 Ndari)
+  strongholdMemories: "music_stronghold_memories", // First boss (Battle 5 — Ndara & Ndari)
   finalBoss: "music_final_boss",                   // Final battle
   adventure1: "music_adventure_1",                 // Opening adventure flashback
   adventureAnthros: "music_adventure_anthros",     // Overworld / world map (Anthros side)
@@ -86,22 +86,40 @@ export class MusicManager {
         }
       });
     } catch { /* scene without tweens */ }
-    // setTimeout backup — runs even if the scene is gone.
+    // setTimeout backup — runs even if the scene is gone. Each step in its own
+    // try/catch so a thrown stop() can't skip destroy() and leak a looped sound.
     setTimeout(() => {
-      try {
-        if ("setVolume" in s) (s as Phaser.Sound.WebAudioSound).setVolume(0);
-        s.stop();
-        s.destroy();
-      } catch { /* already cleaned up */ }
+      try { if ("setVolume" in s) (s as Phaser.Sound.WebAudioSound).setVolume(0); } catch { /* */ }
+      try { s.stop(); } catch { /* */ }
+      try { s.destroy(); } catch { /* */ }
     }, fadeMs + 120);
+  }
+
+  // Belt-and-suspenders: stop any music-key sound still running in Phaser's
+  // global sound manager that isn't the one we're about to keep.
+  private killOrphans(keep: Phaser.Sound.BaseSound | null): void {
+    const mgr = this.scene.sound as unknown as { sounds?: Phaser.Sound.BaseSound[] };
+    const list = mgr.sounds;
+    if (!list) return; // NoAudioSoundManager — nothing to sweep.
+    const musicKeys = new Set<string>(Object.values(MUSIC));
+    for (const s of [...list]) {
+      if (s === keep) continue;
+      if (!musicKeys.has(s.key)) continue;
+      try { s.stop(); } catch { /* */ }
+      try { s.destroy(); } catch { /* */ }
+    }
   }
 
   play(key: MusicKey, opts: { loop?: boolean; fadeMs?: number } = {}): void {
     const { loop = true, fadeMs = 700 } = opts;
     if (this.currentKey === key && this.current?.isPlaying) return;
-    const sound = this.scene.sound.add(key, { loop, volume: 0 });
-    sound.play();
+    // Retire the tracked sound first so a play() failure below can't strand it.
     if (this.current) this.retireSound(this.current, fadeMs);
+    const sound = this.scene.sound.add(key, { loop, volume: 0 });
+    try { sound.play(); } catch { /* autoplay blocked — track anyway */ }
+    // Sweep any orphaned music sounds we may have lost track of (e.g. across
+    // scene transitions where a prior retire never completed).
+    this.killOrphans(sound);
     this.scene.tweens.addCounter({
       from: 0,
       to: this.targetVolume,
@@ -115,11 +133,12 @@ export class MusicManager {
   }
 
   stop(fadeMs = 500): void {
-    if (!this.current) return;
     const old = this.current;
     this.current = null;
     this.currentKey = null;
-    this.retireSound(old, fadeMs);
+    if (old) this.retireSound(old, fadeMs);
+    // Sweep any orphan music sounds the manager may have lost track of.
+    this.killOrphans(null);
   }
 }
 

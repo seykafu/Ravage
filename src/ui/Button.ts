@@ -37,17 +37,26 @@ export class Button extends Phaser.GameObjects.Container {
     }).setOrigin(0.5).setLetterSpacing(0.5);
     this.add([this.bg, this.text]);
 
-    this.setSize(opts.w, opts.h);
-    this.setInteractive(new Phaser.Geom.Rectangle(0, 0, opts.w, opts.h), Phaser.Geom.Rectangle.Contains);
+    // Hit area is slightly larger than the visible rect so edge clicks register.
+    // Kept ≤ half the smallest gap between adjacent buttons (4px) so neighbors
+    // can't overlap and steal each other's clicks.
+    const HIT_PAD = 2;
+    this.setSize(opts.w + HIT_PAD * 2, opts.h + HIT_PAD * 2);
+    this.setInteractive(
+      new Phaser.Geom.Rectangle(-HIT_PAD, -HIT_PAD, opts.w + HIT_PAD * 2, opts.h + HIT_PAD * 2),
+      Phaser.Geom.Rectangle.Contains
+    );
     this.on("pointerover", () => {
       if (!this.enabledFlag) return;
       this.hovered = true;
       sfxHover();
       this.redraw();
     });
+    // IMPORTANT: do not clear `pressed` here. Sub-pixel cursor jitter during a
+    // click can fire pointerout/over rapidly, and clearing pressed would cancel
+    // the click. A global pointerup listener below resets `pressed` cleanly.
     this.on("pointerout", () => {
       this.hovered = false;
-      this.pressed = false;
       this.redraw();
     });
     this.on("pointerdown", () => {
@@ -64,6 +73,18 @@ export class Button extends Phaser.GameObjects.Container {
         sfxClick();
         opts.onClick();
       }
+    });
+    // If the user releases outside the button after pressing on it, drop the
+    // pressed visual state so it doesn't get stuck.
+    const onGlobalUp = (): void => {
+      if (this.pressed) {
+        this.pressed = false;
+        this.redraw();
+      }
+    };
+    scene.input.on("pointerup", onGlobalUp);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => {
+      scene.input.off("pointerup", onGlobalUp);
     });
 
     this.redraw();

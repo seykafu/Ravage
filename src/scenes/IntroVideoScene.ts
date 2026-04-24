@@ -75,27 +75,43 @@ export class IntroVideoScene extends Phaser.Scene {
     // Cinematic fade-in for the Phaser layer (just the black backdrop + skip UI).
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
-    // Skip button — bottom-right, deliberately understated.
+    // "Skip Intro" button — Netflix-style: top-right, visible for ~4s then fades.
+    // Wrapped in a Phaser container so the button + its hint can fade together.
+    const skipW = 168;
+    const skipH = 44;
+    const skipX = GAME_WIDTH - skipW - 32;
+    const skipY = 32;
     const skipBtn = new Button(this, {
-      x: GAME_WIDTH - 130,
-      y: GAME_HEIGHT - 52,
-      w: 110, h: 32,
-      label: "Skip \u23ED",
-      primary: false,
-      fontSize: 12,
+      x: skipX,
+      y: skipY,
+      w: skipW, h: skipH,
+      label: "Skip Intro \u23ED",
+      primary: true,
+      fontSize: 16,
       onClick: () => { sfxClick(); this.finish(); }
     });
-    void skipBtn;
+    skipBtn.setAlpha(0);
+    skipBtn.setScrollFactor(0);
+    skipBtn.setDepth(100);
 
-    // Subtle "press any key to skip" hint that fades after a few seconds.
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 30, "press space to skip", {
+    // Subtle keyboard hint sits just under the button.
+    this.hintText = this.add.text(skipX + skipW / 2, skipY + skipH + 10, "or press space", {
       fontFamily: FAMILY_BODY,
-      fontSize: "12px",
-      color: "#7a7165",
+      fontSize: "11px",
+      color: "#c9b07a",
       fontStyle: "italic"
-    }).setOrigin(0.5).setLetterSpacing(1).setAlpha(0);
-    this.tweens.add({ targets: this.hintText, alpha: 0.85, duration: 800, delay: 400 });
-    this.tweens.add({ targets: this.hintText, alpha: 0, duration: 1200, delay: 4000 });
+    }).setOrigin(0.5, 0).setLetterSpacing(1).setAlpha(0).setDepth(100);
+
+    // Visible for 4 seconds total: 300ms fade-in, 3.4s hold, 300ms fade-out.
+    this.tweens.add({ targets: [skipBtn, this.hintText], alpha: 1, duration: 300, delay: 200 });
+    this.tweens.add({ targets: [skipBtn, this.hintText], alpha: 0, duration: 300, delay: 3900 });
+
+    // After fading out, disable the button so it doesn't intercept stray clicks
+    // on whatever's playing on screen.
+    this.time.delayedCall(4250, () => {
+      skipBtn.setEnabled(false);
+      skipBtn.disableInteractive();
+    });
 
     this.input.keyboard?.on("keydown-ESC", () => this.finish());
     this.input.keyboard?.on("keydown-ENTER", () => this.finish());

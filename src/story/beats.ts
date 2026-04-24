@@ -48,7 +48,7 @@ export const ARCS: Record<string, StoryArc> = {
         "You have planned this for ten months. Tonight your seven comrades are scattered through the back corridors. You and the vanguard reached the throne hall first."
       ),
       { speaker: "Selene", portraitId: "selene", body: "If we don't break the line in the first minute, we don't break it at all. Hold to the right." },
-      { speaker: "Ranatoli", portraitId: "ranatoli", body: "Steel up, Amar. We bleed together or we feast together — anything in between is shame." },
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "lecturing", body: "Steel up, Amar. We bleed together or we feast together — anything in between is shame." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then bleed only what you can spare. We are taking a country tonight." }
     ]
   },
@@ -110,7 +110,7 @@ export const ARCS: Record<string, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Don't thank me. Buy me a drink." }
     ]
   },
-  // -------- Pre-Battle 5 (Mountain Bandits / Ndari) --------
+  // -------- Pre-Battle 5 (Mountain Bandits / Ndara & Ndari) --------
   before_mountain: {
     id: "before_mountain",
     title: "Two months later",
@@ -119,22 +119,24 @@ export const ARCS: Record<string, StoryArc> = {
     next: "prep:b05_mountain_ndari",
     beats: [
       N("General Fergus has work for your squad. The kind of work that pays in gold and uses up the men who do it."),
-      { speaker: "Leo", portraitId: "leo", body: "My father wants me to go with you. Do not argue. He doesn't argue twice." },
-      { speaker: "Maya", portraitId: "maya", body: "Mountain bandits. A village they already burned. Their leader's name is Ndari." },
-      { speaker: "Ning", portraitId: "ning", body: "Ndari. Like the queen Madame Dawn — that Ndari?" },
-      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Different woman. Same kind of trouble." },
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father wants me to go with you. Do not argue. He doesn't argue twice." },
+      { speaker: "Maya", portraitId: "maya", body: "Mountain bandits. A village they already burned. The leaders are siblings — Ndara, who plans, and her brother Ndari, who breaks things in front of her." },
+      { speaker: "Ning", portraitId: "ning", expression: "startled", body: "Ndara. Like the queen Madame Dawn — that Ndara?" },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Different woman. Same kind of trouble. The brother is the one you'll see first — he likes the front of a fight. The sister is the one you have to actually catch." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Bring everything. We won't be picking over bodies — they'll be picking over ours." }
     ]
   },
-  // -------- Post-Battle 5 (Ndari escapes) --------
+  // -------- Post-Battle 5 (Ndara escapes; Ndari falls covering her) --------
   post_mountain: {
     id: "post_mountain",
     title: "On the path home",
     music: "emotional",
     next: "credits",
     beats: [
-      N("Ndari escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
-      { speaker: "Ndari", portraitId: "ndari", body: "Why are you fighting on King Nebu's side, Amar?" },
+      N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had always known the math."),
+      { speaker: "Ndari", portraitId: "ndari", body: "Tell her I held it. Tell her she owes me a drink." },
+      N("Ndara escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
+      { speaker: "Ndara", portraitId: "ndara", body: "Why are you fighting on King Nebu's side, Amar?" },
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "Lucian — " },
