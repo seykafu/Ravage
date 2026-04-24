@@ -186,7 +186,7 @@ export class SaveSlotScene extends Phaser.Scene {
     await activateSlot(slot);
     resetActiveSave();
     this.cameras.main.once("camerafadeoutcomplete", () =>
-      this.scene.start("StoryScene", { arcId: "pre_palace" })
+      this.scene.start("StoryScene", { arcId: "cold_open_dawn" })
     );
   }
 

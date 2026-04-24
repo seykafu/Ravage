@@ -275,7 +275,7 @@ export const BACKDROPS = {
     hasFog: true,
     ridges: 3
   },
-  gruge: {
+  grude: {
     sky: 0x141a32,
     glow: 0x6a92c4,
     far: 0x223256,
@@ -285,6 +285,65 @@ export const BACKDROPS = {
     seed: 11000,
     hasMoon: true,
     ridges: 3
+  },
+  // Interior / intimate backdrops used by story arcs. The procedural specs
+  // here are fallbacks only — real PNGs at public/assets/backdrops/<id>.png
+  // override them via the manifest. Outdoor parallax doesn't really suit
+  // interiors, so the fallback colors aim for a tonal match more than realism.
+  factory: {
+    sky: 0x2a1a14,
+    glow: 0xefa45a,
+    far: 0x1a1410,
+    mid: 0x0e0a08,
+    near: 0x050402,
+    ground: 0x1c1410,
+    seed: 13100,
+    hasFire: true,
+    hasFog: true,
+    ridges: 2
+  },
+  field_night_camp: {
+    sky: 0x0a1426,
+    glow: 0xefa45a,
+    far: 0x122036,
+    mid: 0x0a1422,
+    near: 0x040810,
+    ground: 0x182214,
+    seed: 13200,
+    hasMoon: true,
+    hasFire: true,
+    ridges: 2
+  },
+  rusty_house: {
+    sky: 0x2a1a10,
+    glow: 0xc88a52,
+    far: 0x231510,
+    mid: 0x180e0a,
+    near: 0x0a0604,
+    ground: 0x1a1008,
+    seed: 13300,
+    ridges: 2
+  },
+  study: {
+    sky: 0x141022,
+    glow: 0x9c8a52,
+    far: 0x18142a,
+    mid: 0x100c1c,
+    near: 0x080612,
+    ground: 0x140e1c,
+    seed: 13400,
+    ridges: 2
+  },
+  tavern: {
+    sky: 0x2c1a10,
+    glow: 0xefb56a,
+    far: 0x241510,
+    mid: 0x180e08,
+    near: 0x0a0604,
+    ground: 0x1c1208,
+    seed: 13500,
+    hasFire: true,
+    ridges: 2
   },
   finalBoss: {
     sky: 0x18000c,

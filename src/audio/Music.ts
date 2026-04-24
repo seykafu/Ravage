@@ -11,7 +11,7 @@ export const MUSIC = {
   battlePrep: "music_battle_prep",                 // Battle preparation screen
   danger: "music_danger",                          // Battle 2 (farmland) and ambushes
   everydayAnthros: "music_everyday_anthros",       // Story scenes in Thuling (legacy)
-  lifeInGrude: "music_life_grude",                 // Act 2 (Gruge sections, placeholders)
+  lifeInGrude: "music_life_grude",                 // Act 2 (Grude sections, placeholders)
 
   // Spine of the World — original theme suite, recurring leitmotif
   mainTheme: "music_spine_main",                   // Title screen — the leitmotif

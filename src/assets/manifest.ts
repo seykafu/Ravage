@@ -118,10 +118,13 @@ const unitAnimEntries: ManifestEntry[] = CLASSES.flatMap((cls) =>
   }))
 );
 
-// Backdrops keyed by the same names BackdropArt uses today.
+// Backdrops keyed by the same names BackdropArt uses today. The first row is
+// outdoor battle/world backdrops; the second row is interior/intimate scenes
+// used by story arcs (the file basenames are snake_case as generated).
 const BACKDROP_IDS = [
   "palaceCoup", "thuling", "farmland", "mountain", "swamp",
-  "caravan", "monastery", "orinhal", "cliffs", "gruge", "finalBoss"
+  "caravan", "monastery", "orinhal", "cliffs", "grude", "finalBoss",
+  "factory", "field_night_camp", "rusty_house", "study", "tavern"
 ] as const;
 
 const backdropEntries: ManifestEntry[] = BACKDROP_IDS.map((id) => ({

@@ -74,9 +74,11 @@ export class StoryScene extends Phaser.Scene {
       return;
     }
 
-    // Backdrop chosen from arc's first beat ambient or a default thuling sky.
-    // For story arcs we re-use any cached backdrop appropriate to the location.
-    const bgKey = ensureBackdropTexture(this, "bg_thuling_story", BACKDROPS.thuling);
+    // Backdrop honors arc.backdrop when set; falls back to thuling. Real PNG
+    // (loaded as `backdrop:<id>`) is preferred over the procedural fallback.
+    const bdName = arc.backdrop ?? "thuling";
+    const bdSpec = BACKDROPS[bdName];
+    const bgKey = ensureBackdropTexture(this, `bg_${bdName}_story`, bdSpec, `backdrop:${bdName}`);
     this.bgImage = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     this.bgImage.setAlpha(0.85);
     // Slow Ken-Burns drift

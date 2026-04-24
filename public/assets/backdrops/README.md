@@ -29,7 +29,7 @@ brushwork are encouraged. Sprites and tiles stay crisp; backdrops can blur.
 | `monastery.png` | Monastery interior/exterior | Candlelit, somber, indigo |
 | `orinhal.png` | Orinhal — burning city | Fire-lit, orange + black, smoke |
 | `cliffs.png` | Coastal cliffs | Stormy, blue-grey, fog at base |
-| `gruge.png` | Gruge — moonlit fortress | Night, moonlit, blue-violet |
+| `grude.png` | Grude — moonlit fortress | Night, moonlit, blue-violet |
 | `finalBoss.png` | Final boss arena | Hellish red, fire, deep shadow, foreboding |
 
 ## Composition rules

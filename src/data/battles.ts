@@ -199,7 +199,7 @@ export const BATTLES: BattleNode[] = [
     index: 11,
     title: "Eleventh Battle",
     subtitle: "The Truth About Anthros",
-    intro: "Kian catches you on the cliffs above Madame Dawn's harbor. He brings the truth: Anthros is a colony. Gruge is the empire. Your fight has been smaller than you knew.",
+    intro: "Kian catches you on the cliffs above Madame Dawn's harbor. He brings the truth: Anthros is a colony. Grude is the empire. Your fight has been smaller than you knew.",
     outro: "Lucian falls on the staircase to the ship. Kian falls to a combined strike. The sea takes you both, in different ways.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
@@ -216,7 +216,7 @@ export const BATTLES: BattleNode[] = [
     outro: "You are not the heroes of the world. You are the survivors of a colony.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Reveal"
   },
@@ -229,7 +229,7 @@ export const BATTLES: BattleNode[] = [
     outro: "Dawn weeps without sound for the rest of the night.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Heart"
   },
@@ -242,7 +242,7 @@ export const BATTLES: BattleNode[] = [
     outro: "Everything you have done is exactly half of what you are.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Reveal"
   },
@@ -255,7 +255,7 @@ export const BATTLES: BattleNode[] = [
     outro: "Dawn's promises grow harder.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Intrigue"
   },
@@ -268,7 +268,7 @@ export const BATTLES: BattleNode[] = [
     outro: "You will be asked again, and your answer will cost lives either way.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Choice"
   },
@@ -281,7 +281,7 @@ export const BATTLES: BattleNode[] = [
     outro: "She loves you. She lied. Both can be true.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Reveal"
   },
@@ -294,7 +294,7 @@ export const BATTLES: BattleNode[] = [
     outro: "Either way, sacrifice.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Pivotal"
   },
@@ -307,7 +307,7 @@ export const BATTLES: BattleNode[] = [
     outro: "The world turns under your feet.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Climactic"
   },
@@ -317,10 +317,10 @@ export const BATTLES: BattleNode[] = [
     title: "Twentieth Battle",
     subtitle: "The Kingdom Falls",
     intro: "The last kingdom-scale engagement before the sky changes.",
-    outro: "Anthros, or Gruge, kneels.",
+    outro: "Anthros, or Grude, kneels.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_gruge",
+    backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Climactic"
   },

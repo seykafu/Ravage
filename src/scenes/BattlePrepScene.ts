@@ -47,7 +47,7 @@ const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
   bg_monastery: "monastery",
   bg_orinhal: "orinhal",
   bg_cliffs: "cliffs",
-  bg_gruge: "gruge",
+  bg_grude: "grude",
   bg_finalBoss: "finalBoss"
 };
 

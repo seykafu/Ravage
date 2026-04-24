@@ -47,7 +47,7 @@ const CREDITS: CreditLine[] = [
   { kind: "name", text: "Battle Prep — between battles" },
   { kind: "name", text: "Adventure on Anthros — victories" },
   { kind: "name", text: "Everyday Anthros — interludes" },
-  { kind: "name", text: "Life in Gruge — the road ahead" },
+  { kind: "name", text: "Life in Grude — the road ahead" },
   { kind: "name", text: "Final Boss Battle — Battle 21 (yet to come)" },
   { kind: "spacer", text: "" },
 
@@ -85,9 +85,9 @@ export class CreditsScene extends Phaser.Scene {
   constructor() { super("CreditsScene"); }
 
   create(): void {
-    // Backdrop — final-boss style if available, otherwise gruge.
+    // Backdrop — final-boss style if available, otherwise grude.
     const bdKey = "bg_credits";
-    const bdSpec = BACKDROPS.gruge;
+    const bdSpec = BACKDROPS.grude;
     const bgKey = ensureBackdropTexture(this, bdKey, bdSpec);
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     bg.setAlpha(0.55);

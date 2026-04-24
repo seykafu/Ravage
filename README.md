@@ -69,7 +69,7 @@ Key documents:
 
 Everything the strategic-layer doc describes:
 - Thuling Interludes (between Battles 2–10)
-- Gruge faction map (Battles 11–18)
+- Grude faction map (Battles 11–18)
 - Anthros Restoration governance (post-Battle 19)
 - Bond conversations
 - Trust Meter (Battle 16 fork — Dawn route vs. non-Dawn route)
