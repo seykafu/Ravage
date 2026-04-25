@@ -37,7 +37,7 @@ export const registerUnitAnimations = (scene: Phaser.Scene): void => {
   const anims = scene.anims;
   const classes: ClassKind[] = [
     "swordsman", "spearton", "knight", "archer",
-    "shinobi", "sentinel", "wyvern_rider", "swordmaster", "boss"
+    "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss"
   ];
 
   for (const cls of classes) {

@@ -21,7 +21,7 @@ const classLabel = (k: ClassKind): string => {
     case "knight":    return "Knight";
     case "shinobi":   return "Shinobi";
     case "sentinel":  return "Sentinel";
-    case "wyvern_rider": return "Wyvern Rider";
+    case "dactyl_rider": return "Dactyl Rider";
     case "swordmaster":  return "Swordmaster";
     case "boss": return "Adversary";
   }
@@ -33,7 +33,7 @@ const weaponLabel = (w: WeaponKind): string => {
     case "spear": return "Spear";
     case "shield": return "Shield";
     case "bow": return "Bow";
-    case "wyvern": return "Wyvern";
+    case "dactyl": return "Dactyl";
   }
 };
 

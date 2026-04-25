@@ -42,7 +42,7 @@ npm run preview      # preview the built bundle on :4173
 - **Weapon triangle.** Sword > Spear > Shield > Sword (×1.15 / ×0.85).
   - If your weapon advantages the attacker's, you **passively counter at 1.5× damage** when struck — no Ready stance required.
 - **Items.** Each unit may carry up to **5 items** per battle. Players start every battle with **3 Potions** (+10 HP, 1 AP).
-- **Mounted classes** (`knight`, `wyvern_rider`) get **+2 movement** above their base stat.
+- **Mounted classes** (`knight`, `dactyl_rider`) get **+2 movement** above their base stat.
 - **Special abilities** (max 2 per character):
   - **Boss Fighter** — 2× damage vs. boss-class enemies. *(Amar)*
   - **Aide** — incoming damage halved while adjacent to any ally. *(Lucian, Ning, Maya)*

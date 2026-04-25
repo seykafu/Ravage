@@ -170,7 +170,7 @@ export const ARCS: Record<string, StoryArc> = {
     beats: [
       N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had always known the math."),
       { speaker: "Ndari", portraitId: "ndari", expression: "scornful", body: "Tell her I held it. Tell her she owes me a drink." },
-      N("Ndara escapes on a Wyvern as the last torches gutter out. Her question stays in the cold air."),
+      N("Ndara escapes on a Dactyl as the last torches gutter out. Her question stays in the cold air."),
       { speaker: "Ndara", portraitId: "ndara", expression: "grim", body: "Why are you fighting on King Nebu's side, Amar?" },
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },

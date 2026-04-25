@@ -18,7 +18,7 @@ sprites/
   archer/
   shinobi/
   sentinel/
-  wyvern_rider/
+  dactyl_rider/
   swordmaster/
   boss/
 ```
@@ -58,7 +58,7 @@ Each class must read at thumbnail size. Distinguishing features:
 | archer | Bow drawn diagonally, hood/cowl |
 | shinobi | Hooded, two short blades, lithe pose |
 | sentinel | Robed, staff, glowing focus |
-| wyvern_rider | Wing silhouette behind, rider on top |
+| dactyl_rider | Wing silhouette behind, rider on top |
 | swordmaster | Long blade held two-handed, topknot/long hair |
 | boss | Oversized — give bosses a 1.5× silhouette via wider shoulders/horns |
 

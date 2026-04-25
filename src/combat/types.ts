@@ -3,7 +3,7 @@
 
 export type Faction = "player" | "enemy" | "ally";
 
-export type WeaponKind = "sword" | "spear" | "shield" | "bow" | "wyvern";
+export type WeaponKind = "sword" | "spear" | "shield" | "bow" | "dactyl";
 
 export type ClassKind =
   | "swordsman"
@@ -12,7 +12,7 @@ export type ClassKind =
   | "archer"
   | "shinobi"
   | "sentinel"
-  | "wyvern_rider"
+  | "dactyl_rider"
   | "swordmaster"
   | "boss";
 

@@ -66,7 +66,7 @@ const baseHitForWeapon = (w: WeaponKind): number => {
       return 80;
     case "bow":
       return 75;
-    case "wyvern":
+    case "dactyl":
       return 80;
   }
 };

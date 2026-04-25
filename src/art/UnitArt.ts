@@ -140,8 +140,8 @@ const drawWeapon = (px: PixelCanvas, kind: ClassKind, weapon: WeaponKind, p: Pal
     }
     // string
     for (let y = SH - 25; y < SH - 15; y++) px.pixel(x - 1, y, 0xb6b6b6);
-  } else if (weapon === "wyvern") {
-    // wyvern wing behind
+  } else if (weapon === "dactyl") {
+    // dactyl wing behind
     const wingC = darkenColor(p.primary, 0.15);
     for (let y = SH - 22; y < SH - 14; y++) {
       for (let x = -7; x < -3; x++) px.pixel(cx + x, y, wingC);

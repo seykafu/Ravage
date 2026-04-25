@@ -35,7 +35,7 @@ export const CLASS_TINTS: Record<string, number> = {
   archer: 0x9bcf9a,
   shinobi: 0x6a6a6a,
   sentinel: 0xb39d6e,
-  wyvern_rider: 0xd07c3a,
+  dactyl_rider: 0xd07c3a,
   swordmaster: 0xffd06a,
   boss: 0xff5555
 };

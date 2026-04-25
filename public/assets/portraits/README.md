@@ -21,7 +21,7 @@ Character bust shots used in dialogue and the prep roster.
 | `ning.png` | Ning — archer |
 | `maya.png` | Maya — mage / sentinel |
 | `leo.png` | Leo — knight |
-| `ranatoli.png` | Ranatoli — wyvern rider |
+| `ranatoli.png` | Ranatoli — dactyl rider |
 | `selene.png` | Selene — swordmaster |
 | `kian.png` | Kian — shinobi |
 | `ndari.png` | Ndari — antagonist (Mountain arc boss) |

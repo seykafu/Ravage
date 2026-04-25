@@ -25,7 +25,7 @@ const CREDITS: CreditLine[] = [
   { kind: "name", text: "Lucian — foreman, soldier, the friend who knew" },
   { kind: "name", text: "Ning — bowyer's apprentice" },
   { kind: "name", text: "Maya — of Revat" },
-  { kind: "name", text: "Leo — Wyvern Rider, Talon his mount" },
+  { kind: "name", text: "Leo — Dactyl Rider, Talon his mount" },
   { kind: "name", text: "Ranatoli — exile, scholar, blade" },
   { kind: "name", text: "Kian — the Counsellor who watches" },
   { kind: "name", text: "Ndara — first to ask the question that mattered" },

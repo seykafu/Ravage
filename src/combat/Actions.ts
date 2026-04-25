@@ -11,10 +11,10 @@ export interface BattleState {
   rng: Rng;
 }
 
-// Mounted classes (knights, wyvern riders / dactyls) move further than infantry.
+// Mounted classes (knights, dactyl riders) move further than infantry.
 // Returned as a +N bonus added to the unit's base movement stat.
 export const mountBonus = (u: Unit): number => {
-  if (u.classKind === "knight" || u.classKind === "wyvern_rider") return 2;
+  if (u.classKind === "knight" || u.classKind === "dactyl_rider") return 2;
   return 0;
 };
 
@@ -99,7 +99,7 @@ const canTriggerAdvantageCounter = (defender: Unit, attacker: Unit): boolean => 
   const dy = Math.abs(defender.state.position.y - attacker.state.position.y);
   const dist = dx + dy;
   if (defender.weapon === "spear") return dist === 1 || dist === 2;
-  return dist === 1; // sword / shield / wyvern melee
+  return dist === 1; // sword / shield / dactyl melee
 };
 
 export const performAttack = (state: BattleState, attacker: Unit, defender: Unit): AttackResult => {

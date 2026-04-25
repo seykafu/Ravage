@@ -17,7 +17,7 @@ export const canTriggerReadyCounter = (
   if (defender.weapon === "spear") {
     return dist === 1 || dist === 2;
   }
-  return dist === 1; // sword / shield / wyvern melee
+  return dist === 1; // sword / shield / dactyl melee
 };
 
 // Tiles from which the defender can counter. Used to render the threat zone overlay.

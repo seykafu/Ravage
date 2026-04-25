@@ -108,7 +108,7 @@ const portraitEntries: ManifestEntry[] = [...baseEntries, ...expressionEntries];
 // (we suppress the load error and fall back to procedural).
 const CLASSES: ClassKind[] = [
   "swordsman", "spearton", "knight", "archer",
-  "shinobi", "sentinel", "wyvern_rider", "swordmaster", "boss"
+  "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss"
 ];
 
 const ANIM_STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
