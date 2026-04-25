@@ -41,6 +41,8 @@ import { completeBattle, loadSave, unlockBattle, writeSave } from "../util/save"
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
 import { playUnitState } from "../assets/unitAnim";
+import { hasAsset } from "../assets/manifest";
+import { BattleFSM } from "./battle/BattleFSM";
 
 const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
   bg_palace_coup: "palaceCoup",
@@ -74,9 +76,6 @@ interface UnitView {
   // afterward to avoid two tweens fighting over the same property.
   breathTween?: Phaser.Tweens.Tween;
 }
-
-// "roam" is a free single-Move granted by the Roam ability after AP runs out.
-type Mode = "idle" | "move" | "attack" | "roam";
 
 const PANEL_W = 280;
 
@@ -117,14 +116,14 @@ export class BattleScene extends Phaser.Scene {
   private logText!: Phaser.GameObjects.Text;
   private logLines: string[] = [];
   private initiativeBar!: Phaser.GameObjects.Container;
-  private mode: Mode = "idle";
-  private moveTiles: TilePos[] = [];
-  private targetUnits: Unit[] = [];
+  // Single source of truth for input/turn state. `mode`, `acting`, `ended`
+  // and the move/attack target arrays all live here now — the scene reads
+  // them via fsm.current() / fsm.currentTiles() / etc., and writes them by
+  // sending events. See src/scenes/battle/BattleFSM.ts.
+  private fsm = new BattleFSM();
   private hoverPreview!: Phaser.GameObjects.Container;
   private debug = false;
   private debugText!: Phaser.GameObjects.Text;
-  private acting = false;
-  private ended = false;
   private roundText!: Phaser.GameObjects.Text;
   private activeRing!: Phaser.GameObjects.Graphics;
   private activeArrow!: Phaser.GameObjects.Text;
@@ -137,6 +136,11 @@ export class BattleScene extends Phaser.Scene {
   private wpnZone!: Phaser.GameObjects.Zone;
   private ablZone!: Phaser.GameObjects.Zone;
   private panelUnit?: Unit;
+  // Circular headshot crop of the side-panel unit's portrait. Recreated each
+  // time the panel target changes; absent when the unit has no portrait file.
+  private avatarImg?: Phaser.GameObjects.Image;
+  private avatarMaskG?: Phaser.GameObjects.Graphics;
+  private avatarRing?: Phaser.GameObjects.Graphics;
 
   constructor() { super("BattleScene"); }
 
@@ -145,11 +149,7 @@ export class BattleScene extends Phaser.Scene {
     this.unitViews = new Map();
     this.actionButtons = [];
     this.logLines = [];
-    this.mode = "idle";
-    this.moveTiles = [];
-    this.targetUnits = [];
-    this.acting = false;
-    this.ended = false;
+    this.fsm = new BattleFSM();
     this.debug = false;
   }
 
@@ -264,6 +264,11 @@ export class BattleScene extends Phaser.Scene {
     drawPanel(apg, GAME_WIDTH - PANEL_W - 12, 80, PANEL_W, GAME_HEIGHT - 100);
     const px = GAME_WIDTH - PANEL_W;
     const panelTextW = PANEL_W - 24; // inner width with margin
+    // Avatar slot lives at the left of the panel header; name/inspect/AP text
+    // sit to the right of it inside the narrower textX column.
+    const avatarSlot = 64; // 56px headshot + 8px gap
+    const textX = px + avatarSlot;
+    const headerTextW = panelTextW - avatarSlot;
     // Active-unit ribbon: highlights the currently-acting character above the name.
     this.activeRibbon = this.add.graphics();
     this.activeRibbonText = this.add.text(px, 84, "", {
@@ -271,26 +276,26 @@ export class BattleScene extends Phaser.Scene {
       fontSize: "10px",
       color: "#0a0c12"
     });
-    this.activeUnitText = this.add.text(px, 100, "", {
+    this.activeUnitText = this.add.text(textX, 100, "", {
       fontFamily: FAMILY_HEADING,
       fontSize: "18px",
       color: "#f4d999",
-      wordWrap: { width: panelTextW }
+      wordWrap: { width: headerTextW }
     });
-    this.inspectTag = this.add.text(px, 126, "", {
+    this.inspectTag = this.add.text(textX, 126, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "11px",
       color: "#c9b07a",
       fontStyle: "italic",
-      wordWrap: { width: panelTextW }
+      wordWrap: { width: headerTextW }
     });
-    this.apText = this.add.text(px, 144, "", {
+    this.apText = this.add.text(textX, 144, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#dad3bd",
-      wordWrap: { width: panelTextW }
+      wordWrap: { width: headerTextW }
     });
-    this.statText = this.add.text(px, 168, "", {
+    this.statText = this.add.text(px, 176, "", {
       fontFamily: FAMILY_MONO,
       fontSize: "12px",
       color: "#9da7b8",
@@ -383,7 +388,7 @@ export class BattleScene extends Phaser.Scene {
       this.refreshDebug();
     });
     this.input.keyboard?.on("keydown-ESC", () => {
-      if (this.mode === "idle") return;
+      if (!this.fsm.isTargeting()) return;
       const cur = this.initiative.current();
       if (cur && cur.faction === "player") this.cancelTargetingMode(cur);
       else this.clearOverlays();
@@ -500,7 +505,7 @@ export class BattleScene extends Phaser.Scene {
 
   // ---- Turn flow ----
   private beginCurrentTurn(): void {
-    if (this.ended) return;
+    if (this.fsm.isEnded()) return;
     let u = this.initiative.current();
     while (u && !isAlive(u)) {
       u = this.initiative.advance(this.state.units);
@@ -522,10 +527,17 @@ export class BattleScene extends Phaser.Scene {
     this.drawOverlay();
 
     const startTurn = () => {
-      if (this.ended) return;
+      if (this.fsm.isEnded()) return;
       if (u.faction === "player" && isAlive(u)) {
+        // Coming off an enemy phase: drop back to idle before unlocking input.
+        if (this.fsm.current().tag === "enemyTurn") {
+          this.fsm.send({ tag: "END_ENEMY_TURN" });
+        }
         this.buildActionButtons(u);
       } else {
+        // Enter enemyTurn before kicking off the AI loop so any tile click
+        // arriving during the 450ms grace window is properly blocked.
+        this.fsm.send({ tag: "BEGIN_ENEMY_TURN" });
         this.time.delayedCall(450, () => this.runEnemyTurn(u));
       }
     };
@@ -628,7 +640,59 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  // Circular headshot crop of the unit's neutral portrait, anchored to the
+  // top-left of the side panel. Skips silently if the portrait file isn't
+  // loaded — rank-and-file units without portraits just get no avatar.
+  private setSidePanelAvatar(u: Unit): void {
+    this.avatarImg?.destroy();
+    this.avatarMaskG?.destroy();
+    this.avatarRing?.destroy();
+    this.avatarImg = undefined;
+    this.avatarMaskG = undefined;
+    this.avatarRing = undefined;
+
+    const key = `portrait:${u.id}`;
+    if (!hasAsset(key) || !this.textures.exists(key)) return;
+
+    const size = 56;
+    const px = GAME_WIDTH - PANEL_W;
+    const cx = px + size / 2;
+    const cy = 98 + size / 2;
+
+    const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+    const srcW = tex.width || 1024;
+    const srcH = tex.height || 1536;
+    // Scale the portrait wider than the circle so the head fills it, then push
+    // the image up so the face (~14% down from the top of the source) lands at
+    // the circle's vertical center. Tuned for the standard 2:3 head-and-shoulders
+    // crop our portraits use; rough enough to read for any reasonable composition.
+    const displayW = size * 1.95;
+    const displayH = displayW * (srcH / srcW);
+    const headCenterFromTop = displayH * 0.16;
+
+    const img = this.add.image(cx, cy - headCenterFromTop, key)
+      .setOrigin(0.5, 0)
+      .setDisplaySize(displayW, displayH)
+      .setDepth(2);
+
+    const maskG = this.make.graphics({ x: 0, y: 0 }, false);
+    maskG.fillStyle(0xffffff);
+    maskG.fillCircle(cx, cy, size / 2);
+    img.setMask(maskG.createGeometryMask());
+
+    const ring = this.add.graphics().setDepth(3);
+    ring.lineStyle(2, COLORS.gold, 0.92);
+    ring.strokeCircle(cx, cy, size / 2 + 1);
+    ring.lineStyle(1, 0x000000, 0.5);
+    ring.strokeCircle(cx, cy, size / 2 + 3);
+
+    this.avatarImg = img;
+    this.avatarMaskG = maskG;
+    this.avatarRing = ring;
+  }
+
   private refreshSidePanel(u: Unit): void {
+    this.setSidePanelAvatar(u);
     this.apText.setText(`AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`);
     const mov = effectiveMovement(u);
     const movStr = mov !== u.stats.movement ? `${u.stats.movement}+${mov - u.stats.movement}` : `${u.stats.movement}`;
@@ -753,7 +817,7 @@ export class BattleScene extends Phaser.Scene {
   private checkEnd(): boolean {
     const v = checkVictory(this.state);
     if (!v) return false;
-    this.ended = true;
+    this.fsm.send({ tag: "BATTLE_END" });
     if (v === "player") sfxVictory();
     else sfxDefeat();
     let save = loadSave();
@@ -875,27 +939,24 @@ export class BattleScene extends Phaser.Scene {
     u.state.roamUsedThisTurn = true;
     u.state.apRemaining = 1;
     this.pushLog(`${u.name} roams onward.`);
-    this.mode = "roam";
     const reach = reachableForUnit(this.state, u);
-    this.moveTiles = reach.filter((t) => !unitAt(this.state, t));
+    const tiles = reach.filter((t) => !unitAt(this.state, t));
+    this.fsm.send({ tag: "ENTER_ROAM", tiles });
     this.drawOverlay();
   }
 
   private enterMoveMode(u: Unit): void {
     sfxClick();
-    this.mode = "move";
     const reach = reachableForUnit(this.state, u);
-    this.moveTiles = reach.filter((t) => {
-      const occ = unitAt(this.state, t);
-      return !occ;
-    });
+    const tiles = reach.filter((t) => !unitAt(this.state, t));
+    this.fsm.send({ tag: "ENTER_MOVE", tiles });
     this.drawOverlay();
   }
 
   private enterAttackMode(u: Unit): void {
     sfxClick();
-    this.mode = "attack";
-    this.targetUnits = targetsForUnit(this.state, u);
+    const targets = targetsForUnit(this.state, u);
+    this.fsm.send({ tag: "ENTER_ATTACK", targets });
     this.drawOverlay();
   }
 
@@ -915,31 +976,29 @@ export class BattleScene extends Phaser.Scene {
     this.threatG.clear();
     this.cursorG.clear();
     this.hoverPreview.setVisible(false);
-    this.mode = "idle";
-    this.moveTiles = [];
-    this.targetUnits = [];
   }
 
   private drawOverlay(): void {
     this.overlayG.clear();
     this.threatG.clear();
-    if (this.mode === "move" || this.mode === "roam") {
-      const tint = this.mode === "roam" ? 0xffd45a : COLORS.moveTile;
-      const fillA = this.mode === "roam" ? 0.32 : 0.28;
+    const state = this.fsm.current();
+    if (state.tag === "move" || state.tag === "roam") {
+      const tint = state.tag === "roam" ? 0xffd45a : COLORS.moveTile;
+      const fillA = state.tag === "roam" ? 0.32 : 0.28;
       this.overlayG.fillStyle(tint, fillA);
-      for (const t of this.moveTiles) {
+      for (const t of state.tiles) {
         const px = tileToPixel(t, this.originX, this.originY);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
       }
       this.overlayG.lineStyle(1, tint, 0.85);
-      for (const t of this.moveTiles) {
+      for (const t of state.tiles) {
         const px = tileToPixel(t, this.originX, this.originY);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
       }
-    } else if (this.mode === "attack") {
+    } else if (state.tag === "attack") {
       this.overlayG.fillStyle(COLORS.attackTile, 0.32);
       this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
-      for (const t of this.targetUnits) {
+      for (const t of state.targets) {
         const px = tileToPixel(t.state.position, this.originX, this.originY);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
@@ -961,15 +1020,16 @@ export class BattleScene extends Phaser.Scene {
 
   // ---- Pointer handlers ----
   private handlePointerDown(p: Phaser.Input.Pointer): void {
-    if (this.acting || this.ended) return;
+    if (this.fsm.isInputBlocked()) return;
     const u = this.initiative.current();
     if (!u || u.faction !== "player") return;
     const tile = this.screenToTile(p.x, p.y);
     if (!tile) return;
-    if (this.mode === "move" || this.mode === "roam") {
-      const ok = this.moveTiles.some((t) => t.x === tile.x && t.y === tile.y);
+    const fsmState = this.fsm.current();
+    if (fsmState.tag === "move" || fsmState.tag === "roam") {
+      const ok = fsmState.tiles.some((t) => t.x === tile.x && t.y === tile.y);
       if (ok) {
-        this.acting = true;
+        this.fsm.send({ tag: "BEGIN_PLAYER_ACTION" });
         void this.animateMove(u, tile);
         return;
       }
@@ -978,12 +1038,12 @@ export class BattleScene extends Phaser.Scene {
       // Without this, clicks were silently dropped and players had no visible
       // way to back out without knowing the ESC shortcut.
       this.cancelTargetingMode(u);
-    } else if (this.mode === "attack") {
-      const target = this.targetUnits.find(
+    } else if (fsmState.tag === "attack") {
+      const target = fsmState.targets.find(
         (t) => t.state.position.x === tile.x && t.state.position.y === tile.y
       );
       if (target) {
-        this.acting = true;
+        this.fsm.send({ tag: "BEGIN_PLAYER_ACTION" });
         void this.animateAttack(u, target);
         return;
       }
@@ -1024,17 +1084,18 @@ export class BattleScene extends Phaser.Scene {
   // Roam is special: entering it consumed the free AP and flagged the unit
   // as having roamed, so canceling has to give those back.
   private cancelTargetingMode(u: Unit): void {
-    if (this.mode === "roam") {
+    if (this.fsm.isRoaming()) {
       u.state.roamUsedThisTurn = false;
       u.state.apRemaining = 0;
     }
+    this.fsm.send({ tag: "CANCEL_TARGETING" });
     this.clearOverlays();
     this.clearActionButtons();
     this.buildActionButtons(u);
   }
 
   private handlePointerMove(p: Phaser.Input.Pointer): void {
-    if (this.ended) return;
+    if (this.fsm.isEnded()) return;
     const tile = this.screenToTile(p.x, p.y);
     if (!tile) {
       this.cursorG.clear();
@@ -1046,9 +1107,10 @@ export class BattleScene extends Phaser.Scene {
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
     this.cursorG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
 
-    if (this.mode === "attack") {
+    const fsmState = this.fsm.current();
+    if (fsmState.tag === "attack") {
       const u = this.initiative.current();
-      const target = u && this.targetUnits.find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
+      const target = u && fsmState.targets.find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
       if (u && target) {
         const tileDef = this.state.grid.tileAt(target.state.position);
         const pre = previewAttack(u, target, tileDef, false, this.state.units);
@@ -1131,13 +1193,15 @@ export class BattleScene extends Phaser.Scene {
       return occ !== null && occ !== u && occ.faction !== u.faction;
     });
     if (!path) {
-      this.acting = false;
+      // Player branch: stuck in playerAnimating, recover to idle. Enemy branch:
+      // FSM is in enemyTurn, ACTION_COMPLETE is a no-op there.
+      this.fsm.send({ tag: "ACTION_COMPLETE" });
       return;
     }
     moveUnit(this.state, u, dest);
     const view = this.unitViews.get(u.id);
     if (!view) {
-      this.acting = false;
+      this.fsm.send({ tag: "ACTION_COMPLETE" });
       return;
     }
     let prev: TilePos = startTile;
@@ -1193,7 +1257,8 @@ export class BattleScene extends Phaser.Scene {
     if (isActive) this.drawActiveMarker(u);
     this.clearActionButtons();
     this.clearOverlays();
-    this.acting = false;
+    // Player path: playerAnimating → idle. Enemy path: stays in enemyTurn (no-op).
+    this.fsm.send({ tag: "ACTION_COMPLETE" });
     if (this.checkEnd()) return;
     // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
     if (u.faction !== "player") return;
@@ -1347,7 +1412,8 @@ export class BattleScene extends Phaser.Scene {
     this.refreshSidePanel(u);
     this.clearActionButtons();
     this.clearOverlays();
-    this.acting = false;
+    // Player path: playerAnimating → idle. Enemy path: stays in enemyTurn (no-op).
+    this.fsm.send({ tag: "ACTION_COMPLETE" });
     if (this.checkEnd()) return;
     // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
     if (u.faction !== "player") return;
@@ -1355,9 +1421,13 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ---- Enemy turn ----
+  // Caller (beginCurrentTurn) has already sent BEGIN_ENEMY_TURN, so the FSM
+  // is in enemyTurn for the entire body of this method. We don't transition
+  // out here — endCurrentTurn → beginCurrentTurn handles the END_ENEMY_TURN
+  // event when control passes back to a player unit (or BATTLE_END if the
+  // battle resolved during an animation).
   private async runEnemyTurn(u: Unit): Promise<void> {
-    if (this.ended) return;
-    this.acting = true;
+    if (this.fsm.isEnded()) return;
     while (u.state.apRemaining > 0 && isAlive(u)) {
       const plan = planEnemyTurn(this.state, u);
       if (plan.length === 0) break;
@@ -1387,11 +1457,9 @@ export class BattleScene extends Phaser.Scene {
       } else {
         break;
       }
-      // If checkEnd was hit during animation, ended is true
-      if (this.ended) return;
+      if (this.fsm.isEnded()) return;
     }
-    this.acting = false;
-    if (this.ended) return;
+    if (this.fsm.isEnded()) return;
     if (this.checkEnd()) return;
     this.endCurrentTurn();
   }
