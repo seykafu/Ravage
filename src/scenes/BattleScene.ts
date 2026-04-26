@@ -264,11 +264,10 @@ export class BattleScene extends Phaser.Scene {
     drawPanel(apg, GAME_WIDTH - PANEL_W - 12, 80, PANEL_W, GAME_HEIGHT - 100);
     const px = GAME_WIDTH - PANEL_W;
     const panelTextW = PANEL_W - 24; // inner width with margin
-    // Avatar slot lives at the left of the panel header; name/inspect/AP text
-    // sit to the right of it inside the narrower textX column.
-    const avatarSlot = 64; // 56px headshot + 8px gap
-    const textX = px + avatarSlot;
-    const headerTextW = panelTextW - avatarSlot;
+    // Header layout: a large headshot is centered horizontally near the top of
+    // the panel; the unit's name, inspect tag, and AP line sit centered below
+    // it as a vertical stack. The avatar itself is drawn in setSidePanelAvatar.
+    const panelCenterX = px + PANEL_W / 2 - 12; // panel center after the right margin
     // Active-unit ribbon: highlights the currently-acting character above the name.
     this.activeRibbon = this.add.graphics();
     this.activeRibbonText = this.add.text(px, 84, "", {
@@ -276,26 +275,29 @@ export class BattleScene extends Phaser.Scene {
       fontSize: "10px",
       color: "#0a0c12"
     });
-    this.activeUnitText = this.add.text(textX, 100, "", {
+    this.activeUnitText = this.add.text(panelCenterX, 200, "", {
       fontFamily: FAMILY_HEADING,
       fontSize: "18px",
       color: "#f4d999",
-      wordWrap: { width: headerTextW }
-    });
-    this.inspectTag = this.add.text(textX, 126, "", {
+      align: "center",
+      wordWrap: { width: panelTextW }
+    }).setOrigin(0.5, 0);
+    this.inspectTag = this.add.text(panelCenterX, 226, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "11px",
       color: "#c9b07a",
       fontStyle: "italic",
-      wordWrap: { width: headerTextW }
-    });
-    this.apText = this.add.text(textX, 144, "", {
+      align: "center",
+      wordWrap: { width: panelTextW }
+    }).setOrigin(0.5, 0);
+    this.apText = this.add.text(panelCenterX, 244, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#dad3bd",
-      wordWrap: { width: headerTextW }
-    });
-    this.statText = this.add.text(px, 176, "", {
+      align: "center",
+      wordWrap: { width: panelTextW }
+    }).setOrigin(0.5, 0);
+    this.statText = this.add.text(px, 272, "", {
       fontFamily: FAMILY_MONO,
       fontSize: "12px",
       color: "#9da7b8",
@@ -304,19 +306,19 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Subtle divider + ACTIONS label sit just above the action button block.
-    this.add.text(px, 304, "ACTIONS", {
+    this.add.text(px, 388, "ACTIONS", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     }).setLetterSpacing(2);
 
     // Battle log lives below the (now compacter) action button block.
-    this.add.text(px, 484, "BATTLE LOG", {
+    this.add.text(px, 552, "BATTLE LOG", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     }).setLetterSpacing(2);
-    this.logText = this.add.text(px, 502, "", {
+    this.logText = this.add.text(px, 570, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "12px",
       color: "#c0c5cf",
@@ -654,21 +656,24 @@ export class BattleScene extends Phaser.Scene {
     const key = `portrait:${u.id}`;
     if (!hasAsset(key) || !this.textures.exists(key)) return;
 
-    const size = 56;
+    const size = 96;
     const px = GAME_WIDTH - PANEL_W;
-    const cx = px + size / 2;
-    const cy = 98 + size / 2;
+    const cx = px + PANEL_W / 2 - 12; // centered in panel content area (matches header text)
+    const cy = 102 + size / 2;        // top y = 102 (just below the ribbon at 82–96)
 
     const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
     const srcW = tex.width || 1024;
     const srcH = tex.height || 1536;
-    // Scale the portrait wider than the circle so the head fills it, then push
-    // the image up so the face (~14% down from the top of the source) lands at
-    // the circle's vertical center. Tuned for the standard 2:3 head-and-shoulders
-    // crop our portraits use; rough enough to read for any reasonable composition.
-    const displayW = size * 1.95;
+    // Scale the portrait modestly wider than the circle. Less zoom than before
+    // (1.5× vs 1.95×) means the whole head — crown to chin — lands inside the
+    // circle even when the character's head sits slightly off-center in the
+    // source. Then pull the image up so the face center lands on the circle's
+    // vertical center. Our portraits put the eye-line at roughly y=22% of the
+    // source height (per public/assets/portraits/README.md), so the face midline
+    // is around 24% down.
+    const displayW = size * 1.5;
     const displayH = displayW * (srcH / srcW);
-    const headCenterFromTop = displayH * 0.16;
+    const headCenterFromTop = displayH * 0.24;
 
     const img = this.add.image(cx, cy - headCenterFromTop, key)
       .setOrigin(0.5, 0)
@@ -849,7 +854,7 @@ export class BattleScene extends Phaser.Scene {
 
   private buildActionButtons(u: Unit): void {
     const px = GAME_WIDTH - PANEL_W;
-    const top = 322;             // sits just under the ACTIONS label at y=304
+    const top = 406;             // sits just under the ACTIONS label at y=388
     const fullW = 256;           // panel inner width usable for buttons
     const colW = 126;            // two columns with a small gap
     const colGap = 4;
