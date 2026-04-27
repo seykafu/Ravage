@@ -61,6 +61,11 @@ export interface UnitDef {
   palette?: { primary: number; secondary: number; accent: number };
   // Boss / named unit gets a portrait.
   portrait?: boolean;
+  // Optional override for the portrait asset key. Use this when a unit's `id`
+  // is an alias of a canonical character (e.g. "amar_true" in Battle 1 is the
+  // same character as "amar" but with a different statline) so the side-panel
+  // avatar still routes to the right portrait file.
+  portraitId?: string;
   // Optional tag set used by AI scoring (e.g., "boss" forces the AI to be more aggressive).
   tags?: ReadonlySet<string>;
   // Up to MAX_ABILITIES special abilities granted at unit creation.

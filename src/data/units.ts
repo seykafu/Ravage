@@ -28,6 +28,7 @@ export const PLAYERS = {
     artSeed: 1,
     palette: PLAYER_PALETTES.amar,
     portrait: true,
+    portraitId: "amar",
     abilities: ["BossFighter"]
   }),
   lucian: (): UnitDef => ({

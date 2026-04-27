@@ -306,19 +306,21 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Subtle divider + ACTIONS label sit just above the action button block.
-    this.add.text(px, 388, "ACTIONS", {
+    // Stat block can grow to 7 lines (HP / PWR-ARM / SPD-MOV / WPN / STN / ABL
+    // / INV) ≈ 119px starting at y=272, ending near y=391. Leave breathing room.
+    this.add.text(px, 408, "ACTIONS", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     }).setLetterSpacing(2);
 
-    // Battle log lives below the (now compacter) action button block.
-    this.add.text(px, 552, "BATTLE LOG", {
+    // Battle log lives below the action button block.
+    this.add.text(px, 572, "BATTLE LOG", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
     }).setLetterSpacing(2);
-    this.logText = this.add.text(px, 570, "", {
+    this.logText = this.add.text(px, 590, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "12px",
       color: "#c0c5cf",
@@ -489,7 +491,7 @@ export class BattleScene extends Phaser.Scene {
 
   private pushLog(msg: string): void {
     this.logLines.push(msg);
-    if (this.logLines.length > 8) this.logLines.shift();
+    if (this.logLines.length > 7) this.logLines.shift();
     this.logText.setText(this.logLines.join("\n"));
   }
 
@@ -653,7 +655,9 @@ export class BattleScene extends Phaser.Scene {
     this.avatarMaskG = undefined;
     this.avatarRing = undefined;
 
-    const key = `portrait:${u.id}`;
+    // Prefer an explicit portraitId override; fall back to the unit's own id.
+    // This lets stat-profile aliases (e.g., amar_true → amar) share artwork.
+    const key = `portrait:${u.portraitId ?? u.id}`;
     if (!hasAsset(key) || !this.textures.exists(key)) return;
 
     const size = 96;
@@ -854,7 +858,7 @@ export class BattleScene extends Phaser.Scene {
 
   private buildActionButtons(u: Unit): void {
     const px = GAME_WIDTH - PANEL_W;
-    const top = 406;             // sits just under the ACTIONS label at y=388
+    const top = 426;             // sits just under the ACTIONS label at y=408
     const fullW = 256;           // panel inner width usable for buttons
     const colW = 126;            // two columns with a small gap
     const colGap = 4;
