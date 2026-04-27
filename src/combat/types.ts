@@ -93,6 +93,7 @@ export interface TilePos {
 }
 
 export type TerrainKind =
+  // Core 8 — the original procedural set
   | "grass"
   | "stone"
   | "dirt"
@@ -100,7 +101,20 @@ export type TerrainKind =
   | "water"
   | "carpet"
   | "snow"
-  | "mud";
+  | "mud"
+  // Main asset set — real PNGs in public/assets/tiles/
+  | "marble"
+  | "sand"
+  | "forest"
+  | "wall"
+  | "door"
+  | "rubble"
+  // Bonus asset set — additional environment variety
+  | "cobblestone"
+  | "cracked_earth"
+  | "ice"
+  | "lava"
+  | "moss_stone";
 
 export type ObstacleKind =
   | "none"

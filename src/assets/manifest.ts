@@ -138,9 +138,13 @@ const backdropEntries: ManifestEntry[] = BACKDROP_IDS.map((id) => ({
 }));
 
 // Tiles by terrain name. Optional override for the procedural tile painter.
+// First row: the main 12 documented in public/assets/tiles/README.md.
+// Second row: bonus environment tiles (ice/lava/etc.) — usable from any
+// MapDef once the matching TerrainKind value is selected.
 const TILE_IDS = [
   "grass", "stone", "wood", "marble", "dirt", "snow", "sand", "water",
-  "forest", "wall", "door", "rubble"
+  "forest", "wall", "door", "rubble",
+  "cobblestone", "cracked_earth", "ice", "lava", "moss_stone", "mud"
 ] as const;
 
 const tileEntries: ManifestEntry[] = TILE_IDS.map((id) => ({

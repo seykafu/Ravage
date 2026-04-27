@@ -1,6 +1,9 @@
 import type { MapDef, ObstacleKind, TerrainKind, Tile, TilePos, Unit } from "./types";
 import { manhattan } from "../util/math";
 
+// Defender damage multiplier per terrain (1.0 = neutral, <1.0 = cover).
+// Most terrains stay neutral so existing battles are unaffected; tiles that
+// naturally provide cover (forest canopy, broken stone) get a small benefit.
 const TERRAIN_DEFEND_BONUS: Record<TerrainKind, number> = {
   grass: 1.0,
   stone: 1.0,
@@ -9,7 +12,20 @@ const TERRAIN_DEFEND_BONUS: Record<TerrainKind, number> = {
   carpet: 1.0,
   water: 1.0,
   snow: 1.0,
-  mud: 1.0
+  mud: 1.0,
+  // Main asset set
+  marble: 1.0,
+  sand: 1.0,
+  forest: 0.90,   // canopy cover
+  wall: 1.0,
+  door: 1.0,
+  rubble: 0.92,   // broken stone offers some cover
+  // Bonus asset set
+  cobblestone: 1.0,
+  cracked_earth: 1.0,
+  ice: 1.0,
+  lava: 1.0,
+  moss_stone: 1.0
 };
 
 const OBSTACLE_PROFILE: Record<

@@ -7,15 +7,31 @@ import { TILE_SIZE } from "../util/constants";
 // Render a tile as a pseudo-3D block: top face + slight side highlight + speckled detail.
 // We use TILE_SIZE for the top-face square; the bevel is drawn just inside its borders.
 
+// Palettes used by the procedural tile painter. The real PNGs in
+// public/assets/tiles/ override these at runtime — these stay as the
+// always-available fallback if a real tile fails to load.
 const TERRAIN_BASE: Record<TerrainKind, { hi: number; mid: number; lo: number }> = {
-  grass:   { hi: 0x6da55a, mid: 0x4d8147, lo: 0x2e5a36 },
-  stone:   { hi: 0x9e9e9e, mid: 0x6e6e75, lo: 0x44444a },
-  dirt:    { hi: 0x8a684a, mid: 0x644a35, lo: 0x3a2b1e },
-  wood:    { hi: 0xa07442, mid: 0x6f4e2c, lo: 0x3c2914 },
-  carpet:  { hi: 0x91382f, mid: 0x6a221d, lo: 0x3c100c },
-  water:   { hi: 0x4d8ed1, mid: 0x2c5e98, lo: 0x12345f },
-  snow:    { hi: 0xeef0f4, mid: 0xc5cdd6, lo: 0x8c98a9 },
-  mud:     { hi: 0x6a4d2c, mid: 0x4a3520, lo: 0x231811 }
+  grass:         { hi: 0x6da55a, mid: 0x4d8147, lo: 0x2e5a36 },
+  stone:         { hi: 0x9e9e9e, mid: 0x6e6e75, lo: 0x44444a },
+  dirt:          { hi: 0x8a684a, mid: 0x644a35, lo: 0x3a2b1e },
+  wood:          { hi: 0xa07442, mid: 0x6f4e2c, lo: 0x3c2914 },
+  carpet:        { hi: 0x91382f, mid: 0x6a221d, lo: 0x3c100c },
+  water:         { hi: 0x4d8ed1, mid: 0x2c5e98, lo: 0x12345f },
+  snow:          { hi: 0xeef0f4, mid: 0xc5cdd6, lo: 0x8c98a9 },
+  mud:           { hi: 0x6a4d2c, mid: 0x4a3520, lo: 0x231811 },
+  // Main asset set
+  marble:        { hi: 0xefe9d8, mid: 0xc8c2af, lo: 0x8b8674 },
+  sand:          { hi: 0xe6cf99, mid: 0xc4a973, lo: 0x8a7449 },
+  forest:        { hi: 0x5b8a48, mid: 0x3a5e30, lo: 0x1f3a1c },
+  wall:          { hi: 0x9e9a92, mid: 0x6f6c66, lo: 0x3e3c38 },
+  door:          { hi: 0xa07442, mid: 0x6f4e2c, lo: 0x3c2914 },
+  rubble:        { hi: 0xa9a299, mid: 0x7a746b, lo: 0x4a4540 },
+  // Bonus asset set
+  cobblestone:   { hi: 0x9a958a, mid: 0x6e6961, lo: 0x42403c },
+  cracked_earth: { hi: 0xa68360, mid: 0x7a5b3e, lo: 0x4a3624 },
+  ice:           { hi: 0xdaeaf2, mid: 0xa8c7d8, lo: 0x6e90a4 },
+  lava:          { hi: 0xff8a3a, mid: 0xc94a1e, lo: 0x6f1c0c },
+  moss_stone:    { hi: 0x6e7a52, mid: 0x4a5436, lo: 0x2a311e }
 };
 
 const drawIsoTile = (px: PixelCanvas, base: { hi: number; mid: number; lo: number }, rng: Rng): void => {
