@@ -45,12 +45,14 @@ visually with any procedural tile next to them.
    shadow shadow shadow shadow
 ```
 
-## Obstacles are NOT in this folder
+## Obstacles live in `../obstacles/`
 
 Things that sit on top of tiles (haystacks, fences, wagons, trees, rocks,
-torches, throne, pillar, barricade) are drawn procedurally on top of the
-base tile. There's no manifest entry for them yet — if you want real
-obstacle art, that's a separate pass.
+torches, throne, pillar, barricade) are real PNGs in
+`public/assets/obstacles/` — see that folder's README for the spec. The
+engine composites the obstacle PNG over the base tile in
+`ensureTileTexture()`, falling back to the procedural painter for any
+obstacle file that's missing.
 
 ## Don't
 

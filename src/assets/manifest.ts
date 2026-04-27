@@ -153,6 +153,19 @@ const tileEntries: ManifestEntry[] = TILE_IDS.map((id) => ({
   kind: "image"
 }));
 
+// Obstacles — one PNG per ObstacleKind, drawn over the base tile in
+// ensureTileTexture(). Missing files fall back to the procedural painter.
+const OBSTACLE_IDS = [
+  "hay", "fence", "wagon", "barricade", "pillar", "throne",
+  "tree", "rock", "torch"
+] as const;
+
+const obstacleEntries: ManifestEntry[] = OBSTACLE_IDS.map((id) => ({
+  id: `obstacle:${id}`,
+  path: `assets/obstacles/${id}.png`,
+  kind: "image"
+}));
+
 // VFX
 const vfxEntries: ManifestEntry[] = [
   { id: "vfx:slash",    path: "assets/vfx/slash.png",     kind: "spritesheet", frame: ASSET_SPEC.vfx.slash },
@@ -173,6 +186,7 @@ export const MANIFEST: ManifestEntry[] = [
   ...unitAnimEntries,
   ...backdropEntries,
   ...tileEntries,
+  ...obstacleEntries,
   ...vfxEntries,
   ...uiEntries
 ];

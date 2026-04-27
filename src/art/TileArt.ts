@@ -204,20 +204,56 @@ const drawObstacle = (px: PixelCanvas, kind: ObstacleKind, rng: Rng): void => {
 export const tileTextureKey = (terrain: TerrainKind, obstacle: ObstacleKind, seed: number): string =>
   `tile-${terrain}-${obstacle}-${seed}`;
 
+// Cache key for the composited (real terrain + real obstacle) variant. We
+// don't include the procedural seed because real PNGs are deterministic.
+const compositeKey = (terrain: TerrainKind, obstacle: ObstacleKind): string =>
+  `tile-real-${terrain}-${obstacle}`;
+
+// Pull the underlying source image for a loaded Phaser texture so we can
+// draw it onto our own canvas. Returns null if the asset isn't loaded.
+const getSource = (scene: Phaser.Scene, key: string): CanvasImageSource | null => {
+  if (!scene.textures.exists(key)) return null;
+  const src = scene.textures.get(key).getSourceImage();
+  return src as CanvasImageSource;
+};
+
 export const ensureTileTexture = (
   scene: Phaser.Scene,
   terrain: TerrainKind,
   obstacle: ObstacleKind,
   seed: number
 ): string => {
-  // If a real terrain tile is loaded AND there's no obstacle overlay needed,
-  // use it directly. Procedural still wins when an obstacle is present, since
-  // we draw obstacles atop the base tile in code.
+  // 1) Plain tile, no obstacle: use the real PNG directly if it's loaded.
   if (obstacle === "none") {
     const realKey = `tile:${terrain}`;
     if (scene.textures.exists(realKey)) return realKey;
   }
 
+  // 2) Tile + obstacle: if BOTH real PNGs are loaded, composite them into a
+  //    single cached canvas. The composite is keyed by (terrain, obstacle) so
+  //    every cell with the same combo shares one texture (no per-seed waste).
+  if (obstacle !== "none") {
+    const composite = compositeKey(terrain, obstacle);
+    if (scene.textures.exists(composite)) return composite;
+
+    const tileSrc = getSource(scene, `tile:${terrain}`);
+    const obstacleSrc = getSource(scene, `obstacle:${obstacle}`);
+    if (tileSrc && obstacleSrc) {
+      const canvas = document.createElement("canvas");
+      canvas.width = TILE_SIZE;
+      canvas.height = TILE_SIZE;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tileSrc, 0, 0, TILE_SIZE, TILE_SIZE);
+        ctx.drawImage(obstacleSrc, 0, 0, TILE_SIZE, TILE_SIZE);
+        scene.textures.addCanvas(composite, canvas);
+        return composite;
+      }
+    }
+  }
+
+  // 3) Fallback: full procedural — base tile palette + procedural obstacle.
   const key = tileTextureKey(terrain, obstacle, seed);
   if (scene.textures.exists(key)) return key;
   const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
