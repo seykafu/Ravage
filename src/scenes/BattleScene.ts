@@ -10,6 +10,7 @@ import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { SettingsButton } from "../ui/SettingsButton";
+import { FastForwardButton } from "../ui/FastForwardButton";
 import { battleById } from "../data/battles";
 import {
   BattleState,
@@ -141,6 +142,10 @@ export class BattleScene extends Phaser.Scene {
   private avatarImg?: Phaser.GameObjects.Image;
   private avatarMaskG?: Phaser.GameObjects.Graphics;
   private avatarRing?: Phaser.GameObjects.Graphics;
+  // 2x enemy-turn toggle. When true and the active unit is an enemy, the
+  // scene's tween + timer timescale is doubled so the AI loop visibly snaps
+  // forward without altering combat math.
+  private fastForward = false;
 
   constructor() { super("BattleScene"); }
 
@@ -222,8 +227,8 @@ export class BattleScene extends Phaser.Scene {
       const px = tileToPixel(u.state.position, this.originX, this.originY);
       const baseY = px.y - 4;
       // Cast-shadow first so the sprite is drawn on top of it.
-      const shadow = this.add.ellipse(px.x, baseY + 22, 30, 9, 0x000000, 0.42);
-      const sprite = this.add.sprite(px.x, baseY, tex).setDisplaySize(40, 50);
+      const shadow = this.add.ellipse(px.x, baseY + 24, 33, 10, 0x000000, 0.42);
+      const sprite = this.add.sprite(px.x, baseY, tex).setDisplaySize(44, 55);
       if (u.faction === "enemy") sprite.setFlipX(true);
       const hpBg = this.add.graphics();
       const hpBar = this.add.graphics();
@@ -406,6 +411,13 @@ export class BattleScene extends Phaser.Scene {
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
     new SettingsButton(this, GAME_WIDTH - 32, 35);
+    // 2× enemy-turn toggle — sits to the left of the gear. The button stores
+    // its own enabled state and reports back via callback; we apply timescale
+    // immediately if an enemy is currently acting.
+    new FastForwardButton(this, GAME_WIDTH - 76, 35, (enabled) => {
+      this.fastForward = enabled;
+      this.applyTurnSpeed();
+    });
 
     this.pushLog(`${node.subtitle} begins.`);
     this.refreshInitiativeBar();
@@ -529,6 +541,9 @@ export class BattleScene extends Phaser.Scene {
     this.clearActionButtons();
     this.clearOverlays();
     this.drawOverlay();
+    // Apply the 2× enemy-turn timescale (or reset on player turn) before any
+    // tweens for this turn are scheduled.
+    this.applyTurnSpeed();
 
     const startTurn = () => {
       if (this.fsm.isEnded()) return;
@@ -550,6 +565,17 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private lastActorFaction: Unit["faction"] | null = null;
+
+  // Couple the global tween + timer scale to the fast-forward toggle. Only
+  // boosts during enemy turns so the player's own animations stay at the
+  // designed pace; falls back to 1× the moment control returns.
+  private applyTurnSpeed(): void {
+    const u = this.initiative.current();
+    const isEnemyActing = !!u && u.faction !== "player" && u.faction !== "ally";
+    const scale = this.fastForward && isEnemyActing ? 2 : 1;
+    this.tweens.timeScale = scale;
+    this.time.timeScale = scale;
+  }
 
   private showPhaseBanner(faction: Unit["faction"], onDone: () => void): void {
     if (this.phaseBanner) {
