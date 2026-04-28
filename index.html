@@ -2,95 +2,523 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Ravage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ravage — A tactical RPG of stances and steel</title>
+    <meta name="description" content="Ravage is a tactical RPG built on stances, the weapon triangle, and a 21-battle story. Try the V1 vertical slice — three battles, free, in your browser." />
+
+    <!-- Open Graph / social cards. og-image points at one of the in-game
+         backdrops so link previews look like the game. -->
+    <meta property="og:title" content="Ravage — A tactical RPG of stances and steel" />
+    <meta property="og:description" content="Stances, the weapon triangle, and a 21-battle story. Try the V1 vertical slice — three battles, free, in your browser." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/assets/backdrops/palaceCoup.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap"
     />
+
     <style>
-      :root { color-scheme: dark; }
+      /* ---- Palette mirrors src/util/constants.ts COLORS ---- */
+      :root {
+        --bg-deep: #05060a;
+        --bg-panel: #0d111c;
+        --panel-edge: #2a2a3a;
+        --gold: #c9b07a;
+        --gold-bright: #f2d997;
+        --blood: #b84141;
+        --steel: #6c7281;
+        --parchment: #e8d8a6;
+        --text: #e8eaf2;
+        --text-dim: #b6bccd;
+        color-scheme: dark;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
       html, body {
         margin: 0;
         padding: 0;
-        background: #05060a;
-        color: #e8eaf2;
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-        overflow: hidden;
-        height: 100%;
-        /* Touch hardening: stop the page from scrolling, zooming, or showing
-           the long-press text-selection UI when the player drags a unit on
-           the battle grid. */
-        touch-action: none;
-        overscroll-behavior: none;
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
+        background: var(--bg-deep);
+        color: var(--text);
+        font-family: "EB Garamond", "Georgia", "Times New Roman", serif;
+        font-size: 18px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
-      #app {
-        position: fixed;
-        inset: 0;
+
+      a { color: var(--gold-bright); text-decoration: none; transition: color 120ms ease; }
+      a:hover { color: var(--parchment); }
+
+      h1, h2, h3 {
+        font-family: "Cinzel", "Trajan Pro", "Times New Roman", serif;
+        color: var(--gold-bright);
+        letter-spacing: 0.04em;
+        margin: 0 0 0.4em;
+      }
+
+      .container { width: min(1100px, 92vw); margin: 0 auto; }
+
+      /* ---- HERO ---- */
+      .hero {
+        position: relative;
+        min-height: 100vh;
         display: grid;
         place-items: center;
-        background:
-          radial-gradient(ellipse at 50% 35%, rgba(96, 60, 40, 0.30), transparent 60%),
-          radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.55), transparent 70%),
-          linear-gradient(180deg, #06080f 0%, #02030a 100%);
-        touch-action: none;
+        text-align: center;
+        overflow: hidden;
+        isolation: isolate;
       }
-      /* Pixel-perfect scaling: keep crisp edges. */
-      #app canvas {
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
-        /* "3D feel" — soft chromatic aberration + faint scanlines + warm bloom */
-        filter:
-          drop-shadow(0 14px 30px rgba(0, 0, 0, 0.55))
-          drop-shadow(0 0 12px rgba(220, 170, 90, 0.08))
-          contrast(1.04)
-          saturate(1.06);
-        box-shadow: 0 0 0 1px rgba(255, 220, 160, 0.05) inset;
-      }
-      /* Subtle moving vignette overlay for depth */
-      #app::before {
+      .hero::before {
         content: "";
         position: absolute;
         inset: 0;
-        pointer-events: none;
         background:
-          radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%),
-          repeating-linear-gradient(
-            180deg,
-            rgba(255,255,255,0.012) 0 1px,
-            transparent 1px 3px
-          );
-        mix-blend-mode: multiply;
-        z-index: 2;
+          radial-gradient(ellipse at 50% 30%, rgba(96, 60, 40, 0.35), transparent 60%),
+          radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.65), transparent 70%),
+          linear-gradient(180deg, rgba(5,6,10,0.45) 0%, rgba(5,6,10,0.85) 60%, var(--bg-deep) 100%),
+          url("/assets/backdrops/palaceCoup.png") center / cover no-repeat;
+        filter: contrast(1.05) saturate(1.05);
+        z-index: -1;
       }
-      #loader {
+      .hero::after {
+        content: "";
         position: absolute;
         inset: 0;
-        display: grid;
-        place-items: center;
-        z-index: 3;
+        background:
+          repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .hero-inner { padding: 80px 20px; }
+
+      .hero-eyebrow {
+        font-family: "Cinzel", serif;
         font-size: 14px;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.4em;
+        color: var(--gold);
         text-transform: uppercase;
-        color: #c9b07a;
-        text-shadow: 0 0 12px rgba(201, 176, 122, 0.5);
+        margin-bottom: 18px;
+        text-shadow: 0 0 12px rgba(201, 176, 122, 0.3);
+      }
+
+      .hero-title {
+        font-family: "Cinzel Decorative", "Cinzel", serif;
+        font-weight: 900;
+        font-size: clamp(64px, 13vw, 168px);
+        line-height: 0.95;
+        margin: 0;
+        color: var(--gold-bright);
+        text-shadow:
+          0 4px 24px rgba(0, 0, 0, 0.85),
+          0 0 60px rgba(220, 170, 90, 0.25);
+        letter-spacing: 0.02em;
+      }
+
+      .hero-tagline {
+        font-family: "Cinzel", serif;
+        font-weight: 500;
+        font-size: clamp(18px, 2.4vw, 26px);
+        color: var(--parchment);
+        margin: 22px auto 44px;
+        max-width: 680px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        letter-spacing: 0.08em;
+      }
+
+      /* "Try V1" CTA — gold gradient, mirrors the in-game Skip Intro button */
+      .cta {
+        display: inline-block;
+        padding: 18px 44px;
+        font-family: "Cinzel", serif;
+        font-weight: 600;
+        font-size: 20px;
+        letter-spacing: 0.15em;
+        color: #1a1408;
+        text-transform: uppercase;
+        background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 100%);
+        border: 1px solid rgba(255, 217, 122, 0.7);
+        border-radius: 2px;
+        cursor: pointer;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.4),
+          0 8px 24px rgba(0, 0, 0, 0.55),
+          0 0 24px rgba(220, 170, 90, 0.3);
+        transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      }
+      .cta:hover {
+        color: #1a1408;
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.55),
+          0 12px 30px rgba(0, 0, 0, 0.65),
+          0 0 36px rgba(220, 170, 90, 0.5);
+      }
+      .cta:active { transform: translateY(0); }
+
+      .cta-sub {
+        margin-top: 18px;
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 13px;
+        font-style: italic;
+        color: var(--gold);
+        letter-spacing: 0.12em;
+      }
+
+      .hero-scroll-hint {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Cinzel", serif;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: var(--gold);
+        opacity: 0.6;
+        text-transform: uppercase;
+        animation: pulse 2.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: translate(-50%, 0); }
+        50%      { opacity: 0.8; transform: translate(-50%, 6px); }
+      }
+
+      /* ---- SECTIONS ---- */
+      section { padding: 100px 20px; position: relative; }
+      section + section { border-top: 1px solid rgba(201, 176, 122, 0.08); }
+
+      .section-eyebrow {
+        font-family: "Cinzel", serif;
+        font-size: 12px;
+        letter-spacing: 0.4em;
+        color: var(--gold);
+        text-transform: uppercase;
+        margin-bottom: 14px;
+        text-align: center;
+      }
+      .section-title {
+        text-align: center;
+        font-size: clamp(28px, 4vw, 42px);
+        margin-bottom: 18px;
+      }
+      .section-lede {
+        text-align: center;
+        max-width: 720px;
+        margin: 0 auto 60px;
+        color: var(--text-dim);
+        font-size: 19px;
+        line-height: 1.65;
+      }
+
+      /* ---- WHAT IT IS ---- */
+      .pitch {
+        max-width: 760px;
+        margin: 0 auto;
+        font-size: 21px;
+        line-height: 1.7;
+        color: var(--text);
+        text-align: center;
+      }
+      .pitch em {
+        color: var(--gold-bright);
+        font-style: normal;
+        font-family: "Cinzel", serif;
+        font-size: 0.96em;
+        letter-spacing: 0.04em;
+      }
+
+      /* ---- FEATURES GRID ---- */
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+      }
+      .feature {
+        background: linear-gradient(180deg, var(--bg-panel) 0%, #07090f 100%);
+        border: 1px solid rgba(201, 176, 122, 0.18);
+        padding: 28px 26px;
+        position: relative;
+        transition: border-color 200ms ease, transform 200ms ease;
+      }
+      .feature::before {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border: 1px solid rgba(255, 217, 122, 0.06);
         pointer-events: none;
       }
-      #loader.hidden { display: none; }
+      .feature:hover {
+        border-color: rgba(201, 176, 122, 0.45);
+        transform: translateY(-4px);
+      }
+      .feature h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: var(--gold-bright);
+      }
+      .feature .glyph {
+        font-family: "Cinzel Decorative", serif;
+        font-size: 32px;
+        color: var(--gold);
+        margin-bottom: 12px;
+        display: block;
+        opacity: 0.85;
+      }
+      .feature p {
+        margin: 0;
+        color: var(--text-dim);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      /* ---- WORLD GALLERY ---- */
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+      }
+      .shot {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border: 1px solid rgba(201, 176, 122, 0.18);
+        background: var(--bg-panel);
+      }
+      .shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 600ms ease;
+      }
+      .shot:hover img { transform: scale(1.04); }
+      .shot::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 50%, rgba(5,6,10,0.85) 100%);
+        pointer-events: none;
+      }
+      .shot-label {
+        position: absolute;
+        left: 14px;
+        bottom: 12px;
+        z-index: 1;
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        letter-spacing: 0.2em;
+        color: var(--parchment);
+        text-transform: uppercase;
+        text-shadow: 0 2px 6px #000;
+      }
+
+      /* ---- ROADMAP ---- */
+      .roadmap {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 28px;
+        padding: 22px 0;
+        border-top: 1px dashed rgba(201, 176, 122, 0.18);
+      }
+      .stage:first-child { border-top: none; }
+      .stage-label {
+        font-family: "Cinzel", serif;
+        font-size: 14px;
+        letter-spacing: 0.2em;
+        color: var(--gold);
+        text-transform: uppercase;
+        padding-top: 4px;
+      }
+      .stage-label.now { color: var(--gold-bright); }
+      .stage-label.now::after {
+        content: " ●";
+        color: var(--blood);
+        animation: blink 1.6s ease-in-out infinite;
+      }
+      @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+      .stage h3 { font-size: 19px; margin-bottom: 6px; }
+      .stage p { margin: 0; color: var(--text-dim); }
+
+      /* ---- BOTTOM CTA ---- */
+      .end-cta {
+        text-align: center;
+        padding: 120px 20px 100px;
+        background:
+          radial-gradient(ellipse at 50% 30%, rgba(96, 60, 40, 0.25), transparent 70%),
+          var(--bg-deep);
+      }
+      .end-cta h2 { font-size: clamp(28px, 4vw, 42px); margin-bottom: 28px; }
+
+      /* ---- FOOTER ---- */
+      footer {
+        padding: 36px 20px 48px;
+        text-align: center;
+        font-family: "Inter", system-ui, sans-serif;
+        font-size: 13px;
+        color: var(--steel);
+        letter-spacing: 0.06em;
+        border-top: 1px solid rgba(201, 176, 122, 0.08);
+      }
+      footer a { color: var(--gold); }
+      footer .made { margin-top: 6px; opacity: 0.7; }
+
+      /* ---- RESPONSIVE ---- */
+      @media (max-width: 600px) {
+        body { font-size: 17px; }
+        section { padding: 70px 18px; }
+        .stage { grid-template-columns: 1fr; gap: 6px; }
+        .stage-label { font-size: 12px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation: none !important; transition: none !important; }
+      }
     </style>
   </head>
   <body>
-    <div id="app"></div>
-    <div id="loader">Ravage — loading…</div>
-    <script type="module" src="/src/main.ts"></script>
+
+    <!-- ============== HERO ============== -->
+    <header class="hero">
+      <div class="hero-inner container">
+        <div class="hero-eyebrow">A tactical RPG · vertical slice live</div>
+        <h1 class="hero-title">RAVAGE</h1>
+        <p class="hero-tagline">Stances, the weapon triangle, and a 21-battle story of betrayal in the Anthros highlands.</p>
+        <a href="/play/" class="cta">Try V1 →</a>
+        <div class="cta-sub">free · runs in your browser · ~10 minutes</div>
+      </div>
+      <div class="hero-scroll-hint">scroll</div>
+    </header>
+
+    <!-- ============== WHAT IT IS ============== -->
+    <section>
+      <div class="container">
+        <div class="section-eyebrow">The Game</div>
+        <h2 class="section-title">A tactical RPG that rewards reading the field.</h2>
+        <p class="pitch">
+          Ravage is a turn-based tactics game where every choice is a posture. Take a <em>ready stance</em> to counter a charging spear; <em>brace</em> to soak the inevitable hit; close in with a sword and you'll cut a shieldbearer down — but a spear behind that shield will gut you first. Twenty-one battles, hand-painted portraits, a story you can lose.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============== FEATURES ============== -->
+    <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.6) 50%, transparent 100%);">
+      <div class="container">
+        <div class="section-eyebrow">What's inside</div>
+        <h2 class="section-title">Built on six honest systems.</h2>
+        <p class="section-lede">No gacha, no menus inside menus. Each system is small enough to teach in a sentence and deep enough to argue about for an hour.</p>
+        <div class="features">
+          <div class="feature">
+            <span class="glyph">⚔</span>
+            <h3>Weapon Triangle</h3>
+            <p>Sword beats spear, spear beats shield, shield beats sword. Bows ignore the dance — and pay for it up close.</p>
+          </div>
+          <div class="feature">
+            <span class="glyph">⛨</span>
+            <h3>Stances &amp; Counters</h3>
+            <p>Ready a counter-zone; brace defensively; or stay neutral and swing first. Your stance changes every adjacent fight.</p>
+          </div>
+          <div class="feature">
+            <span class="glyph">✦</span>
+            <h3>Action Points</h3>
+            <p>Move, attack, or stance — three actions, two AP per turn. Turns are short. Decisions aren't.</p>
+          </div>
+          <div class="feature">
+            <span class="glyph">☗</span>
+            <h3>Cover &amp; Terrain</h3>
+            <p>Forest, rubble, and obstacles change defence and line-of-sight. The map is half your strategy.</p>
+          </div>
+          <div class="feature">
+            <span class="glyph">♛</span>
+            <h3>Story That Forks</h3>
+            <p>Eighteen named characters, hand-painted portraits, dialog that branches with every battle outcome.</p>
+          </div>
+          <div class="feature">
+            <span class="glyph">⚒</span>
+            <h3>Built in the open</h3>
+            <p>Every commit is on GitHub. Every system is small TypeScript. Procedural fallbacks for every asset.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== WORLD GALLERY ============== -->
+    <section>
+      <div class="container">
+        <div class="section-eyebrow">The World</div>
+        <h2 class="section-title">From palace courtyards to the cliffs of Grude.</h2>
+        <p class="section-lede">Each battle has its own map, its own mood, and its own music.</p>
+        <div class="gallery">
+          <div class="shot"><img src="/assets/backdrops/palaceCoup.png" alt="Palace Coup" /><span class="shot-label">Palace Coup</span></div>
+          <div class="shot"><img src="/assets/backdrops/mountain.png" alt="Mountain pass" /><span class="shot-label">Mountain Pass</span></div>
+          <div class="shot"><img src="/assets/backdrops/finalBoss.png" alt="Final Boss" /><span class="shot-label">The Final Stand</span></div>
+          <div class="shot"><img src="/assets/backdrops/orinhal.png" alt="Orinhal" /><span class="shot-label">Orinhal</span></div>
+          <div class="shot"><img src="/assets/backdrops/cliffs.png" alt="Cliffs" /><span class="shot-label">Cliffs of Grude</span></div>
+          <div class="shot"><img src="/assets/backdrops/monastery.png" alt="Monastery" /><span class="shot-label">The Monastery</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== ROADMAP ============== -->
+    <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.5) 50%, transparent 100%);">
+      <div class="container">
+        <div class="section-eyebrow">Where we are</div>
+        <h2 class="section-title">A vertical slice, then a full campaign.</h2>
+        <p class="section-lede">V1 is honest about what it is — three battles, the full systems, real art. The campaign builds out from there.</p>
+        <div class="roadmap">
+          <div class="stage">
+            <div class="stage-label now">V1 — now</div>
+            <div>
+              <h3>Three playable battles</h3>
+              <p>The full combat system. Hand-painted portraits for the principal cast. Real tile art, real obstacles, real backdrops, real music.</p>
+            </div>
+          </div>
+          <div class="stage">
+            <div class="stage-label">V2 — next</div>
+            <div>
+              <h3>Mid-arc battles + branching dialog</h3>
+              <p>Eight more battles, the betrayal arc, save slots, and the first end-state branches.</p>
+            </div>
+          </div>
+          <div class="stage">
+            <div class="stage-label">V3</div>
+            <div>
+              <h3>The full 21-battle campaign</h3>
+              <p>Every named character, every ending, every map. Steam release candidate.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== BOTTOM CTA ============== -->
+    <section class="end-cta">
+      <div class="container">
+        <h2>Ready to fight?</h2>
+        <a href="/play/" class="cta">Try V1 →</a>
+        <div class="cta-sub">free · no sign-up needed · ~10 minutes</div>
+      </div>
+    </section>
+
+    <!-- ============== FOOTER ============== -->
+    <footer>
+      <div>
+        <a href="https://github.com/seykafu/Ravage" target="_blank" rel="noopener">GitHub</a>
+        &nbsp;·&nbsp;
+        <a href="/play/">Play V1</a>
+      </div>
+      <div class="made">Made with steel and stubbornness · © 2026</div>
+    </footer>
+
   </body>
 </html>

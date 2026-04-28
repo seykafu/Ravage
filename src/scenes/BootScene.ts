@@ -52,6 +52,15 @@ export class BootScene extends Phaser.Scene {
       front.fillRect(barX, barY, barW * v, barH);
     });
 
+    // Pin every asset path to the site root. Manifest entries store paths
+    // like "assets/foo.png" / "audio/bar.mp3" without a leading slash, so
+    // by default Phaser would resolve them relative to the page's URL. Once
+    // the game is hosted at /play/, that turns into /play/assets/... which
+    // 404s (the assets are at /assets/). Setting the loader baseURL to "/"
+    // makes every subsequent load fetch from the site root regardless of
+    // which route hosts the game shell.
+    this.load.setBaseURL("/");
+
     // Music — required.
     for (const f of MUSIC_FILES) this.load.audio(f.key, f.src);
 
