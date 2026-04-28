@@ -7,6 +7,11 @@ import { sfxClick, sfxHover } from "../audio/Sfx";
 // the onToggle callback) and applies `tweens.timeScale = 2` /
 // `time.timeScale = 2` while an enemy unit is acting.
 //
+// Hit zone is a transparent Phaser.GameObjects.Rectangle child (same pattern
+// as SettingsButton/Button) — Phaser's native Rectangle input geometry covers
+// the whole touch target reliably, where Container-level Circle hit areas
+// have intermittently failed the right half.
+//
 // Visual states:
 //   off  — dim gold outline, gold "▶▶" glyph
 //   on   — bright gold fill, dark glyph (clearly "active")
@@ -18,7 +23,6 @@ export class FastForwardButton extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, onToggle: (enabled: boolean) => void) {
     super(scene, x, y);
-    const r = 18;
     const hitR = 24;
     this.bg = scene.add.graphics();
     this.add(this.bg);
@@ -29,14 +33,14 @@ export class FastForwardButton extends Phaser.GameObjects.Container {
       color: "#f4e4b0"
     }).setOrigin(0.5);
     this.add(this.glyph);
-    this.setSize(hitR * 2, hitR * 2);
-    this.setInteractive(
-      new Phaser.Geom.Circle(0, 0, hitR),
-      Phaser.Geom.Circle.Contains
-    );
-    this.on("pointerover", () => { this.hovered = true; sfxHover(); this.redraw(); });
-    this.on("pointerout", () => { this.hovered = false; this.redraw(); });
-    this.on("pointerdown", () => {
+
+    const hitZone = scene.add.rectangle(0, 0, hitR * 2, hitR * 2, 0x000000, 0).setOrigin(0.5);
+    hitZone.setInteractive({ useHandCursor: true });
+    this.add(hitZone);
+
+    hitZone.on("pointerover", () => { this.hovered = true; sfxHover(); this.redraw(); });
+    hitZone.on("pointerout", () => { this.hovered = false; this.redraw(); });
+    hitZone.on("pointerdown", () => {
       sfxClick();
       this.enabled = !this.enabled;
       onToggle(this.enabled);

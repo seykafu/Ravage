@@ -5,13 +5,18 @@ import { sfxClick, sfxHover } from "../audio/Sfx";
 // A tiny gear icon button that opens the SettingsScene as a modal overlay.
 // Drop into any scene that should expose audio settings — by convention,
 // pinned to the top-right corner.
+//
+// Hit zone is a transparent Phaser.GameObjects.Rectangle child rather than a
+// Container-level circular hit area: same reason as Button.ts — Phaser's
+// native Rectangle input geometry is reliable across the whole visible area,
+// whereas custom Circle hit areas on Containers have intermittently failed
+// the right-half of the touch target.
 export class SettingsButton extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.Graphics;
   private hovered = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
-    const r = 18;
     // Touch target — kept ≥44px even though the visible circle is smaller.
     const hitR = 24;
     this.bg = scene.add.graphics();
@@ -23,14 +28,15 @@ export class SettingsButton extends Phaser.GameObjects.Container {
       color: "#f4e4b0"
     }).setOrigin(0.5);
     this.add(glyph);
-    this.setSize(hitR * 2, hitR * 2);
-    this.setInteractive(
-      new Phaser.Geom.Circle(0, 0, hitR),
-      Phaser.Geom.Circle.Contains
-    );
-    this.on("pointerover", () => { this.hovered = true; sfxHover(); this.redraw(); });
-    this.on("pointerout", () => { this.hovered = false; this.redraw(); });
-    this.on("pointerdown", () => {
+
+    // Transparent square hit zone covering the full touch target.
+    const hitZone = scene.add.rectangle(0, 0, hitR * 2, hitR * 2, 0x000000, 0).setOrigin(0.5);
+    hitZone.setInteractive({ useHandCursor: true });
+    this.add(hitZone);
+
+    hitZone.on("pointerover", () => { this.hovered = true; sfxHover(); this.redraw(); });
+    hitZone.on("pointerout", () => { this.hovered = false; this.redraw(); });
+    hitZone.on("pointerdown", () => {
       sfxClick();
       // Pause the launching scene so its tweens/timers freeze, then overlay
       // the settings modal. SettingsScene resumes us on close.
