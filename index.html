@@ -98,14 +98,21 @@
 
       .hero-inner { padding: 80px 20px; }
 
+      /* Eyebrow is pinned to the top of the hero (not the centred content)
+         so it always sits clearly above the giant title — the title's glow
+         was previously bleeding into the eyebrow when stacked together. */
       .hero-eyebrow {
+        position: absolute;
+        top: 36px;
+        left: 50%;
+        transform: translateX(-50%);
         font-family: "Cinzel", serif;
         font-size: 14px;
         letter-spacing: 0.4em;
         color: var(--gold);
         text-transform: uppercase;
-        margin-bottom: 18px;
         text-shadow: 0 0 12px rgba(201, 176, 122, 0.3);
+        white-space: nowrap;
       }
 
       .hero-title {
@@ -278,6 +285,85 @@
         line-height: 1.6;
       }
 
+      /* ---- STORY: PORTRAIT WALL + TAG CHIPS ---- */
+      .portrait-wall {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 18px;
+        margin-bottom: 50px;
+      }
+      .portrait-card {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        background: var(--bg-panel);
+        border: 1px solid rgba(201, 176, 122, 0.18);
+        overflow: hidden;
+        transition: border-color 200ms ease, transform 200ms ease;
+      }
+      .portrait-card:hover {
+        border-color: rgba(201, 176, 122, 0.55);
+        transform: translateY(-4px);
+      }
+      .portrait-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        display: block;
+      }
+      .portrait-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 50%, rgba(5,6,10,0.92) 100%);
+        pointer-events: none;
+      }
+      .portrait-card .label {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 1;
+        text-shadow: 0 2px 4px #000;
+      }
+      .portrait-card .label .name {
+        display: block;
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        color: var(--gold-bright);
+        text-transform: uppercase;
+      }
+      .portrait-card .label .expr {
+        display: block;
+        margin-top: 2px;
+        font-family: "EB Garamond", serif;
+        font-style: italic;
+        font-size: 13px;
+        color: var(--parchment);
+        opacity: 0.85;
+      }
+
+      .story-tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px 14px;
+        margin-top: 12px;
+      }
+      .story-tag {
+        font-family: "Cinzel", serif;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        color: var(--gold);
+        text-transform: uppercase;
+        padding: 9px 18px;
+        border: 1px solid rgba(201, 176, 122, 0.3);
+        background: rgba(13, 17, 28, 0.55);
+        transition: border-color 180ms ease, color 180ms ease;
+      }
+      .story-tag:hover { border-color: rgba(201, 176, 122, 0.7); color: var(--gold-bright); }
+
       /* ---- WORLD GALLERY ---- */
       .gallery {
         display: grid;
@@ -379,6 +465,16 @@
         section { padding: 70px 18px; }
         .stage { grid-template-columns: 1fr; gap: 6px; }
         .stage-label { font-size: 12px; }
+        /* Allow the eyebrow to wrap on phones — the full single line gets
+           too long once the typography scales down. */
+        .hero-eyebrow {
+          white-space: normal;
+          width: min(86vw, 360px);
+          font-size: 11px;
+          letter-spacing: 0.3em;
+          line-height: 1.5;
+          top: 24px;
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -390,10 +486,10 @@
 
     <!-- ============== HERO ============== -->
     <header class="hero">
+      <div class="hero-eyebrow">A tactical RPG · visual novel · vertical slice live</div>
       <div class="hero-inner container">
-        <div class="hero-eyebrow">A tactical RPG · vertical slice live</div>
         <h1 class="hero-title">RAVAGE</h1>
-        <p class="hero-tagline">Stances, the weapon triangle, and a 21-battle story of betrayal in the Anthros highlands.</p>
+        <p class="hero-tagline">A tactics game wrapped around a visual novel. Eighteen painted characters who plot, plead, fall in love, and betray each other across a 21-battle story you can lose.</p>
         <a href="/play/" class="cta">Try V1 →</a>
         <div class="cta-sub">free · runs in your browser · ~10 minutes</div>
       </div>
@@ -404,10 +500,55 @@
     <section>
       <div class="container">
         <div class="section-eyebrow">The Game</div>
-        <h2 class="section-title">A tactical RPG that rewards reading the field.</h2>
+        <h2 class="section-title">Tactics that bite. Stories that stick.</h2>
         <p class="pitch">
-          Ravage is a turn-based tactics game where every choice is a posture. Take a <em>ready stance</em> to counter a charging spear; <em>brace</em> to soak the inevitable hit; close in with a sword and you'll cut a shieldbearer down — but a spear behind that shield will gut you first. Twenty-one battles, hand-painted portraits, a story you can lose.
+          Every choice in battle is a posture. A <em>ready stance</em> counters a charge. A <em>brace</em> soaks the inevitable hit. A sword cuts a shieldbearer down — but a spear behind that shield gets you first. Then the swords sheathe and a full visual novel unfolds: eighteen painted characters, branching dialog, romance, humor, and the kind of plot twist you'll text your friend about.
         </p>
+      </div>
+    </section>
+
+    <!-- ============== STORY ============== -->
+    <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.55) 50%, transparent 100%);">
+      <div class="container">
+        <div class="section-eyebrow">The Story</div>
+        <h2 class="section-title">A visual novel between every battle.</h2>
+        <p class="section-lede">Ravage isn't combat with cutscenes wedged in. It's a hand-painted visual novel that happens to have one of the meanest tactics engines we could build — eighteen named characters who plot, plead, fall in love, and betray each other across hundreds of expressions. The campaign turns on whether you trust the wrong person at the wrong moment.</p>
+
+        <div class="portrait-wall">
+          <div class="portrait-card">
+            <img src="/assets/portraits/amar_warm_half_smile.png" alt="Amar smiling warmly" loading="lazy" />
+            <div class="label"><span class="name">Amar</span><span class="expr">a warm half-smile</span></div>
+          </div>
+          <div class="portrait-card">
+            <img src="/assets/portraits/maya_tearful.png" alt="Maya tearful" loading="lazy" />
+            <div class="label"><span class="name">Maya</span><span class="expr">tearful</span></div>
+          </div>
+          <div class="portrait-card">
+            <img src="/assets/portraits/fergus_unmasked_treachery.png" alt="Fergus unmasked" loading="lazy" />
+            <div class="label"><span class="name">Fergus</span><span class="expr">unmasked treachery</span></div>
+          </div>
+          <div class="portrait-card">
+            <img src="/assets/portraits/leo_cocky_smirk.png" alt="Leo smirking" loading="lazy" />
+            <div class="label"><span class="name">Leo</span><span class="expr">cocky smirk</span></div>
+          </div>
+          <div class="portrait-card">
+            <img src="/assets/portraits/dawn_mask_slipping.png" alt="Dawn's mask slipping" loading="lazy" />
+            <div class="label"><span class="name">Dawn</span><span class="expr">the mask slipping</span></div>
+          </div>
+          <div class="portrait-card">
+            <img src="/assets/portraits/khione_revelation.png" alt="Khione revelation" loading="lazy" />
+            <div class="label"><span class="name">Khione</span><span class="expr">revelation</span></div>
+          </div>
+        </div>
+
+        <div class="story-tags">
+          <span class="story-tag">♥ Romance</span>
+          <span class="story-tag">☺ Humor</span>
+          <span class="story-tag">⚡ Plot Twists</span>
+          <span class="story-tag">✦ Real Emotion</span>
+          <span class="story-tag">⚔ Betrayal</span>
+          <span class="story-tag">✶ Endings You Can Lose</span>
+        </div>
       </div>
     </section>
 
@@ -440,8 +581,8 @@
           </div>
           <div class="feature">
             <span class="glyph">♛</span>
-            <h3>Story That Forks</h3>
-            <p>Eighteen named characters, hand-painted portraits, dialog that branches with every battle outcome.</p>
+            <h3>Branching Endings</h3>
+            <p>Battle outcomes ripple into the visual novel between fights. Trust the wrong ally, lose a key unit, take the harder path — every save tells a different story.</p>
           </div>
           <div class="feature">
             <span class="glyph">⚒</span>
