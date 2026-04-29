@@ -43,9 +43,56 @@ const config: Phaser.Types.Core.GameConfig = {
   ]
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
 
 const loader = document.getElementById("loader");
 if (loader) {
   setTimeout(() => loader.classList.add("hidden"), 600);
+}
+
+// ---- Dev-only battle/arc warp panel --------------------------------------
+// Press backquote (`) anywhere in the game to open DevJumpScene as a modal
+// overlay. Press ` again or click Cancel to return to whatever scene was
+// running. The scene class itself is dynamically imported so it's tree-
+// shaken out of production builds along with this whole block. See
+// src/scenes/DevJumpScene.ts for the panel implementation.
+//
+// Uses event.code === "Backquote" (physical key, layout-independent) so it
+// works on non-US keyboards where ` lives elsewhere.
+if (import.meta.env.DEV) {
+  void import("./scenes/DevJumpScene").then(({ DevJumpScene }) => {
+    game.scene.add("DevJumpScene", DevJumpScene, false);
+  });
+
+  let pausedKey: string | null = null;
+
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "Backquote") return;
+    // Don't hijack the key while typing into a real input (e.g., Vite error
+    // overlay search box, future debug textboxes).
+    const t = e.target;
+    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
+    e.preventDefault();
+
+    // Toggle: ` while open closes the panel.
+    if (game.scene.isActive("DevJumpScene")) {
+      game.scene.stop("DevJumpScene");
+      if (pausedKey) {
+        game.scene.resume(pausedKey);
+        pausedKey = null;
+      }
+      return;
+    }
+
+    // Find the topmost active scene to pause. Skip overlay-style scenes
+    // (SettingsScene) and our own — they shouldn't be the pause target.
+    const active = game.scene.getScenes(true)
+      .filter((s) => s.scene.key !== "DevJumpScene" && s.scene.key !== "SettingsScene");
+    const target = active[0];
+    if (!target) return;
+
+    pausedKey = target.scene.key;
+    game.scene.pause(pausedKey);
+    game.scene.run("DevJumpScene", { resumeKey: pausedKey });
+  });
 }
