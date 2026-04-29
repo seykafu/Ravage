@@ -1,6 +1,6 @@
 import { Grid } from "./Grid";
-import { hasWeaponAdvantage, previewAttack } from "./Damage";
-import { canTriggerReadyCounter } from "./Stances";
+import { previewAttack } from "./Damage";
+import { canTriggerReadyCounter, canTriggerSpeedCounter } from "./Stances";
 import { beginUnitTurn, damageUnit, hasAbility, isAlive } from "./Unit";
 import type { AttackResult, Stance, Tile, TilePos, Unit } from "./types";
 import type { Rng } from "../util/rng";
@@ -64,11 +64,10 @@ const rollAttack = (
   state: BattleState,
   attacker: Unit,
   defender: Unit,
-  isCounter = false,
-  isAdvantageCounter = false
+  isCounter = false
 ): AttackResult => {
   const tile = state.grid.tileAt(defender.state.position);
-  const preview = previewAttack(attacker, defender, tile, isCounter, state.units, isAdvantageCounter);
+  const preview = previewAttack(attacker, defender, tile, isCounter, state.units);
   const hit = state.rng.rollPercent(preview.hitRate);
   let dmg = 0;
   let crit = false;
@@ -89,21 +88,8 @@ const rollAttack = (
   };
 };
 
-// Whether `defender` can counter `attacker` purely from weapon-triangle advantage
-// (1.5× damage). Always-on, no Ready stance required, but defender still has to be
-// in attack range and not a bow user.
-const canTriggerAdvantageCounter = (defender: Unit, attacker: Unit): boolean => {
-  if (defender.weapon === "bow") return false;
-  if (!hasWeaponAdvantage(defender.weapon, attacker.weapon)) return false;
-  const dx = Math.abs(defender.state.position.x - attacker.state.position.x);
-  const dy = Math.abs(defender.state.position.y - attacker.state.position.y);
-  const dist = dx + dy;
-  if (defender.weapon === "spear") return dist === 1 || dist === 2;
-  return dist === 1; // sword / shield / dactyl melee
-};
-
 export const performAttack = (state: BattleState, attacker: Unit, defender: Unit): AttackResult => {
-  const result = rollAttack(state, attacker, defender, false, false);
+  const result = rollAttack(state, attacker, defender, false);
 
   // Destruct: if the defender was killed and has the ability, the attacker also dies.
   if (result.defenderKilled && hasAbility(defender, "Destruct") && isAlive(attacker)) {
@@ -113,20 +99,26 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
     result.attackerKilled = !isAlive(attacker);
   }
 
-  // Counter resolution. Ready stance takes priority; otherwise weapon-triangle
-  // advantage triggers a 1.5× passive counter. Only a still-living defender counters.
-  if (result.hit && !result.defenderKilled && isAlive(defender)) {
+  // Counter resolution. A defender retaliates iff EITHER they're in Ready
+  // stance OR they out-speed the attacker by SPEED_COUNTER_THRESHOLD points.
+  // Ready takes priority because it carries the +25% damage / +5% crit kicker
+  // (attackerStanceModifier in Damage.ts) and consumes the stance slot; a
+  // Speed counter is passive and does base damage. Only a still-living
+  // defender / still-living attacker can produce a counter.
+  if (result.hit && !result.defenderKilled && isAlive(defender) && isAlive(attacker)) {
     if (canTriggerReadyCounter(defender, attacker, state.grid)) {
-      const counter = rollAttack(state, defender, attacker, true, false);
+      const counter = rollAttack(state, defender, attacker, true);
       defender.state.stance = "none"; // Ready spent
       result.counterTriggered = true;
       result.counterResult = counter;
-    } else if (canTriggerAdvantageCounter(defender, attacker)) {
-      const counter = rollAttack(state, defender, attacker, true, true);
+    } else if (canTriggerSpeedCounter(defender, attacker)) {
+      const counter = rollAttack(state, defender, attacker, true);
       result.counterTriggered = true;
       result.counterResult = counter;
     }
   } else if (result.defenderKilled && canTriggerReadyCounter(defender, attacker, state.grid)) {
+    // Defender died but had Ready ready to fire; clear the stance so the
+    // corpse doesn't appear "still primed" in any post-mortem UI snapshot.
     defender.state.stance = "none";
   }
   return result;

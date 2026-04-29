@@ -933,8 +933,11 @@ export class BattleScene extends Phaser.Scene {
       { label: "Attack  1AP", primary: true,  enabled: canAttack, onClick: () => this.enterAttackMode(u) }
     );
     placeRow(
-      { label: "Ready  1AP",  primary: false, enabled: hasAP && u.weapon !== "bow", onClick: () => this.applyStance(u, "ready") },
-      { label: "Defend  1AP", primary: false, enabled: hasAP,                       onClick: () => this.applyStance(u, "defensive") }
+      // Archers can now enter Ready too — their counter triggers at long range
+      // (dist 2–4) against ranged attackers, NOT against adjacent melee. See
+      // canTriggerReadyCounter / reachFor in combat/Stances.ts.
+      { label: "Ready  1AP",  primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "ready") },
+      { label: "Defend  1AP", primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "defensive") }
     );
     placeRow(
       { label: "Potion  1AP", primary: false, enabled: canPotion, onClick: () => this.useFirstPotion(u) },

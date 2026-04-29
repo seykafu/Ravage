@@ -71,25 +71,19 @@ const baseHitForWeapon = (w: WeaponKind): number => {
   }
 };
 
-// Set when a counter is being thrown by a defender that weapon-triangle-favors
-// the attacker. Damage gets a flat 1.5× kicker on top of the regular weapon mod.
-const ADVANTAGE_COUNTER_MULT = 1.5;
-
 export const previewAttack = (
   attacker: Unit,
   defender: Unit,
   defenderTile: Tile,
   isCounter = false,
-  allUnits: Unit[] = [],
-  isAdvantageCounter = false
+  allUnits: Unit[] = []
 ): AttackPreview => {
   const weaponMod = weaponModifier(attacker.weapon, defender.weapon);
   const terrainMod = defenderTile.defendBonus;
   const stanceMod = attackerStanceModifier(attacker, isCounter) * defenderStanceModifier(defender);
   const abilityMod = attackerAbilityModifier(attacker, defender) * defenderAbilityModifier(defender, allUnits);
-  const advantageMod = isAdvantageCounter ? ADVANTAGE_COUNTER_MULT : 1.0;
   const baseDamage =
-    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * advantageMod -
+    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod -
     defender.stats.armor;
   const damage = Math.max(1, Math.round(baseDamage));
 
