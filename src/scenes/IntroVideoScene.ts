@@ -26,6 +26,7 @@ export class IntroVideoScene extends Phaser.Scene {
   private videoEl?: HTMLVideoElement;
   private skipWrap?: HTMLDivElement;
   private skipTimers: number[] = [];
+  private skipReposition?: () => void;
 
   constructor() { super("IntroVideoScene"); }
 
@@ -105,8 +106,12 @@ export class IntroVideoScene extends Phaser.Scene {
   private mountSkipUI(host: HTMLElement): void {
     const wrap = document.createElement("div");
     wrap.style.position = "absolute";
-    wrap.style.top = "32px";
-    wrap.style.right = "32px";
+    // Top/right are recomputed by reposition() so the button hugs the GAME
+    // CANVAS's corner (which is letterboxed inside #app under FIT scaling),
+    // not the viewport corner — otherwise on widescreens the button lands in
+    // the empty letterbox bar, off the visible game area.
+    wrap.style.top = "24px";
+    wrap.style.right = "24px";
     wrap.style.zIndex = "10"; // above the video (z-index 5)
     wrap.style.display = "flex";
     wrap.style.flexDirection = "column";
@@ -156,6 +161,26 @@ export class IntroVideoScene extends Phaser.Scene {
     host.appendChild(wrap);
     this.skipWrap = wrap;
 
+    // Snap the wrap onto the canvas's top-right corner. The Phaser canvas is
+    // centered inside #app via FIT + CENTER_BOTH, so on monitors wider than
+    // 1280×720 there are letterbox bars on the sides. Without this, the wrap
+    // sat 32px from the viewport edge — which on a 1920-wide screen is well
+    // inside the right letterbox bar, not on the canvas at all.
+    const reposition = (): void => {
+      const canvas = host.querySelector("canvas");
+      if (!canvas || !this.skipWrap) return;
+      const cRect = canvas.getBoundingClientRect();
+      const hRect = host.getBoundingClientRect();
+      this.skipWrap.style.top   = `${(cRect.top   - hRect.top)              + 24}px`;
+      this.skipWrap.style.right = `${(hRect.right - cRect.right)            + 24}px`;
+    };
+    reposition();
+    // Phaser dispatches a "resize" through its scale manager when the host
+    // viewport changes; the canvas's bounding rect changes with it.
+    this.skipReposition = reposition;
+    window.addEventListener("resize", reposition);
+    this.scale.on(Phaser.Scale.Events.RESIZE, reposition);
+
     // Fade in after a tiny delay so it appears alongside the video, then hold
     // for ~3.4s, then fade out. Total visible window: ~4 seconds.
     this.skipTimers.push(window.setTimeout(() => { wrap.style.opacity = "1"; }, 200));
@@ -171,6 +196,11 @@ export class IntroVideoScene extends Phaser.Scene {
   private teardownSkipUI(): void {
     for (const id of this.skipTimers) clearTimeout(id);
     this.skipTimers = [];
+    if (this.skipReposition) {
+      window.removeEventListener("resize", this.skipReposition);
+      this.scale?.off(Phaser.Scale.Events.RESIZE, this.skipReposition);
+      this.skipReposition = undefined;
+    }
     if (this.skipWrap) {
       this.skipWrap.remove();
       this.skipWrap = undefined;

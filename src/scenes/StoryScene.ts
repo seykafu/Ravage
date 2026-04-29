@@ -121,9 +121,11 @@ export class StoryScene extends Phaser.Scene {
     const pg = this.add.graphics();
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
-    // Reserve a region to the left of the dialog text for the speaker portrait.
-    // Portrait floats above the dialog panel, no frame — sized per image (see showBeat).
-    const textLeft = panelX + 24 + PORTRAIT_AREA_W + 16;
+    // Text is left-aligned inside the panel; the speaker portrait floats above
+    // the panel on the RIGHT side. (Earlier layout reserved the LEFT for the
+    // portrait, which pushed the dialogue ~340px in and made the text feel
+    // shoved against the right edge.)
+    const textLeft = panelX + 24;
 
     this.speakerText = this.add.text(textLeft, panelY + 18, "", {
       fontFamily: FAMILY_HEADING,
@@ -186,9 +188,11 @@ export class StoryScene extends Phaser.Scene {
       if (key) {
         const panelX = 120;
         const panelY = GAME_HEIGHT - 240;
+        const panelW = GAME_WIDTH - 240;
+        // Portrait sits on the RIGHT side of the panel now (text on the left).
         // Top-center of the portrait region; the image extends downward and
         // overlaps the dialog panel by ~24px, hidden by the gradient mask.
-        const areaCenterX = panelX + 24 + PORTRAIT_AREA_W / 2;
+        const areaCenterX = panelX + panelW - 24 - PORTRAIT_AREA_W / 2;
         const areaTopY = panelY - PORTRAIT_AREA_H + 24;
         this.portrait = this.add.image(areaCenterX, areaTopY, key).setOrigin(0.5, 0);
         const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
