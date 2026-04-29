@@ -5,39 +5,27 @@ import { drawPanel } from "../ui/Panel";
 import { battleById, BATTLES } from "../data/battles";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
-import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
+import { ensureBackdropForKey } from "../art/BackdropArt";
 import { loadSave } from "../util/save";
 import { SettingsButton } from "../ui/SettingsButton";
+import type { ArcId, BattleId } from "../data/contentIds";
 
 interface EndArgs {
-  battleId: string;
+  battleId: BattleId;
   outcome: "player" | "enemy";
 }
 
 // Map a completed battle to the post-battle story arc that follows it.
 // If a battle has no scripted post arc, route Continue back to the overworld.
-const POST_ARC: Record<string, string> = {
+// Both sides are typed: a stale BattleId or arc id is now a compile error.
+const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b01_palace_coup: "post_palace",
   b02_farmland: "post_farmland",
   b05_mountain_ndari: "post_mountain"
 };
 
-const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
-  bg_palace_coup: "palaceCoup",
-  bg_thuling: "thuling",
-  bg_farmland: "farmland",
-  bg_mountain: "mountain",
-  bg_swamp: "swamp",
-  bg_caravan: "caravan",
-  bg_monastery: "monastery",
-  bg_orinhal: "orinhal",
-  bg_cliffs: "cliffs",
-  bg_grude: "grude",
-  bg_finalBoss: "finalBoss"
-};
-
 export class EndScene extends Phaser.Scene {
-  private battleId!: string;
+  private battleId!: BattleId;
   private outcome!: "player" | "enemy";
 
   constructor() { super("EndScene"); }
@@ -52,8 +40,7 @@ export class EndScene extends Phaser.Scene {
     const isVictory = this.outcome === "player";
 
     const bdKey = node?.backdropKey ?? "bg_thuling";
-    const bdSpec = BACKDROPS[BACKDROP_LOOKUP[bdKey] ?? "thuling"];
-    const bgKey = ensureBackdropTexture(this, bdKey, bdSpec);
+    const bgKey = ensureBackdropForKey(this, bdKey);
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     bg.setAlpha(0.55);
 

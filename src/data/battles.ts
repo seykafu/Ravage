@@ -2,9 +2,10 @@ import type { MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
 import { farmlandMap, mountainMap, palaceMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
+import type { BackdropKey, BattleId } from "./contentIds";
 
 export interface BattleNode {
-  id: string;
+  id: BattleId;        // typed; new ids must be added to contentIds.ts first
   index: number;       // 1..20+
   title: string;       // "First Battle" / "Battle 2" etc.
   subtitle: string;    // narrative name
@@ -12,7 +13,7 @@ export interface BattleNode {
   outro: string;       // brief post-battle text
   music: MusicKey;
   prepMusic: MusicKey;
-  backdropKey: string;
+  backdropKey: BackdropKey; // typed; the bg_<label> selector resolved by ensureBackdropForKey
   playable: boolean;   // false = placeholder ("not yet playable")
   map?: MapDef;
   buildPlayers?: () => UnitDef[];
@@ -340,5 +341,8 @@ export const BATTLES: BattleNode[] = [
   }
 ];
 
+// Accepts a plain string for ergonomic call sites (URL params, save files,
+// scene.start payloads), but the predicate compares against the typed
+// BattleNode.id. Returns undefined if the lookup misses.
 export const battleById = (id: string): BattleNode | undefined => BATTLES.find((b) => b.id === id);
 export const battleByIndex = (idx: number): BattleNode | undefined => BATTLES.find((b) => b.index === idx);

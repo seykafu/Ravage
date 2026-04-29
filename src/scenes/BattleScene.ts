@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../util/constants";
-import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
+import { ensureBackdropForKey } from "../art/BackdropArt";
+import type { BattleId } from "../data/contentIds";
 import { ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
@@ -45,21 +46,7 @@ import { playUnitState } from "../assets/unitAnim";
 import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 
-const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
-  bg_palace_coup: "palaceCoup",
-  bg_thuling: "thuling",
-  bg_farmland: "farmland",
-  bg_mountain: "mountain",
-  bg_swamp: "swamp",
-  bg_caravan: "caravan",
-  bg_monastery: "monastery",
-  bg_orinhal: "orinhal",
-  bg_cliffs: "cliffs",
-  bg_grude: "grude",
-  bg_finalBoss: "finalBoss"
-};
-
-interface BattleArgs { battleId: string; }
+interface BattleArgs { battleId: BattleId; }
 
 interface UnitView {
   unit: Unit;
@@ -98,7 +85,7 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
 };
 
 export class BattleScene extends Phaser.Scene {
-  private battleId!: string;
+  private battleId!: BattleId;
   private state!: BattleState;
   private initiative!: Initiative;
   private originX = 0;
@@ -165,10 +152,9 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    // Backdrop
-    const camel = BACKDROP_LOOKUP[node.backdropKey] ?? "thuling";
-    const bdSpec = BACKDROPS[camel];
-    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec, `backdrop:${camel}`);
+    // Backdrop — see ensureBackdropForKey in BackdropArt.ts. The BackdropKey
+    // union and the spec lookup are co-located so a typo'd key fails to compile.
+    const bgKey = ensureBackdropForKey(this, node.backdropKey);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     const v = this.add.graphics();
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0.45, 0.78, 0.78);

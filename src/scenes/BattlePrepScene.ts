@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
+import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getMusic } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
@@ -10,8 +10,9 @@ import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
+import type { BattleId } from "../data/contentIds";
 
-interface PrepArgs { battleId: string; }
+interface PrepArgs { battleId: BattleId; }
 
 const classLabel = (k: ClassKind): string => {
   switch (k) {
@@ -37,22 +38,8 @@ const weaponLabel = (w: WeaponKind): string => {
   }
 };
 
-const BACKDROP_LOOKUP: Record<string, keyof typeof BACKDROPS> = {
-  bg_palace_coup: "palaceCoup",
-  bg_thuling: "thuling",
-  bg_farmland: "farmland",
-  bg_mountain: "mountain",
-  bg_swamp: "swamp",
-  bg_caravan: "caravan",
-  bg_monastery: "monastery",
-  bg_orinhal: "orinhal",
-  bg_cliffs: "cliffs",
-  bg_grude: "grude",
-  bg_finalBoss: "finalBoss"
-};
-
 export class BattlePrepScene extends Phaser.Scene {
-  private battleId!: string;
+  private battleId!: BattleId;
   constructor() { super("BattlePrepScene"); }
   init(data: PrepArgs): void { this.battleId = data.battleId; }
 
@@ -60,9 +47,7 @@ export class BattlePrepScene extends Phaser.Scene {
     const node = battleById(this.battleId);
     if (!node) { this.scene.start("OverworldScene"); return; }
 
-    const camel = BACKDROP_LOOKUP[node.backdropKey] ?? "thuling";
-    const bdSpec = BACKDROPS[camel];
-    const bgKey = ensureBackdropTexture(this, node.backdropKey, bdSpec, `backdrop:${camel}`);
+    const bgKey = ensureBackdropForKey(this, node.backdropKey);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     const v = this.add.graphics();
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.55, 0.55, 0.85, 0.85);

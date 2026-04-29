@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
+import type { ArcId, RouteRef } from "../data/contentIds";
 
 interface PortraitMeta {
   primary: number; secondary: number; accent: number; skin: number; hair: number;
@@ -42,7 +43,7 @@ const arcMusic: Record<string, MusicKey> = {
   trailer: MUSIC.trailer
 };
 
-interface StoryArgs { arcId: string; }
+interface StoryArgs { arcId: ArcId; }
 
 // Portrait display area — anchored above the dialog panel.
 // Uses cover-fit (Math.max) + top-anchor so faces stay legible regardless of
@@ -53,7 +54,7 @@ const PORTRAIT_AREA_H = 360;
 const PORTRAIT_MASK_KEY = "story_portrait_fade_mask";
 
 export class StoryScene extends Phaser.Scene {
-  private arcId!: string;
+  private arcId!: ArcId;
   private idx = 0;
   private bodyText!: Phaser.GameObjects.Text;
   private speakerText!: Phaser.GameObjects.Text;
@@ -292,7 +293,12 @@ export class StoryScene extends Phaser.Scene {
     this.cameras.main.once("camerafadeoutcomplete", () => this.routeNext(arc.next));
   }
 
-  private routeNext(next: string): void {
+  // `next` is a discriminated union of "credits" | "overworld" |
+  // `story:${ArcId}` | `prep:${BattleId}`. Because the prefixed variants are
+  // template literal types, the slice'd suffix is provably an ArcId / BattleId
+  // — no runtime check needed once the prefix matches. Anything outside the
+  // union fails to type-check upstream in beats.ts.
+  private routeNext(next: RouteRef): void {
     if (next === "credits") {
       this.scene.start("CreditsScene");
       return;
@@ -302,7 +308,7 @@ export class StoryScene extends Phaser.Scene {
       return;
     }
     if (next.startsWith("story:")) {
-      const id = next.slice("story:".length);
+      const id = next.slice("story:".length) as ArcId;
       this.scene.start("StoryScene", { arcId: id });
       return;
     }

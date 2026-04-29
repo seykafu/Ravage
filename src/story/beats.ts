@@ -1,6 +1,8 @@
 // Story beats: dialog cards bracketing each battle. Each beat is a single screen
 // with a portrait (or none), a speaker name, a body, and an optional ambient color.
 
+import type { ArcId, RouteRef } from "../data/contentIds";
+
 export type PortraitId =
   | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
   | "kian" | "ndari" | "nebu"
@@ -19,17 +21,22 @@ export interface DialogBeat {
 }
 
 export interface StoryArc {
-  id: string;
+  id: ArcId;
   title: string;        // banner shown at top of the story screen
   subtitle?: string;    // smaller subline
   beats: DialogBeat[];
-  // After the arc, where to go next: "battle:<id>" | "overworld" | "credits".
-  next: string;
+  // After the arc, where to go next. Discriminated by prefix; see RouteRef
+  // in src/data/contentIds.ts. A typo or pointer to a non-existent battle
+  // or arc is now a compile-time error rather than a silent overworld
+  // fall-through at runtime.
+  next: RouteRef;
   music:
     | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
     | "mainTheme" | "emotional" | "everydayLife" | "trailer";
   // Optional backdrop key — must match a key in BACKDROPS (see BackdropArt).
   // If omitted, StoryScene falls back to the generic Thuling sky.
+  // NOTE: this is the camelCase BACKDROPS key, NOT the bg_<label> BackdropKey
+  // used by battles. StoryScene uses the camel name directly.
   backdrop?:
     | "palaceCoup" | "thuling" | "farmland" | "mountain" | "swamp"
     | "caravan" | "monastery" | "orinhal" | "cliffs" | "grude" | "finalBoss"
@@ -38,7 +45,9 @@ export interface StoryArc {
 
 const N = (body: string, ambient?: number): DialogBeat => ({ portraitId: "narrator", body, ambient });
 
-export const ARCS: Record<string, StoryArc> = {
+// Keyed by ArcId so missing/extra/typo'd arcs fail at compile time. Pair with
+// StoryArc.id: ArcId so the key and the inner id can't drift apart.
+export const ARCS: Record<ArcId, StoryArc> = {
   // -------- Cold open: Madame Dawn, the night of the coup --------
   // Plays once on New Game, before pre_palace. The player meets the woman
   // pulling the strings before they meet the boy who thinks the plan is his.

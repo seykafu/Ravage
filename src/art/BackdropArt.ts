@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor, mixColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
 import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import type { BackdropKey } from "../data/contentIds";
 
 // Painted parallax-style backdrops for non-battle scenes.
 // Each backdrop is a static large canvas drawn once, then referenced by Phaser.
@@ -357,4 +358,34 @@ export const BACKDROPS = {
     hasFog: true,
     ridges: 4
   }
+};
+
+// Maps the public-facing BackdropKey ("bg_<label>") strings used in content
+// data files to the camelCase keys of the BACKDROPS spec table above. This
+// indirection used to live (duplicated three times!) inside the scene files
+// as `BACKDROP_LOOKUP`. Centralizing it here lets each scene call
+// ensureBackdropForKey(scene, key) with a typed BackdropKey and have the
+// compiler guarantee the lookup will succeed.
+const BACKDROP_KEY_TO_SPEC: Record<BackdropKey, keyof typeof BACKDROPS> = {
+  bg_palace_coup: "palaceCoup",
+  bg_thuling: "thuling",
+  bg_farmland: "farmland",
+  bg_mountain: "mountain",
+  bg_swamp: "swamp",
+  bg_caravan: "caravan",
+  bg_monastery: "monastery",
+  bg_orinhal: "orinhal",
+  bg_cliffs: "cliffs",
+  bg_grude: "grude",
+  bg_finalBoss: "finalBoss"
+};
+
+// Resolve a BackdropKey to a usable Phaser texture key. Prefers a real PNG
+// loaded under `backdrop:<camel>` if present; otherwise generates the
+// procedural fallback into the `bg_<label>` cache slot. Callers should treat
+// the returned string as an opaque texture-cache identifier.
+export const ensureBackdropForKey = (scene: Phaser.Scene, key: BackdropKey): string => {
+  const camel = BACKDROP_KEY_TO_SPEC[key];
+  const spec = BACKDROPS[camel];
+  return ensureBackdropTexture(scene, key, spec, `backdrop:${camel}`);
 };
