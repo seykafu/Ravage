@@ -19,7 +19,11 @@ export const MUSIC = {
   battleTheme2: "music_spine_battle2",             // Non-boss battle (variant B)
   emotional: "music_spine_emotional",              // Heavy story moments
   everydayLife: "music_spine_everyday",            // Light everyday story scenes
-  trailer: "music_spine_trailer"                   // Epic story openings + credits finale
+  trailer: "music_spine_trailer",                  // Epic story openings + credits finale
+
+  // Standalone single — heist/coup energy, used for the night-of-the-coup
+  // story arc that briefs Amar's vanguard right before Battle 1.
+  ravageDaredevil: "music_ravage_daredevil"
 } as const;
 export type MusicKey = (typeof MUSIC)[keyof typeof MUSIC];
 
@@ -39,7 +43,8 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.battleTheme2,       src: "audio/Spine of the World - Battle 2.mp3" },
   { key: MUSIC.emotional,          src: "audio/Spine of the World - Emotional Scenes.mp3" },
   { key: MUSIC.everydayLife,       src: "audio/Spine of the World - Everyday.mp3" },
-  { key: MUSIC.trailer,            src: "audio/Spine of the World - Trailer.mp3" }
+  { key: MUSIC.trailer,            src: "audio/Spine of the World - Trailer.mp3" },
+  { key: MUSIC.ravageDaredevil,    src: "audio/Ravage_Daredevil.mp3" }
 ];
 
 // Singleton-ish music manager. Lives across scenes via game.registry.

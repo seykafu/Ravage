@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { ARCS, type DialogBeat } from "../story/beats";
+import { ARCS, type DialogBeat, type StoryArc } from "../story/beats";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
@@ -30,7 +30,10 @@ const PORTRAIT_TABLE: Record<string, PortraitMeta> = {
   nebu:    { ...ENEMY_PALETTES.archbold, hairStyle: "short", beard: true, seed: 13 }
 };
 
-const arcMusic: Record<string, MusicKey> = {
+// Typed against StoryArc["music"] so adding a new music slug to the union in
+// beats.ts without adding a row here is a compile error — was Record<string,
+// MusicKey>, which silently returned undefined and crashed at runtime.
+const arcMusic: Record<StoryArc["music"], MusicKey> = {
   everydayAnthros: MUSIC.everydayAnthros,
   adventureAnthros: MUSIC.adventureAnthros,
   adventure1: MUSIC.adventure1,
@@ -40,7 +43,8 @@ const arcMusic: Record<string, MusicKey> = {
   mainTheme: MUSIC.mainTheme,
   emotional: MUSIC.emotional,
   everydayLife: MUSIC.everydayLife,
-  trailer: MUSIC.trailer
+  trailer: MUSIC.trailer,
+  ravageDaredevil: MUSIC.ravageDaredevil
 };
 
 interface StoryArgs { arcId: ArcId; }

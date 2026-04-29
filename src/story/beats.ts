@@ -32,7 +32,7 @@ export interface StoryArc {
   next: RouteRef;
   music:
     | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
-    | "mainTheme" | "emotional" | "everydayLife" | "trailer";
+    | "mainTheme" | "emotional" | "everydayLife" | "trailer" | "ravageDaredevil";
   // Optional backdrop key — must match a key in BACKDROPS (see BackdropArt).
   // If omitted, StoryScene falls back to the generic Thuling sky.
   // NOTE: this is the camelCase BACKDROPS key, NOT the bg_<label> BackdropKey
@@ -76,7 +76,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "pre_palace",
     title: "Year 2640 of the Anthros Monarch",
     subtitle: "Para — the night of the coup",
-    music: "trailer",
+    // Ravage Daredevil — heist/coup energy for the briefing in the throne-hall
+    // antechamber. Plays from the start of this arc through the BattlePrepScene
+    // crossfade into Battle 1's "entering the stronghold" track.
+    music: "ravageDaredevil",
     backdrop: "palaceCoup",
     next: "prep:b01_palace_coup",
     beats: [
