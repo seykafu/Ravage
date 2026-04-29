@@ -107,6 +107,27 @@ export const PLAYERS = {
     artSeed: 7,
     palette: PLAYER_PALETTES.selene,
     portrait: true
+  }),
+  // Kian rides with Amar's squad in early battles (b04 swamp ambush, b07
+  // monastery, b08 Orinhal escort). Knight-class, mounted: gets the +2
+  // movement bonus from Actions.mountBonus, so effective movement = 6 —
+  // notably more mobile than Lucian (spearton, eff. mv 3) and on par with
+  // Leo (dactyl_rider, eff. mv 7). Sword + decent armor makes him a
+  // reliable melee anchor without overshadowing Amar's hero stat-line.
+  // Same `id` ("kian") will be reused by an enemy factory once he turns
+  // hostile in b10/b11 — palette already lives in both PLAYER_PALETTES
+  // and ENEMY_PALETTES under the same key for that reason.
+  kian: (): UnitDef => ({
+    id: "kian",
+    name: "Kian",
+    shortName: "Ki",
+    faction: "player",
+    classKind: "knight",
+    weapon: "sword",
+    stats: { hp: 32, power: 11, armor: 6, speed: 7, movement: 4, ap: 3 },
+    artSeed: 8,
+    palette: PLAYER_PALETTES.kian,
+    portrait: true
   })
 };
 

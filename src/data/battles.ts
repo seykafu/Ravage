@@ -1,9 +1,9 @@
 import type { MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { farmlandMap, mountainMap, palaceMap } from "./maps";
+import { farmlandMap, mountainMap, palaceMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
-import { defeatUnit, type VictoryCondition } from "../combat/Victory";
+import { anyOf, defeatUnit, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
 
 export interface BattleNode {
   id: BattleId;        // typed; new ids must be added to contentIds.ts first
@@ -96,13 +96,39 @@ export const BATTLES: BattleNode[] = [
     index: 4,
     title: "Fourth Battle",
     subtitle: "Ambush in the Swamp",
-    intro: "The squad is ambushed in the marsh on the road home. Kian rejoins, and his suspicion deepens.",
-    outro: "Lucian invents a story for Kian. Lucian invents a confession for you alone.",
+    intro:
+      "Halfway home through the marsh on the road back to Thuling. Kian rode out from the keep that morning to meet you and ride the rest of the way in — \"the General's compliments,\" he said. Bandits burst from the tree-line at all four corners of the road. Maya draws first. Kian draws second, and watches you draw with the eyes of a man counting evidence.",
+    outro:
+      "Lucian invents a story for Kian about reflexes learned on the farm. Kian nods and says nothing. That night by the fire Lucian invents a different story, this one only for you, and then asks you to tell him the true one.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_swamp",
-    playable: false,
-    difficultyLabel: "Skirmish"
+    playable: true,
+    map: swampMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.kian()
+    ],
+    buildEnemies: () => [
+      ENEMIES.banditSpearton("amb_sp1", 401),
+      ENEMIES.banditSpearton("amb_sp2", 402),
+      ENEMIES.banditArcher("amb_a1", 403),
+      ENEMIES.banditArcher("amb_a2", 404),
+      ENEMIES.banditSwordsman("amb_sw1", 405),
+      ENEMIES.banditSwordsman("amb_sw2", 406)
+    ],
+    difficultyLabel: "Ambush",
+    // First battle to use the anyOf combinator. Lore framing: it's an
+    // ambush on the road home — the squad doesn't have to wipe the
+    // bandits, just survive long enough for the pickets at the keep to
+    // notice they're overdue and ride out (modeled as 4 rounds), OR
+    // break the ambush by routing the squad outright. Either resolution
+    // matches the outro ("Lucian invents a story" — implies they got
+    // home, with or without a clean kill count).
+    victory: anyOf(surviveRounds(4), routEnemies)
   },
   {
     id: "b05_mountain_ndari",

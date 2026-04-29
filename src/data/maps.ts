@@ -93,7 +93,58 @@ export const farmlandMap: MapDef = buildMap("farmland", "Thuling Farmland", farm
   ]
 });
 
-// ============== Battle 3 — Mountain Bandits / Ndari ==============
+// ============== Battle 4 — Ambush in the Swamp ==============
+// 12×9 marsh on the road home. The squad is moving through a clear lane in
+// the middle (rows 3–5, cols 4–7 are open grass) when bandits burst from
+// the tree-line at the four corners. Mud and water frame the playable
+// area for atmosphere; the only fully blocking cover is the four FT (forest+tree)
+// chokes at (2,1)/(9,1)/(2,7)/(9,7) and a few mud "puddles" mid-map that
+// constrain pathing without prohibiting it. Forest tiles at the corners
+// (Fo) give the ambushers a 0.90 defend bonus on round 1 — they're shooting
+// from cover until the squad pushes out to engage them.
+const Mu = t("mud");
+const Wa = t("water");
+const Gr = t("grass");
+const Fo = t("forest");
+const FT = t("forest", "tree");
+
+const swampRows = [
+  [Wa, Mu, Mu, Fo, Gr, Gr, Gr, Gr, Fo, Mu, Mu, Wa],
+  [Mu, Mu, FT, Gr, Gr, Gr, Gr, Gr, Gr, FT, Mu, Mu],
+  [Wa, Mu, Gr, Gr, Mu, Mu, Mu, Mu, Gr, Gr, Mu, Wa],
+  [Mu, Gr, Gr, Gr, Mu, Gr, Gr, Mu, Gr, Gr, Gr, Mu],
+  [Mu, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Mu],
+  [Mu, Gr, Gr, Gr, Mu, Gr, Gr, Mu, Gr, Gr, Gr, Mu],
+  [Wa, Mu, Gr, Gr, Mu, Mu, Mu, Mu, Gr, Gr, Mu, Wa],
+  [Mu, Mu, FT, Gr, Gr, Gr, Gr, Gr, Gr, FT, Mu, Mu],
+  [Wa, Mu, Mu, Fo, Gr, Gr, Gr, Gr, Fo, Mu, Mu, Wa]
+] as const;
+
+export const swampMap: MapDef = buildMap("swamp", "Marsh Road Ambush", swampRows, {
+  // Squad walking single-file down the road, Maya scouting ahead.
+  player: [
+    { x: 6, y: 4 }, // Amar (center of formation)
+    { x: 5, y: 4 }, // Lucian (left flank)
+    { x: 7, y: 4 }, // Kian (right flank)
+    { x: 6, y: 3 }, // Maya (point)
+    { x: 6, y: 5 }  // Ning (rear, bow ready)
+  ],
+  // Six bandits ringing the squad. Speartons close on the lane, archers
+  // open up from forest cover at the back corners, swordsmen flank from
+  // the SW/SE corner cover. Distance from the corner forests to the squad
+  // is ~6–7 tiles, so the archers spend round 1 advancing or shooting one
+  // exposed scout (Maya/Ning), then settle into their effective range.
+  enemy: [
+    { x: 5, y: 1 }, // Spearton — north blocker
+    { x: 6, y: 7 }, // Spearton — south blocker
+    { x: 3, y: 0 }, // Archer in NW forest cover
+    { x: 8, y: 0 }, // Archer in NE forest cover
+    { x: 3, y: 8 }, // Swordsman in SW forest cover
+    { x: 8, y: 8 }  // Swordsman in SE forest cover
+  ]
+});
+
+// ============== Battle 5 — Mountain Bandits / Ndari ==============
 // 14×10 jagged mountain pass: rocks, trees, snow patches, choke points.
 const SN = t("snow");
 const SR = t("snow", "rock");

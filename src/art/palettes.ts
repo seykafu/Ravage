@@ -15,7 +15,12 @@ export const PLAYER_PALETTES: Record<string, UnitPalette> = {
   maya:   { primary: 0x6a3a8a, secondary: 0x3b1c4c, accent: 0xf0c97b, skin: 0xc69372, hair: 0x4f1b1b },
   leo:    { primary: 0xb55330, secondary: 0x6e2e1c, accent: 0xf3d572, skin: 0xd09a78, hair: 0xb46d2b },
   ranatoli: { primary: 0x6c7188, secondary: 0x3a3e54, accent: 0xc7c4d8, skin: 0xc69372, hair: 0x1a1a1a },
-  selene: { primary: 0x222238, secondary: 0x101020, accent: 0xc83a3a, skin: 0xd2a380, hair: 0x111111 }
+  selene: { primary: 0x222238, secondary: 0x101020, accent: 0xc83a3a, skin: 0xd2a380, hair: 0x111111 },
+  // Kian rides with the squad in early-game battles (b02 referenced, b04
+  // ambush, b07/b08 escort), and turns hostile from b10 onward when his
+  // suspicion crystallizes. Same character — same palette — appears here
+  // and in ENEMY_PALETTES so either-side factories resolve correctly.
+  kian:   { primary: 0x1a3a6a, secondary: 0x0a1838, accent: 0xefcf6a, skin: 0xc8a07e, hair: 0x202020 }
 };
 
 export const ENEMY_PALETTES: Record<string, UnitPalette> = {
