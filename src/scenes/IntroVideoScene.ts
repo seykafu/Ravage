@@ -12,9 +12,14 @@ interface IntroArgs {
 // lives at /play/, where a relative "video/..." would 404). Two sources are
 // attached: WebM first because VP9-capable browsers prefer it (smaller),
 // MP4 second as a universal fallback that Safari and older browsers use.
+//
+// IMPORTANT: these are the "_sound" transcodes (VP9+Opus / H.264+AAC) that
+// retain the original score. The silent /video/intro.{webm,mp4} files exist
+// for the landing-page hero, where the page can't get a user gesture before
+// autoplay and browsers therefore require muted playback.
 const VIDEO_SOURCES: ReadonlyArray<{ src: string; type: string }> = [
-  { src: "/video/intro.webm", type: "video/webm" },
-  { src: "/video/intro.mp4",  type: "video/mp4"  }
+  { src: "/video/intro_sound.webm", type: "video/webm" },
+  { src: "/video/intro_sound.mp4",  type: "video/mp4"  }
 ];
 
 // Plays the intro cinematic between Title → Menu. Uses an HTML <video> element
