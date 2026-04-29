@@ -63,7 +63,16 @@
 
       .container { width: min(1100px, 92vw); margin: 0 auto; }
 
-      /* ---- HERO ---- */
+      /* ---- HERO ----
+         Z-stack (back → front):
+           -3: static backdrop (palaceCoup) — instant fallback while video
+               buffers, plus what shows on autoplay-blocked / reduced-motion
+           -2: <video class="hero-video"> — the trailer; faded in via JS
+               once it can play, so a black frame never flashes
+           -1: gradient overlay — darkens whatever's behind so the gold
+               title stays readable
+            0: scanline texture — pure mood
+            1: content (eyebrow, title, tagline, CTA, scroll hint) */
       .hero {
         position: relative;
         min-height: 100vh;
@@ -72,17 +81,40 @@
         text-align: center;
         overflow: hidden;
         isolation: isolate;
+        background: var(--bg-deep);
       }
       .hero::before {
         content: "";
         position: absolute;
         inset: 0;
+        background: url("/assets/backdrops/palaceCoup.png") center / cover no-repeat;
+        filter: contrast(1.05) saturate(1.05);
+        z-index: -3;
+      }
+      .hero-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 900ms ease;
+        /* Subtle desaturation pulls it closer to the painted backdrop's
+           palette so the cut between video frames and the radial-glow
+           dark overlay reads as one image, not two layers. */
+        filter: contrast(1.04) saturate(0.92) brightness(0.92);
+        z-index: -2;
+      }
+      .hero-video.is-playing { opacity: 1; }
+      .hero-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
         background:
           radial-gradient(ellipse at 50% 30%, rgba(96, 60, 40, 0.35), transparent 60%),
           radial-gradient(ellipse at 50% 80%, rgba(20, 30, 60, 0.65), transparent 70%),
-          linear-gradient(180deg, rgba(5,6,10,0.45) 0%, rgba(5,6,10,0.85) 60%, var(--bg-deep) 100%),
-          url("/assets/backdrops/palaceCoup.png") center / cover no-repeat;
-        filter: contrast(1.05) saturate(1.05);
+          linear-gradient(180deg, rgba(5,6,10,0.50) 0%, rgba(5,6,10,0.78) 60%, var(--bg-deep) 100%);
         z-index: -1;
       }
       .hero::after {
@@ -93,7 +125,11 @@
           repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
         mix-blend-mode: multiply;
         pointer-events: none;
-        z-index: -1;
+        z-index: 0;
+      }
+      /* Respect users who've asked the OS to reduce motion. */
+      @media (prefers-reduced-motion: reduce) {
+        .hero-video { display: none !important; }
       }
 
       .hero-inner { padding: 80px 20px; }
@@ -486,6 +522,20 @@
 
     <!-- ============== HERO ============== -->
     <header class="hero">
+      <!-- Trailer-style background. Muted + playsinline + (eventually)
+           autoplay are the magic combo every modern browser allows. The
+           <source> tags are intentionally absent here; the inline script
+           below attaches them based on the viewer's capabilities, so users
+           on prefers-reduced-motion get zero video bandwidth. -->
+      <video class="hero-video"
+             muted
+             loop
+             playsinline
+             preload="none"
+             aria-hidden="true"
+             poster="/video/intro_poster.jpg"></video>
+      <div class="hero-overlay"></div>
+
       <div class="hero-eyebrow">A tactical RPG · visual novel · vertical slice live</div>
       <div class="hero-inner container">
         <h1 class="hero-title">RAVAGE</h1>
@@ -495,6 +545,44 @@
       </div>
       <div class="hero-scroll-hint">scroll</div>
     </header>
+
+    <!-- Hero-video bootstrap. Runs synchronously after the video element
+         exists; gates source attachment on capability checks. -->
+    <script>
+      (function () {
+        var v = document.querySelector(".hero-video");
+        if (!v) return;
+        var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) { v.remove(); return; }
+
+        // Attach sources only now — keeps autoplay-blocked or no-JS users
+        // from paying the bandwidth cost.
+        var addSrc = function (src, type) {
+          var s = document.createElement("source");
+          s.src = src;
+          s.type = type;
+          v.appendChild(s);
+        };
+        // WebM first; browsers that grok it prefer it (smaller) and Safari
+        // skips to the MP4 fallback automatically.
+        addSrc("/video/intro.webm", "video/webm");
+        addSrc("/video/intro.mp4",  "video/mp4");
+        v.preload = "auto";
+        v.load();
+
+        var reveal = function () { v.classList.add("is-playing"); };
+        v.addEventListener("playing", reveal, { once: true });
+
+        var p = v.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(function () {
+            // Autoplay blocked (rare for muted video, but possible). Drop the
+            // element so the static palaceCoup backdrop wins.
+            v.remove();
+          });
+        }
+      })();
+    </script>
 
     <!-- ============== WHAT IT IS ============== -->
     <section>
