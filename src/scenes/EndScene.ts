@@ -21,6 +21,8 @@ interface EndArgs {
 const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b01_palace_coup: "post_palace",
   b02_farmland: "post_farmland",
+  b03_dawn_bandits: "post_dawn_bandits",
+  b04_swamp: "post_swamp",
   b05_mountain_ndari: "post_mountain"
 };
 

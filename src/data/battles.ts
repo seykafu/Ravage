@@ -1,6 +1,6 @@
 import type { MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { farmlandMap, mountainMap, palaceMap, swampMap } from "./maps";
+import { dawnBanditsMap, farmlandMap, mountainMap, palaceMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -83,13 +83,38 @@ export const BATTLES: BattleNode[] = [
     index: 3,
     title: "Third Battle",
     subtitle: "Madame Dawn's Bandits",
-    intro: "A second wave bears the colors of a queen called Madame Dawn — said to have lost her land to King Nebu. Maya joins the squad mid-fight, reading the field like she has read it many times before.",
-    outro: "Maya stays. Lucian watches her closely.",
+    intro:
+      "Two days after the wagons. A second wave comes down the eastern road — fewer than the first, better armed, all wearing the same dyed sash on the right shoulder. Word in town calls them \"Dawn's lot,\" after a queen across the sea who lost her land to King Nebu and kept her grudge. Lucian draws the squad up south of the road. Ning checks her draw. A stranger you have not seen before drops in from the orchard at the east flank, watches the line for one breath, and joins it without asking.",
+    outro:
+      "The stranger introduces herself as Maya — quiet, watchful, with a tactician's eye Ning admires before she has finished her sentence. Lucian says nothing, which is how he says everything. She stays.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
-    playable: false,
+    playable: true,
+    map: dawnBanditsMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      // Maya joins the squad on this battle. Narratively she "appears
+      // mid-fight" (her arrival is dramatized in the b03 intro paragraph
+      // and the post arc); mechanically she starts on the field at the
+      // east flank, separated from the main squad by the road and wagons.
+      PLAYERS.maya()
+    ],
+    buildEnemies: () => [
+      // Dawn's raiders use the same bandit factories as Battle 2 — same
+      // mechanical profile, framed as a different faction in the script.
+      // A future pass could give them a distinct palette/name; for now
+      // the differentiation is purely narrative.
+      ENEMIES.banditSwordsman("dawn_sw1", 301),
+      ENEMIES.banditSwordsman("dawn_sw2", 302),
+      ENEMIES.banditSpearton("dawn_sp1", 303),
+      ENEMIES.banditArcher("dawn_a1", 304),
+      ENEMIES.banditArcher("dawn_a2", 305)
+    ],
     difficultyLabel: "Skirmish"
+    // No explicit victory — falls back to routEnemies (default).
   },
   {
     id: "b04_swamp",
@@ -97,7 +122,7 @@ export const BATTLES: BattleNode[] = [
     title: "Fourth Battle",
     subtitle: "Ambush in the Swamp",
     intro:
-      "Halfway home through the marsh on the road back to Thuling. Kian rode out from the keep that morning to meet you and ride the rest of the way in — \"the General's compliments,\" he said. Bandits burst from the tree-line at all four corners of the road. Maya draws first. Kian draws second, and watches you draw with the eyes of a man counting evidence.",
+      "Three minutes into the marsh the morning sun is gone — swallowed by canopy and standing water. The squad is single file: Maya at point, Amar and Lucian centered, Kian on the right flank in armor that will not stop sounding like itself, Ning watching the rear. The package for the smallholding is in Lucian's saddlebag. The bandits are in the trees on all four sides, and Maya draws first.",
     outro:
       "Lucian invents a story for Kian about reflexes learned on the farm. Kian nods and says nothing. That night by the fire Lucian invents a different story, this one only for you, and then asks you to tell him the true one.",
     music: MUSIC.battleTheme2,

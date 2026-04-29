@@ -40,13 +40,22 @@ export type BattleId =
 
 // ---- Story arcs -----------------------------------------------------------
 // Must stay in sync with the keys of ARCS in src/story/beats.ts. Currently
-// covers the playable vertical-slice arcs only — extend as the script grows.
+// covers the playable vertical-slice arcs (chapters 1–5):
+//
+//   cold_open_dawn → pre_palace → b01 → post_palace → thuling_arrival
+//     → b02 → post_farmland → before_dawn_bandits → b03 → post_dawn_bandits
+//     → before_swamp → b04 → post_swamp → before_mountain → b05 → post_mountain
+//     → credits
 export type ArcId =
   | "cold_open_dawn"
   | "pre_palace"
   | "post_palace"
   | "thuling_arrival"
   | "post_farmland"
+  | "before_dawn_bandits"
+  | "post_dawn_bandits"
+  | "before_swamp"
+  | "post_swamp"
   | "before_mountain"
   | "post_mountain";
 

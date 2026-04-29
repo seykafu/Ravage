@@ -93,6 +93,59 @@ export const farmlandMap: MapDef = buildMap("farmland", "Thuling Farmland", farm
   ]
 });
 
+// ============== Battle 3 — Madame Dawn's Bandits ==============
+// 12×9 outskirts of Thuling: a dirt road running E-W (rows 3–5) with
+// open grass farms to the south (player-friendly territory) and rubble
+// from a recently burned-out smallholding to the north (where the Dawn
+// raiders have set up). Two derelict wagons (Wg) on the road act as
+// movement blockers and force the squad to commit to one flank or the
+// other. Hay bales (Hy) at the corners and the rubble field give the
+// raiders' archers a few cover tiles to fire from on round 1.
+//
+// `Gr` (grass) is hoisted to this section because it's the first map in
+// source order to use it; the swamp section below shares the const.
+const Gr = t("grass");
+const Di = t("dirt");
+const Hy = t("grass", "hay");
+const Wg = t("dirt", "wagon");
+const Ru = t("rubble");
+const Fn = t("grass", "fence");
+
+const dawnBanditsRows = [
+  [Gr, Gr, Hy, Gr, Ru, Gr, Gr, Ru, Gr, Hy, Gr, Gr],
+  [Gr, Fn, Fn, Gr, Ru, Ru, Ru, Ru, Gr, Fn, Fn, Gr],
+  [Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr],
+  [Di, Di, Di, Di, Di, Di, Di, Di, Di, Di, Di, Di],
+  [Di, Di, Wg, Di, Di, Di, Di, Di, Di, Wg, Di, Di],
+  [Di, Di, Di, Di, Di, Di, Di, Di, Di, Di, Di, Di],
+  [Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr],
+  [Gr, Fn, Fn, Gr, Gr, Gr, Gr, Gr, Gr, Fn, Fn, Gr],
+  [Gr, Hy, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr, Hy, Gr]
+] as const;
+
+export const dawnBanditsMap: MapDef = buildMap("dawn_bandits", "Outskirts of Thuling", dawnBanditsRows, {
+  // Squad braced south of the road, defending the farms behind them.
+  // Maya enters from the east flank — narratively she "joins mid-fight"
+  // (her appearance in pre-battle dialog is foreshadowed; mechanically
+  // she just starts on the field separated from the main squad).
+  player: [
+    { x: 5, y: 7 }, // Amar
+    { x: 6, y: 7 }, // Lucian
+    { x: 4, y: 8 }, // Ning
+    { x: 10, y: 5 } // Maya — east flank, separated
+  ],
+  // Five raiders in/around the rubble at the north field. Two archers
+  // perched on hay/rubble for first-round shots, two swordsmen pressing
+  // down the road, one spearton holding the rubble line.
+  enemy: [
+    { x: 5, y: 0 }, // Swordsman, north-center
+    { x: 7, y: 0 }, // Swordsman
+    { x: 5, y: 1 }, // Spearton in rubble cover
+    { x: 4, y: 0 }, // Archer
+    { x: 8, y: 0 }  // Archer
+  ]
+});
+
 // ============== Battle 4 — Ambush in the Swamp ==============
 // 12×9 marsh on the road home. The squad is moving through a clear lane in
 // the middle (rows 3–5, cols 4–7 are open grass) when bandits burst from
@@ -104,7 +157,7 @@ export const farmlandMap: MapDef = buildMap("farmland", "Thuling Farmland", farm
 // from cover until the squad pushes out to engage them.
 const Mu = t("mud");
 const Wa = t("water");
-const Gr = t("grass");
+// Gr (grass) is shared with the Battle 3 section above — declared once there.
 const Fo = t("forest");
 const FT = t("forest", "tree");
 
