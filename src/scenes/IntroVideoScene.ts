@@ -8,7 +8,14 @@ interface IntroArgs {
   next: string;
 }
 
-const VIDEO_URL = encodeURI("video/Ravage - Intro Video.mov");
+// Absolute paths so they resolve from any host route (the game shell now
+// lives at /play/, where a relative "video/..." would 404). Two sources are
+// attached: WebM first because VP9-capable browsers prefer it (smaller),
+// MP4 second as a universal fallback that Safari and older browsers use.
+const VIDEO_SOURCES: ReadonlyArray<{ src: string; type: string }> = [
+  { src: "/video/intro.webm", type: "video/webm" },
+  { src: "/video/intro.mp4",  type: "video/mp4"  }
+];
 
 // Plays the intro cinematic between Title → Menu. Uses an HTML <video> element
 // overlaid on the Phaser canvas so HD footage renders with the browser's smooth
@@ -42,7 +49,12 @@ export class IntroVideoScene extends Phaser.Scene {
       return;
     }
     const vid = document.createElement("video");
-    vid.src = VIDEO_URL;
+    for (const s of VIDEO_SOURCES) {
+      const el = document.createElement("source");
+      el.src = s.src;
+      el.type = s.type;
+      vid.appendChild(el);
+    }
     vid.preload = "auto";
     vid.playsInline = true;
     vid.autoplay = true;
