@@ -3,6 +3,7 @@ import { ENEMIES, PLAYERS } from "./units";
 import { farmlandMap, mountainMap, palaceMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
+import { defeatUnit, type VictoryCondition } from "../combat/Victory";
 
 export interface BattleNode {
   id: BattleId;        // typed; new ids must be added to contentIds.ts first
@@ -20,6 +21,11 @@ export interface BattleNode {
   buildEnemies?: () => UnitDef[];
   difficultyLabel: string;
   unlockNote?: string;
+  // Win/lose rule for this battle. If omitted, defaults to routEnemies
+  // ("kill all enemies, don't die"). Use surviveRounds(N) for defense
+  // battles, defeatUnit(...) for boss kills, escapeToTile(...) for breakouts,
+  // or compose with allOf/anyOf. See src/combat/Victory.ts.
+  victory?: VictoryCondition;
 }
 
 export const BATTLES: BattleNode[] = [
@@ -128,7 +134,13 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("nd_a1", 505),
       ENEMIES.banditArcher("nd_a2", 506)
     ],
-    difficultyLabel: "Boss — First Major Threat"
+    difficultyLabel: "Boss — First Major Threat",
+    // Lore-accurate: "Ndari falls at the gate, holding the line so his sister
+    // can run." The player can win by routing the squad if they want, but the
+    // intended cinematic ending is to drop Ndari and let the mooks scatter —
+    // so victory triggers the moment Ndari falls, regardless of remaining
+    // bandits. Demonstrates the new defeatUnit primitive in src/combat/Victory.ts.
+    victory: defeatUnit("ndari", { label: "Defeat Ndari" })
   },
   {
     id: "b06_caravan",

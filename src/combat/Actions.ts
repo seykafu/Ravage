@@ -130,13 +130,11 @@ export const enterStance = (u: Unit, stance: Exclude<Stance, "none">): void => {
 
 export const beginTurn = (u: Unit): void => beginUnitTurn(u);
 
-export const checkVictory = (state: BattleState): "player" | "enemy" | null => {
-  const playersAlive = state.units.some((u) => u.faction === "player" && isAlive(u));
-  const enemiesAlive = state.units.some((u) => u.faction === "enemy" && isAlive(u));
-  if (!playersAlive) return "enemy";
-  if (!enemiesAlive) return "player";
-  return null;
-};
+// Note: the legacy `checkVictory` (rout-only, fixed) was deleted in favor of
+// the VictoryCondition primitive. See src/combat/Victory.ts; BattleScene now
+// reads the per-battle condition from BattleNode.victory and evaluates it
+// against (state, round). The default rout behavior lives there as
+// `routEnemies`.
 
 export const tileFor = (state: BattleState, u: Unit): Tile =>
   state.grid.tileAt(u.state.position);

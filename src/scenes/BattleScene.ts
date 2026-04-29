@@ -15,7 +15,6 @@ import { FastForwardButton } from "../ui/FastForwardButton";
 import { battleById } from "../data/battles";
 import {
   BattleState,
-  checkVictory,
   effectiveMovement,
   enterStance,
   moveUnit,
@@ -24,6 +23,7 @@ import {
   targetsForUnit,
   unitAt
 } from "../combat/Actions";
+import { routEnemies, type VictoryCondition } from "../combat/Victory";
 import { previewAttack } from "../combat/Damage";
 import { counterZoneTiles } from "../combat/Stances";
 import { executePlan, planEnemyTurn } from "../combat/AI";
@@ -87,6 +87,11 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
 export class BattleScene extends Phaser.Scene {
   private battleId!: BattleId;
   private state!: BattleState;
+  // Win/lose rule for this battle. Set in create() from node.victory, falling
+  // back to routEnemies (kill all enemies). Read by checkEnd() and used to
+  // populate the goal label in the top-left HUD.
+  private victory!: VictoryCondition;
+  private goalText!: Phaser.GameObjects.Text;
   private initiative!: Initiative;
   private originX = 0;
   private originY = 0;
@@ -175,6 +180,12 @@ export class BattleScene extends Phaser.Scene {
     const units: Unit[] = [...players, ...enemies];
     this.state = { units, grid, rng };
 
+    // Win/lose rule. Most battles use the default "rout all enemies"; battles
+    // that override .victory in their BattleNode (defense, escort, escape,
+    // boss-only kills) set a custom condition that drives both checkEnd()
+    // and the goal label in the HUD.
+    this.victory = node.victory ?? routEnemies;
+
     this.initiative = new Initiative();
     this.initiative.reseed(units);
 
@@ -247,6 +258,14 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: FAMILY_HEADING,
       fontSize: "16px",
       color: "#f4d999"
+    });
+    // Goal label sits under the round counter so the player always knows what
+    // the battle wants from them (rout, survive, escape, kill the boss…).
+    // Populated from this.victory.label, set once per battle in create().
+    this.goalText = this.add.text(16, 46, `Goal: ${this.victory.label}`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "12px",
+      color: "#c9b07a"
     });
     this.initiativeBar = this.add.container(110, 16);
 
@@ -830,13 +849,17 @@ export class BattleScene extends Phaser.Scene {
     if (cur) endUnitTurn(cur);
     this.clearActionButtons();
     this.clearOverlays();
-    if (this.checkEnd()) return;
+    // Advance BEFORE evaluating victory so round-based conditions
+    // (surviveRounds, protectUnit) see the new round counter on the same
+    // tick the player crosses the threshold. The rout/defeat-unit checks
+    // are state-only and don't care about ordering.
     this.initiative.advance(this.state.units);
+    if (this.checkEnd()) return;
     this.beginCurrentTurn();
   }
 
   private checkEnd(): boolean {
-    const v = checkVictory(this.state);
+    const v = this.victory.evaluate({ state: this.state, round: this.initiative.round });
     if (!v) return false;
     this.fsm.send({ tag: "BATTLE_END" });
     if (v === "player") sfxVictory();
