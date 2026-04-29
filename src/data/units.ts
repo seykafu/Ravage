@@ -123,6 +123,12 @@ export const PLAYERS = {
     shortName: "Ki",
     faction: "player",
     classKind: "knight",
+    // No knight sprite folder under public/assets/sprites/ yet. Render as
+    // swordmaster (visually distinct from Amar's swordsman, fits Kian's
+    // "elite blade in the king's service" framing) until proper knight
+    // sprites ship. The "knight" classKind is preserved so Kian still
+    // gets the +2 mountBonus from Actions.ts.
+    spriteClassOverride: "swordmaster",
     weapon: "sword",
     stats: { hp: 32, power: 11, armor: 6, speed: 7, movement: 4, ap: 3 },
     artSeed: 8,

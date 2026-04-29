@@ -66,6 +66,14 @@ export interface UnitDef {
   // same character as "amar" but with a different statline) so the side-panel
   // avatar still routes to the right portrait file.
   portraitId?: string;
+  // Optional override for the in-battle sprite class. Use this when a unit's
+  // `classKind` (which drives mechanics — mountBonus, AP, etc.) doesn't
+  // have a shipped sprite folder under public/assets/sprites/. Without this,
+  // ensureUnitTexture in UnitArt.ts silently falls back to the procedural
+  // pixel-art generator, which looks notably worse than the asset sprites.
+  // E.g., Kian is class "knight" mechanically (gets the +2 mount bonus) but
+  // renders as "swordmaster" until knight sprites ship.
+  spriteClassOverride?: ClassKind;
   // Optional tag set used by AI scoring (e.g., "boss" forces the AI to be more aggressive).
   tags?: ReadonlySet<string>;
   // Up to MAX_ABILITIES special abilities granted at unit creation.

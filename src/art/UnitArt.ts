@@ -178,11 +178,39 @@ const drawWeapon = (px: PixelCanvas, kind: ClassKind, weapon: WeaponKind, p: Pal
 
 const unitTexKey = (u: Unit): string => `unit-${u.id}`;
 
+// Tracks (id, effectiveClass) pairs we've already warned about, so the
+// fallback log doesn't fire on every camera redraw.
+const warnedFallback = new Set<string>();
+
 export const ensureUnitTexture = (scene: Phaser.Scene, u: Unit): string => {
-  // If a real idle spritesheet exists for this class, prefer it. The first
+  // The sprite class can be overridden separately from the mechanical
+  // classKind — this lets a unit get its class's mechanics (e.g., knight
+  // gets +2 mountBonus from Actions.ts) while rendering with another
+  // class's sprites until proper assets ship for theirs.
+  const spriteClass = u.spriteClassOverride ?? u.classKind;
+
+  // If a real idle spritesheet exists for that class, prefer it. The first
   // frame becomes the static texture used by code paths that don't animate.
-  const realKey = `unit:${u.classKind}:idle`;
+  const realKey = `unit:${spriteClass}:idle`;
   if (scene.textures.exists(realKey)) return realKey;
+
+  // No real sprite — falling back to the procedural pixel-art generator.
+  // This is a permanent feature (procedural is the default for unfinished
+  // classes), but in DEV we surface it once so missing-sprite mistakes
+  // like "Kian shipped as a class with no sprite folder" don't reach the
+  // player as "LOL crappy sprite". Set spriteClassOverride on the UnitDef
+  // (or ship sprites for the class) to silence the warning.
+  if (import.meta.env.DEV) {
+    const tag = `${u.id}:${spriteClass}`;
+    if (!warnedFallback.has(tag)) {
+      warnedFallback.add(tag);
+      console.warn(
+        `[UnitArt] No sprite for class "${spriteClass}" — unit "${u.id}" (${u.name}) ` +
+        `is using the procedural fallback. Add a spriteClassOverride on the UnitDef ` +
+        `or drop assets at public/assets/sprites/${spriteClass}/idle.png.`
+      );
+    }
+  }
 
   const key = unitTexKey(u);
   if (scene.textures.exists(key)) return key;

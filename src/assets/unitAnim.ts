@@ -30,9 +30,12 @@ export const playUnitState = (
   unit: Unit,
   state: UnitAnimState
 ): void => {
-  if (hasUnitAnimation(unit.classKind, state)) {
+  // Mirror UnitArt.ensureUnitTexture: prefer the override sprite class so
+  // animation lookups stay consistent with whichever spritesheet was loaded.
+  const spriteClass = unit.spriteClassOverride ?? unit.classKind;
+  if (hasUnitAnimation(spriteClass, state)) {
     stopIdleFallback(sprite);
-    sprite.play(animKey(unit.classKind, state), true);
+    sprite.play(animKey(spriteClass, state), true);
     return;
   }
 
