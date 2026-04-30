@@ -1,5 +1,30 @@
-import type { UnitDef } from "../combat/types";
+import type { GrowthTable, UnitDef } from "../combat/types";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
+
+// ---- Player growth tables -----------------------------------------------
+// Each value is the % chance for that stat to gain +1 on level up. See
+// docs/RAVAGE_DESIGN.md §4.3 for the per-character philosophy. Hero
+// characters (Amar) get the highest totals; supports (Ranatoli, Ning)
+// trade total points for specialization.
+//
+// Co-located here rather than scattered into each factory so cross-unit
+// balance is comparable at a glance.
+
+const G_AMAR:     GrowthTable = { hp: 70, power: 60, armor: 40, speed: 50, movement: 10 };
+const G_LUCIAN:   GrowthTable = { hp: 75, power: 50, armor: 60, speed: 25, movement: 5 };
+const G_NING:     GrowthTable = { hp: 50, power: 60, armor: 25, speed: 60, movement: 15 };
+const G_MAYA:     GrowthTable = { hp: 50, power: 55, armor: 30, speed: 70, movement: 20 };
+const G_LEO:      GrowthTable = { hp: 65, power: 60, armor: 50, speed: 45, movement: 10 };
+const G_RANATOLI: GrowthTable = { hp: 80, power: 40, armor: 70, speed: 25, movement: 5 };
+const G_SELENE:   GrowthTable = { hp: 60, power: 70, armor: 35, speed: 65, movement: 15 };
+const G_KIAN:     GrowthTable = { hp: 65, power: 55, armor: 55, speed: 50, movement: 10 };
+
+// Generic enemy growth tables. Used when a battle author actively chooses
+// to give an enemy growths (rare — most enemies are single-encounter). The
+// rank-and-file enemy factories leave growths undefined so they don't
+// level up mid-battle.
+const G_BANDIT:   GrowthTable = { hp: 55, power: 50, armor: 30, speed: 40, movement: 5 };
+const G_ROYAL:    GrowthTable = { hp: 65, power: 55, armor: 60, speed: 45, movement: 5 };
 
 export const PLAYERS = {
   amar: (): UnitDef => ({
@@ -10,11 +35,18 @@ export const PLAYERS = {
     classKind: "swordsman",
     weapon: "sword",
     // Hero-of-the-story bump: a touch more HP, hit, and footwork than the rest.
+    // Post-amnesia statline (see amarHidden for the original-coup version).
     stats: { hp: 38, power: 12, armor: 5, speed: 9, movement: 5, ap: 3 },
     artSeed: 1,
     palette: PLAYER_PALETTES.amar,
     portrait: true,
-    abilities: ["BossFighter"]
+    abilities: ["BossFighter"],
+    // Post-amnesia Amar starts at L3 — the script's "muscle memory intact,
+    // raw stats reset" framing made mechanical. He levels back up over
+    // the course of Acts 1-2 and is expected to hit promotion at L~12+
+    // around the cliffs reveal (Battle 11).
+    level: 3,
+    growths: G_AMAR
   }),
   amarHidden: (): UnitDef => ({
     // Same Amar, but with the "true" combat statline (used in Battle 1 — pre-amnesia).
@@ -29,7 +61,12 @@ export const PLAYERS = {
     palette: PLAYER_PALETTES.amar,
     portrait: true,
     portraitId: "amar",
-    abilities: ["BossFighter"]
+    abilities: ["BossFighter"],
+    // Pre-amnesia Amar is a level-10 veteran — same as the rest of the
+    // original coup squad. Doesn't matter for B1 progression (the coup
+    // is scripted to fail) but enforces the lore baseline.
+    level: 10,
+    growths: G_AMAR
   }),
   lucian: (): UnitDef => ({
     id: "lucian",
@@ -42,7 +79,9 @@ export const PLAYERS = {
     artSeed: 2,
     palette: PLAYER_PALETTES.lucian,
     portrait: true,
-    abilities: ["Aide"]
+    abilities: ["Aide"],
+    level: 1,
+    growths: G_LUCIAN
   }),
   ning: (): UnitDef => ({
     id: "ning",
@@ -55,7 +94,9 @@ export const PLAYERS = {
     artSeed: 3,
     palette: PLAYER_PALETTES.ning,
     portrait: true,
-    abilities: ["Aide"]
+    abilities: ["Aide"],
+    level: 1,
+    growths: G_NING
   }),
   maya: (): UnitDef => ({
     id: "maya",
@@ -68,7 +109,11 @@ export const PLAYERS = {
     artSeed: 4,
     palette: PLAYER_PALETTES.maya,
     portrait: true,
-    abilities: ["Aide"]
+    abilities: ["Aide"],
+    // Maya joins mid-fight in B3 with a touch of training already; she's
+    // intentionally not a fresh recruit (Dawn planted her in the squad).
+    level: 2,
+    growths: G_MAYA
   }),
   leo: (): UnitDef => ({
     id: "leo",
@@ -81,7 +126,11 @@ export const PLAYERS = {
     artSeed: 5,
     palette: PLAYER_PALETTES.leo,
     portrait: true,
-    abilities: ["Destruct", "Roam"]
+    abilities: ["Destruct", "Roam"],
+    // Fergus's son — trained as a Dactyl Rider, joins the squad in B5
+    // already capable. Mid-tier starting level.
+    level: 3,
+    growths: G_LEO
   }),
   ranatoli: (): UnitDef => ({
     id: "ranatoli",
@@ -94,7 +143,12 @@ export const PLAYERS = {
     artSeed: 6,
     palette: PLAYER_PALETTES.ranatoli,
     portrait: true,
-    abilities: ["Destruct"]
+    abilities: ["Destruct"],
+    // Original-8 coup veteran. Uses L10 baseline; the catch-up rule in
+    // Progression.catchUpToSquad will fast-forward him further if the
+    // squad has out-leveled L10 by the time he rejoins.
+    level: 10,
+    growths: G_RANATOLI
   }),
   selene: (): UnitDef => ({
     id: "selene",
@@ -106,17 +160,12 @@ export const PLAYERS = {
     stats: { hp: 30, power: 13, armor: 4, speed: 12, movement: 4, ap: 3 },
     artSeed: 7,
     palette: PLAYER_PALETTES.selene,
-    portrait: true
+    portrait: true,
+    // Selene is already a Swordmaster (Tier 2) when the squad meets her
+    // at the monastery in B7. L10 baseline + catch-up rule applies.
+    level: 10,
+    growths: G_SELENE
   }),
-  // Kian rides with Amar's squad in early battles (b04 swamp ambush, b07
-  // monastery, b08 Orinhal escort). Knight-class, mounted: gets the +2
-  // movement bonus from Actions.mountBonus, so effective movement = 6 —
-  // notably more mobile than Lucian (spearton, eff. mv 3) and on par with
-  // Leo (dactyl_rider, eff. mv 7). Sword + decent armor makes him a
-  // reliable melee anchor without overshadowing Amar's hero stat-line.
-  // Same `id` ("kian") will be reused by an enemy factory once he turns
-  // hostile in b10/b11 — palette already lives in both PLAYER_PALETTES
-  // and ENEMY_PALETTES under the same key for that reason.
   kian: (): UnitDef => ({
     id: "kian",
     name: "Kian",
@@ -133,12 +182,24 @@ export const PLAYERS = {
     stats: { hp: 32, power: 11, armor: 6, speed: 7, movement: 4, ap: 3 },
     artSeed: 8,
     palette: PLAYER_PALETTES.kian,
-    portrait: true
+    portrait: true,
+    // Kian is a King's man with formal training — he's a step ahead of the
+    // farm/factory recruits when he joins the squad in B4.
+    level: 4,
+    growths: G_KIAN
   })
 };
 
+// ---- Enemy factories ----------------------------------------------------
+// Every enemy factory takes an explicit `level` parameter so per-battle
+// authors can tune difficulty in the call site. The level feeds the XP
+// reward formula (level diff modifier in Progression.xpRewardFor) and is
+// the hook the future stat-scaling pass will multiply against. For the
+// v1 system stats are still hand-authored — battle authors override the
+// `stats` field on the returned object if they want a tougher specimen.
+
 export const ENEMIES = {
-  banditSwordsman: (id: string, seed: number): UnitDef => ({
+  banditSwordsman: (id: string, seed: number, level = 2): UnitDef => ({
     id,
     name: "Bandit",
     shortName: "Bd",
@@ -147,9 +208,11 @@ export const ENEMIES = {
     weapon: "sword",
     stats: { hp: 22, power: 8, armor: 3, speed: 6, movement: 4, ap: 3 },
     artSeed: seed,
-    palette: ENEMY_PALETTES.bandit
+    palette: ENEMY_PALETTES.bandit,
+    level,
+    growths: G_BANDIT
   }),
-  banditArcher: (id: string, seed: number): UnitDef => ({
+  banditArcher: (id: string, seed: number, level = 2): UnitDef => ({
     id,
     name: "Raider",
     shortName: "Rd",
@@ -158,9 +221,11 @@ export const ENEMIES = {
     weapon: "bow",
     stats: { hp: 18, power: 7, armor: 2, speed: 7, movement: 4, ap: 2 },
     artSeed: seed,
-    palette: ENEMY_PALETTES.bandit_archer
+    palette: ENEMY_PALETTES.bandit_archer,
+    level,
+    growths: G_BANDIT
   }),
-  banditSpearton: (id: string, seed: number): UnitDef => ({
+  banditSpearton: (id: string, seed: number, level = 3): UnitDef => ({
     id,
     name: "Reaver",
     shortName: "Rv",
@@ -169,9 +234,13 @@ export const ENEMIES = {
     weapon: "spear",
     stats: { hp: 26, power: 10, armor: 5, speed: 5, movement: 3, ap: 2 },
     artSeed: seed,
-    palette: ENEMY_PALETTES.bandit
+    palette: ENEMY_PALETTES.bandit,
+    level,
+    growths: G_BANDIT
   }),
-  royalGuard: (id: string, seed: number): UnitDef => ({
+  // Royal classes are tagged "elite" — Progression.xpRewardFor treats
+  // elite kills as 50 XP base instead of the default 30.
+  royalGuard: (id: string, seed: number, level = 6): UnitDef => ({
     id,
     name: "Royal Guard",
     shortName: "RG",
@@ -180,9 +249,12 @@ export const ENEMIES = {
     weapon: "spear",
     stats: { hp: 30, power: 11, armor: 7, speed: 6, movement: 3, ap: 2 },
     artSeed: seed,
-    palette: ENEMY_PALETTES.royal_guard
+    palette: ENEMY_PALETTES.royal_guard,
+    tags: new Set(["elite"]),
+    level,
+    growths: G_ROYAL
   }),
-  royalArcher: (id: string, seed: number): UnitDef => ({
+  royalArcher: (id: string, seed: number, level = 6): UnitDef => ({
     id,
     name: "Crown Archer",
     shortName: "Ca",
@@ -191,9 +263,14 @@ export const ENEMIES = {
     weapon: "bow",
     stats: { hp: 22, power: 9, armor: 3, speed: 8, movement: 4, ap: 2 },
     artSeed: seed,
-    palette: ENEMY_PALETTES.royal_guard
+    palette: ENEMY_PALETTES.royal_guard,
+    tags: new Set(["elite"]),
+    level,
+    growths: G_ROYAL
   }),
-  ndari: (): UnitDef => ({
+  // Bosses don't have growths — they're single-encounter. Battle authors
+  // pass an explicit level if they want to override the default.
+  ndari: (level = 7): UnitDef => ({
     id: "ndari",
     name: "Ndari",
     shortName: "Nd",
@@ -204,9 +281,10 @@ export const ENEMIES = {
     artSeed: 99,
     palette: ENEMY_PALETTES.ndari,
     portrait: true,
-    tags: new Set(["boss"])
+    tags: new Set(["boss"]),
+    level
   }),
-  kingNebu: (): UnitDef => ({
+  kingNebu: (level = 12): UnitDef => ({
     id: "nebu",
     name: "King Nebu IV",
     shortName: "Ne",
@@ -217,6 +295,7 @@ export const ENEMIES = {
     artSeed: 88,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    tags: new Set(["boss"])
+    tags: new Set(["boss"]),
+    level
   })
 };

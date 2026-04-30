@@ -16,6 +16,7 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
     hp: def.stats.hp,
     apRemaining: def.stats.ap,
     stance: "none",
+    xp: 0,
     hasUsedRepositionStep: false,
     hasActedThisRound: false,
     hasStartedTurnThisRound: false,

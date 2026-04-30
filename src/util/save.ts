@@ -1,5 +1,25 @@
 import { GAME_STATE_KEY } from "./constants";
 import { getSupabase } from "../auth/supabase";
+import type { Ability, ClassKind, UnitStats } from "../combat/types";
+
+// Per-character progression record. Persisted across battles. The unit's
+// authored UnitDef supplies the starting baseline; once a character has
+// fought at least one battle, this record is the source of truth and
+// overrides factory defaults (level, current stats, post-promotion class
+// + abilities). Implemented in BattleScene's unit hydration path.
+//
+// `stats` is the FULL stat block at the unit's current level — we don't
+// reconstruct from baseline + growth rolls because growths are random and
+// the rolls aren't seeded per-character. Just snapshot the current values.
+export interface CharacterRecord {
+  level: number;
+  xp: number;
+  stats: UnitStats;
+  // Set after Tier 1 → Tier 2 promotion. When absent, unit uses its
+  // factory-defined classKind + abilities.
+  classKind?: ClassKind;
+  abilities?: Ability[];
+}
 
 export interface SaveState {
   unlockedBattles: string[];
@@ -7,6 +27,11 @@ export interface SaveState {
   lastBattleResult: { id: string; outcome: "victory" | "defeat" } | null;
   // Light flags for the future strategic layer.
   flags: Record<string, boolean | number | string>;
+  // Per-character progression keyed by UnitDef.id. Optional for
+  // backward-compat with saves created before the progression system
+  // landed; missing characters fall back to factory defaults the first
+  // time they appear in a battle.
+  characters?: Record<string, CharacterRecord>;
   // Bookkeeping (optional — only set when loaded from a remote slot).
   updatedAt?: string;
 }
@@ -88,6 +113,23 @@ export const completeBattle = (s: SaveState, id: string): SaveState => {
       : [...s.completedBattles, id]
   };
 };
+
+// Read a character's progression record. Returns undefined if the character
+// has never been persisted (first appearance — caller should use factory
+// defaults and apply the catch-up rule if applicable).
+export const getCharacterRecord = (s: SaveState, id: string): CharacterRecord | undefined =>
+  s.characters?.[id];
+
+// Write or update a single character's progression record. Pure — returns
+// a new SaveState; caller still has to writeSave() the result.
+export const setCharacterRecord = (
+  s: SaveState,
+  id: string,
+  rec: CharacterRecord
+): SaveState => ({
+  ...s,
+  characters: { ...(s.characters ?? {}), [id]: rec }
+});
 
 // --- Slot operations (async; used by SaveSlotScene) ---------------------------
 

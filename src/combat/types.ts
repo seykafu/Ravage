@@ -47,6 +47,28 @@ export interface UnitStats {
   ap: number;
 }
 
+// Per-stat % chance to gain +1 on level up. See src/combat/Progression.ts and
+// the "Stat Growths" table in docs/RAVAGE_DESIGN.md. Each field is a 0–100
+// integer; a value of 0 means the stat will never grow naturally.
+//
+// Movement growth is intentionally rare across all characters — speed already
+// scales tactical reach, and movement creep breaks map design.
+export interface GrowthTable {
+  hp: number;
+  power: number;
+  armor: number;
+  speed: number;
+  movement: number;
+}
+
+// Levels and XP. Cap, threshold, and reward formulas live in Progression.ts.
+// `level` is required on every UnitDef so the level-difference XP modifier
+// works without scattered fallbacks. `growths` is optional — enemies and
+// units who don't progress (bosses) leave it undefined and are treated as
+// non-growing for level-up purposes.
+export const LEVEL_CAP = 20;
+export const XP_PER_LEVEL = 100;
+
 export interface UnitDef {
   id: string;
   name: string;
@@ -78,12 +100,27 @@ export interface UnitDef {
   tags?: ReadonlySet<string>;
   // Up to MAX_ABILITIES special abilities granted at unit creation.
   abilities?: Ability[];
+  // Progression. Required field; the XP reward formula needs both attacker
+  // and defender level to compute the level-diff modifier without fallbacks.
+  // Player factories set their character's narratively-correct starting
+  // level (e.g., post-amnesia Amar = 3, original-8 Amar = 10). Enemy
+  // factories take a `level` parameter so battle authors can tune
+  // difficulty per fight (cap is LEVEL_CAP = 20).
+  level: number;
+  // Per-stat % chance to gain +1 on level up. Optional; units without a
+  // growths table simply don't roll new stats on level up (used for
+  // single-encounter bosses and the like).
+  growths?: GrowthTable;
 }
 
 export interface UnitState {
   hp: number;
   apRemaining: number;
   stance: Stance;
+  // Cumulative XP earned at this unit's CURRENT level. Drains by XP_PER_LEVEL
+  // each time the unit levels up; capped implicitly when level == LEVEL_CAP
+  // (no further XP is awarded). Persisted across battles via SaveState.
+  xp: number;
   hasUsedRepositionStep: boolean;
   hasActedThisRound: boolean;
   // Set true the first time beginUnitTurn runs for this unit in a round, and

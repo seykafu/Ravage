@@ -27,6 +27,13 @@ import { routEnemies, type VictoryCondition } from "../combat/Victory";
 import { previewAttack } from "../combat/Damage";
 import { counterZoneTiles } from "../combat/Stances";
 import { executePlan, planEnemyTurn } from "../combat/AI";
+import {
+  awardXp,
+  catchUpToSquad,
+  squadAverageLevel,
+  xpRewardFor,
+  type LevelUpReport
+} from "../combat/Progression";
 import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
@@ -39,7 +46,14 @@ import {
   sfxStep,
   sfxVictory
 } from "../audio/Sfx";
-import { completeBattle, loadSave, unlockBattle, writeSave } from "../util/save";
+import {
+  completeBattle,
+  getCharacterRecord,
+  loadSave,
+  setCharacterRecord,
+  unlockBattle,
+  writeSave
+} from "../util/save";
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
 import { playUnitState } from "../assets/unitAnim";
@@ -210,6 +224,34 @@ export class BattleScene extends Phaser.Scene {
     const enemies = node.buildEnemies().map((def, i) =>
       createUnit(def, map.startPositions.enemy[i] ?? { x: 0, y: 0 })
     );
+
+    // Hydrate player units from the save slot. Characters with a saved
+    // record have their level / xp / current stats / post-promotion class
+    // restored from disk; first-time appearances use the factory baseline,
+    // and the catch-up rule fast-forwards veterans (e.g., Selene rejoining
+    // at L10 when the squad average has reached L13). See Progression.ts
+    // and docs/RAVAGE_DESIGN.md §4.
+    const save = loadSave();
+    const squadAvg = squadAverageLevel(players);
+    for (const p of players) {
+      const rec = getCharacterRecord(save, p.id);
+      if (rec) {
+        p.level = rec.level;
+        p.state.xp = rec.xp;
+        p.stats = { ...rec.stats };
+        p.state.hp = rec.stats.hp; // start the battle at full HP
+        if (rec.classKind) p.classKind = rec.classKind;
+        if (rec.abilities) p.abilities = rec.abilities;
+      } else if (p.level < squadAvg - 2) {
+        const gained = catchUpToSquad(p, squadAvg);
+        if (gained > 0) {
+          p.state.hp = p.stats.hp; // top up after the catch-up HP gains
+          // eslint-disable-next-line no-console
+          if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
+        }
+      }
+    }
+
     enemies.forEach((e) => (e.state.facingX = -1));
     players.forEach((p) => (p.state.facingX = 1));
     const units: Unit[] = [...players, ...enemies];
@@ -932,14 +974,26 @@ export class BattleScene extends Phaser.Scene {
     this.apText.setText(`AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`);
     const mov = effectiveMovement(u);
     const movStr = mov !== u.stats.movement ? `${u.stats.movement}+${mov - u.stats.movement}` : `${u.stats.movement}`;
+    // Show level + XP only for player units (enemy XP doesn't matter to the
+    // player). Capped units show "MAX" instead of an XP bar so players can
+    // see at a glance who's hit the ceiling.
+    const lvLine = u.faction === "player"
+      ? (u.level >= 20
+          ? `LV   ${u.level}    XP   MAX`
+          : `LV   ${u.level}    XP   ${u.state.xp}/100`)
+      : `LV   ${u.level}`;
     const lines = [
+      lvLine,
       `HP   ${u.state.hp}/${u.stats.hp}`,
       `PWR  ${u.stats.power}    ARM  ${u.stats.armor}`,
       `SPD  ${u.stats.speed}    MOV  ${movStr}`,
       `WPN  ${u.weapon}`,
       `STN  ${u.state.stance}`
     ];
-    const wpnIdx = 3;
+    // Index of the WPN row in `lines` above. Bumped from 3 → 4 when the LV
+    // row was added at index 0; the hover zone for the weapon tooltip needs
+    // to follow.
+    const wpnIdx = 4;
     let ablIdx = -1;
     if (u.abilities && u.abilities.length > 0) {
       ablIdx = lines.length;
@@ -1071,6 +1125,22 @@ export class BattleScene extends Phaser.Scene {
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "victory" } };
     } else {
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "defeat" } };
+    }
+    // Persist player progression — every player unit's level, xp, and
+    // current stats (incl. accumulated growth gains) and any post-promotion
+    // class/abilities. We snapshot on BOTH victory and defeat so the player
+    // doesn't lose XP earned mid-fight just because the squad wiped at the
+    // end. Catch-up rolls applied at battle start are also persisted, so
+    // veterans only catch up once.
+    for (const u of this.state.units) {
+      if (u.faction !== "player") continue;
+      save = setCharacterRecord(save, u.id, {
+        level: u.level,
+        xp: u.state.xp,
+        stats: { ...u.stats },
+        ...(u.classKind ? { classKind: u.classKind } : {}),
+        ...(u.abilities ? { abilities: [...u.abilities] } : {})
+      });
     }
     writeSave(save);
     getMusic(this).stop(650);
@@ -1619,6 +1689,53 @@ export class BattleScene extends Phaser.Scene {
         scaleX: 0.5,
         scaleY: 0.5,
         duration: 420
+      });
+      // XP award: only player kills of enemies count. Allied kills (friendly
+      // fire, AI vs AI) and enemy kills of players don't award anything.
+      // The reward is computed from base-by-class × level-diff modifier; a
+      // level-up may fire if the unit crosses 100 XP, with stat gains
+      // surfaced in the log so the player sees what changed.
+      if (attacker.faction === "player" && defender.faction === "enemy") {
+        const reward = xpRewardFor(attacker, defender);
+        const { totalAwarded, levelUps } = awardXp(attacker, reward);
+        if (totalAwarded > 0) {
+          this.pushLog(`${attacker.name} gains ${totalAwarded} XP.`);
+        }
+        for (const lu of levelUps) {
+          this.announceLevelUp(attacker, lu);
+        }
+      }
+    }
+  }
+
+  // Surface a level-up to the player: a log line and a brief golden floater
+  // over the unit's sprite. Stats that didn't roll growths are simply not
+  // mentioned — the floater stays compact.
+  private announceLevelUp(unit: Unit, report: LevelUpReport): void {
+    const view = this.unitViews.get(unit.id);
+    const gainedKeys = Object.keys(report.gained) as Array<keyof typeof report.gained>;
+    const shorthand: Record<string, string> = {
+      hp: "HP", power: "PWR", armor: "ARM", speed: "SPD", movement: "MOV"
+    };
+    const gainedTags = gainedKeys.map((k) => `+${shorthand[k] ?? k.toUpperCase()}`).join(" ");
+    const summary = gainedTags ? ` (${gainedTags})` : "";
+    this.pushLog(`${unit.name} reaches level ${report.newLevel}!${summary}`);
+    if (view) {
+      const floater = this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 10, `LV ${report.newLevel}`, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "14px",
+        color: "#fff7c4",
+        stroke: "#1a0e04",
+        strokeThickness: 3,
+        shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
+      }).setOrigin(0.5, 1).setDepth(40);
+      this.tweens.add({
+        targets: floater,
+        y: floater.y - 28,
+        alpha: 0,
+        duration: 1200,
+        ease: "Sine.easeOut",
+        onComplete: () => floater.destroy()
       });
     }
   }
