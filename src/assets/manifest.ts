@@ -68,12 +68,22 @@ export interface ManifestEntry {
 }
 
 // All known portraits. Add a file at public/assets/portraits/<id>.png and
-// uncomment / register here to swap in the real version.
+// register the id here to load it on boot. The side panel and dialogue
+// system look up portraits by `portrait:<id>`; missing files silently
+// fall through to the procedural portrait painter.
+//
+// Generic enemy portraits (bandit / raider / reaver / royal_guard /
+// crown_archer) are shared across every instance of that enemy class —
+// the ENEMIES factory in src/data/units.ts sets `portraitId: "bandit"`
+// (etc.) so dawn_sw1, amb_sw1, nd_b1, etc. all route to the same artwork.
 const PORTRAIT_IDS = [
+  // Named characters
   "amar", "lucian", "ning", "maya", "leo", "ranatoli", "selene",
   "kian", "ndari", "nebu",
   "dawn", "fergus", "ndara", "archbold", "khione", "mira", "tali",
-  "narrator"
+  "narrator",
+  // Generic enemy classes
+  "bandit", "raider", "reaver", "royal_guard", "crown_archer"
 ] as const;
 
 const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => {

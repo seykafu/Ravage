@@ -198,6 +198,12 @@ export const PLAYERS = {
 // v1 system stats are still hand-authored — battle authors override the
 // `stats` field on the returned object if they want a tougher specimen.
 
+// Generic enemy classes share a single portrait per class — every Bandit
+// instance shows the same `bandit.png`, every Royal Guard the same
+// `royal_guard.png`, etc. portraitId routes the per-instance unit.id
+// (e.g., "dawn_sw1") to the shared portrait file via PortraitArt's
+// resolution path. portrait: true marks them as eligible for portrait
+// rendering at all (the side panel checks this).
 export const ENEMIES = {
   banditSwordsman: (id: string, seed: number, level = 2): UnitDef => ({
     id,
@@ -209,6 +215,8 @@ export const ENEMIES = {
     stats: { hp: 22, power: 8, armor: 3, speed: 6, movement: 4, ap: 3 },
     artSeed: seed,
     palette: ENEMY_PALETTES.bandit,
+    portrait: true,
+    portraitId: "bandit",
     level,
     growths: G_BANDIT
   }),
@@ -222,6 +230,8 @@ export const ENEMIES = {
     stats: { hp: 18, power: 7, armor: 2, speed: 7, movement: 4, ap: 2 },
     artSeed: seed,
     palette: ENEMY_PALETTES.bandit_archer,
+    portrait: true,
+    portraitId: "raider",
     level,
     growths: G_BANDIT
   }),
@@ -235,6 +245,8 @@ export const ENEMIES = {
     stats: { hp: 26, power: 10, armor: 5, speed: 5, movement: 3, ap: 2 },
     artSeed: seed,
     palette: ENEMY_PALETTES.bandit,
+    portrait: true,
+    portraitId: "reaver",
     level,
     growths: G_BANDIT
   }),
@@ -250,6 +262,8 @@ export const ENEMIES = {
     stats: { hp: 30, power: 11, armor: 7, speed: 6, movement: 3, ap: 2 },
     artSeed: seed,
     palette: ENEMY_PALETTES.royal_guard,
+    portrait: true,
+    portraitId: "royal_guard",
     tags: new Set(["elite"]),
     level,
     growths: G_ROYAL
@@ -264,6 +278,8 @@ export const ENEMIES = {
     stats: { hp: 22, power: 9, armor: 3, speed: 8, movement: 4, ap: 2 },
     artSeed: seed,
     palette: ENEMY_PALETTES.royal_guard,
+    portrait: true,
+    portraitId: "crown_archer",
     tags: new Set(["elite"]),
     level,
     growths: G_ROYAL
