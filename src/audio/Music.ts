@@ -120,6 +120,19 @@ export class MusicManager {
     if (this.currentKey === key && this.current?.isPlaying) return;
     // Retire the tracked sound first so a play() failure below can't strand it.
     if (this.current) this.retireSound(this.current, fadeMs);
+
+    // Defensive: ensure the WebAudio context is in a "running" state before
+    // we try to play. Across a scene transition (e.g., cold_open_dawn →
+    // pre_palace), the context can briefly drop into "suspended" — Phaser's
+    // sound.play() returns silently in that state and the new track never
+    // actually starts. resume() returns a Promise; we void-await it because
+    // play() runs synchronously. The retry-on-unlock below handles the
+    // narrow window where resume() hasn't completed by the time play() runs.
+    const sm = this.scene.sound as unknown as { context?: AudioContext };
+    if (sm.context && sm.context.state === "suspended") {
+      void sm.context.resume();
+    }
+
     const sound = this.scene.sound.add(key, { loop, volume: 0 });
     try { sound.play(); } catch { /* autoplay blocked — track anyway */ }
     // Sweep any orphaned music sounds we may have lost track of (e.g. across
@@ -135,6 +148,21 @@ export class MusicManager {
     });
     this.current = sound;
     this.currentKey = key;
+
+    // Retry-on-unlock: if context.resume() raced with play() and the sound
+    // is still not playing 250ms in, force a second play() attempt now that
+    // the context should be running. Most of the time this is a no-op (the
+    // first play already worked); when it fires, it salvages the silent-arc
+    // bug instead of leaving the player in eerie quiet.
+    setTimeout(() => {
+      if (this.current === sound && !sound.isPlaying) {
+        try { sound.play(); } catch { /* */ }
+        if (import.meta.env.DEV && !sound.isPlaying) {
+          // eslint-disable-next-line no-console
+          console.warn(`[MusicManager] Track "${key}" failed to start. AudioContext state: ${sm.context?.state ?? "n/a"}`);
+        }
+      }
+    }, 250);
   }
 
   stop(fadeMs = 500): void {
