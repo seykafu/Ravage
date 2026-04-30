@@ -848,6 +848,11 @@
         font-size: 14px;
         line-height: 1.45;
       }
+      /* The user-agent [hidden] { display: none } rule (specificity 0,1,0)
+         loses to #cookie-banner { display: flex } (specificity 1,0,0), so
+         setting banner.hidden = true did nothing visually. This rule wins
+         the cascade because #cookie-banner[hidden] is (1,1,0). */
+      #cookie-banner[hidden] { display: none; }
       #cookie-banner p { margin: 0; flex: 1; }
       .cookie-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
       .cookie-btn {
