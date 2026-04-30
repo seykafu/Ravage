@@ -71,22 +71,145 @@ export class SettingsScene extends Phaser.Scene {
       this.commit();
     });
 
-    // Resume / Close button
-    const closeW = 180;
-    const closeH = 44;
-    new Button(this, {
-      x: GAME_WIDTH / 2 - closeW / 2,
-      y: panelY + panelH - 64,
-      w: closeW,
-      h: closeH,
-      label: "Resume",
-      primary: true,
-      fontSize: 16,
-      onClick: () => { sfxClick(); this.close(); }
-    });
+    // Bottom button row. When the settings modal was launched from
+    // BattleScene, we offer a "Return to Map" escape hatch (gated behind a
+    // confirmation, since it forfeits the in-progress battle). Everywhere
+    // else the modal just gets the single Resume button.
+    const btnH = 44;
+    const btnY = panelY + panelH - 64;
+    const isInBattle = this.fromKey === "BattleScene";
+    if (isInBattle) {
+      const btnW = 180;
+      const gap = 24;
+      new Button(this, {
+        x: GAME_WIDTH / 2 - btnW - gap / 2,
+        y: btnY, w: btnW, h: btnH,
+        label: "Return to Map",
+        primary: false,
+        fontSize: 14,
+        onClick: () => { sfxClick(); this.confirmReturnToMap(); }
+      });
+      new Button(this, {
+        x: GAME_WIDTH / 2 + gap / 2,
+        y: btnY, w: btnW, h: btnH,
+        label: "Resume",
+        primary: true,
+        fontSize: 16,
+        onClick: () => { sfxClick(); this.close(); }
+      });
+    } else {
+      const closeW = 180;
+      new Button(this, {
+        x: GAME_WIDTH / 2 - closeW / 2,
+        y: btnY, w: closeW, h: btnH,
+        label: "Resume",
+        primary: true,
+        fontSize: 16,
+        onClick: () => { sfxClick(); this.close(); }
+      });
+    }
 
     this.input.keyboard?.on("keydown-ESC", () => this.close());
     this.input.keyboard?.on("keydown-ENTER", () => this.close());
+  }
+
+  // Two-step confirmation overlay shown on top of the main settings modal.
+  // Built as its own (smaller) modal — full-screen dim swallows clicks to
+  // anything beneath, so the player can't accidentally trigger a slider or
+  // the original Resume button while deciding. Cancel destroys the overlay
+  // and restores normal interaction; Confirm navigates away.
+  private confirmReturnToMap(): void {
+    const overlayDepth = 100;
+
+    // Full-screen interactive dim — sits above the settings panel and
+    // captures any click that doesn't land on the confirmation buttons.
+    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.55)
+      .setDepth(overlayDepth);
+    dim.setInteractive();
+
+    // Smaller confirmation panel.
+    const panelW = 460;
+    const panelH = 240;
+    const panelX = GAME_WIDTH / 2 - panelW / 2;
+    const panelY = GAME_HEIGHT / 2 - panelH / 2;
+    const panel = this.add.graphics().setDepth(overlayDepth + 1);
+    panel.fillStyle(0x0d111c, 0.98);
+    panel.fillRect(panelX, panelY, panelW, panelH);
+    panel.lineStyle(1, COLORS.gold, 0.85);
+    panel.strokeRect(panelX + 0.5, panelY + 0.5, panelW - 1, panelH - 1);
+    panel.lineStyle(1, COLORS.goldBright, 0.25);
+    panel.strokeRect(panelX + 2.5, panelY + 2.5, panelW - 5, panelH - 5);
+
+    const title = this.add.text(GAME_WIDTH / 2, panelY + 32, "Return to the World Map?", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "22px",
+      color: "#f4e4b0",
+      stroke: "#000",
+      strokeThickness: 2
+    }).setOrigin(0.5).setDepth(overlayDepth + 2);
+
+    const body = this.add.text(
+      GAME_WIDTH / 2,
+      panelY + 90,
+      "This will forfeit the current battle. You can re-enter it from the world map at any time.",
+      {
+        fontFamily: FAMILY_BODY,
+        fontSize: "14px",
+        color: "#dde6ef",
+        align: "center",
+        wordWrap: { width: panelW - 60 },
+        lineSpacing: 4
+      }
+    ).setOrigin(0.5).setDepth(overlayDepth + 2);
+
+    const btnW = 180;
+    const btnH = 44;
+    const gap = 24;
+    const btnY = panelY + panelH - 60;
+
+    // Track every overlay element so Cancel can clean them all up at once.
+    // Buttons are top-level scene objects, not children of `panel`, so they
+    // need to be destroyed explicitly.
+    const elements: Phaser.GameObjects.GameObject[] = [dim, panel, title, body];
+
+    const cancelBtn = new Button(this, {
+      x: GAME_WIDTH / 2 - btnW - gap / 2,
+      y: btnY, w: btnW, h: btnH,
+      label: "Cancel",
+      primary: false,
+      fontSize: 14,
+      onClick: () => {
+        sfxClick();
+        for (const e of elements) e.destroy();
+      }
+    });
+    cancelBtn.setDepth(overlayDepth + 2);
+    elements.push(cancelBtn);
+
+    const confirmBtn = new Button(this, {
+      x: GAME_WIDTH / 2 + gap / 2,
+      y: btnY, w: btnW, h: btnH,
+      label: "Return to Map",
+      primary: true,
+      fontSize: 14,
+      onClick: () => {
+        sfxClick();
+        this.returnToMap();
+      }
+    });
+    confirmBtn.setDepth(overlayDepth + 2);
+    elements.push(confirmBtn);
+  }
+
+  // Quit the in-progress battle and route to the overworld. Stops both the
+  // paused BattleScene and ourselves; OverworldScene.create() will swap the
+  // music to adventureAnthros via MusicManager's crossfade.
+  private returnToMap(): void {
+    if (this.fromKey) {
+      this.scene.stop(this.fromKey);
+    }
+    this.scene.stop();
+    this.scene.start("OverworldScene");
   }
 
   private commit(): void {
