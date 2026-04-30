@@ -117,6 +117,15 @@ export const sfxDefeat = (): void => {
   const notes = [392, 330, 262, 196];
   notes.forEach((n, i) => setTimeout(() => beep(n, 0.30, "sawtooth", 0.08), i * 150));
 };
+// Brief two-note ascending "ding" for XP awards. Triangle waves so it sits
+// brighter than action SFX (which use square/sawtooth) and reads as
+// reward/positive feedback rather than impact. Pitched high (A5 → E6) and
+// kept short so it doesn't crowd the post-kill audio (sfxDeath fires first).
+export const sfxXpGain = (): void => {
+  beep(880, 0.06, "triangle", 0.05, 0.005, 0.04);
+  setTimeout(() => beep(1320, 0.08, "triangle", 0.05, 0.005, 0.05), 50);
+};
+
 export const sfxPageTurn = (): void => {
   noiseBurst(0.10, 0.07, 3500);
 };

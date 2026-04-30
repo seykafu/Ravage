@@ -45,7 +45,8 @@ import {
   sfxDefeat,
   sfxStance,
   sfxStep,
-  sfxVictory
+  sfxVictory,
+  sfxXpGain
 } from "../audio/Sfx";
 import {
   completeBattle,
@@ -1716,12 +1717,39 @@ export class BattleScene extends Phaser.Scene {
         const { totalAwarded, levelUps } = awardXp(attacker, reward);
         if (totalAwarded > 0) {
           this.pushLog(`${attacker.name} gains ${totalAwarded} XP.`);
+          this.announceXpGain(attacker, totalAwarded);
         }
         for (const lu of levelUps) {
           this.announceLevelUp(attacker, lu);
         }
       }
     }
+  }
+
+  // Surface an XP gain to the player: brief two-note "ding" + a small
+  // golden floater above the attacker's sprite. Pairs with the existing
+  // log line (Amar gains 30 XP). Sits at -34px above sprite center so a
+  // companion level-up floater (-10px) doesn't overlap it.
+  private announceXpGain(unit: Unit, amount: number): void {
+    sfxXpGain();
+    const view = this.unitViews.get(unit.id);
+    if (!view) return;
+    const floater = this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 34, `+${amount} XP`, {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "12px",
+      color: "#fff7c4",
+      stroke: "#1a0e04",
+      strokeThickness: 3,
+      shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
+    }).setOrigin(0.5, 1).setDepth(40);
+    this.tweens.add({
+      targets: floater,
+      y: floater.y - 24,
+      alpha: 0,
+      duration: 1100,
+      ease: "Sine.easeOut",
+      onComplete: () => floater.destroy()
+    });
   }
 
   // Surface a level-up to the player: a log line and a brief golden floater
