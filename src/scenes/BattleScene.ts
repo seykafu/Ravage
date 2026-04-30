@@ -88,16 +88,29 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
 // Compact-icon style: portrait stacked above a centered name, no per-box
 // stat line (stats live in the side panel). Box dimensions and slot pitch
 // drive both the inline bar and the dropdown panel — keep them in sync.
+//
+// BOX_H was bumped 52 → 64 to give the name area enough vertical room for
+// two wrapped lines. Names like "Royal Guard" and "Crown Archer" wrap to
+// two lines with the heading-font glyph widths; previously the second line
+// rendered below the box border. The companion change is TOP_BAR_HEIGHT
+// (70 → 84) so the bar still fits cleanly within the top banner.
 const INITIATIVE_BAR_X = 320;       // px from left; clears the goal label
 const INITIATIVE_BAR_Y = 14;        // matches container y in create()
 const INITIATIVE_BOX_W = 64;
-const INITIATIVE_BOX_H = 52;
+const INITIATIVE_BOX_H = 64;
 const INITIATIVE_SLOT_PITCH = 70;   // box width + 6px gap
 // How many boxes fit between the bar's start and the right margin. With
 // GAME_WIDTH 1280 and bar X 320, that's (1280 - 320 - 16) / 70 ≈ 13. We cap
 // at 10 so the bar never visually competes with the side panel; the
 // remainder spills into the dropdown.
 const INITIATIVE_BAR_MAX_BOXES = 10;
+// Top banner height. Sized so INITIATIVE_BAR_Y + INITIATIVE_BOX_H = 78 fits
+// inside (with 2px headroom) and the side panel below — which has many
+// hard-coded child Y positions anchored to its y=80 origin — sits flush
+// with the bar's bottom. If you bump BOX_H further you'll need to push the
+// side panel down too, which means touching every absolute y inside it.
+const TOP_BAR_HEIGHT = 80;
+const MAP_TOP_OFFSET = 92;
 
 export class BattleScene extends Phaser.Scene {
   private battleId!: BattleId;
@@ -213,9 +226,9 @@ export class BattleScene extends Phaser.Scene {
 
     // Layout
     const playW = GAME_WIDTH - PANEL_W - 40;
-    const playH = GAME_HEIGHT - 80 - 40;
+    const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
     this.originX = 20 + Math.floor((playW - map.width * TILE_SIZE) / 2);
-    this.originY = 80 + Math.floor((playH - map.height * TILE_SIZE) / 2);
+    this.originY = MAP_TOP_OFFSET + Math.floor((playH - map.height * TILE_SIZE) / 2);
 
     // Tiles
     const tileSeed = map.id.length * 31 + 7;
@@ -268,9 +281,9 @@ export class BattleScene extends Phaser.Scene {
     // Top initiative bar
     const topG = this.add.graphics();
     topG.fillStyle(0x000000, 0.6);
-    topG.fillRect(0, 0, GAME_WIDTH, 70);
+    topG.fillRect(0, 0, GAME_WIDTH, TOP_BAR_HEIGHT);
     topG.lineStyle(1, COLORS.gold, 0.5);
-    topG.strokeRect(0.5, 0.5, GAME_WIDTH - 1, 69);
+    topG.strokeRect(0.5, 0.5, GAME_WIDTH - 1, TOP_BAR_HEIGHT - 1);
     this.add.text(16, 8, "INITIATIVE", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
@@ -576,13 +589,16 @@ export class BattleScene extends Phaser.Scene {
 
     // Name centered under the portrait. wordWrap to box width minus 4px
     // padding so long names wrap to a 2nd line instead of bleeding past the
-    // border. setOrigin(0.5, 0) anchors at the top-center for clean stacking.
+    // border. useAdvancedWrap: true allows mid-word breaks for hypothetical
+    // single-token names that exceed the line width (e.g., "Banditspearton"
+    // with no space) — defensive against future unit names. setOrigin(0.5, 0)
+    // anchors at the top-center for clean vertical stacking under the portrait.
     const name = this.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 36, u.name, {
       fontFamily: FAMILY_HEADING,
       fontSize: "10px",
       color: isActive ? "#fff7c4" : "#dccfa8",
       align: "center",
-      wordWrap: { width: INITIATIVE_BOX_W - 4 }
+      wordWrap: { width: INITIATIVE_BOX_W - 4, useAdvancedWrap: true }
     }).setOrigin(0.5, 0);
 
     return [bg, portrait, name];
