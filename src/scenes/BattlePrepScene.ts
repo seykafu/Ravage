@@ -10,6 +10,7 @@ import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
+import { createScrollableText } from "../ui/scrollableText";
 import type { BattleId } from "../data/contentIds";
 
 interface PrepArgs { battleId: BattleId; }
@@ -76,7 +77,10 @@ export class BattlePrepScene extends Phaser.Scene {
       color: "#c9b07a"
     }).setOrigin(0.5);
 
-    // Intro panel
+    // Intro panel — body text is scrollable so paragraph-length intros
+    // (b07's monastery briefing wraps to 6+ lines) don't bleed past the
+    // panel's bottom border. The scrollable region starts at y+44 (below
+    // the "Field Brief" header) and runs to y+H-12 (12px bottom padding).
     const introX = 60;
     const introY = 130;
     const introW = GAME_WIDTH - 120;
@@ -88,12 +92,18 @@ export class BattlePrepScene extends Phaser.Scene {
       fontSize: "16px",
       color: "#f4d999"
     });
-    this.add.text(introX + 24, introY + 44, node.intro, {
-      fontFamily: FAMILY_BODY,
-      fontSize: "15px",
-      color: "#dad3bd",
-      wordWrap: { width: introW - 48 },
-      lineSpacing: 4
+    createScrollableText(this, {
+      x: introX + 24,
+      y: introY + 44,
+      w: introW - 48,
+      h: introH - 44 - 12,
+      text: node.intro,
+      style: {
+        fontFamily: FAMILY_BODY,
+        fontSize: "15px",
+        color: "#dad3bd",
+        lineSpacing: 4
+      }
     });
 
     // Combat primer

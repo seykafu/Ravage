@@ -8,6 +8,7 @@ import { BATTLES } from "../data/battles";
 import { loadSave } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
+import { createScrollableText } from "../ui/scrollableText";
 
 // World map / battle log. Lists all 21 battle nodes; lit-up = playable & unlocked.
 export class OverworldScene extends Phaser.Scene {
@@ -74,32 +75,30 @@ export class OverworldScene extends Phaser.Scene {
       fontSize: "14px",
       color: "#c9b07a"
     });
-    const detailBody = this.add.text(bodyLeft, detailY + 80, "", {
-      fontFamily: FAMILY_BODY,
-      fontSize: "14px",
-      color: "#dad3bd",
-      wordWrap: { width: bodyWrapWidth }
-    });
 
-    // Truncate the intro to MAX_BODY_LINES wrapped lines with an ellipsis
-    // when it's longer. Battle intros are paragraph-length (5–8 wrapped
-    // lines for the longer ones) and would otherwise overflow the panel
-    // and slide under the Enter Battle button. The full intro text still
-    // shows in BattlePrepScene before the fight, so this is just a teaser.
-    const MAX_BODY_LINES = 3;
-    const setBodyTruncated = (intro: string): void => {
-      const wrapped = detailBody.getWrappedText(intro);
-      if (wrapped.length <= MAX_BODY_LINES) {
-        detailBody.setText(intro);
-        return;
+    // Body uses the scrollable-text helper instead of the previous "truncate
+    // to 3 lines + ellipsis" hack. Long intros stay readable in full via
+    // the mouse wheel; the helper auto-shows a thin gold scrollbar on the
+    // right edge of the body region when the body overflows the visible
+    // height. Body region runs from y+78 (just below the sub line) down to
+    // the top of the button row with a 12px gap. The width clears the
+    // button on the right via bodyWrapWidth from earlier.
+    const bodyTop = detailY + 78;
+    const bodyBottom = btnTop - 12;
+    const bodyHeight = bodyBottom - bodyTop;
+    const bodyHandle = createScrollableText(this, {
+      x: bodyLeft,
+      y: bodyTop,
+      w: bodyWrapWidth,
+      h: bodyHeight,
+      text: "",
+      style: {
+        fontFamily: FAMILY_BODY,
+        fontSize: "14px",
+        color: "#dad3bd",
+        lineSpacing: 4
       }
-      const visible = wrapped.slice(0, MAX_BODY_LINES);
-      // Drop the last word on the trimmed line so the ellipsis sits flush
-      // against a natural word boundary instead of mid-word.
-      const lastIdx = MAX_BODY_LINES - 1;
-      visible[lastIdx] = (visible[lastIdx] ?? "").replace(/\s*\S+$/, "") + " …";
-      detailBody.setText(visible.join("\n"));
-    };
+    });
 
     let selectedId: string | null = null;
     const playBtn = new Button(this, {
@@ -197,7 +196,10 @@ export class OverworldScene extends Phaser.Scene {
         selectedId = b.id;
         detailTitle.setText(`${b.title} — ${b.subtitle}`);
         detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
-        setBodyTruncated(b.intro);
+        // Full intro shown — scrollable when it overflows. setText resets
+        // scroll to the top so the player sees the start of every new
+        // hovered battle.
+        bodyHandle.setText(b.intro);
         playBtn.setEnabled(true);
         playBtn.setLabel(playable ? "Enter Battle ▸" : "Story Scaffold ▸");
       });
