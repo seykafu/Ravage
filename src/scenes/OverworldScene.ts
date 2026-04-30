@@ -52,28 +52,60 @@ export class OverworldScene extends Phaser.Scene {
     const detailH = 160;
     drawPanel(detailG, detailX, detailY, detailW, detailH);
 
-    const detailTitle = this.add.text(detailX + 24, detailY + 18, "", {
+    // Button geometry computed up front so the body's wordWrap can use the
+    // button's left edge as its right boundary. Previously body wrap was
+    // (detailW - 220) which was based on panel width, not button position —
+    // off by ~24px because the body text has its own 24px left margin and
+    // the wrap width didn't account for the gap-to-button.
+    const btnW = 180;
+    const btnH = 40;
+    const btnLeft = detailX + detailW - btnW - 24;          // 24px right padding
+    const btnTop = detailY + detailH - btnH - 20;           // 20px bottom padding
+    const bodyLeft = detailX + 24;
+    const bodyWrapWidth = btnLeft - bodyLeft - 24;          // 24px gap before button
+
+    const detailTitle = this.add.text(bodyLeft, detailY + 18, "", {
       fontFamily: FAMILY_HEADING,
       fontSize: "22px",
       color: "#f4d999"
     });
-    const detailSub = this.add.text(detailX + 24, detailY + 50, "", {
+    const detailSub = this.add.text(bodyLeft, detailY + 50, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#c9b07a"
     });
-    const detailBody = this.add.text(detailX + 24, detailY + 80, "", {
+    const detailBody = this.add.text(bodyLeft, detailY + 80, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#dad3bd",
-      wordWrap: { width: detailW - 220 }
+      wordWrap: { width: bodyWrapWidth }
     });
+
+    // Truncate the intro to MAX_BODY_LINES wrapped lines with an ellipsis
+    // when it's longer. Battle intros are paragraph-length (5–8 wrapped
+    // lines for the longer ones) and would otherwise overflow the panel
+    // and slide under the Enter Battle button. The full intro text still
+    // shows in BattlePrepScene before the fight, so this is just a teaser.
+    const MAX_BODY_LINES = 3;
+    const setBodyTruncated = (intro: string): void => {
+      const wrapped = detailBody.getWrappedText(intro);
+      if (wrapped.length <= MAX_BODY_LINES) {
+        detailBody.setText(intro);
+        return;
+      }
+      const visible = wrapped.slice(0, MAX_BODY_LINES);
+      // Drop the last word on the trimmed line so the ellipsis sits flush
+      // against a natural word boundary instead of mid-word.
+      const lastIdx = MAX_BODY_LINES - 1;
+      visible[lastIdx] = (visible[lastIdx] ?? "").replace(/\s*\S+$/, "") + " …";
+      detailBody.setText(visible.join("\n"));
+    };
 
     let selectedId: string | null = null;
     const playBtn = new Button(this, {
-      x: detailX + detailW - 220,
-      y: detailY + detailH - 60,
-      w: 180, h: 40,
+      x: btnLeft,
+      y: btnTop,
+      w: btnW, h: btnH,
       label: "Enter Battle ▸",
       primary: true,
       enabled: false,
@@ -165,7 +197,7 @@ export class OverworldScene extends Phaser.Scene {
         selectedId = b.id;
         detailTitle.setText(`${b.title} — ${b.subtitle}`);
         detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
-        detailBody.setText(b.intro);
+        setBodyTruncated(b.intro);
         playBtn.setEnabled(true);
         playBtn.setLabel(playable ? "Enter Battle ▸" : "Story Scaffold ▸");
       });
