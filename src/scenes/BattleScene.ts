@@ -506,14 +506,31 @@ export class BattleScene extends Phaser.Scene {
     // changed, so a stale snapshot would mislead.
     this.closeInitiativeDropdown();
 
-    // Pull more upcoming than the bar can show so we know whether to render
-    // the overflow expander. 16 is enough for any battle in the script
-    // (largest squad fight has 12 units alive at once).
-    const upcoming = this.initiative.upcoming(this.state.units, 16);
-    const willOverflow = upcoming.length > INITIATIVE_BAR_MAX_BOXES;
+    // Pull enough upcoming turns to cover every alive unit, then dedupe by
+    // unit id. Initiative.upcoming() cycles virtually into the NEXT round
+    // when asked for more turns than there are alive units, which surfaces
+    // the same character twice (once for end-of-this-round and once for
+    // start-of-next). The bar/dropdown should only ever show distinct
+    // characters \u2014 no one wants to see "Lucian, Lucian" in the lineup.
+    const raw = this.initiative.upcoming(this.state.units, 32);
+    const seen = new Set<string>();
+    const distinct: Unit[] = [];
+    for (const u of raw) {
+      if (seen.has(u.id)) continue;
+      seen.add(u.id);
+      distinct.push(u);
+    }
+
+    const willOverflow = distinct.length > INITIATIVE_BAR_MAX_BOXES;
     // Reserve the last slot for the expander when overflow exists.
-    const visibleCount = willOverflow ? INITIATIVE_BAR_MAX_BOXES - 1 : Math.min(upcoming.length, INITIATIVE_BAR_MAX_BOXES);
-    const visible = upcoming.slice(0, visibleCount);
+    const visibleCount = willOverflow
+      ? INITIATIVE_BAR_MAX_BOXES - 1
+      : Math.min(distinct.length, INITIATIVE_BAR_MAX_BOXES);
+    const visible = distinct.slice(0, visibleCount);
+    // Dropdown shows ONLY what the bar can't fit. Previously this passed
+    // the entire upcoming list, which (a) duplicated everything already
+    // visible inline and (b) inherited the same cycle-duplicate problem.
+    const overflow = willOverflow ? distinct.slice(visibleCount) : [];
 
     visible.forEach((u, i) => {
       const x = i * INITIATIVE_SLOT_PITCH;
@@ -524,8 +541,7 @@ export class BattleScene extends Phaser.Scene {
 
     if (willOverflow) {
       const x = visibleCount * INITIATIVE_SLOT_PITCH;
-      const overflowCount = upcoming.length - visibleCount;
-      const expander = this.buildInitiativeExpander(x, 0, overflowCount, upcoming);
+      const expander = this.buildInitiativeExpander(x, 0, overflow.length, overflow);
       this.initiativeBar.add(expander);
     }
 
@@ -653,9 +669,9 @@ export class BattleScene extends Phaser.Scene {
       const c = i % cols;
       const x = panelPad + c * INITIATIVE_SLOT_PITCH;
       const y = panelPad + r * (INITIATIVE_BOX_H + 8);
-      // The first entry in the dropdown matches the active turn; mirror the
-      // active styling from the bar so the player can find it instantly.
-      const cell = this.buildInitiativeCell(x, y, u, i === 0);
+      // The dropdown now shows OVERFLOW only — the active turn is always in
+      // the bar, never here. So no cell in the dropdown gets active styling.
+      const cell = this.buildInitiativeCell(x, y, u, false);
       this.initiativeDropdown!.add(cell);
     });
 
