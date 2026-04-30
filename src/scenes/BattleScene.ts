@@ -84,6 +84,21 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
   Roam:        { title: "Roam",         body: "Once per turn after AP is spent, pay 1 extra AP to make a single Move.\nClosing distance or repositioning out of danger." }
 };
 
+// ---- Initiative bar layout ----
+// Compact-icon style: portrait stacked above a centered name, no per-box
+// stat line (stats live in the side panel). Box dimensions and slot pitch
+// drive both the inline bar and the dropdown panel — keep them in sync.
+const INITIATIVE_BAR_X = 320;       // px from left; clears the goal label
+const INITIATIVE_BAR_Y = 14;        // matches container y in create()
+const INITIATIVE_BOX_W = 64;
+const INITIATIVE_BOX_H = 52;
+const INITIATIVE_SLOT_PITCH = 70;   // box width + 6px gap
+// How many boxes fit between the bar's start and the right margin. With
+// GAME_WIDTH 1280 and bar X 320, that's (1280 - 320 - 16) / 70 ≈ 13. We cap
+// at 10 so the bar never visually competes with the side panel; the
+// remainder spills into the dropdown.
+const INITIATIVE_BAR_MAX_BOXES = 10;
+
 export class BattleScene extends Phaser.Scene {
   private battleId!: BattleId;
   private state!: BattleState;
@@ -109,6 +124,13 @@ export class BattleScene extends Phaser.Scene {
   private logText!: Phaser.GameObjects.Text;
   private logLines: string[] = [];
   private initiativeBar!: Phaser.GameObjects.Container;
+  // Optional dropdown that expands the full upcoming-turn order when the
+  // initiative bar can't show everyone (battles with > INITIATIVE_BAR_MAX_BOXES
+  // upcoming turns). Toggled by the "▾ +N" expander cell at the right end of
+  // the bar; auto-closes on every refreshInitiativeBar() so it never persists
+  // through a stale turn snapshot.
+  private initiativeDropdown?: Phaser.GameObjects.Container;
+  private initiativeDropdownOpen = false;
   // Single source of truth for input/turn state. `mode`, `acting`, `ended`
   // and the move/attack target arrays all live here now — the scene reads
   // them via fsm.current() / fsm.currentTiles() / etc., and writes them by
@@ -267,7 +289,12 @@ export class BattleScene extends Phaser.Scene {
       fontSize: "12px",
       color: "#c9b07a"
     });
-    this.initiativeBar = this.add.container(110, 16);
+    // Initiative bar is pushed right of the goal text so the goal stays
+    // legible. INITIATIVE_BAR_X needs to clear the longest goal label —
+    // currently "Goal: Survive 4 rounds or Defeat all enemies" at ~280px.
+    // 320px gives a safe margin and still leaves room for ~13 boxes before
+    // the right edge.
+    this.initiativeBar = this.add.container(INITIATIVE_BAR_X, 14);
 
     // Right panel
     const apg = this.add.graphics();
@@ -475,35 +502,172 @@ export class BattleScene extends Phaser.Scene {
 
   private refreshInitiativeBar(): void {
     this.initiativeBar.removeAll(true);
-    const upcoming = this.initiative.upcoming(this.state.units, 8);
-    const slot = 76;
-    upcoming.forEach((u, i) => {
-      const x = i * slot;
-      const bg = this.add.graphics();
-      const fill = u.faction === "player" ? 0x1a3554 : 0x4a1a1a;
-      bg.fillStyle(fill, 0.85);
-      bg.fillRect(x, 0, slot - 6, 44);
-      bg.lineStyle(1, i === 0 ? COLORS.goldBright : COLORS.gold, i === 0 ? 1 : 0.5);
-      bg.strokeRect(x + 0.5, 0.5, slot - 7, 43);
-      const tex = ensureUnitTexture(this, u);
-      const portrait = this.add.image(x + 18, 22, tex).setDisplaySize(28, 36);
-      if (u.faction === "enemy") portrait.setFlipX(true);
-      const nameMax = slot - 6 - 36 - 2; // available pixels between portrait and slot right edge
-      const displayName = u.name.length > 7 ? u.name.slice(0, 6) + "\u2026" : u.name;
-      const name = this.add.text(x + 36, 6, displayName, {
-        fontFamily: FAMILY_HEADING,
-        fontSize: "10px",
-        color: i === 0 ? "#fff7c4" : "#dccfa8",
-        wordWrap: { width: nameMax }
-      });
-      const sp = this.add.text(x + 36, 22, `SPD ${u.stats.speed}`, {
-        fontFamily: FAMILY_MONO,
-        fontSize: "9px",
-        color: "#9da7b8"
-      });
-      this.initiativeBar.add([bg, portrait, name, sp]);
+    // Always close the dropdown on a refresh \u2014 initiative state has just
+    // changed, so a stale snapshot would mislead.
+    this.closeInitiativeDropdown();
+
+    // Pull more upcoming than the bar can show so we know whether to render
+    // the overflow expander. 16 is enough for any battle in the script
+    // (largest squad fight has 12 units alive at once).
+    const upcoming = this.initiative.upcoming(this.state.units, 16);
+    const willOverflow = upcoming.length > INITIATIVE_BAR_MAX_BOXES;
+    // Reserve the last slot for the expander when overflow exists.
+    const visibleCount = willOverflow ? INITIATIVE_BAR_MAX_BOXES - 1 : Math.min(upcoming.length, INITIATIVE_BAR_MAX_BOXES);
+    const visible = upcoming.slice(0, visibleCount);
+
+    visible.forEach((u, i) => {
+      const x = i * INITIATIVE_SLOT_PITCH;
+      const isActive = i === 0;
+      const cell = this.buildInitiativeCell(x, 0, u, isActive);
+      this.initiativeBar.add(cell);
     });
+
+    if (willOverflow) {
+      const x = visibleCount * INITIATIVE_SLOT_PITCH;
+      const overflowCount = upcoming.length - visibleCount;
+      const expander = this.buildInitiativeExpander(x, 0, overflowCount, upcoming);
+      this.initiativeBar.add(expander);
+    }
+
     this.roundText.setText(`Round ${this.initiative.round}`);
+  }
+
+  // Builds a single compact initiative cell: tinted background, faction-
+  // mirrored portrait centered on top, and a centered name underneath. No
+  // stat line \u2014 speed/HP/etc. live in the side panel for the active unit.
+  // The active cell (first in the upcoming list) gets a brighter border and
+  // text color so the player can spot whose turn is next at a glance.
+  private buildInitiativeCell(
+    offsetX: number,
+    offsetY: number,
+    u: Unit,
+    isActive: boolean
+  ): Phaser.GameObjects.GameObject[] {
+    const bg = this.add.graphics();
+    const fill = u.faction === "player" ? 0x1a3554 : 0x4a1a1a;
+    bg.fillStyle(fill, 0.85);
+    bg.fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H);
+    bg.lineStyle(1, isActive ? COLORS.goldBright : COLORS.gold, isActive ? 1 : 0.5);
+    bg.strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1);
+
+    const tex = ensureUnitTexture(this, u);
+    // Portrait stacked on top, centered horizontally. 28\u00d730 leaves room for
+    // the name below within the 52px box height.
+    const portrait = this.add.image(offsetX + INITIATIVE_BOX_W / 2, offsetY + 4, tex)
+      .setOrigin(0.5, 0)
+      .setDisplaySize(28, 30);
+    if (u.faction === "enemy") portrait.setFlipX(true);
+
+    // Name centered under the portrait. wordWrap to box width minus 4px
+    // padding so long names wrap to a 2nd line instead of bleeding past the
+    // border. setOrigin(0.5, 0) anchors at the top-center for clean stacking.
+    const name = this.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 36, u.name, {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "10px",
+      color: isActive ? "#fff7c4" : "#dccfa8",
+      align: "center",
+      wordWrap: { width: INITIATIVE_BOX_W - 4 }
+    }).setOrigin(0.5, 0);
+
+    return [bg, portrait, name];
+  }
+
+  // Builds the expander cell at the right end of the bar. Visually styled
+  // like a regular cell but neutral (gold border, black fill) and labeled
+  // "\u25be +N" where N is the count of units not shown inline. Clicking opens
+  // the dropdown that lists all upcoming units.
+  private buildInitiativeExpander(
+    offsetX: number,
+    offsetY: number,
+    overflowCount: number,
+    fullUpcoming: Unit[]
+  ): Phaser.GameObjects.GameObject[] {
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.7);
+    bg.fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H);
+    bg.lineStyle(1, COLORS.gold, 0.6);
+    bg.strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1);
+
+    const arrow = this.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 8, "\u25be", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "20px",
+      color: "#f4d999"
+    }).setOrigin(0.5, 0);
+
+    const label = this.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 32, `+${overflowCount} more`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "10px",
+      color: "#dccfa8",
+      align: "center"
+    }).setOrigin(0.5, 0);
+
+    // Hit zone covers the full cell. Created as a child of the container
+    // (initiativeBar) so its hit testing uses the bar's world position.
+    const hit = this.add.zone(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H)
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerover", () => bg.clear()
+      .fillStyle(0x1a1a1a, 0.85).fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H)
+      .lineStyle(1, COLORS.goldBright, 1).strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1));
+    hit.on("pointerout", () => bg.clear()
+      .fillStyle(0x000000, 0.7).fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H)
+      .lineStyle(1, COLORS.gold, 0.6).strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1));
+    hit.on("pointerdown", () => this.toggleInitiativeDropdown(fullUpcoming));
+
+    return [bg, arrow, label, hit];
+  }
+
+  // Toggle / open / close the initiative dropdown panel. The panel is a
+  // grid of compact cells (same style as the bar) showing the full upcoming
+  // turn order. Lives at depth 30 so it overlays the action button block
+  // underneath. Auto-closes whenever refreshInitiativeBar() runs.
+  private toggleInitiativeDropdown(upcoming: Unit[]): void {
+    if (this.initiativeDropdownOpen) {
+      this.closeInitiativeDropdown();
+    } else {
+      this.openInitiativeDropdown(upcoming);
+    }
+  }
+
+  private openInitiativeDropdown(upcoming: Unit[]): void {
+    this.closeInitiativeDropdown();
+    const cols = INITIATIVE_BAR_MAX_BOXES; // grid width matches the bar
+    const rows = Math.ceil(upcoming.length / cols);
+    const panelPad = 10;
+    const panelW = cols * INITIATIVE_SLOT_PITCH - (INITIATIVE_SLOT_PITCH - INITIATIVE_BOX_W) + panelPad * 2;
+    const panelH = rows * (INITIATIVE_BOX_H + 8) + panelPad * 2;
+    const panelX = INITIATIVE_BAR_X - panelPad;
+    const panelY = INITIATIVE_BAR_Y + INITIATIVE_BOX_H + 8;
+
+    this.initiativeDropdown = this.add.container(panelX, panelY).setDepth(30);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x05060a, 0.96);
+    bg.fillRect(0, 0, panelW, panelH);
+    bg.lineStyle(1, COLORS.gold, 0.8);
+    bg.strokeRect(0.5, 0.5, panelW - 1, panelH - 1);
+    this.initiativeDropdown.add(bg);
+
+    upcoming.forEach((u, i) => {
+      const r = Math.floor(i / cols);
+      const c = i % cols;
+      const x = panelPad + c * INITIATIVE_SLOT_PITCH;
+      const y = panelPad + r * (INITIATIVE_BOX_H + 8);
+      // The first entry in the dropdown matches the active turn; mirror the
+      // active styling from the bar so the player can find it instantly.
+      const cell = this.buildInitiativeCell(x, y, u, i === 0);
+      this.initiativeDropdown!.add(cell);
+    });
+
+    this.initiativeDropdownOpen = true;
+  }
+
+  private closeInitiativeDropdown(): void {
+    if (this.initiativeDropdown) {
+      this.initiativeDropdown.destroy();
+      this.initiativeDropdown = undefined;
+    }
+    this.initiativeDropdownOpen = false;
   }
 
   private pushLog(msg: string): void {
