@@ -1,6 +1,6 @@
 import type { MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { dawnBanditsMap, farmlandMap, mountainMap, palaceMap, swampMap } from "./maps";
+import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, palaceMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -198,26 +198,82 @@ export const BATTLES: BattleNode[] = [
     index: 6,
     title: "Sixth Battle",
     subtitle: "The Caravan",
-    intro: "A canyon escort that should not have been a fight. Maya commands a flank without being asked. A bandit's ledger is written in the King's own accounting hand.",
-    outro: "Someone inside Nebu's court paid for this. You keep the ledger.",
+    intro:
+      "Two wagons, a routine escort east through the foothill canyons. Grain and steel for a garrison town the squad has never set foot in. Then bowstrings sing from both rim-shelves at once and mounted bandits seal the road behind you, and it stops being a job and starts being a fight that someone planned. The civilian drivers go flat against the wagon wheels. Maya, without being told, takes the south flank as if she has done it a hundred times before. Lucian's eyes tighten. He has seen enough.",
+    outro:
+      "The road is yours. Two wagons of grain and steel intact, four civilian drivers shaken but breathing. Under the body of the bandit captain Amar finds a leather ledger — columns of route times, payment dates, and a margin note in the King's own accounting hand, the codebook only palace officers know. Someone inside Nebu's court paid for this. The squad keeps the ledger.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_caravan",
-    playable: false,
+    playable: true,
+    map: caravanMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Eight-bandit coordinated ambush — same shape as the script: archers
+      // perched on both canyon shelves, speartons sealing east, swordsmen
+      // pressing west. Levels bumped slightly above b03/b04 mooks to match
+      // the post-mountain difficulty curve; Progression.xpRewardFor handles
+      // the level-diff scaling so a squad that out-leveled the curve still
+      // gets the right reward.
+      ENEMIES.banditArcher("crv_a1", 601, 5),
+      ENEMIES.banditArcher("crv_a2", 602, 5),
+      ENEMIES.banditArcher("crv_a3", 603, 5),
+      ENEMIES.banditArcher("crv_a4", 604, 5),
+      ENEMIES.banditSpearton("crv_sp1", 605, 6),
+      ENEMIES.banditSpearton("crv_sp2", 606, 6),
+      ENEMIES.banditSwordsman("crv_sw1", 607, 5),
+      ENEMIES.banditSwordsman("crv_sw2", 608, 5)
+    ],
     difficultyLabel: "Ambush"
+    // Defaults to routEnemies. The script-mandated outcomes (wagons
+    // intact, civilian drivers safe, ledger found) are narrative and
+    // resolve in the post arc regardless of damage taken in-fight.
   },
   {
     id: "b07_monastery",
     index: 7,
     title: "Seventh Battle",
     subtitle: "The Ghost from Para",
-    intro: "Raiders in an abandoned monastery. The leader has your old face on a wanted poster — Selene, your comrade from the coup.",
-    outro: "Selene escapes into the mist. That night, you tell Lucian everything. He covers you anyway.",
+    intro:
+      "Fergus said: raiders, monastery, kidnapped tax collectors, clear it. The squad climbed for two days through the high passes to reach the place. Stone corridors that swallow torchlight. A dry chapel hall. A bell tower with a balcony you can't see the top of. The squad breaches the south gate and starts pushing inward. Then in the inner sanctum, by the altar, the woman leading the raiders looks up — and Amar's whole life since the hospital in Thuling stops mattering for one breath, because her face is on a wanted poster he read a year ago, and her name is Selene, and she was one of the seven.",
+    outro:
+      "Selene goes off the bell tower balcony rather than be cornered, a rope already coiled across her shoulder, and is gone into the mist before Leo can wheel his Dactyl back around. The raiders break or fall. Lucian fought the whole battle on Amar's blind side, soaking blows meant for the man who was suddenly fighting at half his real strength. He doesn't ask why. Not yet. He waits until the camp fire pops twice.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_monastery",
-    playable: false,
-    difficultyLabel: "Hard"
+    playable: true,
+    map: monasteryMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Selene as boss; defeating her ends the battle. Per the script she
+      // doesn't actually die — the post arc reframes her HP-to-zero as
+      // throwing herself off the balcony to escape. Four raiders fill out
+      // the chambers around her at slightly higher level than the canyon
+      // mooks (these are her hand-picked, not random opportunists).
+      ENEMIES.selene(),
+      ENEMIES.banditArcher("mst_a1", 701, 6),
+      ENEMIES.banditArcher("mst_a2", 702, 6),
+      ENEMIES.banditSwordsman("mst_sw1", 703, 6),
+      ENEMIES.banditSwordsman("mst_sw2", 704, 6),
+      ENEMIES.banditSpearton("mst_sp1", 705, 7)
+    ],
+    difficultyLabel: "Boss — The Monastery",
+    // Defeat Selene to win — the rest can scatter. Mirrors b05's
+    // defeatUnit("ndari") pattern; players who want the cleanest run
+    // can dive on Selene early, players who want full XP rout the room.
+    victory: defeatUnit("selene_enemy", { label: "Defeat Selene" })
   },
   {
     id: "b08_orinhal",

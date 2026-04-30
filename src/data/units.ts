@@ -313,5 +313,32 @@ export const ENEMIES = {
     portrait: true,
     tags: new Set(["boss"]),
     level
+  }),
+  // Selene as antagonist in Battle 7 (the monastery). She's one of Amar's
+  // original coup comrades from B1, surfaced here on a King's wanted poster
+  // and leading raiders out of an abandoned monastery in the high passes.
+  // Mechanically a swordmaster (Tier 2 already — she joined the original
+  // coup pre-promotion-system, narratively a veteran). Tagged "boss" so she
+  // gives 100 base XP and triggers the BossFighter bonus when applicable.
+  //
+  // Distinct unit id ("selene_enemy") so progression saved here doesn't
+  // collide with PLAYERS.selene if she's recruited in a future battle —
+  // they're the same character fictionally but separate save records.
+  // Shares the player portrait via portraitId so the side-panel avatar
+  // and dialog scenes route to the same artwork.
+  selene: (level = 11): UnitDef => ({
+    id: "selene_enemy",
+    name: "Selene",
+    shortName: "Se",
+    faction: "enemy",
+    classKind: "swordmaster",
+    weapon: "sword",
+    stats: { hp: 48, power: 14, armor: 5, speed: 13, movement: 5, ap: 3 },
+    artSeed: 7,
+    palette: PLAYER_PALETTES.selene,
+    portrait: true,
+    portraitId: "selene",
+    tags: new Set(["boss"]),
+    level
   })
 };

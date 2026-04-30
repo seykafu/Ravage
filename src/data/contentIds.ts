@@ -40,12 +40,13 @@ export type BattleId =
 
 // ---- Story arcs -----------------------------------------------------------
 // Must stay in sync with the keys of ARCS in src/story/beats.ts. Currently
-// covers the playable vertical-slice arcs (chapters 1–5):
+// covers the playable vertical-slice arcs (chapters 1–7):
 //
 //   cold_open_dawn → pre_palace → b01 → post_palace → thuling_arrival
 //     → b02 → post_farmland → before_dawn_bandits → b03 → post_dawn_bandits
 //     → before_swamp → b04 → post_swamp → before_mountain → b05 → post_mountain
-//     → credits
+//     → before_caravan → b06 → post_caravan → before_monastery → b07
+//     → post_monastery → credits
 export type ArcId =
   | "cold_open_dawn"
   | "pre_palace"
@@ -57,7 +58,11 @@ export type ArcId =
   | "before_swamp"
   | "post_swamp"
   | "before_mountain"
-  | "post_mountain";
+  | "post_mountain"
+  | "before_caravan"
+  | "post_caravan"
+  | "before_monastery"
+  | "post_monastery";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

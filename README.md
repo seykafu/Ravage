@@ -1,12 +1,12 @@
 # Ravage
 
-A tactical RPG vertical slice — five battles from a 21-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — seven battles from a 21-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
-Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the nine music tracks in `public/audio/`.
+Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
 ## Vertical slice contents
 
-Five playable battles drawn from the larger 21-battle script:
+Seven playable battles drawn from the larger 21-battle script:
 
 | # | Title | Music |
 |---|-------|-------|
@@ -15,8 +15,10 @@ Five playable battles drawn from the larger 21-battle script:
 | 3 | Madame Dawn's Bandits | *Spine of the World — Battle* |
 | 4 | Ambush in the Swamp | *Spine of the World — Battle 2* |
 | 5 | The Mountain Bandits — Ndari (first boss) | *Stronghold of Memories* |
+| 6 | The Caravan | *Spine of the World — Battle* |
+| 7 | The Ghost from Para (Selene the Swordmaster) | *Spine of the World — Battle 2* |
 
-Battles 6–21 exist as data stubs in the world map for narrative continuity but are not playable in the slice.
+Battles 8–21 exist as data stubs in the world map for narrative continuity but are not playable in the slice.
 
 ## Setup
 

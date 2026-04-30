@@ -236,3 +236,102 @@ export const mountainMap: MapDef = buildMap("mountain_pass", "Ravaged Mountain V
     { x: 8, y: 5 }
   ]
 });
+
+// ============== Battle 6 — The Caravan ==============
+// 13×9 canyon road. The middle three rows (3–5) are the dirt road the
+// caravan is travelling east → west; the top three rows (0–2) are the
+// north canyon shelf where archers perch behind rock cover; the bottom
+// three rows (6–8) mirror it. Two wagons block the middle of the road
+// (the actual caravan being escorted) — they're treated as obstacles
+// the bandits can shelter behind and the squad has to flow around.
+//
+// The squad enters from the west; bandits seal the east end and rain
+// arrows from the perches. The script's "civilian drivers" aren't
+// modeled mechanically (no ally faction yet); the wagons being
+// preserved is the narrative payoff for routing the bandits.
+const Sn = t("stone");
+const SnR = t("stone", "rock");
+
+const caravanRows = [
+  [Sn,  Sn,  SnR, Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  SnR, Sn,  Sn,  Sn ],
+  [Sn,  SnR, Sn,  Sn,  Sn,  SnR, Sn,  Sn,  SnR, Sn,  Sn,  SnR, Sn ],
+  [Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn ],
+  [Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di ],
+  [Di,  Di,  Di,  Di,  Di,  Wg,  Di,  Di,  Wg,  Di,  Di,  Di,  Di ],
+  [Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di,  Di ],
+  [Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  Sn ],
+  [Sn,  SnR, Sn,  Sn,  SnR, Sn,  Sn,  SnR, Sn,  Sn,  SnR, Sn,  Sn ],
+  [Sn,  Sn,  SnR, Sn,  Sn,  Sn,  Sn,  Sn,  Sn,  SnR, Sn,  Sn,  Sn ]
+] as const;
+
+export const caravanMap: MapDef = buildMap("caravan", "Foothill Canyon Road", caravanRows, {
+  // Squad enters from the west, formation tight on the road.
+  player: [
+    { x: 1, y: 4 }, // Amar (lead)
+    { x: 0, y: 4 }, // Lucian (anchor)
+    { x: 1, y: 3 }, // Ning (north flank — has bowline up the perch)
+    { x: 1, y: 5 }, // Maya (south flank — the script's "took command of one flank")
+    { x: 2, y: 4 }  // Leo (mounted, can swing wide either way)
+  ],
+  // Eight bandits — coordinated ambush per the script. Two perched
+  // archers each on the N and S shelves; two speartons sealing the east
+  // end of the road; two swordsmen pressing west from the road itself.
+  enemy: [
+    { x: 4, y: 1 },  // North-shelf archer (advance west to engage)
+    { x: 9, y: 1 },  // North-shelf archer
+    { x: 4, y: 7 },  // South-shelf archer
+    { x: 9, y: 7 },  // South-shelf archer
+    { x: 12, y: 4 }, // Spearton sealing east entrance
+    { x: 11, y: 5 }, // Spearton sealing east
+    { x: 11, y: 3 }, // Swordsman pressing west
+    { x: 10, y: 4 }  // Swordsman pressing west
+  ]
+});
+
+// ============== Battle 7 — The Ghost from Para (monastery) ==============
+// 12×10 abandoned monastery: outer chapel, narrow corridor, inner
+// sanctum. Pillars (P) define the corridor walls; the player squad
+// enters from the south, Selene holds the inner sanctum at the north
+// where an old altar (T = throne obstacle, used here as the altar
+// stone she stands on) overlooks the room. The corridor at row 5 is
+// the kill-funnel — narrow gaps the squad must push through under
+// archer fire from inside the sanctum.
+const PP = t("stone", "pillar");
+const Th = t("stone", "throne");
+
+const monasteryRows = [
+  [Sn, Sn, PP, Sn, Sn, Sn, Th, Sn, Sn, PP, Sn, Sn], // ← inner sanctum altar (north end, behind Selene)
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, PP, PP, Sn, Sn, PP, PP, PP, Sn, Sn], // ← inner sanctum wall, gap mid-row
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, PP, Sn, Sn, PP, Sn, Sn, PP, Sn, Sn, PP, Sn], // ← corridor pillars (kill funnel)
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, PP, PP, Sn, Sn, PP, PP, PP, Sn, Sn], // ← outer chapel wall
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn]  // ← outer chapel entrance row (squad spawns)
+] as const;
+
+export const monasteryMap: MapDef = buildMap("monastery", "Abandoned Monastery", monasteryRows, {
+  // Squad breaches from the south, formation centered. Leo at the rear
+  // because his mount can't push through the narrowest corridor gaps
+  // until the pillars are flanked.
+  player: [
+    { x: 5, y: 8 }, // Amar
+    { x: 6, y: 8 }, // Lucian (per script: stays on Amar's flank)
+    { x: 4, y: 9 }, // Ning (bowline through the corridor)
+    { x: 7, y: 9 }, // Maya
+    { x: 3, y: 9 }  // Leo (rear)
+  ],
+  // Selene anchored at the inner sanctum (south of the throne so the
+  // throne's defendBonus doesn't shield her). Four raiders posted in
+  // the outer chambers, mixed sword + spear + archer.
+  enemy: [
+    { x: 5, y: 1 }, // Selene — boss
+    { x: 4, y: 1 }, // Raider archer (sanctum)
+    { x: 8, y: 1 }, // Raider archer (sanctum)
+    { x: 3, y: 3 }, // Raider swordsman (outer chamber W)
+    { x: 8, y: 3 }, // Raider swordsman (outer chamber E)
+    { x: 6, y: 5 }  // Raider spearton (corridor blocker)
+  ]
+});

@@ -281,7 +281,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     title: "On the path home",
     music: "emotional",
     backdrop: "field_night_camp",
-    next: "credits",
+    next: "story:before_caravan",
     beats: [
       N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had always known the math."),
       { speaker: "Ndari", portraitId: "ndari", expression: "scornful", body: "Tell her I held it. Tell her she owes me a drink." },
@@ -290,8 +290,111 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "Lucian — " },
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Not tonight. The rest can wait. But for the first time, Amar — you have a witness." },
-      N("(End of the playable vertical slice. The remaining sixteen battles are scaffolded — the full story continues across the Caravan, the Monastery, the cliffs of Para, the year of travel in Grude, and the Ravage Fleet at the end of the world.)")
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Not tonight. The rest can wait. But for the first time, Amar — you have a witness." }
+    ]
+  },
+  // -------- Pre-Battle 6 (Caravan ambush briefing) --------
+  // Fergus assigns the contract. The squad takes it. The "routine" framing
+  // is intentional — the player should feel the discrepancy between the
+  // pitch and what unfolds in the canyon.
+  before_caravan: {
+    id: "before_caravan",
+    title: "A week later",
+    subtitle: "Thuling — Fergus's office at the keep",
+    music: "adventureAnthros",
+    backdrop: "rusty_house",
+    next: "prep:b06_caravan",
+    beats: [
+      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "A simple one this time. Two wagons, grain and steel, three days east through the foothills. Drop them at Brielwatch and come home. The kind of work that buys a soldier a roof." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Brielwatch hasn't seen a bandit raid since spring." },
+      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Then it'll be a quiet week for you. Take the road early, take it slow. The drivers are civilians — keep them whole." },
+      N("On the way out of the keep, Maya falls in beside Amar without looking at him."),
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Three days east, full road. Anyone who wanted to find us between here and Brielwatch would know exactly where we'd be on the third afternoon." },
+      { speaker: "Amar", portraitId: "amar", body: "You think it's a setup." },
+      { speaker: "Maya", portraitId: "maya", body: "I think Fergus has never used the word 'simple' to mean simple." },
+      N("On the third afternoon, in the canyon east of Brielwatch, the bowstrings sing.")
+    ]
+  },
+  // -------- Post-Battle 6 (the ledger) --------
+  // The reveal: bandits weren't bandits, they were paid by Nebu's court.
+  // Sets up Amar's growing distrust of Fergus and lays the groundwork for
+  // the monastery assignment (which is also a setup).
+  post_caravan: {
+    id: "post_caravan",
+    title: "After the canyon",
+    subtitle: "Roadside, two miles from Brielwatch",
+    music: "emotional",
+    backdrop: "field_night_camp",
+    next: "story:before_monastery",
+    beats: [
+      N("Eight bodies on the road. The drivers count themselves twice and find themselves still alive both times. The wagons roll on after a brief argument about who pays for the broken axle on the second one."),
+      { speaker: "Amar", portraitId: "amar", body: "Maya. The captain — search him." },
+      N("She's already done it. The leather ledger is already in her hand. She passes it to Lucian, not to Amar — knowing where the eyes in the squad still settle by reflex."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Three columns. Route, schedule, payment date. The handwriting in the margin — Amar, you'd know this. You said you wouldn't, but you would." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...That's the King's accounting hand. Officer codebook. Only palace clerks are taught it." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Then this wasn't a bandit ambush. This was a contract." },
+      { speaker: "Ning", portraitId: "ning", expression: "startled", body: "Why us?" },
+      { speaker: "Lucian", portraitId: "lucian", body: "Because someone in Nebu's court would prefer that the squad delivering Fergus's ledger arrived as a set of bodies. We keep this." },
+      N("The ledger goes into Lucian's saddlebag. The squad rides for Brielwatch. Nobody mentions the ledger again until Fergus's next contract arrives.")
+    ]
+  },
+  // -------- Pre-Battle 7 (the monastery briefing) --------
+  // Fergus's next contract — by now Amar's squad knows it's not what
+  // it sounds like. They take it anyway, because the alternative is to
+  // tip Fergus off that they've stopped trusting him.
+  before_monastery: {
+    id: "before_monastery",
+    title: "Five days later",
+    subtitle: "Thuling — at the keep gate, before dawn",
+    music: "danger",
+    backdrop: "thuling",
+    next: "prep:b07_monastery",
+    beats: [
+      { speaker: "Fergus", portraitId: "fergus", body: "An abandoned monastery in the high passes — north of Drennig, two days' climb. Raiders moved in last winter, started taking tax collectors. The Crown wants it cleared." },
+      { speaker: "Amar", portraitId: "amar", body: "How many?" },
+      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Half a dozen, maybe. A leader. Bring rope — the inner sanctum sits behind a bell tower, and whoever's holding it knows the climb." },
+      N("Lucian counts the words Fergus didn't use. \"Wanted poster.\" \"Bounty.\" \"Name.\" Lucian says nothing. The squad sets out before noon."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "He didn't tell us who's leading them. He'd tell us, if it were anyone we could be paid to bring back." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we'll find out at the door." },
+      N("The road to the monastery is two days of switchbacks above a frozen river. By the second night, the squad can see torchlight at the top of the bell tower.")
+    ]
+  },
+  // -------- Post-Battle 7 (Lucian's "I have a wife and a daughter") --------
+  // The night Amar finally tells Lucian everything. Lucian's response is
+  // the script's defining beat for him: he doesn't recoil, doesn't
+  // bargain, doesn't ask for anything. He just covers.
+  // **Lucian's promotion fires here** (per docs/RAVAGE_DESIGN.md §5.3).
+  post_monastery: {
+    id: "post_monastery",
+    title: "Camp below the monastery",
+    music: "emotional",
+    backdrop: "field_night_camp",
+    next: "credits",
+    beats: [
+      N("Selene goes off the bell tower balcony with a coil of rope already in her hand. She does not look back. By the time Leo wheels his Dactyl around to the courtyard, she is gone into the high mist, and the squad is left with five bodies and a question Amar cannot answer in front of the others."),
+      N("That night the camp is colder than the road. Maya takes first watch up the slope. Ning falls asleep before her stew is done. Leo checks his Dactyl's wing-leather one more time than necessary and then, finally, lies down. Lucian stays up. Amar stays up. The fire pops twice."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "She knew you. From the gate to the balcony, she knew you, and you knew her, and you fought her at half what I've watched you do to a bandit half her size." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded", body: "Lucian." },
+      { speaker: "Lucian", portraitId: "lucian", body: "I'm not asking. I'm telling you I'm not asking. I'm telling you that whatever you say next, I have already decided what to do about it. Speak when you're ready." },
+      N("Amar speaks for an hour. The coup. The seven. The hospital in Thuling and the smell of wet hay in the cart and the wound he opened himself the morning of the farmland fight. Selene by name. Ranatoli by name. The five he hasn't seen since. The throne hall. The plan."),
+      N("Lucian listens until Amar is done. He does not interrupt once. He does not move. When Amar finally stops talking, the fire has gone down to embers."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "I thought it was something like that. I have a wife and a daughter, Amar. Mira is forty-one this winter. Tali is eight. They live at the edge of Thuling in a house I built with the same hands I'm holding this stew with." },
+      { speaker: "Lucian", portraitId: "lucian", body: "If you want to rebuild this country into somewhere safer for them — somewhere a girl named Tali can grow up without learning to flinch when the King's clerks visit — you tell me when it's time to move. Until then, I'll cover you." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "I haven't asked anything of you." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "I know. That's why I'm offering. Sleep, Amar. We've got work in the morning." },
+      // Lucian's Tier 2 promotion fires here, after the offer. The promote
+      // beat triggers PromotionScene as a paused overlay — Lucian becomes
+      // a Spearton Lord with the Phalanx ability, +5 HP / +2 PWR/ARM/SPD /
+      // +1 MOV stat boost. Mechanically he's earned the Tier 2; narratively
+      // it lands at the moment he commits to Amar's larger fight.
+      {
+        speaker: "Lucian",
+        portraitId: "lucian",
+        expression: "grim_resolve",
+        body: "And Amar — tomorrow, on the climb back, walk on my shield side. I'm done covering one flank at a time.",
+        promote: "lucian"
+      },
+      N("(End of the playable vertical slice — chapters 1 through 7. The remaining fourteen battles are scaffolded — the full story continues through Orinhal, the ravine, the cliffs of Para, the year of travel in Grude, and the Ravage Fleet at the end of the world.)")
     ]
   }
 };
