@@ -11,6 +11,7 @@ import { CreditsScene } from "./scenes/CreditsScene";
 import { AuthScene } from "./scenes/AuthScene";
 import { SaveSlotScene } from "./scenes/SaveSlotScene";
 import { SettingsScene } from "./scenes/SettingsScene";
+import { PromotionScene } from "./scenes/PromotionScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -39,7 +40,8 @@ const config: Phaser.Types.Core.GameConfig = {
     BattleScene,
     EndScene,
     CreditsScene,
-    SettingsScene
+    SettingsScene,
+    PromotionScene
   ]
 };
 

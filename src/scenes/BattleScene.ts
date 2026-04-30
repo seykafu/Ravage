@@ -242,6 +242,10 @@ export class BattleScene extends Phaser.Scene {
         p.state.hp = rec.stats.hp; // start the battle at full HP
         if (rec.classKind) p.classKind = rec.classKind;
         if (rec.abilities) p.abilities = rec.abilities;
+        // Post-promotion sprite override survives save/load — without
+        // this, a promoted unit's Tier 2 classKind (e.g., spearton_lord)
+        // would route to a sprite folder that doesn't exist.
+        if (rec.spriteClassOverride) p.spriteClassOverride = rec.spriteClassOverride;
       } else if (p.level < squadAvg - 2) {
         const gained = catchUpToSquad(p, squadAvg);
         if (gained > 0) {
@@ -1139,7 +1143,8 @@ export class BattleScene extends Phaser.Scene {
         xp: u.state.xp,
         stats: { ...u.stats },
         ...(u.classKind ? { classKind: u.classKind } : {}),
-        ...(u.abilities ? { abilities: [...u.abilities] } : {})
+        ...(u.abilities ? { abilities: [...u.abilities] } : {}),
+        ...(u.spriteClassOverride ? { spriteClassOverride: u.spriteClassOverride } : {})
       });
     }
     writeSave(save);

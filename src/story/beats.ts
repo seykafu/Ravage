@@ -18,6 +18,14 @@ export interface DialogBeat {
   expression?: string;
   body: string;
   ambient?: number;
+  // Story-gated promotion trigger. When set, advancing past the LAST page
+  // of this beat launches PromotionScene for this character before the
+  // next beat shows. The promotion is applied to the save mid-arc, so any
+  // subsequent battle picks up the upgraded class + ability + stats.
+  // See docs/RAVAGE_DESIGN.md §5.3 for the per-character beat table.
+  // No-op if the character has already been promoted (idempotent across
+  // dev replays via DevJumpScene).
+  promote?: PortraitId;
 }
 
 export interface StoryArc {

@@ -6,6 +6,7 @@ export type Faction = "player" | "enemy" | "ally";
 export type WeaponKind = "sword" | "spear" | "shield" | "bow" | "dactyl";
 
 export type ClassKind =
+  // Tier 1
   | "swordsman"
   | "spearton"
   | "knight"
@@ -13,18 +14,45 @@ export type ClassKind =
   | "shinobi"
   | "sentinel"
   | "dactyl_rider"
+  // Tier 2 (post-promotion). swordmaster ships first because Selene already
+  // joins as one in B7. The other six don't have sprite folders yet — units
+  // that promote into them rely on spriteClassOverride pointing back at the
+  // Tier 1 sprite until proper assets ship. See docs/RAVAGE_DESIGN.md §5.2.
   | "swordmaster"
+  | "spearton_lord"
+  | "khan"
+  | "robinhelm"
+  | "dactyl_king"
+  | "shinobi_master"
+  | "guardian"
+  // Special
   | "boss";
 
 export type Stance = "none" | "defensive" | "ready";
 
 // Special abilities. A unit may have at most MAX_ABILITIES (2).
+//
+// Tier 1 abilities (granted at unit creation):
 //   BossFighter: 2× damage vs. boss-class enemies.
 //   Aide:        2× defense (incoming dmg ×0.5) when adjacent to another ally.
 //   Destruct:    on death, the killing blow's attacker also dies.
 //   Roam:        once per turn, after AP is spent, the unit may consume 1 extra
 //                AP to make a single additional Move.
-export type Ability = "BossFighter" | "Aide" | "Destruct" | "Roam";
+//
+// Tier 2 signature abilities (granted on story-gated promotion). These are
+// declared in the union now so the side panel can render them and saves can
+// persist them, but their combat math is NOT YET wired — they're effectively
+// no-ops until the bond/counter pass. See docs/RAVAGE_DESIGN.md §5.5.
+//   CritPlus:    Swordmaster — +15% crit rate.
+//   Phalanx:     Spearton Lord — adjacent allies take −20% damage.
+//   Charge:      Khan — first attack each turn does +25% damage.
+//   Pierce:      Robinhelm — bow attacks ignore 50% of target armor.
+//   Stoop:       Dactyl King — once per battle, free move + attack within 6 mv.
+//   Vanish:      Shinobi Master — after attacking, take −50% damage until next turn.
+//   Bulwark:     Guardian — cannot be moved by enemy effects; +2 effective armor.
+export type Ability =
+  | "BossFighter" | "Aide" | "Destruct" | "Roam"
+  | "CritPlus" | "Phalanx" | "Charge" | "Pierce" | "Stoop" | "Vanish" | "Bulwark";
 export const MAX_ABILITIES = 2;
 
 // Battle inventory. Capped at MAX_INVENTORY (5) per unit.

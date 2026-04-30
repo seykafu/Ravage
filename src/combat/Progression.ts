@@ -8,7 +8,9 @@
 // Determinism: growth rolls take an injected `roll` callback (typically a
 // closure over Math.random or an Rng). Tests pass a deterministic stub.
 
-import { LEVEL_CAP, XP_PER_LEVEL, type GrowthTable, type Unit, type UnitStats } from "./types";
+import { LEVEL_CAP, MAX_ABILITIES, XP_PER_LEVEL, type Ability, type GrowthTable, type Unit, type UnitStats } from "./types";
+import type { CharacterRecord } from "../util/save";
+import type { PromotionData } from "../data/promotions";
 
 // ---- XP rewards ---------------------------------------------------------
 
@@ -163,4 +165,51 @@ export const squadAverageLevel = (squad: Unit[], excludeId?: string): number => 
   if (eligible.length === 0) return 1;
   const sum = eligible.reduce((acc, u) => acc + u.level, 0);
   return Math.round(sum / eligible.length);
+};
+
+// ---- Story-gated promotion ----------------------------------------------
+
+// Apply a promotion to a CharacterRecord. Pure — returns a new record with
+// the boosted stats, new classKind, second ability slot filled, and
+// optional spriteClassOverride. Caller writes the result back to the save.
+//
+// If the unit has already been promoted (record.classKind matches the
+// promotion target), this is a no-op — re-firing the promote beat (e.g.,
+// via DevJump replays) won't double-stack the stat boost.
+export const promoteCharacter = (
+  rec: CharacterRecord,
+  data: PromotionData
+): CharacterRecord => {
+  if (rec.classKind === data.toClass) return rec;
+
+  const boosted: UnitStats = {
+    hp:       rec.stats.hp       + (data.statBoost.hp       ?? 0),
+    power:    rec.stats.power    + (data.statBoost.power    ?? 0),
+    armor:    rec.stats.armor    + (data.statBoost.armor    ?? 0),
+    speed:    rec.stats.speed    + (data.statBoost.speed    ?? 0),
+    movement: rec.stats.movement + (data.statBoost.movement ?? 0),
+    ap:       rec.stats.ap       + (data.statBoost.ap       ?? 0)
+  };
+
+  // Second ability slot fills with the Tier 2 signature. If the unit
+  // already has 2 abilities (the cap), the new one replaces the second
+  // slot — never overwrite the first slot, which is the unit's signature
+  // Tier 1 ability (Lucian's Aide, Leo's Destruct, etc.).
+  const existing = rec.abilities ?? [];
+  let newAbilities: Ability[];
+  if (existing.length === 0) {
+    newAbilities = [data.newAbility];
+  } else if (existing.length < MAX_ABILITIES) {
+    newAbilities = [...existing, data.newAbility];
+  } else {
+    newAbilities = [existing[0]!, data.newAbility];
+  }
+
+  return {
+    ...rec,
+    stats: boosted,
+    classKind: data.toClass,
+    abilities: newAbilities,
+    ...(data.spriteClassOverride ? { spriteClassOverride: data.spriteClassOverride } : {})
+  };
 };

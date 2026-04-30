@@ -339,9 +339,35 @@ export class StoryScene extends Phaser.Scene {
       this.showCurrentPage();
       return;
     }
-    // Otherwise advance to the next beat (or end the arc).
+    // Story-gated promotion: if this beat carries a `promote` field, fire
+    // PromotionScene as a paused overlay before moving on. The promotion
+    // mutates the save synchronously inside PromotionScene.create(); when
+    // the player closes it, this scene resumes and we step to the next
+    // beat. Idempotent — re-entering an already-fired promote beat (via
+    // DevJump or save-state restore) is a no-op for the save mutation.
     const arc = ARCS[this.arcId];
     if (!arc) return;
+    const currentBeat = arc.beats[this.idx];
+    if (currentBeat?.promote) {
+      this.scene.pause();
+      this.scene.run("PromotionScene", {
+        characterId: currentBeat.promote,
+        resumeKey: this.scene.key
+      });
+      // When PromotionScene closes, this scene resumes — but we still
+      // need to advance past the promote beat. Listen for the resume
+      // event once and step to the next beat.
+      this.events.once(Phaser.Scenes.Events.RESUME, () => {
+        this.idx++;
+        if (this.idx >= arc.beats.length) {
+          this.finishArc();
+          return;
+        }
+        this.showBeat(arc.beats[this.idx]!);
+      });
+      return;
+    }
+    // Otherwise advance to the next beat (or end the arc).
     this.idx++;
     if (this.idx >= arc.beats.length) {
       this.finishArc();

@@ -16,6 +16,7 @@ interface PrepArgs { battleId: BattleId; }
 
 const classLabel = (k: ClassKind): string => {
   switch (k) {
+    // Tier 1
     case "swordsman": return "Swordsman";
     case "spearton":  return "Spearton";
     case "archer":    return "Archer";
@@ -23,7 +24,15 @@ const classLabel = (k: ClassKind): string => {
     case "shinobi":   return "Shinobi";
     case "sentinel":  return "Sentinel";
     case "dactyl_rider": return "Dactyl Rider";
-    case "swordmaster":  return "Swordmaster";
+    // Tier 2 — added when the promotion system landed.
+    case "swordmaster":    return "Swordmaster";
+    case "spearton_lord":  return "Spearton Lord";
+    case "khan":           return "Khan";
+    case "robinhelm":      return "Robinhelm";
+    case "dactyl_king":    return "Dactyl King";
+    case "shinobi_master": return "Shinobi Master";
+    case "guardian":       return "Guardian";
+    // Special
     case "boss": return "Adversary";
   }
 };

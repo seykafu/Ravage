@@ -19,6 +19,10 @@ export interface CharacterRecord {
   // factory-defined classKind + abilities.
   classKind?: ClassKind;
   abilities?: Ability[];
+  // Mirrors UnitDef.spriteClassOverride. Used post-promotion when the new
+  // Tier 2 classKind doesn't have a shipped sprite folder yet — the
+  // promoted unit renders with its Tier 1 sprite until proper assets ship.
+  spriteClassOverride?: ClassKind;
 }
 
 export interface SaveState {
