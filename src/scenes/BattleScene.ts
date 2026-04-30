@@ -1600,19 +1600,55 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(120, () => s.clearTint());
   }
 
-  private spawnDamageNumber(x: number, y: number, text: string, color: number): void {
+  private spawnDamageNumber(
+    x: number,
+    y: number,
+    text: string,
+    color: number,
+    crit = false
+  ): void {
+    // Crit numbers render larger, with a heavier stroke + drop shadow, and
+    // pop in with a more aggressive scale curve. Misses and regular hits
+    // get the lighter treatment so the eye knows instantly when something
+    // big landed.
+    const fontSize = crit ? "26px" : "18px";
+    const strokeThickness = crit ? 5 : 3;
     const t = this.add.text(x, y - 12, text, {
       fontFamily: FAMILY_HEADING,
-      fontSize: "16px",
+      fontSize,
       color: `#${color.toString(16).padStart(6, "0")}`,
       stroke: "#000",
-      strokeThickness: 3
+      strokeThickness,
+      shadow: crit
+        ? { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true, stroke: true }
+        : { offsetX: 0, offsetY: 2, color: "#000", blur: 4, fill: true }
     }).setOrigin(0.5);
+    // Pop-in: scale punches up then settles. Crit overshoots harder.
+    const peak = crit ? 1.45 : 1.2;
+    t.setScale(0.5);
     this.tweens.add({
       targets: t,
-      y: y - 36,
+      scaleX: peak,
+      scaleY: peak,
+      duration: 110,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: t,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 90,
+          ease: "Sine.easeInOut"
+        });
+      }
+    });
+    // Drift up + fade. Crits hang slightly longer so the pop reads.
+    this.tweens.add({
+      targets: t,
+      y: y - 42,
       alpha: 0,
-      duration: 700,
+      duration: crit ? 900 : 700,
+      ease: "Sine.easeOut",
       onComplete: () => t.destroy()
     });
   }
@@ -1679,7 +1715,12 @@ export class BattleScene extends Phaser.Scene {
       // of unit palette. Red tint blended in with enemy reds before.
       this.flashSprite(tv.sprite, 0xffffff);
       playUnitState(this, tv.sprite, defender, "hit");
-      this.spawnDamageNumber(tx, ty, result.crit ? `CRIT ${result.damage}` : `${result.damage}`, result.crit ? 0xffd45a : 0xff8a8a);
+      this.spawnDamageNumber(
+        tx, ty,
+        result.crit ? `CRIT ${result.damage}` : `${result.damage}`,
+        result.crit ? 0xffd45a : 0xff8a8a,
+        result.crit
+      );
       this.pushLog(`${attacker.name} hits ${defender.name} for ${result.damage}${result.crit ? " (crit!)" : ""}.`);
     } else {
       sfxAttackMiss();

@@ -244,7 +244,14 @@ export const ensureTileTexture = (
       canvas.height = TILE_SIZE;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.imageSmoothingEnabled = false;
+        // Smoothing ON: source PNGs are 600×600 paintings, the canvas is
+        // 48×48. Without smoothing the downscale uses nearest-neighbor
+        // and produces a grainy mosaic. Smoothing on gives a clean
+        // bilinear-ish downsample that preserves the paint detail.
+        // (Was: imageSmoothingEnabled = false — that was right for chunky
+        // pixel-art tiles but wrong for the painted set we ship.)
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.drawImage(tileSrc, 0, 0, TILE_SIZE, TILE_SIZE);
         ctx.drawImage(obstacleSrc, 0, 0, TILE_SIZE, TILE_SIZE);
         scene.textures.addCanvas(composite, canvas);

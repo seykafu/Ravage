@@ -67,9 +67,29 @@ export class BootScene extends Phaser.Scene {
     // Manifest — optional. Failed loads are silently dropped; the procedural
     // fallback handles missing assets. We mark each successful load so art
     // helpers know which entries are real.
+    //
+    // Per-texture filter override: the global Phaser config sets
+    // pixelArt: true (necessary for the chunky 32×40 unit spritesheets to
+    // stay crisp), which forces NEAREST-neighbor sampling on every texture.
+    // That's wrong for the high-res painted assets (portraits at 600×600,
+    // backdrops at 1280×720, painted tiles at 600×600 downscaled to 48×48):
+    // nearest-neighbor on a downscale of those produces grainy, posterized
+    // garbage. We flip them to LINEAR per texture so the GPU samples them
+    // smoothly. Sprites, VFX, and UI keep NEAREST.
     this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string) => {
       // Phaser uses the asset id as the texture key; mark it loaded.
       markLoaded(key);
+      if (
+        key.startsWith("portrait:") ||
+        key.startsWith("backdrop:") ||
+        key.startsWith("tile:") ||
+        key.startsWith("obstacle:")
+      ) {
+        // setFilter is a Texture method; safe to call as long as the texture
+        // exists, which it does at FILE_COMPLETE for image assets.
+        const tex = this.textures.get(key);
+        if (tex) tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      }
     });
     this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
       markFailed(file.key);

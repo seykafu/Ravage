@@ -554,6 +554,9 @@ when revisiting tradeoffs months later.
 | 2026-04 | GA4 + custom event tracking | Page views in GA4; six custom events (new_game / arc / battle started/completed, level-up, promotion) for funnel analytics. Triple-gate (no gtag / localhost / DEV) so dev runs don't pollute prod. |
 | 2026-04 | GDPR Consent Mode v2 banner | Default consent denied; one-time banner upgrades on Accept and persists choice in `localStorage('ravage:consent:v1')`. Same banner ships on landing + game pages, sharing the storage key. |
 | 2026-04 | LV row moved into apText | Adding LV as its own stat row pushed the inventory line into the ACTIONS header below; compressed into the existing AP one-liner ("LV 3 · 45 XP · AP 3/3 · PLAYER") instead. |
+| 2026-04 | Per-texture LINEAR filter for painted assets | Phaser's global `pixelArt: true` was forcing nearest-neighbor sampling on every texture, which made high-res portraits / backdrops / painted tiles look posterized when downscaled. BootScene now flips `portrait:` / `backdrop:` / `tile:` / `obstacle:` textures to LINEAR after load; sprites/VFX/UI keep NEAREST. |
+| 2026-04 | Painted tile composite uses high-quality smoothing | The tile+obstacle composite path in TileArt was setting `imageSmoothingEnabled = false` when downscaling 600×600 painted source PNGs to 48×48 tiles — produced grainy mosaics. Flipped to `true` + `imageSmoothingQuality: "high"`. |
+| 2026-04 | Damage number pop + crit flash | Floaters now scale-pop in (Back.easeOut to 1.2× / 1.45× crit, then settle to 1.0). Crits render larger (26px vs 18px), thicker stroke, deeper drop shadow, hang ~200ms longer. Sells the impact. |
 
 ---
 
