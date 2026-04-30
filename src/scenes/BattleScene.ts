@@ -980,29 +980,32 @@ export class BattleScene extends Phaser.Scene {
 
   private refreshSidePanel(u: Unit): void {
     this.setSidePanelAvatar(u);
-    this.apText.setText(`AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`);
+    // Compress LV (and XP-toward-next-level for players) into the apText
+    // one-liner so the stat block below stays at 7-row max. Adding LV as
+    // its own stat row pushed an 8th row into the ACTIONS header below.
+    // Format kept short so it stays single-line at panelTextW = 256px:
+    //   player non-cap: "LV 3 · 45 XP · AP 3/3 · PLAYER"  (~28 chars)
+    //   player at cap:  "LV 20 · MAX · AP 3/3 · PLAYER"
+    //   enemy:          "LV 7 · AP 3/3 · ENEMY"
+    const xpSuffix = u.faction === "player"
+      ? (u.level >= 20 ? "  ·  MAX" : `  ·  ${u.state.xp} XP`)
+      : "";
+    this.apText.setText(
+      `LV ${u.level}${xpSuffix}  ·  AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`
+    );
     const mov = effectiveMovement(u);
     const movStr = mov !== u.stats.movement ? `${u.stats.movement}+${mov - u.stats.movement}` : `${u.stats.movement}`;
-    // Show level + XP only for player units (enemy XP doesn't matter to the
-    // player). Capped units show "MAX" instead of an XP bar so players can
-    // see at a glance who's hit the ceiling.
-    const lvLine = u.faction === "player"
-      ? (u.level >= 20
-          ? `LV   ${u.level}    XP   MAX`
-          : `LV   ${u.level}    XP   ${u.state.xp}/100`)
-      : `LV   ${u.level}`;
     const lines = [
-      lvLine,
       `HP   ${u.state.hp}/${u.stats.hp}`,
       `PWR  ${u.stats.power}    ARM  ${u.stats.armor}`,
       `SPD  ${u.stats.speed}    MOV  ${movStr}`,
       `WPN  ${u.weapon}`,
       `STN  ${u.state.stance}`
     ];
-    // Index of the WPN row in `lines` above. Bumped from 3 → 4 when the LV
-    // row was added at index 0; the hover zone for the weapon tooltip needs
-    // to follow.
-    const wpnIdx = 4;
+    // Index of the WPN row in `lines` above. Restored to 3 when LV moved
+    // out of the stat block and into apText; the hover zone for the
+    // weapon tooltip needs to track this index.
+    const wpnIdx = 3;
     let ablIdx = -1;
     if (u.abilities && u.abilities.length > 0) {
       ablIdx = lines.length;

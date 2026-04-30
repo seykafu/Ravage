@@ -551,6 +551,9 @@ when revisiting tradeoffs months later.
 | 2026-04 | Story-gated promotion | Differentiates from FE's grind-gated Master Seal; anchors mechanical growth to emotional beats |
 | 2026-04 | Original-8 catch-up rule | L10 baseline + one-time bump to (squad_avg − 2) when rejoining; keeps elites elite without making them dead weight |
 | 2026-04 | Wyvern → Dactyl | Codebase used `dactyl_rider` consistently; script had mixed Wyvern/Dactyl |
+| 2026-04 | GA4 + custom event tracking | Page views in GA4; six custom events (new_game / arc / battle started/completed, level-up, promotion) for funnel analytics. Triple-gate (no gtag / localhost / DEV) so dev runs don't pollute prod. |
+| 2026-04 | GDPR Consent Mode v2 banner | Default consent denied; one-time banner upgrades on Accept and persists choice in `localStorage('ravage:consent:v1')`. Same banner ships on landing + game pages, sharing the storage key. |
+| 2026-04 | LV row moved into apText | Adding LV as its own stat row pushed the inventory line into the ACTIONS header below; compressed into the existing AP one-liner ("LV 3 · 45 XP · AP 3/3 · PLAYER") instead. |
 
 ---
 

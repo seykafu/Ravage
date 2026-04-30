@@ -8,19 +8,37 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ravage</title>
 
-    <!-- Google Analytics (GA4). Mirror of the snippet in /index.html so
-         the /play subroute is tracked as its own page view. The config
-         call is gated to non-localhost hosts so `npm run dev` doesn't
-         pollute production analytics. -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XSNSMMB78R"></script>
+    <!-- Google Analytics (GA4) with Consent Mode v2. Mirrors /index.html
+         so /play is tracked as its own page view and shares the same
+         consent decision (both pages read the same localStorage key).
+         If the player accepted on the landing page, the upgrade fires
+         here too before the first play-page hit goes out. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){ dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        analytics_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500
+      });
+      try {
+        if (localStorage.getItem('ravage:consent:v1') === 'granted') {
+          gtag('consent', 'update', {
+            ad_storage: 'granted',
+            analytics_storage: 'granted',
+            ad_user_data: 'granted',
+            ad_personalization: 'granted'
+          });
+        }
+      } catch (e) { /* localStorage blocked → stay denied */ }
       gtag('js', new Date());
       if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         gtag('config', 'G-XSNSMMB78R');
       }
     </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XSNSMMB78R"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -106,6 +124,94 @@
   <body>
     <div id="app"></div>
     <div id="loader">Ravage — loading…</div>
+
+    <!-- ============== GDPR consent banner ============== -->
+    <!-- Mirror of the banner in /index.html. Shares the localStorage
+         key 'ravage:consent:v1' so a user who accepted on the landing
+         page won't see this on /play. Decline keeps gtag.js loaded
+         in denied state — no cookies, no hits sent. The banner sits
+         on top of the Phaser canvas via z-index 9999 + position fixed. -->
+    <div id="cookie-banner" hidden>
+      <p>
+        Ravage uses cookies for anonymous analytics so we can see which battles
+        are working and which need tuning. Your choice is saved on this device.
+      </p>
+      <div class="cookie-banner-actions">
+        <button id="cookie-decline" type="button" class="cookie-btn">Decline</button>
+        <button id="cookie-accept" type="button" class="cookie-btn cookie-btn-primary">Accept</button>
+      </div>
+    </div>
+    <style>
+      #cookie-banner {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        max-width: 760px;
+        margin: 0 auto;
+        background: #0d111c;
+        border: 1px solid #c9b07a;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        padding: 16px 20px;
+        z-index: 9999;
+        font-family: "EB Garamond", "Georgia", "Times New Roman", serif;
+        color: #e8eaf2;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 14px;
+        line-height: 1.45;
+        pointer-events: auto;
+      }
+      #cookie-banner p { margin: 0; flex: 1; }
+      .cookie-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+      .cookie-btn {
+        padding: 8px 18px;
+        background: #1c2032;
+        border: 1px solid #6c7281;
+        color: #dde6ef;
+        font-family: "Cinzel", "Trajan Pro", serif;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
+      }
+      .cookie-btn:hover { background: #2a2a3a; border-color: #a0aabc; }
+      .cookie-btn-primary { border-color: #c9b07a; color: #fff7c4; background: #131724; }
+      .cookie-btn-primary:hover { background: #1c2032; border-color: #f2d997; }
+      @media (max-width: 600px) {
+        #cookie-banner { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px; }
+        .cookie-banner-actions { justify-content: flex-end; }
+      }
+    </style>
+    <script>
+      (function() {
+        var STORAGE_KEY = 'ravage:consent:v1';
+        var stored = null;
+        try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) { /* blocked */ }
+        if (stored === 'granted' || stored === 'denied') return;
+        var banner = document.getElementById('cookie-banner');
+        if (!banner) return;
+        banner.hidden = false;
+        document.getElementById('cookie-accept').addEventListener('click', function() {
+          try { localStorage.setItem(STORAGE_KEY, 'granted'); } catch (e) {}
+          if (typeof gtag === 'function') {
+            gtag('consent', 'update', {
+              ad_storage: 'granted',
+              analytics_storage: 'granted',
+              ad_user_data: 'granted',
+              ad_personalization: 'granted'
+            });
+          }
+          banner.hidden = true;
+        });
+        document.getElementById('cookie-decline').addEventListener('click', function() {
+          try { localStorage.setItem(STORAGE_KEY, 'denied'); } catch (e) {}
+          banner.hidden = true;
+        });
+      })();
+    </script>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
