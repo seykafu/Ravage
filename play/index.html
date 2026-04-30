@@ -7,6 +7,21 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ravage</title>
+
+    <!-- Google Analytics (GA4). Mirror of the snippet in /index.html so
+         the /play subroute is tracked as its own page view. The config
+         call is gated to non-localhost hosts so `npm run dev` doesn't
+         pollute production analytics. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XSNSMMB78R"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        gtag('config', 'G-XSNSMMB78R');
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

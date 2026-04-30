@@ -14,6 +14,21 @@
     <meta property="og:image" content="/assets/backdrops/palaceCoup.png" />
     <meta name="twitter:card" content="summary_large_image" />
 
+    <!-- Google Analytics (GA4). Loads gtag.js on every visit, but the
+         config call is gated to non-localhost hosts so `npm run dev` /
+         `127.0.0.1` traffic doesn't pollute production analytics. The
+         same snippet ships in play/index.html so the game subroute is
+         tracked as its own page view. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XSNSMMB78R"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        gtag('config', 'G-XSNSMMB78R');
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
