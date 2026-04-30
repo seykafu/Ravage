@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
+import { trackArcStarted } from "../util/analytics";
 import type { ArcId, RouteRef } from "../data/contentIds";
 
 interface PortraitMeta {
@@ -108,6 +109,10 @@ export class StoryScene extends Phaser.Scene {
       this.scene.start("OverworldScene");
       return;
     }
+
+    // Analytics — track arc entries so we can see how far into the script
+    // the average player reaches.
+    trackArcStarted(this.arcId);
 
     // Backdrop honors arc.backdrop when set; falls back to thuling. Real PNG
     // (loaded as `backdrop:<id>`) is preferred over the procedural fallback.

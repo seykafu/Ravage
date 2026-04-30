@@ -34,6 +34,7 @@ import {
   xpRewardFor,
   type LevelUpReport
 } from "../combat/Progression";
+import { trackBattleCompleted, trackBattleStarted, trackCharacterLeveledUp } from "../util/analytics";
 import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
@@ -205,6 +206,10 @@ export class BattleScene extends Phaser.Scene {
       this.scene.start("OverworldScene");
       return;
     }
+
+    // Analytics — pair with trackBattleCompleted in checkEnd() to compute
+    // win/loss rates and drop-off per battle.
+    trackBattleStarted(this.battleId);
 
     // Backdrop — see ensureBackdropForKey in BackdropArt.ts. The BackdropKey
     // union and the spec lookup are co-located so a typo'd key fails to compile.
@@ -1148,6 +1153,9 @@ export class BattleScene extends Phaser.Scene {
       });
     }
     writeSave(save);
+    // Analytics — capture outcome + duration so we can see pacing issues
+    // (e.g., a battle averaging 12+ rounds is probably overlong).
+    trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
@@ -1725,6 +1733,9 @@ export class BattleScene extends Phaser.Scene {
     const gainedTags = gainedKeys.map((k) => `+${shorthand[k] ?? k.toUpperCase()}`).join(" ");
     const summary = gainedTags ? ` (${gainedTags})` : "";
     this.pushLog(`${unit.name} reaches level ${report.newLevel}!${summary}`);
+    // Analytics — fire one event per level (cascading multi-level XP awards
+    // call announceLevelUp once per gained level, so this naturally batches).
+    trackCharacterLeveledUp(unit.id, report.newLevel);
     if (view) {
       const floater = this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 10, `LV ${report.newLevel}`, {
         fontFamily: FAMILY_HEADING,

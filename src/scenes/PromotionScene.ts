@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { sfxClick, sfxVictory } from "../audio/Sfx";
 import { ABILITY_DISPLAY, CLASS_DISPLAY_NAMES, PROMOTIONS } from "../data/promotions";
 import { promoteCharacter } from "../combat/Progression";
+import { trackCharacterPromoted } from "../util/analytics";
 import {
   getCharacterRecord,
   setCharacterRecord,
@@ -64,6 +65,9 @@ export class PromotionScene extends Phaser.Scene {
     const after = promoteCharacter(before, promotion);
     if (after !== before) {
       writeSave(setCharacterRecord(save, this.characterId, after));
+      // Analytics — only fire on actual promotion (not on idempotent
+      // re-runs from DevJump replays).
+      trackCharacterPromoted(this.characterId, promotion.toClass);
     }
 
     this.renderPanel(this.characterId, before, after, promotion.toClass, promotion.newAbility);

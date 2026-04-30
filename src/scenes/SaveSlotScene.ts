@@ -14,6 +14,7 @@ import {
 import { battleById } from "../data/battles";
 import { isAuthEnabled, currentUser, signOut } from "../auth/session";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
+import { trackNewGameStarted } from "../util/analytics";
 
 export class SaveSlotScene extends Phaser.Scene {
   private previews: SlotPreview[] = [];
@@ -185,6 +186,9 @@ export class SaveSlotScene extends Phaser.Scene {
     this.cameras.main.fadeOut(300, 0, 0, 0);
     await activateSlot(slot);
     resetActiveSave();
+    // Analytics — single event per New Game intent. Bookends the funnel
+    // (vs. battle_completed for the final battle).
+    trackNewGameStarted();
     this.cameras.main.once("camerafadeoutcomplete", () =>
       this.scene.start("StoryScene", { arcId: "cold_open_dawn" })
     );
