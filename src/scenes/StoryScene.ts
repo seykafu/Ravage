@@ -57,6 +57,27 @@ const PORTRAIT_AREA_W = 300;
 const PORTRAIT_AREA_H = 360;
 const PORTRAIT_MASK_KEY = "story_portrait_fade_mask";
 
+// Dialog panel layout. Hoisted to module scope so create() and showBeat()
+// don't drift apart when one is tweaked. Values were tightened in the
+// pagination pass: the panel now sits 20px higher and is 20px taller than
+// before (same bottom edge), and the body text top padding dropped from 56
+// to 44 so 4–5 wrapped lines fit comfortably instead of clipping the
+// border.
+const PANEL_X = 120;
+const PANEL_Y = GAME_HEIGHT - 260;
+const PANEL_W = GAME_WIDTH - 240;
+const PANEL_H = 200;
+const SPEAKER_Y_OFFSET = 14;
+const BODY_Y_OFFSET = 44;
+// fontSize 21 + lineSpacing 10 = effective line height per Phaser's text
+// wrapping. Used to compute LINES_PER_PAGE for auto-pagination.
+const BODY_LINE_HEIGHT = 31;
+const BODY_BOTTOM_PADDING = 16;
+const LINES_PER_PAGE = Math.max(
+  1,
+  Math.floor((PANEL_H - BODY_Y_OFFSET - BODY_BOTTOM_PADDING) / BODY_LINE_HEIGHT)
+);
+
 export class StoryScene extends Phaser.Scene {
   private arcId!: ArcId;
   private idx = 0;
@@ -68,6 +89,11 @@ export class StoryScene extends Phaser.Scene {
   private bgImage!: Phaser.GameObjects.Image;
   private revealing = false;
   private fullText = "";
+  // Pagination state. A "beat" can span multiple "pages" if its body wraps to
+  // more lines than fit in the panel. The portrait + speaker name stay fixed
+  // across pages of the same beat; only the body text steps.
+  private currentBeatPages: string[] = [];
+  private currentPageIdx = 0;
 
   constructor() { super("StoryScene"); }
 
@@ -119,20 +145,16 @@ export class StoryScene extends Phaser.Scene {
     }
 
     // Dialog panel
-    const panelX = 120;
-    const panelY = GAME_HEIGHT - 240;
-    const panelW = GAME_WIDTH - 240;
-    const panelH = 180;
     const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
+    drawPanel(pg, PANEL_X, PANEL_Y, PANEL_W, PANEL_H);
 
     // Text is left-aligned inside the panel; the speaker portrait floats above
     // the panel on the RIGHT side. (Earlier layout reserved the LEFT for the
     // portrait, which pushed the dialogue ~340px in and made the text feel
     // shoved against the right edge.)
-    const textLeft = panelX + 24;
+    const textLeft = PANEL_X + 24;
 
-    this.speakerText = this.add.text(textLeft, panelY + 18, "", {
+    this.speakerText = this.add.text(textLeft, PANEL_Y + SPEAKER_Y_OFFSET, "", {
       fontFamily: FAMILY_HEADING,
       fontSize: "22px",
       color: "#f4d999",
@@ -141,14 +163,14 @@ export class StoryScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
     }).setLetterSpacing(1);
 
-    this.bodyText = this.add.text(textLeft, panelY + 56, "", {
+    this.bodyText = this.add.text(textLeft, PANEL_Y + BODY_Y_OFFSET, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "21px",
       color: "#f3ecd9",
       stroke: "#000",
       strokeThickness: 2,
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true },
-      wordWrap: { width: panelW - PORTRAIT_AREA_W - 80 },
+      wordWrap: { width: PANEL_W - PORTRAIT_AREA_W - 80 },
       lineSpacing: 10
     }).setLetterSpacing(0.3);
 
@@ -185,20 +207,17 @@ export class StoryScene extends Phaser.Scene {
   }
 
   private showBeat(beat: DialogBeat): void {
-    sfxPageTurn();
-    // Portrait
+    // Portrait + speaker change only between beats, not between pages of the
+    // same beat. Keep this work outside showCurrentPage().
     if (this.portrait) { this.portrait.destroy(); this.portrait = undefined; }
     if (beat.portraitId && beat.portraitId !== "narrator") {
       const key = this.resolvePortraitKey(beat.portraitId, beat.expression);
       if (key) {
-        const panelX = 120;
-        const panelY = GAME_HEIGHT - 240;
-        const panelW = GAME_WIDTH - 240;
         // Portrait sits on the RIGHT side of the panel now (text on the left).
         // Top-center of the portrait region; the image extends downward and
         // overlaps the dialog panel by ~24px, hidden by the gradient mask.
-        const areaCenterX = panelX + panelW - 24 - PORTRAIT_AREA_W / 2;
-        const areaTopY = panelY - PORTRAIT_AREA_H + 24;
+        const areaCenterX = PANEL_X + PANEL_W - 24 - PORTRAIT_AREA_W / 2;
+        const areaTopY = PANEL_Y - PORTRAIT_AREA_H + 24;
         this.portrait = this.add.image(areaCenterX, areaTopY, key).setOrigin(0.5, 0);
         const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
         const srcW = tex.width || PORTRAIT_W;
@@ -214,9 +233,36 @@ export class StoryScene extends Phaser.Scene {
     }
 
     this.speakerText.setText(beat.speaker ?? (beat.portraitId === "narrator" ? "" : ""));
-    this.fullText = beat.body;
+
+    // Compute the wrapped lines for this beat, then chunk into LINES_PER_PAGE.
+    // Phaser's getWrappedText respects the wordWrap.width set on bodyText.
+    // Empty beats (shouldn't happen) get a single empty page so the page
+    // pointer stays valid.
+    const wrapped = this.bodyText.getWrappedText(beat.body);
+    this.currentBeatPages = [];
+    if (wrapped.length === 0) {
+      this.currentBeatPages.push(beat.body);
+    } else {
+      for (let i = 0; i < wrapped.length; i += LINES_PER_PAGE) {
+        this.currentBeatPages.push(wrapped.slice(i, i + LINES_PER_PAGE).join("\n"));
+      }
+    }
+    this.currentPageIdx = 0;
+    this.showCurrentPage();
+  }
+
+  // Renders the current page's text with the typewriter reveal. Called by
+  // showBeat (first page of a new beat) and by advance() (next page of the
+  // same beat). Updates the Continue button's label so the player can tell
+  // mid-beat pagination apart from beat-to-beat advance.
+  private showCurrentPage(): void {
+    sfxPageTurn();
+    const page = this.currentBeatPages[this.currentPageIdx] ?? "";
+    this.fullText = page;
     this.bodyText.setText("");
     this.revealing = true;
+    const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;
+    this.continueBtn.setLabel(hasMore ? "More ▾" : "Continue ▸");
     let i = 0;
     const reveal = () => {
       if (!this.revealing) {
@@ -275,11 +321,25 @@ export class StoryScene extends Phaser.Scene {
   }
 
   private advance(): void {
+    // Mid-typewriter: complete the current page instantly instead of
+    // advancing. Prevents accidentally skipping a page if the player clicks
+    // before the reveal finishes.
     if (this.revealing) {
       this.revealing = false;
       this.bodyText.setText(this.fullText);
+      // Re-evaluate the button label now that the page is fully shown.
+      const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;
+      this.continueBtn.setLabel(hasMore ? "More ▾" : "Continue ▸");
       return;
     }
+    // More pages of the current beat? Step within the beat instead of moving
+    // to the next one. Portrait + speaker stay; only the body text changes.
+    if (this.currentPageIdx + 1 < this.currentBeatPages.length) {
+      this.currentPageIdx++;
+      this.showCurrentPage();
+      return;
+    }
+    // Otherwise advance to the next beat (or end the arc).
     const arc = ARCS[this.arcId];
     if (!arc) return;
     this.idx++;
