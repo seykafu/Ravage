@@ -557,6 +557,7 @@ when revisiting tradeoffs months later.
 | 2026-04 | Per-texture LINEAR filter for painted assets | Phaser's global `pixelArt: true` was forcing nearest-neighbor sampling on every texture, which made high-res portraits / backdrops / painted tiles look posterized when downscaled. BootScene now flips `portrait:` / `backdrop:` / `tile:` / `obstacle:` textures to LINEAR after load; sprites/VFX/UI keep NEAREST. |
 | 2026-04 | Painted tile composite uses high-quality smoothing | The tile+obstacle composite path in TileArt was setting `imageSmoothingEnabled = false` when downscaling 600×600 painted source PNGs to 48×48 tiles — produced grainy mosaics. Flipped to `true` + `imageSmoothingQuality: "high"`. |
 | 2026-04 | Damage number pop + crit flash | Floaters now scale-pop in (Back.easeOut to 1.2× / 1.45× crit, then settle to 1.0). Crits render larger (26px vs 18px), thicker stroke, deeper drop shadow, hang ~200ms longer. Sells the impact. |
+| 2026-04 | Crisp text on retina displays | Monkey-patched `Phaser.GameObjects.GameObjectFactory.text` (in `src/util/crispText.ts`, called from main.ts before game construction) so every `scene.add.text(...)` gets `setResolution(devicePixelRatio)` + LINEAR filter on the resulting texture. Glyphs render at 2×/3× density and downsample smoothly instead of being nearest-stretched and chunky. No-op on 1× displays to avoid texture-memory inflation. |
 
 ---
 

@@ -13,6 +13,7 @@ import { SaveSlotScene } from "./scenes/SaveSlotScene";
 import { SettingsScene } from "./scenes/SettingsScene";
 import { PromotionScene } from "./scenes/PromotionScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
+import { installCrispText } from "./util/crispText";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
@@ -44,6 +45,12 @@ const config: Phaser.Types.Core.GameConfig = {
     PromotionScene
   ]
 };
+
+// Patch Phaser's text factory BEFORE game construction so every
+// scene.add.text(...) call across the game gets crisp 2x/3x density
+// glyphs sampled with LINEAR instead of nearest-neighbor. See
+// src/util/crispText.ts for the full rationale. No-op on 1x displays.
+installCrispText();
 
 const game = new Phaser.Game(config);
 
