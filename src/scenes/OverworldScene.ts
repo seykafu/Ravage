@@ -80,11 +80,18 @@ export class OverworldScene extends Phaser.Scene {
     // to 3 lines + ellipsis" hack. Long intros stay readable in full via
     // the mouse wheel; the helper auto-shows a thin gold scrollbar on the
     // right edge of the body region when the body overflows the visible
-    // height. Body region runs from y+78 (just below the sub line) down to
-    // the top of the button row with a 12px gap. The width clears the
-    // button on the right via bodyWrapWidth from earlier.
-    const bodyTop = detailY + 78;
-    const bodyBottom = btnTop - 12;
+    // height.
+    //
+    // Body extends to the BOTTOM of the panel (with 12px padding), not
+    // just to the top of the button — earlier version tied bodyBottom to
+    // btnTop-12 which collapsed the body to ~10px tall and clipped almost
+    // the entire intro. The button doesn't actually block the body
+    // vertically: bodyWrapWidth already excludes the button's horizontal
+    // range, so body text + button can coexist at the same y range without
+    // ever overlapping. The scrollbar lands ~30px to the left of the
+    // button (sbX = bodyLeft + bodyWrapWidth - 6), well clear of it.
+    const bodyTop = detailY + 72;
+    const bodyBottom = detailY + detailH - 12;
     const bodyHeight = bodyBottom - bodyTop;
     const bodyHandle = createScrollableText(this, {
       x: bodyLeft,
