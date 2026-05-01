@@ -4,6 +4,43 @@ import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, pal
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
+import type { DialogBeat } from "../story/beats";
+
+// ---- Mid-battle dialogue --------------------------------------------------
+// FE-style support conversations that fire mid-fight when specific
+// conditions hit. Authoring lives here (per-battle) rather than globally
+// for v1 — keeps each battle's beats next to its other content. A
+// graduate-to-globally-keyed-supports pass can come later if/when we want
+// cross-battle continuity ("this scene fires the first time Maya & Ning
+// stand adjacent in any battle").
+//
+// Trigger kinds:
+//   - "round_start" (round N starts) — cinematic, fires once per battle
+//     when the round counter reaches N.
+//   - "adjacent_eot" (units A & B end turn melee-adjacent) — relational,
+//     fires the first time the two named units land next to each other
+//     after a turn ends. Either unit being dead suppresses the trigger.
+//   - "ally_killed_target" (specific ally lands the killing blow on a
+//     specific enemy) — payoff, fires inline in the kill resolution path.
+//
+// Dedup: each dialogue has an `id` that goes into BattleScene.firedDialogues
+// (a Set per-battle) so re-entering an already-fired trigger is a no-op.
+// IDs are scoped per battle, so collisions across battles don't matter.
+export type BattleDialogueTrigger =
+  | { kind: "round_start"; round: number }
+  | { kind: "adjacent_eot"; unitA: string; unitB: string }
+  | { kind: "ally_killed_target"; allyId: string; targetId: string };
+
+export interface BattleDialogue {
+  // Stable identifier within this battle's dialogues array. Used as the
+  // dedup key in BattleScene.firedDialogues.
+  id: string;
+  trigger: BattleDialogueTrigger;
+  // Reuses the StoryScene DialogBeat type — same speaker / portraitId /
+  // expression / body shape. Pagination (5 lines per page, "More ▾"
+  // button) carries over from the StoryScene treatment.
+  beats: DialogBeat[];
+}
 
 export interface BattleNode {
   id: BattleId;        // typed; new ids must be added to contentIds.ts first
@@ -26,6 +63,12 @@ export interface BattleNode {
   // battles, defeatUnit(...) for boss kills, escapeToTile(...) for breakouts,
   // or compose with allOf/anyOf. See src/combat/Victory.ts.
   victory?: VictoryCondition;
+  // Mid-battle dialogues that fire on specific triggers (see
+  // BattleDialogueTrigger above). Optional; absence means no in-fight
+  // banter. BattleScene checks triggers at well-defined moments
+  // (round transitions, end-of-turn, kill resolution) and pauses the
+  // scene to launch BattleDialogueScene as an overlay.
+  dialogues?: BattleDialogue[];
 }
 
 export const BATTLES: BattleNode[] = [
@@ -113,8 +156,25 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("dawn_a1", 304),
       ENEMIES.banditArcher("dawn_a2", 305)
     ],
-    difficultyLabel: "Skirmish"
+    difficultyLabel: "Skirmish",
     // No explicit victory — falls back to routEnemies (default).
+    dialogues: [
+      // Maya joining the squad — first time she and Amar share an
+      // adjacent tile after a turn ends. Maya's first probe of Amar's
+      // background; Amar deflects.
+      {
+        id: "b03_maya_amar_first_recognition",
+        trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "amar" },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "Your footwork. You step like a man who learned in a courtyard, not a wagon yard." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "I learned on the farm. We do wagon-rotation drills." },
+          { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+            body: "Sure. I'll let you keep that one for now." }
+        ]
+      }
+    ]
   },
   {
     id: "b04_swamp",
@@ -153,7 +213,40 @@ export const BATTLES: BattleNode[] = [
     // break the ambush by routing the squad outright. Either resolution
     // matches the outro ("Lucian invents a story" — implies they got
     // home, with or without a clean kill count).
-    victory: anyOf(surviveRounds(4), routEnemies)
+    victory: anyOf(surviveRounds(4), routEnemies),
+    dialogues: [
+      // Kian's suspicion crystallizing. He's been watching Amar since B2;
+      // here in the swamp ambush he says it out loud for the first time.
+      // Amar deflects by giving Kian a tactical instruction — taking the
+      // tactical lead away from "the man who's watching me fight."
+      {
+        id: "b04_kian_amar_test",
+        trigger: { kind: "adjacent_eot", unitA: "kian", unitB: "amar" },
+        beats: [
+          { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+            body: "You handled that one well, Amar. Almost rehearsed." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Reflex. Kian — eyes left. The archer behind the third tree." },
+          { speaker: "Kian", portraitId: "kian",
+            body: "...Right. I see him." }
+        ]
+      },
+      // Lucian buffering between Kian and Amar — first time on screen
+      // that Lucian openly takes Amar's side without saying so. Kian
+      // notices the chain of command isn't where Fergus put it.
+      {
+        id: "b04_lucian_kian_buffer",
+        trigger: { kind: "adjacent_eot", unitA: "lucian", unitB: "kian" },
+        beats: [
+          { speaker: "Lucian", portraitId: "lucian",
+            body: "Kian. Cover the western reed line. Amar takes center." },
+          { speaker: "Kian", portraitId: "kian",
+            body: "I take orders from generals, Lucian. Not foremen." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+            body: "Then take this one as a favor. Cover the western reed line." }
+        ]
+      }
+    ]
   },
   {
     id: "b05_mountain_ndari",
@@ -230,10 +323,48 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSwordsman("crv_sw1", 607, 5),
       ENEMIES.banditSwordsman("crv_sw2", 608, 5)
     ],
-    difficultyLabel: "Ambush"
+    difficultyLabel: "Ambush",
     // Defaults to routEnemies. The script-mandated outcomes (wagons
     // intact, civilian drivers safe, ledger found) are narrative and
     // resolve in the post arc regardless of damage taken in-fight.
+    dialogues: [
+      // Maya commanding the south flank — the script's "took command of
+      // one flank without being asked" beat made mechanical. Fires at
+      // the start of round 2, after the first round's ambush has
+      // committed everyone to a position. Marks the moment Lucian
+      // realizes Maya's not just a peasant who knows how to fight.
+      {
+        id: "b06_maya_takes_flank",
+        trigger: { kind: "round_start", round: 2 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "South flank. Lucian, hold the west wagon. Ning, climb the south shelf — the perched archer there is reloading slow, you can take her clean. Amar takes center. Leo, swing wide and break the east seal." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "...Confirmed." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "Maya. Who taught you to read a field like that?" },
+          { speaker: "Maya", portraitId: "maya",
+            body: "The same person who taught me to keep quiet about it. Move." }
+        ]
+      },
+      // Payoff for the ledger-discovery in the post arc — when Amar
+      // personally drops the captain spearton, Lucian flags the body
+      // for a search before they lose it. ally_killed_target requires
+      // a specific (ally, target) pair, so this only fires if Amar
+      // makes the kill on crv_sp1 specifically. Other kill paths
+      // don't trigger it; the post arc handles the ledger reveal
+      // either way (the post arc fires regardless of who killed whom).
+      {
+        id: "b06_amar_drops_captain",
+        trigger: { kind: "ally_killed_target", allyId: "amar", targetId: "crv_sp1" },
+        beats: [
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Hold up. That one had a leather pouch on his hip — I saw it when he raised his shield. Maya, search him before we lose the body to the road dust." },
+          { speaker: "Maya", portraitId: "maya",
+            body: "Already on it." }
+        ]
+      }
+    ]
   },
   {
     id: "b07_monastery",
@@ -273,7 +404,43 @@ export const BATTLES: BattleNode[] = [
     // Defeat Selene to win — the rest can scatter. Mirrors b05's
     // defeatUnit("ndari") pattern; players who want the cleanest run
     // can dive on Selene early, players who want full XP rout the room.
-    victory: defeatUnit("selene_enemy", { label: "Defeat Selene" })
+    victory: defeatUnit("selene_enemy", { label: "Defeat Selene" }),
+    dialogues: [
+      // Lucian explicitly takes Amar's blind side. Earlier dialogues in
+      // b04 had Lucian buffering Kian on Amar's behalf; here, in the
+      // monastery, he says it out loud — fight at half strength, I'll
+      // cover you. Mirrors the post arc beat where he says it again
+      // when Amar finally tells him everything.
+      {
+        id: "b07_lucian_amar_cover",
+        trigger: { kind: "adjacent_eot", unitA: "lucian", unitB: "amar" },
+        beats: [
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Amar. Whatever this is — whatever she is to you — fight at half strength all you need to. I'm on your blind side." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "Lucian — " },
+          { speaker: "Lucian", portraitId: "lucian",
+            body: "Don't say it tonight. Say it after, by the fire. We've still got a balcony to clear." }
+        ]
+      },
+      // The Amar/Selene moment. First time they've stood face-to-face
+      // since the failed coup a year ago. Neither calls the other by
+      // their old role; both pretend not to recognize the other in
+      // public. Selene's "the bell" line is the bell tower — she's
+      // already planning her exit before the fight is over.
+      {
+        id: "b07_amar_selene_eyes",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "selene_enemy" },
+        beats: [
+          { speaker: "Selene", portraitId: "selene", expression: "cold_contempt",
+            body: "...You shouldn't be here." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "Neither should you. They told us you were dead at the gate." },
+          { speaker: "Selene", portraitId: "selene", expression: "breaking",
+            body: "Then we keep telling them. Don't follow me past the bell, Amar. Don't make me cut you here in front of the people you've kept alive this year." }
+        ]
+      }
+    ]
   },
   {
     id: "b08_orinhal",

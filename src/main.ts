@@ -12,6 +12,7 @@ import { AuthScene } from "./scenes/AuthScene";
 import { SaveSlotScene } from "./scenes/SaveSlotScene";
 import { SettingsScene } from "./scenes/SettingsScene";
 import { PromotionScene } from "./scenes/PromotionScene";
+import { BattleDialogueScene } from "./scenes/BattleDialogueScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 
@@ -42,7 +43,8 @@ const config: Phaser.Types.Core.GameConfig = {
     EndScene,
     CreditsScene,
     SettingsScene,
-    PromotionScene
+    PromotionScene,
+    BattleDialogueScene
   ]
 };
 

@@ -12,7 +12,7 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
-import { battleById } from "../data/battles";
+import { battleById, type BattleDialogue, type BattleDialogueTrigger } from "../data/battles";
 import {
   BattleState,
   effectiveMovement,
@@ -189,6 +189,14 @@ export class BattleScene extends Phaser.Scene {
   // scene's tween + timer timescale is doubled so the AI loop visibly snaps
   // forward without altering combat math.
   private fastForward = false;
+  // Mid-battle dialogue dedup. Each BattleDialogue has a stable id; once
+  // it fires, this set prevents re-firing in the same battle. Reset by
+  // init() on every BattleScene entry, so retrying a battle re-shows the
+  // dialogues. lastSeenDialogueRound tracks the last round number that
+  // ran a check, so round_start triggers fire exactly once per round
+  // crossing instead of on every checkDialogueTriggers tick.
+  private firedDialogues = new Set<string>();
+  private lastSeenDialogueRound = 0;
 
   constructor() { super("BattleScene"); }
 
@@ -199,6 +207,8 @@ export class BattleScene extends Phaser.Scene {
     this.logLines = [];
     this.fsm = new BattleFSM();
     this.debug = false;
+    this.firedDialogues = new Set();
+    this.lastSeenDialogueRound = 0;
   }
 
   create(): void {
@@ -800,6 +810,14 @@ export class BattleScene extends Phaser.Scene {
 
     const startTurn = () => {
       if (this.fsm.isEnded()) return;
+      // Check for round_start / adjacent_eot dialogue triggers BEFORE
+      // dispatching control. If a dialogue fires, scene.pause() halts
+      // tweens + timers (including the 450ms enemy-turn delay below),
+      // and the AI / player input continues normally on resume. Doing
+      // this first means dialogues land BEFORE the AI starts moving
+      // and BEFORE the player gets action buttons — feels like a beat
+      // in the script rather than an interrupt.
+      this.checkDialogueTriggers();
       if (u.faction === "player" && isAlive(u)) {
         // Coming off an enemy phase: drop back to idle before unlocking input.
         if (this.fsm.current().tag === "enemyTurn") {
@@ -815,6 +833,76 @@ export class BattleScene extends Phaser.Scene {
     };
     if (isNewPhase) this.showPhaseBanner(u.faction, startTurn);
     else startTurn();
+  }
+
+  // ---- Mid-battle dialogue triggers ----
+  // Called from startTurn (every turn transition) for round_start +
+  // adjacent_eot triggers. ally_killed_target is checked inline in
+  // applyAttackEffects since it needs the (attacker, defender) pair.
+  // Only fires the FIRST matching un-fired dialogue per check tick — if
+  // two triggers happen to match in the same instant, the second waits
+  // until its next check.
+  private checkDialogueTriggers(): void {
+    const node = battleById(this.battleId);
+    if (!node?.dialogues) return;
+    const round = this.initiative.round;
+    const roundChanged = round !== this.lastSeenDialogueRound;
+    this.lastSeenDialogueRound = round;
+    for (const dlg of node.dialogues) {
+      if (this.firedDialogues.has(dlg.id)) continue;
+      if (this.matchesTrigger(dlg.trigger, round, roundChanged)) {
+        this.fireDialogue(dlg);
+        return;
+      }
+    }
+  }
+
+  private matchesTrigger(t: BattleDialogueTrigger, round: number, roundChanged: boolean): boolean {
+    switch (t.kind) {
+      case "round_start":
+        // Fires the first time the round counter reaches t.round (or any
+        // higher round if the trigger was added late). roundChanged
+        // ensures we don't re-fire on subsequent same-round checks.
+        return roundChanged && round >= t.round;
+      case "adjacent_eot": {
+        const a = this.state.units.find((u) => u.id === t.unitA);
+        const b = this.state.units.find((u) => u.id === t.unitB);
+        if (!a || !b || !isAlive(a) || !isAlive(b)) return false;
+        return this.state.grid.isMeleeAdjacent(a.state.position, b.state.position);
+      }
+      case "ally_killed_target":
+        // Fired inline in applyAttackEffects, never via this code path.
+        return false;
+    }
+  }
+
+  // Mark a dialogue fired and launch BattleDialogueScene as an overlay.
+  // BattleScene pauses; the dialogue scene resumes us when its Continue
+  // button (or ENTER/SPACE) closes the panel.
+  private fireDialogue(dlg: BattleDialogue): void {
+    this.firedDialogues.add(dlg.id);
+    this.scene.pause();
+    this.scene.run("BattleDialogueScene", {
+      beats: dlg.beats,
+      resumeKey: this.scene.key
+    });
+  }
+
+  // Called from applyAttackEffects right after the kill resolves and
+  // (for player kills) the XP award. Scans for an ally_killed_target
+  // dialogue that matches the (attacker, defender) pair and fires the
+  // first match. Cheap because this only runs on actual kills.
+  private checkKillDialogue(attacker: Unit, defender: Unit): void {
+    const node = battleById(this.battleId);
+    if (!node?.dialogues) return;
+    for (const dlg of node.dialogues) {
+      if (this.firedDialogues.has(dlg.id)) continue;
+      const t = dlg.trigger;
+      if (t.kind === "ally_killed_target" && t.allyId === attacker.id && t.targetId === defender.id) {
+        this.fireDialogue(dlg);
+        return;
+      }
+    }
   }
 
   private lastActorFaction: Unit["faction"] | null = null;
@@ -1764,6 +1852,10 @@ export class BattleScene extends Phaser.Scene {
           this.announceLevelUp(attacker, lu);
         }
       }
+      // Dialogue trigger: fire any ally_killed_target dialogue matching
+      // this (attacker, defender) pair. Pauses the battle if one matches,
+      // resumes after the player advances through the dialogue.
+      this.checkKillDialogue(attacker, defender);
     }
   }
 
