@@ -8,6 +8,8 @@ import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { loadSave } from "../util/save";
 import { SettingsButton } from "../ui/SettingsButton";
+import { ITEM_CATALOG } from "../combat/items";
+import type { ItemKind } from "../combat/types";
 import type { ArcId, BattleId } from "../data/contentIds";
 
 interface EndArgs {
@@ -99,6 +101,29 @@ export class EndScene extends Phaser.Scene {
       wordWrap: { width: panelW - 56 },
       lineSpacing: 6
     });
+
+    // Spoils — only on victory and only if the BattleNode authored a
+    // rewards array. Tally by kind (so "potion ×3" reads more cleanly
+    // than three identical lines), build a single comma-separated
+    // line, anchor it to the bottom of the outro panel.
+    if (isVictory && node?.rewards && node.rewards.length > 0) {
+      const counts: Partial<Record<ItemKind, number>> = {};
+      for (const k of node.rewards) counts[k] = (counts[k] ?? 0) + 1;
+      const parts: string[] = [];
+      for (const k of Object.keys(counts) as ItemKind[]) {
+        const n = counts[k]!;
+        const meta = ITEM_CATALOG[k];
+        parts.push(`${meta.glyph} ${meta.name}${n > 1 ? ` ×${n}` : ""}`);
+      }
+      this.add.text(panelX + 28, panelY + panelH - 38, `Spoils: ${parts.join("  ")}`, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "14px",
+        color: "#f4d999",
+        stroke: "#1a0e04",
+        strokeThickness: 2,
+        wordWrap: { width: panelW - 56 }
+      });
+    }
 
     // Stats line
     const save = loadSave();

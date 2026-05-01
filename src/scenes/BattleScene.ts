@@ -56,11 +56,14 @@ import {
   completeBattle,
   getAssignedInventory,
   getCharacterRecord,
+  getSquadInventory,
   loadSave,
   setCharacterRecord,
+  setSquadInventory,
   unlockBattle,
   writeSave
 } from "../util/save";
+import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { returnInventoriesToPool } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
@@ -1421,8 +1424,36 @@ export class BattleScene extends Phaser.Scene {
       ablIdx = lines.length;
       lines.push(`ABL  ${u.abilities.join(", ")}`);
     }
+    // Inventory + equipment summary. Renders the carried items with
+    // their glyphs (so the player can scan at a glance which character
+    // has the Royal Lens vs the Mask), then a single EQ line summing
+    // the active passive bonuses. Both rows skipped when the bag is
+    // empty.
     if (u.state.inventory.length > 0) {
-      lines.push(`INV  ${u.state.inventory.map((it) => it.name).join(", ")}`);
+      // Tally by kind so "🧪 Potion ×3" reads more cleanly than three
+      // identical lines. Iteration preserves first-seen order which
+      // matches drop / assignment order in practice.
+      const counts: Record<string, { glyph: string; name: string; count: number }> = {};
+      for (const it of u.state.inventory) {
+        const key = it.kind;
+        if (counts[key]) counts[key]!.count += 1;
+        else counts[key] = { glyph: ITEM_CATALOG[it.kind].glyph, name: ITEM_CATALOG[it.kind].name, count: 1 };
+      }
+      const invStr = Object.values(counts)
+        .map((c) => `${c.glyph}${c.count > 1 ? `×${c.count}` : ""}`)
+        .join(" ");
+      lines.push(`INV  ${invStr}`);
+      // Sum the equipment passives — only render the row when there's
+      // something non-zero to report, so a unit carrying just two
+      // potions doesn't get a misleading "EQ +0%" line.
+      const eq = equipmentBonuses(u);
+      const eqParts: string[] = [];
+      if (eq.movement) eqParts.push(`+${eq.movement} MOV`);
+      if (eq.critPct) eqParts.push(`+${eq.critPct}% CRIT`);
+      if (eq.hitPct) eqParts.push(`+${eq.hitPct}% HIT`);
+      if (eq.apBonus) eqParts.push(`+${eq.apBonus} AP`);
+      if (eq.armorPenalty) eqParts.push(`-${eq.armorPenalty} ARM`);
+      if (eqParts.length > 0) lines.push(`EQ   ${eqParts.join(", ")}`);
     }
     this.statText.setText(lines.join("\n"));
     this.panelUnit = u;
@@ -1566,6 +1597,21 @@ export class BattleScene extends Phaser.Scene {
       });
     }
     writeSave(save);
+    // Battle rewards (victory only). Mint each ItemKind in the node's
+    // rewards array as a fresh Item and drop it directly into the
+    // squad pool. Done BEFORE returnInventoriesToPool so a single
+    // writeSave from there captures both. EndScene reads the same
+    // rewards array off the node to render the "Spoils" line — no
+    // need to plumb the actual Item ids through the scene transition.
+    if (v === "player") {
+      const node = battleById(this.battleId);
+      if (node?.rewards && node.rewards.length > 0) {
+        const reloaded = loadSave();
+        const pool = getSquadInventory(reloaded);
+        for (const kind of node.rewards) pool.push(createItem(kind));
+        writeSave(setSquadInventory(reloaded, pool));
+      }
+    }
     // Inventory reconciliation. Items consumed in battle (potions used,
     // elixirs drunk) are simply absent from each player's live
     // inventory and so don't return to the pool — they're permanently
@@ -1901,18 +1947,30 @@ export class BattleScene extends Phaser.Scene {
         const tileDef = this.state.grid.tileAt(target.state.position);
         const pre = previewAttack(u, target, tileDef, false, this.state.units);
         const txt = this.hoverPreview.getData("txt") as Phaser.GameObjects.Text;
-        txt.setText(
-          [
-            `${u.name} → ${target.name}`,
-            `Damage  ${pre.damage}`,
-            `Hit     ${pre.hitRate}%`,
-            `Crit    ${pre.critRate}%`,
-            `Wpn x${pre.weaponMod.toFixed(2)}`,
-            `Trn x${pre.terrainMod.toFixed(2)}  Stn x${pre.stanceMod.toFixed(2)}`
-          ].join("\n")
-        );
+        // Equipment delta line — surfaces "why is my crit 35% not 25%?"
+        // by spelling out the active passives. Skipped when neither
+        // attacker nor defender carries equipment, so the tooltip stays
+        // compact for vanilla attacks.
+        const atkEq = equipmentBonuses(u);
+        const defEq = equipmentBonuses(target);
+        const eqParts: string[] = [];
+        if (atkEq.hitPct) eqParts.push(`+${atkEq.hitPct}% hit`);
+        if (atkEq.critPct) eqParts.push(`+${atkEq.critPct}% crit`);
+        if (defEq.armorPenalty) eqParts.push(`-${defEq.armorPenalty} armr`);
+        const lines = [
+          `${u.name} → ${target.name}`,
+          `Damage  ${pre.damage}`,
+          `Hit     ${pre.hitRate}%`,
+          `Crit    ${pre.critRate}%`,
+          `Wpn x${pre.weaponMod.toFixed(2)}`,
+          `Trn x${pre.terrainMod.toFixed(2)}  Stn x${pre.stanceMod.toFixed(2)}`
+        ];
+        if (eqParts.length > 0) lines.push(`Eq  ${eqParts.join(", ")}`);
+        if (u.state.ravagedActive) lines.push(`RAVAGED +50% dmg`);
+        if (target.state.ravagedActive) lines.push(`Target RAVAGED -50% arm`);
+        txt.setText(lines.join("\n"));
         const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - 230);
-        const hy = Math.min(px.y - 16, GAME_HEIGHT - 110);
+        const hy = Math.min(px.y - 16, GAME_HEIGHT - 130);
         this.hoverPreview.setPosition(hx, hy).setVisible(true);
       } else {
         this.hoverPreview.setVisible(false);

@@ -158,6 +158,36 @@ trade to be a real sacrifice ("I give up two healing potions to get
 this Mask") rather than the abstracted "1 gold = 1 unit of nothing"
 of FE shops.
 
+**Battle rewards** (`BattleNode.rewards: ItemKind[]`): each playable
+battle authors a thematic reward set granted to the squad pool on
+victory. Without this the inventory loop only shrinks (consumables
+get burned in battle, trading just shuffles existing items), so every
+fight needs to add something. Surfaces in EndScene's outro panel as
+"Spoils: 🧪 Potion ×3  🎭 Mask  ⚗️ Elixir" with kind-aware tallying.
+
+| Battle | Rewards | Narrative tie |
+|---|---|---|
+| B1 Palace Coup | 2 Potions | Throne-hall medic kits stripped before reinforcements arrive |
+| B2 Farmland | 3 Potions, 1 Mask | First equipment drop — bandit lead's intimidation mask |
+| B3 Dawn Bandits | 2 Potions, 1 Fang | Tactician's keepsake from the lead raider — Maya's introduction |
+| B4 Swamp | 2 Elixirs | Bandit medic's satchel; the squad earns the upgrade after a costly ambush |
+| B5 Mountain | 2 Potions, 1 Elixir, 1 Mask | Village dispensary + Ndari's war-trophy mask |
+| B6 Caravan | 2 Potions, 1 Elixir, 1 Royal Lens | Bandit captain's spyglass — royal-issue, ties to the ledger reveal |
+| B7 Monastery | 2 Elixirs, 1 Fang | Monastery dispensary + relic blade-tooth Selene leaves on the altar |
+| B8 Orinhal | 1 Royal Lens, 1 Mask, 1 Potion | King's tax detail's gear — material proof of fighting royal forces |
+| B9 Ravine | 2 Elixirs, 2 Royal Lenses, 1 Fang | Elite regiment kit + a Dawn-issue Fang from the lieutenant — early hint not all enemies were royal |
+
+**In-battle inventory display** (side panel + attack preview):
+- Side panel `INV` row shows carried items with glyphs and stack
+  counts (`🧪×3 🎭`).
+- Side panel `EQ` row sums active equipment passives (`+2 MOV, +10%
+  CRIT`) — only renders when something non-zero is contributing, so
+  potion-only carriers don't get a misleading "+0%" line.
+- Attack preview tooltip adds an `Eq` line surfacing attacker hit/crit
+  bonuses + defender armor reductions, plus `RAVAGED` badges if either
+  unit is in their Ravaged turn. Answers the player's "why is my crit
+  35% not 25%" question without a separate stat-source UI.
+
 ### 3.7 Mid-Battle Dialogue Triggers
 
 FE-style support conversations that fire during combat. Authored
@@ -809,6 +839,7 @@ when revisiting tradeoffs months later.
 | 2026-05 | Ravage State + Interpose — combat differentiators | The mechanical + narrative signatures that distinguish Ravage from FE. **Ravage State** (§3.10): unit takes ≥50% max HP between turns → next turn they get +50% damage / half armor / +1 MOV with a crimson aura + RAVAGED! announcement. Symmetric (works on enemies too); rewards full-commit takedowns over chip-and-run. New UnitState fields (`damageTakenSinceLastTurn`, `ravagedNextTurn`, `ravagedActive`); promoted at `beginUnitTurn`, cleared at `endUnitTurn`; modifiers in `Damage.ts` + MOV bonus in `Actions.ts`. **Interpose** (§3.11): enemy attack would deal lethal damage to a player unit + adjacent ally available → InterposeScene modal pauses the battle, player picks an interposer (or declines). Damage redirects at full force (no armor recalc — they caught the literal blade), counter is suppressed, Destruct still fires on the interposer if they die. Required splitting `performAttack` into `rollAttackOnly` + `applyAttackOutcome` so the player-defended path can pause between roll and damage. New `interposeCandidates(state, defender, attacker)` finds eligible neighbors. New `InterposeScene` is a paused-overlay modal with portrait + HP cards (HP coloured red/amber/gold by surviveability). |
 | 2026-05 | Inventory overhaul — squad pool + per-character distribution + trading post | Inventory was 1-item (potion), 3-per-character-per-battle, no persistence. Now: 6 item kinds (potion, elixir, mask, fang, royal_lens, dactyl_food) split into consumables (`uses > 0`) and equipment (`uses === 0`, passive bonuses while carried). Squad pool persisted in `SaveState.squadInventory`; per-character pre-battle assignments staged in `SaveState.assignedInventory` (so a refresh between BattlePrep + BattleScene doesn't lose distribution). New `InventoryScene` modal launched from BattlePrepScene: 3-panel layout (squad pool / per-character bags / trading post), click-to-assign / click-to-unassign, atomic trade execution. New `TRADE_RECIPES` in `src/data/trades.ts` with 8 trades — 5 forward (Potion → others), 2 lateral upgrades (Fang/Mask → Royal Lens), 1 emergency downgrade (Elixir → Potions). Equipment effects wire through `equipmentBonuses(unit)` in `src/combat/items.ts`, applied in Damage.ts (crit/hit/armor) + Actions.ts (movement) + Unit.ts (AP). Equipment STACKS — five Fangs = +50% crit, capped only by 5-slot inventory. Heal action auto-picks smallest item that covers missing HP so Elixirs aren't wasted. Items consumed in battle are gone permanently; survivors return to pool via `returnInventoriesToPool` at battle end. No currency — trading IS the economy, tonally fits the exiled-survivor squad framing. |
 | 2026-05 | Chapter expansion 21 → 30 + Seven Paths structure | Per design intent, the slice grows to 30 chapters with the Seven Paths divergence anchored at B18 (after Grude arrival arc). Existing B18-B21 placeholders replaced with the new chain: B18 (Seven Paths divergence), B19 × 7 (path-specific openers — only chosen path's plays), B20-B22 (shared mid-finale), B23-B24 (path-specific climax pair, branched internally), B25-B27 (shared penultimate / Ravage fleet arrives), B28 (path-specific final battle), B29 (shared aftermath), B30 (path-flavoured epilogue). Total 30 chapters; single playthrough sees ~22-24 (skipping unchosen B19 openers + path-overrides). New `SevenPath` type in contentIds.ts (`vengeance` / `restoration` / `revolution` / `duty` / `exile` / `mercy` / `forgetting`). All new chapters scaffolded with `playable: false`; full authoring + path-routing in OverworldScene + B18 path-pick UI deferred to follow-up passes. See §16 for the full structural design. |
+| 2026-05 | Battle rewards + in-battle inventory display | Closes the inventory loop. Without rewards the squad pool only shrinks (consumables get burned in battle, trading just shuffles existing items). New `BattleNode.rewards: ItemKind[]` field; minted into the squad pool in `BattleScene.checkEnd` on victory before `returnInventoriesToPool`. Each playable battle (B1-B9) authors a thematic reward set tied to the chapter — B5 Mountain drops Ndari's war-trophy Mask, B6 Caravan drops the bandit captain's royal-issue Lens (ties to the ledger reveal), B9 Ravine drops a Dawn-issue Fang from the lieutenant (early hint not all enemies were royal). EndScene shows a "Spoils:" line with kind-aware tallying. Side panel `INV` row now shows glyphs + stack counts (`🧪×3 🎭`) instead of comma-separated names; new `EQ` row sums active equipment passives (`+2 MOV, +10% CRIT`); attack preview tooltip adds `Eq` line + RAVAGED badges so the player understands why their numbers shift. |
 
 ---
 
@@ -825,7 +856,7 @@ when revisiting tradeoffs months later.
 - **Tutorial/tooltips for the progression system** — first level-up should explain what's happening
 - **Save slot UI for Grave mode + difficulty** — currently set in code; needs the New Game flow
 - **Path-routing implementation** — Seven Paths chapter ids exist in the registry (§16), but OverworldScene doesn't yet filter B19+ visibility on `save.flags["seven_paths.choice"]`. B18 also needs the actual path-pick UI (modal listing the seven names with their stance descriptions).
-- **Battle-reward item drops** — pool currently grows only via trading post; no battles award items yet. Each playable battle should grant 1-2 items on victory tied to the chapter (e.g., B5 mountain → Mask, B8 royal-troops → Royal Lens).
+- **Battle rewards for B10-B30** — playable battles B1-B9 now author thematic reward sets (§3.6); the scaffolded chapters B10-B30 will need similar sets when each becomes playable.
 
 ---
 

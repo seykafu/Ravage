@@ -1,4 +1,4 @@
-import type { MapDef, UnitDef } from "../combat/types";
+import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
 import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
@@ -84,6 +84,14 @@ export interface BattleNode {
   // (round transitions, end-of-turn, kill resolution) and pauses the
   // scene to launch BattleDialogueScene as an overlay.
   dialogues?: BattleDialogue[];
+  // Items granted to the squad pool on victory. Read by BattleScene
+  // .checkEnd, minted into the squad inventory just before the
+  // post-battle reconciliation, surfaced in EndScene's outro panel as
+  // a "Spoils" line. Without this the inventory loop only shrinks
+  // (consumables get burned, trading just shuffles), so every
+  // playable battle should grant 1-3 thematically appropriate items.
+  // Defeat awards nothing.
+  rewards?: ItemKind[];
 }
 
 export const BATTLES: BattleNode[] = [
@@ -112,6 +120,11 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalGuard("rg4", 126)
     ],
     difficultyLabel: "Grand Engagement",
+    // Spoils: 2 potions from the throne-hall medic kits the squad strips
+    // off the fallen guards before reinforcements arrive. Modest because
+    // narratively the squad is captured immediately after — they don't
+    // get to thoroughly loot the room.
+    rewards: ["potion", "potion"],
     // Capture beat — fires the moment the player drops the last guard
     // (mechanical victory). The squad believes it's over for one
     // breath, then palace reinforcements pour out from behind the
@@ -179,7 +192,12 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSpearton("b3", 203),
       ENEMIES.banditArcher("b4", 204)
     ],
-    difficultyLabel: "Skirmish"
+    difficultyLabel: "Skirmish",
+    // Spoils: 3 potions from the bandit field stash + a Mask the lead
+    // raider was wearing as intimidation. First taste of equipment for
+    // the player — Lucian or Ning gets a permanent +2 MOV they can lean
+    // into for B3.
+    rewards: ["potion", "potion", "potion", "mask"]
   },
   {
     id: "b03_dawn_bandits",
@@ -217,6 +235,10 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("dawn_a2", 305)
     ],
     difficultyLabel: "Skirmish",
+    // Spoils: 2 potions + a Fang Maya finds in the lead raider's belt
+    // pouch. The Fang is a tactician's keepsake — fits her arrival as
+    // the squad's new long-game thinker.
+    rewards: ["potion", "potion", "fang"],
     // No explicit victory — falls back to routEnemies (default).
     dialogues: [
       // Maya joining the squad — first time she and Amar share an
@@ -266,6 +288,11 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSwordsman("amb_sw2", 406)
     ],
     difficultyLabel: "Ambush",
+    // Spoils: 2 elixirs from the bandit medic's satchel. Bigger heals
+    // than potions — the swamp ambush was costly enough that the squad
+    // earns the upgrade. No equipment because the bandits travelled
+    // light on the road.
+    rewards: ["elixir", "elixir"],
     // First battle to use the anyOf combinator. Lore framing: it's an
     // ambush on the road home — the squad doesn't have to wipe the
     // bandits, just survive long enough for the pickets at the keep to
@@ -346,6 +373,11 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("nd_a2", 506)
     ],
     difficultyLabel: "Boss — First Major Threat",
+    // Spoils: 2 potions, an Elixir from the village's dispensary, and
+    // a Mask Ndari was wearing as a war trophy. The Mask is the second
+    // mobility item the squad has — they can equip both on the same
+    // unit for +4 MOV (a knight build) or split for two flexible units.
+    rewards: ["potion", "potion", "elixir", "mask"],
     // Lore-accurate: "Ndari falls at the gate, holding the line so his sister
     // can run." The player can win by routing the squad if they want, but the
     // intended cinematic ending is to drop Ndari and let the mooks scatter —
@@ -391,6 +423,12 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSwordsman("crv_sw2", 608, 5)
     ],
     difficultyLabel: "Ambush",
+    // Spoils: 2 potions, an Elixir from the wagon stores, and a Royal
+    // Lens — the bandit captain's spyglass, which Maya recognizes as
+    // royal-issue gear. First Royal Lens drop ties directly to the
+    // ledger reveal: the squad now has visible proof their attackers
+    // were palace-supplied.
+    rewards: ["potion", "potion", "elixir", "royal_lens"],
     // Defaults to routEnemies. The script-mandated outcomes (wagons
     // intact, civilian drivers safe, ledger found) are narrative and
     // resolve in the post arc regardless of damage taken in-fight.
@@ -468,6 +506,11 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSpearton("mst_sp1", 705, 7)
     ],
     difficultyLabel: "Boss — The Monastery",
+    // Spoils: 2 elixirs from the monastery's still-stocked dispensary
+    // and a Fang — a relic blade-tooth Selene leaves on the altar
+    // before her balcony exit. Narrative tell: she meant for the squad
+    // to find it.
+    rewards: ["elixir", "elixir", "fang"],
     // Defeat Selene to win — the rest can scatter. Mirrors b05's
     // defeatUnit("ndari") pattern; players who want the cleanest run
     // can dive on Selene early, players who want full XP rout the room.
@@ -554,7 +597,12 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSwordsman("orn_sw2", 806, 6),
       ENEMIES.banditSpearton("orn_sp1", 807, 7)
     ],
-    difficultyLabel: "Choice"
+    difficultyLabel: "Choice",
+    // Spoils: Royal-issue gear from the tax detail proper. The Royal
+    // Lens is the spotter's, the Mask is from the captain's kit. The
+    // squad now has TWO royal-issue items — visible material proof
+    // they're fighting the King's own forces, not bandits.
+    rewards: ["royal_lens", "mask", "potion"]
     // Defaults to routEnemies. The Ndara meeting + silver
     // distribution fire in the post arc regardless of damage taken.
   },
@@ -603,7 +651,15 @@ export const BATTLES: BattleNode[] = [
       surviveRounds(5),
       escapeToTile({ x: 6, y: 13 }, { label: "Escape south through the ford" }),
       routEnemies
-    )
+    ),
+    // Spoils: 2 elixirs (Lucian needed them just to walk out of the
+    // ravine), 2 royal lenses stripped from the elite crown archers'
+    // kits, and a Fang Maya retrieves from the lieutenant's body —
+    // turns out to be Dawn-issue, an early hint that not all the
+    // "regiment" was royal. Strong loadout for the final B9 → endgame
+    // gap because the squad's about to be on the run with no
+    // restock for several chapters.
+    rewards: ["elixir", "elixir", "royal_lens", "royal_lens", "fang"]
   },
   {
     id: "b10_leaving_thuling",
