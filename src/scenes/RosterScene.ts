@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { drawPanel } from "../ui/Panel";
 import { sfxClick } from "../audio/Sfx";
 import { PLAYERS } from "../data/units";
+import { BATTLES } from "../data/battles";
 import { createUnit } from "../combat/Unit";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { hasAsset } from "../assets/manifest";
@@ -21,9 +22,7 @@ interface RosterArgs {
 // sequence so the cast appears in chronological-recruit order rather
 // than alphabetical. amar_true (the pre-amnesia coup version) is
 // excluded — it's a B1 narrative alias of amar; in the roster we
-// always show the post-amnesia identity. Selene appears whether she's
-// been seen as an enemy or recruited, since she's an "ally on the run"
-// throughout.
+// always show the post-amnesia identity.
 //
 // Each entry maps a save-record id → the PLAYERS factory key. The
 // factory call gives us name / class / palette / abilities / portrait
@@ -39,6 +38,52 @@ const ROSTER_ORDER: Array<{ recordId: string; factory: () => UnitDef }> = [
   { recordId: "ranatoli",  factory: PLAYERS.ranatoli  },
   { recordId: "selene",    factory: PLAYERS.selene    }
 ];
+
+// Active squad after each battle's completion. Keyed by BattleId; the
+// value is the list of PLAYERS factory ids that should appear in the
+// roster after winning that battle. The roster is computed by finding
+// the highest-indexed completed battle in this table and reading its
+// squad list.
+//
+// Why this exists: B1 ends with the original 8 captured/dead — Amar
+// wakes up alone in the hospital, so the roster MUST collapse to just
+// him until B2 recruits begin. Without this filter the roster would
+// keep showing Ranatoli + Selene + amar_true after B1 (since their
+// CharacterRecords are still in the save) — confusing because those
+// characters aren't actually with Amar anymore at that point in the
+// story. From B2 onward the squad accumulates as new characters join.
+//
+// Selene's B7 reappearance is as an enemy boss (`selene_enemy`), not a
+// player character; she stays out of the roster. Future battles where
+// she's recruited can add her here.
+const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
+  b01_palace_coup:    ["amar"],                                                    // hospital, alone
+  b02_farmland:       ["amar", "lucian", "ning"],                                  // squad starts forming
+  b03_dawn_bandits:   ["amar", "lucian", "ning", "maya"],                          // Maya stays
+  b04_swamp:          ["amar", "lucian", "ning", "maya", "kian"],                  // Kian rejoins
+  b05_mountain_ndari: ["amar", "lucian", "ning", "maya", "kian", "leo"],           // Leo joins
+  b06_caravan:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
+  b07_monastery:      ["amar", "lucian", "ning", "maya", "kian", "leo"],           // Selene escapes (not recruited)
+  b08_orinhal:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
+  b09_ravine:         ["amar", "lucian", "ning", "maya", "kian", "leo"]
+};
+
+// Resolve the player's current active squad based on their save's
+// completedBattles. Walks the BATTLES list backwards (highest index
+// first) and returns the first ACTIVE_ROSTER entry that matches a
+// completed battle. Empty array if no completed battles or no match.
+const getActiveSquadIds = (completedBattles: string[]): string[] => {
+  // Sort completed battle ids by their BATTLES index, descending.
+  const completed = completedBattles
+    .map((id) => BATTLES.find((b) => b.id === id))
+    .filter((b): b is typeof BATTLES[number] => b !== undefined)
+    .sort((a, b) => b.index - a.index);
+  for (const b of completed) {
+    const squad = ACTIVE_ROSTER[b.id];
+    if (squad) return squad;
+  }
+  return [];
+};
 
 // RosterScene — modal overlay launched from OverworldScene's "Roster"
 // button. Lists every player character that has a save record (the player
@@ -89,10 +134,16 @@ export class RosterScene extends Phaser.Scene {
 
     const save = loadSave();
 
-    // Resolve roster: only show characters with a save record. Until a
-    // character has fought a battle they have no progression to show, so
-    // listing them would be a confusing "L1 placeholder" row.
+    // Resolve roster: filter to the CURRENT ACTIVE SQUAD based on the
+    // player's progress. ACTIVE_ROSTER maps "highest completed battle"
+    // → list of character ids actually with Amar at that point in the
+    // story. Without this filter the roster would still show Ranatoli
+    // and Selene after B1 (their CharacterRecords are still in the
+    // save) — but they were captured/lost in the failed coup, so the
+    // post-amnesia squad doesn't include them.
+    const activeSquadIds = getActiveSquadIds(save.completedBattles);
     const roster = ROSTER_ORDER
+      .filter(({ recordId }) => activeSquadIds.includes(recordId))
       .map(({ recordId, factory }) => {
         const rec = getCharacterRecord(save, recordId);
         if (!rec) return null;
@@ -100,11 +151,14 @@ export class RosterScene extends Phaser.Scene {
       })
       .filter((x): x is { rec: CharacterRecord; def: UnitDef; recordId: string } => x !== null);
 
-    // Special case: B1 (Palace Coup) saves a record under "amar_true"
-    // for the pre-amnesia statline. If the player has fought B1 but not
-    // yet B2, "amar" has no record but "amar_true" does — we want to
-    // show ONE Amar entry. Detect this and synthesize a fallback.
-    if (!roster.find((r) => r.recordId === "amar")) {
+    // Special case: B1 saves a record under "amar_true" (pre-amnesia
+    // statline). If the player has fought B1 but not yet B2, "amar" is
+    // in the active squad but has no record yet — synthesize an entry
+    // from "amar_true" so Amar still shows. The post-amnesia identity
+    // is the canonical one going forward; the L10 statline from B1 is
+    // what carries over until B2 starts overwriting it with post-
+    // amnesia progression.
+    if (activeSquadIds.includes("amar") && !roster.find((r) => r.recordId === "amar")) {
       const amarTrueRec = getCharacterRecord(save, "amar_true");
       if (amarTrueRec) {
         roster.unshift({

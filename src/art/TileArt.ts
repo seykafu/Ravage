@@ -201,74 +201,64 @@ const drawObstacle = (px: PixelCanvas, kind: ObstacleKind, rng: Rng): void => {
   }
 };
 
-export const tileTextureKey = (terrain: TerrainKind, obstacle: ObstacleKind, seed: number): string =>
-  `tile-${terrain}-${obstacle}-${seed}`;
+export const tileTextureKey = (terrain: TerrainKind, seed: number): string =>
+  `tile-proc-${terrain}-${seed}`;
 
-// Cache key for the composited (real terrain + real obstacle) variant. We
-// don't include the procedural seed because real PNGs are deterministic.
-const compositeKey = (terrain: TerrainKind, obstacle: ObstacleKind): string =>
-  `tile-real-${terrain}-${obstacle}`;
+const procObstacleKey = (obstacle: ObstacleKind): string =>
+  `obstacle-proc-${obstacle}`;
 
-// Pull the underlying source image for a loaded Phaser texture so we can
-// draw it onto our own canvas. Returns null if the asset isn't loaded.
-const getSource = (scene: Phaser.Scene, key: string): CanvasImageSource | null => {
-  if (!scene.textures.exists(key)) return null;
-  const src = scene.textures.get(key).getSourceImage();
-  return src as CanvasImageSource;
-};
-
+// Returns the texture key for a tile's TERRAIN ONLY. Obstacle compositing
+// was removed: obstacles render as separate sprites on top of the tile via
+// ensureObstacleTexture below. The motivation was that the old composite
+// path downsampled both layers into one 48×48 canvas with imageSmoothing,
+// and the obstacle's soft alpha edges blurred pixels of the underlying
+// painted tile. With separate sprites both layers preserve their native
+// texture filter (LINEAR for painted assets per BootScene), and the
+// obstacle's edges blend with the tile at the GPU level instead of being
+// baked into the tile's bitmap.
 export const ensureTileTexture = (
   scene: Phaser.Scene,
   terrain: TerrainKind,
-  obstacle: ObstacleKind,
   seed: number
 ): string => {
-  // 1) Plain tile, no obstacle: use the real PNG directly if it's loaded.
-  if (obstacle === "none") {
-    const realKey = `tile:${terrain}`;
-    if (scene.textures.exists(realKey)) return realKey;
-  }
-
-  // 2) Tile + obstacle: if BOTH real PNGs are loaded, composite them into a
-  //    single cached canvas. The composite is keyed by (terrain, obstacle) so
-  //    every cell with the same combo shares one texture (no per-seed waste).
-  if (obstacle !== "none") {
-    const composite = compositeKey(terrain, obstacle);
-    if (scene.textures.exists(composite)) return composite;
-
-    const tileSrc = getSource(scene, `tile:${terrain}`);
-    const obstacleSrc = getSource(scene, `obstacle:${obstacle}`);
-    if (tileSrc && obstacleSrc) {
-      const canvas = document.createElement("canvas");
-      canvas.width = TILE_SIZE;
-      canvas.height = TILE_SIZE;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        // Smoothing ON: source PNGs are 600×600 paintings, the canvas is
-        // 48×48. Without smoothing the downscale uses nearest-neighbor
-        // and produces a grainy mosaic. Smoothing on gives a clean
-        // bilinear-ish downsample that preserves the paint detail.
-        // (Was: imageSmoothingEnabled = false — that was right for chunky
-        // pixel-art tiles but wrong for the painted set we ship.)
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(tileSrc, 0, 0, TILE_SIZE, TILE_SIZE);
-        ctx.drawImage(obstacleSrc, 0, 0, TILE_SIZE, TILE_SIZE);
-        scene.textures.addCanvas(composite, canvas);
-        return composite;
-      }
-    }
-  }
-
-  // 3) Fallback: full procedural — base tile palette + procedural obstacle.
-  const key = tileTextureKey(terrain, obstacle, seed);
+  // Prefer the painted PNG. BootScene already applied LINEAR filter to
+  // any texture key starting with "tile:" so the GPU downsamples smoothly.
+  const realKey = `tile:${terrain}`;
+  if (scene.textures.exists(realKey)) return realKey;
+  // Fallback: procedural tile painter. Cached per terrain + seed so cells
+  // sharing the same combo don't allocate a new texture each.
+  const key = tileTextureKey(terrain, seed);
   if (scene.textures.exists(key)) return key;
   const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
   const rng = new Rng(seed * 16777619 ^ terrain.length * 7919);
   drawIsoTile(px, TERRAIN_BASE[terrain], rng);
-  drawObstacle(px, obstacle, rng);
   scene.textures.addCanvas(key, px.canvas);
   return key;
+};
+
+// Returns the texture key for an obstacle sprite to be drawn ON TOP of
+// the terrain tile. Returns null when obstacle is "none". Painted PNG
+// preferred; procedurally drawn obstacles fall back to a transparent
+// canvas with just the obstacle silhouette (rendered with the existing
+// drawObstacle painter).
+//
+// One cached procedural texture per obstacle kind (no per-seed cache —
+// procedural obstacles are deterministic enough that the visual sameness
+// across cells with the same obstacle is fine).
+export const ensureObstacleTexture = (
+  scene: Phaser.Scene,
+  obstacle: ObstacleKind
+): string | null => {
+  if (obstacle === "none") return null;
+  const realKey = `obstacle:${obstacle}`;
+  if (scene.textures.exists(realKey)) return realKey;
+  const procKey = procObstacleKey(obstacle);
+  if (scene.textures.exists(procKey)) return procKey;
+  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
+  const rng = new Rng(obstacle.length * 7919);
+  drawObstacle(px, obstacle, rng);
+  scene.textures.addCanvas(procKey, px.canvas);
+  return procKey;
 };
 
 // A tinted overlay tile — for highlights (move/attack/threat).

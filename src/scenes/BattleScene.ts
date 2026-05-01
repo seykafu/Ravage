@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../util/constants";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import type { BattleId } from "../data/contentIds";
-import { ensureTileTexture } from "../art/TileArt";
+import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
@@ -321,9 +321,21 @@ export class BattleScene extends Phaser.Scene {
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = grid.tileAt({ x, y });
-        const key = ensureTileTexture(this, tile.terrain, tile.obstacle, tileSeed + (x * 73 + y * 131));
         const px = tileToPixel({ x, y }, this.originX, this.originY);
-        this.add.image(px.x, px.y, key).setDisplaySize(TILE_SIZE, TILE_SIZE);
+        // Two-layer rendering: terrain sprite first, obstacle sprite on
+        // top. Earlier the two were composited into a single canvas
+        // texture with imageSmoothing — that path softened the obstacle's
+        // alpha edges into the underlying tile, blurring out the painted
+        // tile detail around obstacles. Splitting into separate sprites
+        // lets each layer keep its native LINEAR-filtered quality and
+        // the alpha blend happens at the GPU level instead of being
+        // baked into the bitmap.
+        const tileKey = ensureTileTexture(this, tile.terrain, tileSeed + (x * 73 + y * 131));
+        this.add.image(px.x, px.y, tileKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+        const obsKey = ensureObstacleTexture(this, tile.obstacle);
+        if (obsKey) {
+          this.add.image(px.x, px.y, obsKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+        }
       }
     }
 
