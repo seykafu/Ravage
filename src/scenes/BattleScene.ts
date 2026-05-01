@@ -286,11 +286,35 @@ export class BattleScene extends Phaser.Scene {
     this.initiative = new Initiative();
     this.initiative.reseed(units);
 
-    // Layout
+    // Layout. The playfield viewport is the screen area NOT occupied by
+    // the side panel (right) or the top bar (top). Maps that fit inside
+    // it are centered; maps bigger than it anchor to the top-left corner
+    // of the viewport and the camera scrolls to reveal the rest.
     const playW = GAME_WIDTH - PANEL_W - 40;
     const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
-    this.originX = 20 + Math.floor((playW - map.width * TILE_SIZE) / 2);
-    this.originY = MAP_TOP_OFFSET + Math.floor((playH - map.height * TILE_SIZE) / 2);
+    const mapPxW = map.width * TILE_SIZE;
+    const mapPxH = map.height * TILE_SIZE;
+    // Math.max(0, ...) keeps the origin from going negative (which would
+    // place the map's top-left off-screen). For oversized maps we anchor
+    // at a small left/top margin and let the camera handle the rest.
+    this.originX = 20 + Math.max(0, Math.floor((playW - mapPxW) / 2));
+    this.originY = MAP_TOP_OFFSET + Math.max(0, Math.floor((playH - mapPxH) / 2));
+
+    // Camera scrolling. Bounds are MAX(viewport, map+margins) so:
+    //   - Maps that fit inside the viewport: bounds == viewport, camera
+    //     can't scroll (no slack), drag/keys are no-ops.
+    //   - Maps bigger than viewport: bounds extend to cover the whole
+    //     map plus margins, camera scrolls within that range.
+    // Right-click drag pans the camera; arrow keys nudge it. UI is pinned
+    // (setScrollFactor(0)) so it stays put when the world moves.
+    const boundsW = Math.max(GAME_WIDTH, this.originX + mapPxW + 40);
+    const boundsH = Math.max(GAME_HEIGHT, this.originY + mapPxH + 40);
+    this.cameras.main.setBounds(0, 0, boundsW, boundsH);
+    // Disable the browser's right-click context menu so right-click drag
+    // doesn't trigger a system menu mid-pan.
+    this.input.mouse?.disableContextMenu();
+    this.setupCameraDragPan();
+    this.setupCameraKeyboardPan();
 
     // Tiles
     const tileSeed = map.id.length * 31 + 7;
@@ -339,6 +363,14 @@ export class BattleScene extends Phaser.Scene {
       playUnitState(this, sprite, u, "idle");
       this.startBreathing(view);
     }
+
+    // Snapshot children count before UI creation. Anything added between
+    // here and the end of create() is UI by definition (the top bar,
+    // side panel, action button block, hover/info tooltips, etc.) and
+    // gets pinned via setScrollFactor(0) so it stays put when the camera
+    // pans. Tile sprites + unit views above stay at the default
+    // scrollFactor of 1 so they move with the world.
+    const uiStartIdx = this.children.list.length;
 
     // Top initiative bar
     const topG = this.add.graphics();
@@ -528,13 +560,36 @@ export class BattleScene extends Phaser.Scene {
 
     this.pushLog(`${node.subtitle} begins.`);
     this.refreshInitiativeBar();
+
+    // Pin every UI element created since the units snapshot above so they
+    // don't move with the camera when the player pans. World objects
+    // (tiles, units, overlays, active marker) created BEFORE the snapshot
+    // stay at default scrollFactor=1 and move with the world. Runtime UI
+    // (action buttons, phase banner, side panel avatar, dropdown) is
+    // pinned individually at its creation site via this.pin(...).
+    for (let i = uiStartIdx; i < this.children.list.length; i++) {
+      const child = this.children.list[i];
+      if (child) this.pin(child);
+    }
+    // Hover damage preview is positioned in WORLD coords (next to the
+    // hovered enemy tile) so its scrollFactor must stay at 1 — without
+    // this the bulk pin above would lock it to a screen position and it
+    // would slide off the enemy when the camera pans.
+    this.hoverPreview.setScrollFactor(1);
+
     this.beginCurrentTurn();
   }
 
   // ---- Helpers ----
+  // Convert a SCREEN-coord pointer position to a TilePos. Adds the camera's
+  // scroll offset so the math gives the correct tile when the camera has
+  // panned — without this, a player who scrolls the map and then clicks
+  // would target a tile based on the un-scrolled origin.
   private screenToTile(px: number, py: number): TilePos | null {
-    const x = Math.floor((px - this.originX) / TILE_SIZE);
-    const y = Math.floor((py - this.originY) / TILE_SIZE);
+    const worldX = px + this.cameras.main.scrollX;
+    const worldY = py + this.cameras.main.scrollY;
+    const x = Math.floor((worldX - this.originX) / TILE_SIZE);
+    const y = Math.floor((worldY - this.originY) / TILE_SIZE);
     if (x < 0 || y < 0 || x >= this.state.grid.width || y >= this.state.grid.height) return null;
     return { x, y };
   }
@@ -733,7 +788,7 @@ export class BattleScene extends Phaser.Scene {
     const panelX = INITIATIVE_BAR_X - panelPad;
     const panelY = INITIATIVE_BAR_Y + INITIATIVE_BOX_H + 8;
 
-    this.initiativeDropdown = this.add.container(panelX, panelY).setDepth(30);
+    this.initiativeDropdown = this.pin(this.add.container(panelX, panelY).setDepth(30));
 
     const bg = this.add.graphics();
     bg.fillStyle(0x05060a, 0.96);
@@ -833,6 +888,85 @@ export class BattleScene extends Phaser.Scene {
     };
     if (isNewPhase) this.showPhaseBanner(u.faction, startTurn);
     else startTurn();
+  }
+
+  // ---- Camera scrolling ----
+  // Pin a UI GameObject to the screen so it doesn't move when the player
+  // pans the camera. Used for everything in the top bar, side panel,
+  // action button block, hover/info tooltips, and phase banners. Tile
+  // sprites, unit sprites, overlays, and damage floaters are left at the
+  // default scrollFactor of 1 so they move with the world.
+  private pin<T extends Phaser.GameObjects.GameObject>(obj: T): T {
+    if ("setScrollFactor" in obj) {
+      (obj as unknown as { setScrollFactor: (x: number, y?: number) => void }).setScrollFactor(0);
+    }
+    return obj;
+  }
+
+  // Right-click drag to pan. The drag origin is captured on pointerdown;
+  // subsequent pointermove events translate the camera by the inverted
+  // pointer delta so the world appears to slide under the cursor.
+  // Phaser's setBounds clamps the scroll automatically — no need to
+  // re-clamp here.
+  private cameraDragState = {
+    active: false,
+    startScrollX: 0,
+    startScrollY: 0,
+    startPointerX: 0,
+    startPointerY: 0
+  };
+  private setupCameraDragPan(): void {
+    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
+      // rightButtonDown is true for both press and hold; we want to
+      // initiate a drag only on the down transition.
+      if (!p.rightButtonDown()) return;
+      this.cameraDragState.active = true;
+      this.cameraDragState.startScrollX = this.cameras.main.scrollX;
+      this.cameraDragState.startScrollY = this.cameras.main.scrollY;
+      this.cameraDragState.startPointerX = p.x;
+      this.cameraDragState.startPointerY = p.y;
+    });
+    this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+      if (!this.cameraDragState.active) return;
+      const dx = p.x - this.cameraDragState.startPointerX;
+      const dy = p.y - this.cameraDragState.startPointerY;
+      this.cameras.main.setScroll(
+        this.cameraDragState.startScrollX - dx,
+        this.cameraDragState.startScrollY - dy
+      );
+    });
+    this.input.on("pointerup", (p: Phaser.Input.Pointer) => {
+      // pointerup fires once per release; using rightButtonReleased to
+      // avoid clearing drag on a left-click release.
+      if (p.rightButtonReleased()) this.cameraDragState.active = false;
+    });
+  }
+
+  // Arrow keys + WASD nudge the camera. Useful for keyboard players and
+  // for fine adjustments that mouse drag overshoots. Step is per-frame,
+  // not per-keypress, so holding produces continuous pan.
+  private setupCameraKeyboardPan(): void {
+    const keys = this.input.keyboard?.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.UP,
+      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+      left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+      right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      w: Phaser.Input.Keyboard.KeyCodes.W,
+      a: Phaser.Input.Keyboard.KeyCodes.A,
+      s: Phaser.Input.Keyboard.KeyCodes.S,
+      d: Phaser.Input.Keyboard.KeyCodes.D
+    }) as { [k: string]: Phaser.Input.Keyboard.Key } | undefined;
+    if (!keys) return;
+    const STEP = 8; // px per frame at 60fps ≈ 480px/s
+    this.events.on("update", () => {
+      const cam = this.cameras.main;
+      let dx = 0, dy = 0;
+      if (keys.left.isDown || keys.a.isDown) dx -= STEP;
+      if (keys.right.isDown || keys.d.isDown) dx += STEP;
+      if (keys.up.isDown || keys.w.isDown) dy -= STEP;
+      if (keys.down.isDown || keys.s.isDown) dy += STEP;
+      if (dx !== 0 || dy !== 0) cam.setScroll(cam.scrollX + dx, cam.scrollY + dy);
+    });
   }
 
   // ---- Mid-battle dialogue triggers ----
@@ -940,6 +1074,7 @@ export class BattleScene extends Phaser.Scene {
     const banner = this.add.container(0, 0, [bg, txt]);
     banner.setDepth(1000);
     banner.setAlpha(0);
+    this.pin(banner); // phase banner is full-screen UI, not world
     this.phaseBanner = banner;
     this.tweens.add({
       targets: banner,
@@ -1062,6 +1197,10 @@ export class BattleScene extends Phaser.Scene {
     ring.lineStyle(1, 0x000000, 0.5);
     ring.strokeCircle(cx, cy, size / 2 + 3);
 
+    // Pin avatar + ring so they stay anchored to the side panel when the
+    // camera pans. (The mask graphics is invisible — no need to pin.)
+    this.pin(img);
+    this.pin(ring);
     this.avatarImg = img;
     this.avatarMaskG = maskG;
     this.avatarRing = ring;
@@ -1275,27 +1414,27 @@ export class BattleScene extends Phaser.Scene {
                       right: { label: string; primary: boolean; enabled: boolean; onClick: () => void } | null): void => {
       const y = top + row * (h + rowGap);
       if (left) {
-        this.actionButtons.push(new Button(this, {
+        this.actionButtons.push(this.pin(new Button(this, {
           x: px, y, w: colW, h,
           label: left.label, primary: left.primary, enabled: left.enabled,
           fontSize: 12, onClick: left.onClick
-        }));
+        })));
       }
       if (right) {
-        this.actionButtons.push(new Button(this, {
+        this.actionButtons.push(this.pin(new Button(this, {
           x: px + colW + colGap, y, w: colW, h,
           label: right.label, primary: right.primary, enabled: right.enabled,
           fontSize: 12, onClick: right.onClick
-        }));
+        })));
       }
       row++;
     };
     const placeFull = (label: string, primary: boolean, enabled: boolean, onClick: () => void): void => {
       const y = top + row * (h + rowGap);
-      this.actionButtons.push(new Button(this, {
+      this.actionButtons.push(this.pin(new Button(this, {
         x: px, y, w: fullW, h,
         label, primary, enabled, fontSize: 13, onClick
-      }));
+      })));
       row++;
     };
 

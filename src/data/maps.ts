@@ -20,41 +20,57 @@ const buildMap = (
 };
 
 // ============== Battle 1 — The Palace Coup ==============
-// 13×9 throne room: carpet aisle, pillars, throne at far end.
+// 18×14 throne hall — significantly expanded from the v1 13×9 to give
+// the climactic opening battle the spatial weight the script asks for
+// ("a grand, almost boss-fight encounter"). The hall is taller than
+// the viewport (14 × 48 = 672px > ~588 visible), so the camera scrolls
+// vertically — players see the squad at the south doors and have to
+// pan up to see Nebu on the throne. Pillars in two staggered ranks
+// + a third rank below break long sight lines into the throne so
+// archers can't snipe across the whole map.
 const _ = t("carpet");
 const S = t("stone");
 const P = t("stone", "pillar");
 const TH = t("carpet", "throne");
 const TO = t("stone", "torch");
 const palaceRows = [
-  [S, S, P, S, S, S, TH, S, S, S, P, S, S],
-  [S, _, _, _, _, _, _, _, _, _, _, _, S],
-  [S, _, _, _, _, _, _, _, _, _, _, _, S],
-  [S, P, _, _, _, _, _, _, _, _, _, P, S],
-  [S, _, _, _, _, _, _, _, _, _, _, _, S],
-  [S, _, _, _, _, _, _, _, _, _, _, _, S],
-  [S, P, _, _, _, _, _, _, _, _, _, P, S],
-  [S, _, _, _, _, _, _, _, _, _, _, _, S],
-  [TO, S, S, S, S, S, S, S, S, S, S, S, TO]
+  [S,  S,  S,  S,  S,  P,  S,  S,  S, TH, S,  S,  S,  P,  S,  S,  S,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  P,  _,  _,  _,  _,  _,  P,  _,  _,  P,  _,  _,  _,  _,  _,  P,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  P,  _,  _,  _,  _,  _,  P,  _,  _,  P,  _,  _,  _,  _,  _,  P,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [S,  P,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  P,  S ],
+  [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
+  [TO, S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  S,  TO]
 ] as const;
 
 export const palaceMap: MapDef = buildMap("palace_coup", "Royal Throne Hall", palaceRows, {
-  // Player enters from south doors.
+  // Player enters from south doors at row 13. Five-unit fan formation
+  // hugs the south wall — Amar center with the originals on either side.
   player: [
-    { x: 5, y: 8 },
-    { x: 6, y: 8 },
-    { x: 7, y: 8 },
-    { x: 4, y: 7 },
-    { x: 8, y: 7 }
+    { x: 8,  y: 12 }, // Amar (center, lead)
+    { x: 9,  y: 12 }, // Ranatoli (right of center)
+    { x: 7,  y: 12 }, // Selene (left of center)
+    { x: 10, y: 12 }, // unseen comrade right
+    { x: 6,  y: 12 }  // unseen comrade left
   ],
+  // Nebu on the throne at (9, 0); Royal Guards flanking him on row 1;
+  // Crown Archers + a second rank of guards on rows 3–4 controlling
+  // the long north-south sight lines.
   enemy: [
-    { x: 6, y: 0 }, // King Nebu on throne
-    { x: 4, y: 1 },
-    { x: 8, y: 1 },
-    { x: 2, y: 3 },
-    { x: 10, y: 3 },
-    { x: 5, y: 4 },
-    { x: 7, y: 4 }
+    { x: 9,  y: 0 },  // King Nebu on the throne
+    { x: 6,  y: 1 },  // Royal Guard flanking left
+    { x: 12, y: 1 },  // Royal Guard flanking right
+    { x: 3,  y: 4 },  // Royal Guard mid-hall west
+    { x: 14, y: 4 },  // Royal Guard mid-hall east
+    { x: 6,  y: 5 },  // Crown Archer firing south
+    { x: 11, y: 5 }   // Crown Archer firing south
   ]
 });
 
@@ -198,7 +214,13 @@ export const swampMap: MapDef = buildMap("swamp", "Marsh Road Ambush", swampRows
 });
 
 // ============== Battle 5 — Mountain Bandits / Ndari ==============
-// 14×10 jagged mountain pass: rocks, trees, snow patches, choke points.
+// 20×13 mountain pass — expanded from the v1 14×10 to give the squad
+// room to flank the elevated parapet where Ndari + the bandit speartons
+// hold the high ground. The map is right at the horizontal limit of the
+// viewport (20 × 48 = 960px = playW) and exceeds vertically (13 × 48 =
+// 624 > ~588 visible), so the camera scrolls vertically. Trees + rocks
+// scattered through rows 7–12 break up the open snow approach into
+// multiple paths.
 const SN = t("snow");
 const SR = t("snow", "rock");
 const ST = t("snow", "tree");
@@ -206,34 +228,43 @@ const SS = t("stone");
 const SE = t("stone");
 
 const mountainRows = [
-  [SR, SN, SN, SN, SS, SS, SS, SS, SS, SS, SN, SN, SN, SR],
-  [SN, SN, SN, SS, SS, SE, SS, SS, SE, SS, SS, SN, SN, SN],
-  [SN, ST, SN, SS, SE, SE, SE, SE, SE, SE, SS, SN, ST, SN],
-  [SN, SN, SN, SS, SE, SE, SE, SE, SE, SE, SS, SN, SN, SN],
-  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
-  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
-  [SN, ST, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, ST, SN],
-  [SN, SN, SR, SN, SN, ST, SN, SN, ST, SN, SN, SR, SN, SN],
-  [SN, SN, SN, SR, SN, SN, SN, SN, SN, SN, SR, SN, SN, SN],
-  [SR, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SR]
+  [SR, SN, SN, SN, SN, SS, SS, SS, SS, SS, SS, SS, SS, SS, SS, SN, SN, SN, SN, SR],
+  [SN, SN, SN, SN, SS, SS, SE, SS, SS, SS, SE, SS, SS, SS, SE, SS, SN, SN, SN, SN],
+  [SN, ST, SN, SS, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SS, SN, ST, SN],
+  [SN, SN, SN, SS, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SE, SS, SN, SN, SN],
+  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
+  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
+  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
+  [SN, ST, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, ST, SN],
+  [SN, SN, SR, SN, SN, ST, SN, SN, ST, SN, SN, ST, SN, SN, SR, SN, SN, SR, SN, SN],
+  [SN, SN, SN, SR, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SR, SN, SR, SN, SN, SN],
+  [SR, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SN, SR],
+  [SN, SN, SR, SN, SN, SN, SN, ST, SN, SN, SN, ST, SN, SN, SN, SN, SR, SN, SN, SN],
+  [SR, SN, SN, SR, SN, SR, SN, SN, SR, SN, SN, SN, SR, SN, SR, SN, SN, SR, SN, SR]
 ] as const;
 
 export const mountainMap: MapDef = buildMap("mountain_pass", "Ravaged Mountain Village", mountainRows, {
+  // Squad spread along the south snow line (row 12) — wide enough to
+  // pick a flanking approach via the gaps in the tree/rock obstacles
+  // in rows 7–11.
   player: [
-    { x: 2, y: 9 },
-    { x: 4, y: 9 },
-    { x: 6, y: 9 },
-    { x: 8, y: 9 },
-    { x: 10, y: 9 }
+    { x: 4,  y: 12 },
+    { x: 7,  y: 12 },
+    { x: 10, y: 12 },
+    { x: 13, y: 12 },
+    { x: 16, y: 12 }
   ],
+  // Ndari + flanking speartons on the stone parapet (row 1); 2 swordsmen
+  // at the parapet edge (row 3); 2 archers in the open mid-pass (row 5)
+  // ranging on the squad's south approach.
   enemy: [
-    { x: 7, y: 1 }, // Ndari on the parapet
-    { x: 5, y: 1 },
-    { x: 9, y: 1 },
-    { x: 4, y: 4 },
-    { x: 10, y: 4 },
-    { x: 6, y: 5 },
-    { x: 8, y: 5 }
+    { x: 10, y: 1 }, // Ndari on the parapet, dead center
+    { x: 7,  y: 1 }, // bandit spearton flanking left
+    { x: 13, y: 1 }, // bandit spearton flanking right
+    { x: 5,  y: 3 }, // bandit swordsman west edge
+    { x: 15, y: 3 }, // bandit swordsman east edge
+    { x: 8,  y: 5 }, // bandit archer mid-pass
+    { x: 12, y: 5 }  // bandit archer mid-pass
   ]
 });
 
@@ -289,49 +320,57 @@ export const caravanMap: MapDef = buildMap("caravan", "Foothill Canyon Road", ca
 });
 
 // ============== Battle 7 — The Ghost from Para (monastery) ==============
-// 12×10 abandoned monastery: outer chapel, narrow corridor, inner
-// sanctum. Pillars (P) define the corridor walls; the player squad
-// enters from the south, Selene holds the inner sanctum at the north
-// where an old altar (T = throne obstacle, used here as the altar
-// stone she stands on) overlooks the room. The corridor at row 5 is
-// the kill-funnel — narrow gaps the squad must push through under
-// archer fire from inside the sanctum.
+// 16×15 abandoned monastery — expanded from the v1 12×10 to give the
+// "climb up to the bell tower" arc the vertical real estate the script
+// describes. Five rooms now stack vertically: vestibule (row 14, squad
+// entry) → outer chapel (rows 9–12) → middle chamber (rows 5–8) →
+// inner sanctum (rows 1–4) → bell tower altar (row 0). Each room is
+// separated by a pillar wall with a single gap that the squad must
+// push through under fire from the next room. The map exceeds the
+// viewport vertically (15 × 48 = 720 > ~588 visible) so the camera
+// scrolls — the player sees Selene at the top only after a few moves
+// of advance.
 const PP = t("stone", "pillar");
 const Th = t("stone", "throne");
 
 const monasteryRows = [
-  [Sn, Sn, PP, Sn, Sn, Sn, Th, Sn, Sn, PP, Sn, Sn], // ← inner sanctum altar (north end, behind Selene)
-  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
-  [Sn, Sn, PP, PP, PP, Sn, Sn, PP, PP, PP, Sn, Sn], // ← inner sanctum wall, gap mid-row
-  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
-  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
-  [Sn, PP, Sn, Sn, PP, Sn, Sn, PP, Sn, Sn, PP, Sn], // ← corridor pillars (kill funnel)
-  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
-  [Sn, Sn, PP, PP, PP, Sn, Sn, PP, PP, PP, Sn, Sn], // ← outer chapel wall
-  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
-  [Sn, Sn, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn]  // ← outer chapel entrance row (squad spawns)
+  [Sn, Sn, PP, Sn, Sn, Sn, Sn, Th, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn], // ← bell tower altar
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, PP, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, PP, PP, Sn, Sn], // ← inner sanctum wall (gap rows 5–10)
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, PP, Sn, Sn, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn, PP, Sn], // ← middle-chamber pillar funnel
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, PP, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, PP, PP, Sn, Sn], // ← middle-chamber north wall
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, PP, Sn, Sn, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn, PP, Sn], // ← outer-chapel pillar funnel
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, PP, PP, Sn, Sn, Sn, Sn, Sn, Sn, PP, PP, PP, Sn, Sn], // ← outer-chapel south wall
+  [Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn],
+  [Sn, Sn, PP, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, PP, Sn, Sn]  // ← vestibule (squad spawns here)
 ] as const;
 
 export const monasteryMap: MapDef = buildMap("monastery", "Abandoned Monastery", monasteryRows, {
-  // Squad breaches from the south, formation centered. Leo at the rear
-  // because his mount can't push through the narrowest corridor gaps
-  // until the pillars are flanked.
+  // Squad breaches from the south at the vestibule. Leo at the rear
+  // because his mount can't push through the narrowest pillar gaps
+  // until the front line clears them.
   player: [
-    { x: 5, y: 8 }, // Amar
-    { x: 6, y: 8 }, // Lucian (per script: stays on Amar's flank)
-    { x: 4, y: 9 }, // Ning (bowline through the corridor)
-    { x: 7, y: 9 }, // Maya
-    { x: 3, y: 9 }  // Leo (rear)
+    { x: 7,  y: 13 }, // Amar
+    { x: 8,  y: 13 }, // Lucian (per script: stays on Amar's flank)
+    { x: 6,  y: 14 }, // Ning (bowline up the central nave)
+    { x: 9,  y: 14 }, // Maya
+    { x: 5,  y: 14 }  // Leo (rear)
   ],
-  // Selene anchored at the inner sanctum (south of the throne so the
-  // throne's defendBonus doesn't shield her). Four raiders posted in
-  // the outer chambers, mixed sword + spear + archer.
+  // Selene at the bell tower (north of the altar's gap). Two archers
+  // perched in the inner sanctum, two swordsmen in the middle chamber,
+  // one spearton anchoring the outer-chapel funnel.
   enemy: [
-    { x: 5, y: 1 }, // Selene — boss
-    { x: 4, y: 1 }, // Raider archer (sanctum)
-    { x: 8, y: 1 }, // Raider archer (sanctum)
-    { x: 3, y: 3 }, // Raider swordsman (outer chamber W)
-    { x: 8, y: 3 }, // Raider swordsman (outer chamber E)
-    { x: 6, y: 5 }  // Raider spearton (corridor blocker)
+    { x: 7,  y: 1 },  // Selene — boss
+    { x: 5,  y: 2 },  // Raider archer (inner sanctum, west)
+    { x: 10, y: 2 },  // Raider archer (inner sanctum, east)
+    { x: 3,  y: 6 },  // Raider swordsman (middle chamber, west)
+    { x: 12, y: 6 },  // Raider swordsman (middle chamber, east)
+    { x: 7,  y: 10 }  // Raider spearton (outer chapel funnel)
   ]
 });
