@@ -90,17 +90,39 @@ export const loadSave = (): SaveState => {
 };
 
 export const writeSave = (s: SaveState): void => {
+  // Stamp every write with a client-side timestamp. fetchSlotPreviews uses
+  // this to decide between a fresh local cache and an in-flight remote
+  // (Supabase push is async and can finish AFTER the user navigates).
+  const stamped: SaveState = { ...s, updatedAt: new Date().toISOString() };
   try {
-    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(s));
-    // Mirror into the per-slot localStorage cache too, so slot previews stay
-    // accurate even if the remote push fails.
-    const slot = getCurrentSlot();
-    if (slot) {
-      localStorage.setItem(slotLocalKey(slot), JSON.stringify(s));
-      void pushSlotRemote(slot, s); // fire-and-forget
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(stamped));
+  } catch (err) {
+    // Surface the failure rather than swallowing it — a quota error here
+    // means the player's progress just vanished and they deserve to know.
+    // eslint-disable-next-line no-console
+    console.error("[save] failed to write active mirror:", err);
+    return;
+  }
+  // Mirror into the per-slot localStorage cache so slot previews stay
+  // accurate even if the remote push fails. Wrapped in its own try/catch
+  // so a slot-cache failure doesn't lose the active mirror write.
+  const slot = getCurrentSlot();
+  if (slot) {
+    try {
+      localStorage.setItem(slotLocalKey(slot), JSON.stringify(stamped));
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`[save] failed to write slot ${slot} cache:`, err);
     }
-  } catch {
-    // ignore
+    void pushSlotRemote(slot, stamped); // fire-and-forget
+  } else if (import.meta.env.DEV) {
+    // Defensive: if there's no active slot at write time, the slot cache
+    // never updates and SaveSlotScene later shows the slot as empty.
+    // Active mirror still has the data — fetchSlotPreviews will rescue
+    // it via the active-mirror fallback below — but log loudly so we
+    // notice if a code path forgot to set the slot.
+    // eslint-disable-next-line no-console
+    console.warn("[save] writeSave: no currentSlot; only the active mirror was updated.");
   }
 };
 
@@ -170,12 +192,36 @@ const writeSlotLocal = (slot: SlotIndex, s: SaveState | null): void => {
   else localStorage.setItem(slotLocalKey(slot), JSON.stringify(s));
 };
 
+// Compare two SaveStates and return the one that should be treated as
+// authoritative. Progress monotonically increases (battles only get added,
+// never removed by gameplay), so the state with more completed battles
+// wins; ties break by updatedAt timestamp; missing data loses.
+const pickFresher = (a: SaveState | null, b: SaveState | null): SaveState | null => {
+  if (!a) return b;
+  if (!b) return a;
+  const ac = a.completedBattles?.length ?? 0;
+  const bc = b.completedBattles?.length ?? 0;
+  if (ac !== bc) return ac > bc ? a : b;
+  const at = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+  const bt = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+  return bt > at ? b : a;
+};
+
 // Fetch all three slot previews. Tries Supabase first, falls back to local
-// per-slot caches.
+// per-slot caches. Critically, NEVER lets a stale Supabase row clobber a
+// fresher local cache (writeSave's remote push is async + fire-and-forget,
+// so a fast-clicking player can land here before the push completes), and
+// uses the active mirror (GAME_STATE_KEY) as a final rescue if the slot
+// cache is somehow missing the latest progress.
 export const fetchSlotPreviews = async (): Promise<SlotPreview[]> => {
   const sb = getSupabase();
   const slots: SlotIndex[] = [1, 2, 3];
 
+  // Resolve the per-slot state by merging remote (if any) with local cache,
+  // then with the active mirror as a last-resort rescue.
+  const resolved: Record<SlotIndex, SaveState | null> = { 1: null, 2: null, 3: null };
+
+  // Phase 1: pull from Supabase if configured + signed in.
   if (sb) {
     const { data: userData } = await sb.auth.getUser();
     const user = userData.user;
@@ -185,41 +231,57 @@ export const fetchSlotPreviews = async (): Promise<SlotPreview[]> => {
         .select("slot, data, updated_at")
         .eq("user_id", user.id);
       if (!error && data) {
-        const byslot = new Map<number, { data: SaveState; updated_at: string }>();
         for (const row of data) {
-          byslot.set(row.slot as number, {
-            data: row.data as SaveState,
-            updated_at: row.updated_at as string
-          });
+          const s = row.slot as SlotIndex;
+          if (s !== 1 && s !== 2 && s !== 3) continue;
+          resolved[s] = { ...(row.data as SaveState), updatedAt: row.updated_at as string };
         }
-        // Refresh local caches with whatever the server has.
-        for (const s of slots) {
-          const remote = byslot.get(s);
-          if (remote) {
-            const merged = { ...remote.data, updatedAt: remote.updated_at };
-            writeSlotLocal(s, merged);
-          }
-        }
-        return slots.map((s) => {
-          const remote = byslot.get(s);
-          if (remote) {
-            return previewFromState(s, { ...remote.data, updatedAt: remote.updated_at });
-          }
-          return previewFromState(s, null);
-        });
       }
     }
   }
 
-  // Offline / no auth: read from local caches only.
-  return slots.map((s) => previewFromState(s, readSlotLocal(s)));
+  // Phase 2: fold in local caches. pickFresher ensures we never downgrade
+  // progress — if the local cache has more completed battles than the
+  // remote (because writeSave's push is still in flight), the local one
+  // wins and we'll repush it on the next write.
+  for (const s of slots) {
+    const local = readSlotLocal(s);
+    resolved[s] = pickFresher(resolved[s], local);
+  }
+
+  // Phase 3: rescue. If CURRENT_SLOT_KEY identifies a slot, the active
+  // mirror at GAME_STATE_KEY is the latest authoritative state for that
+  // slot. Use it if it beats both local + remote (catches the case where
+  // writeSave stamped GAME_STATE_KEY but the slot cache write was dropped
+  // for any reason).
+  const activeSlot = getCurrentSlot();
+  if (activeSlot) {
+    try {
+      const raw = localStorage.getItem(GAME_STATE_KEY);
+      if (raw) {
+        const active = JSON.parse(raw) as SaveState;
+        const fresher = pickFresher(resolved[activeSlot], active);
+        resolved[activeSlot] = fresher;
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Phase 4: persist whatever we resolved back to local cache so the next
+  // session reads the canonical state directly without needing to re-merge.
+  for (const s of slots) {
+    if (resolved[s]) writeSlotLocal(s, resolved[s]);
+  }
+
+  return slots.map((s) => previewFromState(s, resolved[s]));
 };
 
 // Load a specific slot into the active mirror so the rest of the game can
-// read it via loadSave().
+// read it via loadSave(). Merges remote + local cache + active mirror via
+// pickFresher so an in-flight Supabase push never demotes the player's
+// progress, mirroring the defensive logic in fetchSlotPreviews.
 export const activateSlot = async (slot: SlotIndex): Promise<SaveState> => {
   const sb = getSupabase();
-  let state: SaveState | null = null;
+  let remote: SaveState | null = null;
 
   if (sb) {
     const { data: userData } = await sb.auth.getUser();
@@ -232,16 +294,31 @@ export const activateSlot = async (slot: SlotIndex): Promise<SaveState> => {
         .eq("slot", slot)
         .maybeSingle();
       if (!error && data) {
-        state = { ...(data.data as SaveState), updatedAt: data.updated_at as string };
-        writeSlotLocal(slot, state);
+        remote = { ...(data.data as SaveState), updatedAt: data.updated_at as string };
       }
     }
   }
 
-  if (!state) state = readSlotLocal(slot);
+  const local = readSlotLocal(slot);
+  let state = pickFresher(remote, local);
+
+  // If the same slot is currently active, the active mirror may be even
+  // fresher than the slot cache (last write hadn't flushed). Fold it in.
+  const currentActive = getCurrentSlot();
+  if (currentActive === slot) {
+    try {
+      const raw = localStorage.getItem(GAME_STATE_KEY);
+      if (raw) {
+        const active = JSON.parse(raw) as SaveState;
+        state = pickFresher(state, active);
+      }
+    } catch { /* ignore */ }
+  }
+
   if (!state) state = defaultSave();
 
   setCurrentSlot(slot);
+  writeSlotLocal(slot, state);
   localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
   return state;
 };

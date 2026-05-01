@@ -525,29 +525,62 @@ stay fixed across pages of the same beat.
 
 ### 10.1 Save Slot Schema
 
-(Single source of truth: `src/util/save.ts`. Schema bumped on additions.)
+(Single source of truth: `src/util/save.ts`.)
 
 ```ts
-{
-  schemaVersion: 2,                    // bump when shape changes
-  characters: {                        // per-character roster
-    amar: { level, xp, statBonuses: { hp, power, ... }, classKind, abilities, alive, inventory },
-    lucian: { ... },
-    // ...
-  },
-  completedBattles: BattleId[],
-  graveMode: boolean,                  // set at New Game; immutable thereafter
-  difficulty: "normal" | "hard" | "extreme",
-  amarGender: "male" | "female",
-  storyChoices: {                      // discrete branch points
-    orinhal: "kings" | "dawn",         // Battle 8 choice
-    dawn: "refuse" | "side",           // Battle 16 choice
-    // ...
-  }
+interface SaveState {
+  unlockedBattles: BattleId[];          // gating for OverworldScene
+  completedBattles: BattleId[];         // monotonically grows
+  lastBattleResult: { id, outcome } | null;
+  flags: Record<string, boolean | number | string>;
+  characters?: Record<string, CharacterRecord>;  // post-battle progression
+  updatedAt?: string;                   // ISO; stamped by writeSave
+}
+
+interface CharacterRecord {
+  level: number;
+  xp: number;
+  stats: UnitStats;                     // FULL stat block at current level
+  classKind?: ClassKind;                // set after Tier 1 → Tier 2 promotion
+  abilities?: Ability[];
+  spriteClassOverride?: ClassKind;      // for promoted units lacking sprites
 }
 ```
 
-### 10.2 What's NOT in the save slot
+### 10.2 Storage layout
+
+Three keys per slot in `localStorage`, plus an active mirror:
+
+- `ravage:save:v1` — **active mirror**. Read by `loadSave()`, written
+  by `writeSave()`. Always reflects the in-progress session.
+- `ravage:save:v1:slot{1,2,3}` — **per-slot caches**. Mirrored from
+  `writeSave()` so SaveSlotScene can preview every slot without
+  loading them. Source of truth when no Supabase row is fresher.
+- `ravage:current_slot:v1` — which slot the active mirror belongs to.
+- Supabase `saves` table (optional) — remote backup, keyed
+  `(user_id, slot)`. Pushed fire-and-forget from `writeSave`.
+
+### 10.3 Race protection — `pickFresher`
+
+`writeSave`'s remote push is async/fire-and-forget. A fast-clicking
+player can leave the BattleScene, return to Title, and click into
+SaveSlotScene **before** the Supabase push completes. Without
+protection, fetchSlotPreviews would pull the stale remote row and
+overwrite the fresher local cache, demoting the player's progress.
+
+`pickFresher(a, b)` resolves: more `completedBattles` wins; ties
+break by `updatedAt` timestamp. Used in:
+
+- `fetchSlotPreviews` — folds remote → local cache → active mirror
+  (if `currentSlot` matches), then writes the resolved state back
+  to the slot cache.
+- `activateSlot` — same merge, applied at the moment a slot becomes
+  active so the in-game session starts from the freshest known state.
+
+This guarantees **progress can never go backwards** so long as it's
+been written to *any* of remote / slot cache / active mirror.
+
+### 10.4 What's NOT in the save slot
 
 - Per-battle state (HP, AP, position) — not persisted; battles are
   atomic units that complete or restart from the BattlePrep entry.
@@ -630,6 +663,7 @@ when revisiting tradeoffs months later.
 | 2026-05 | thuling_arrival intro beat + obstacle blur fix + RosterScene active-squad filter | Three threads. (1) thuling_arrival now opens with Lucian and Ning introducing themselves to Amar at the forge before the existing hammer-grip beat — addresses a gap where the script implied the meeting but never dramatized it. (2) Tile rendering refactored: terrain and obstacle render as separate sprites instead of being composited into a single canvas with `imageSmoothingQuality: "high"`. The composite path's smoothing was softening the obstacle's alpha edges into the underlying painted tile and blurring it. New `ensureObstacleTexture(scene, obstacle)` returns the obstacle PNG (or a transparent procedural canvas) keyed once per obstacle kind; BattleScene's tile loop draws terrain then optionally an obstacle on top. Both layers preserve their native LINEAR-filter quality and the alpha blend happens at the GPU level instead of being baked into the bitmap. (3) RosterScene filters to the CURRENT ACTIVE SQUAD based on completed battles via a new `ACTIVE_ROSTER` table (B1: just Amar, B2: +Lucian/Ning, B3: +Maya, etc.). Without this filter the post-B1 roster kept showing Ranatoli + Selene + amar_true even though those characters were captured in the failed coup; now post-B1 shows only Amar (synthesized from the amar_true record) and the squad accumulates as the player progresses. |
 | 2026-05 | B1 capture beat + Nebu hold-position + B7 Selene "Sh!!" recognition | Three small narrative tightenings. (1) New `before_victory` BattleDialogue trigger fires after the victory condition resolves to `"player"` but BEFORE the EndScene transition; the dialogue plays out as a paused overlay and the transition resumes when the player advances past the last beat. Wired for B1's capture sequence — squad mechanically wins (royal guard wiped) but reinforcements pour out from behind the second-rank pillars and pounce Amar/Ranatoli/Selene; the four unseen coup members (Khonu, Tev, Yul, Sera) get name-checked here so the player has anchors for the seven-comrades framing. (2) New `holdPositionUntil: { allyCount }` field on UnitDef; AI early-returns "end" until the unit's faction count drops to/below the threshold. King Nebu sits the throne until only one Royal Guard remains, then engages — matches the script's "the King doesn't expect to need to fight" framing. (3) B7's `b07_amar_selene_eyes` reworked: Selene starts to say "Am—", Amar cuts her off with "Sh!!", a silent narrator beat sells the year-old reflex of two coup members covering each other at a glance, then both pivot to public-register lines before Selene drops the "don't follow me past the bell" beat. |
 | 2026-04 | Battle 8 (Orinhal) + Battle 9 (Ravine) authored; chapters 1–9 chain | Two more playable battles + four new arcs (`before_orinhal`, `post_orinhal`, `before_ravine`, `post_ravine`). post_monastery rerouted from `credits` → `before_orinhal`; new end-of-slice gate is post_ravine. b08 is a 14×11 cobblestone town square (squad vs King's tax detail + hired bandits, 5 vs 7); b09 is a 12×14 narrow canyon (squad ambushed mid-ravine, must escape through a south river ford OR rout the elite "regiment in disguise"; victory = `anyOf(surviveRounds(5), escapeToTile, routEnemies)`). post_orinhal fires Leo's promotion (Tier 2 = Dactyl King). post_ravine fires Maya's promotion (Tier 2 = Shinobi Master, the moment she names herself as Dawn's officer) AND Ning's promotion (Tier 2 = Robinhelm, the moment she stops being the bowyer's apprentice afraid of her draw). Three story-gated promotions in two arcs — first time multiple characters promote in adjacent beats. Slice copy bumped from "seven" → "nine" battles in landing page, README, CreditsScene, and EndScene's `isFinalPlayable` gate. |
+| 2026-04 | Save persistence hardening — `pickFresher` race protection | Player reported B1 completion not surviving a Title → SaveSlotScene round-trip. Root cause: `writeSave`'s Supabase push is fire-and-forget, so a fast-clicking player could reach SaveSlotScene before the push completed; `fetchSlotPreviews` then unconditionally overwrote the fresh local cache with the stale remote row, demoting the slot card to "empty." Fix: every `writeSave` now stamps a client-side `updatedAt`, and `fetchSlotPreviews` + `activateSlot` resolve via a new `pickFresher(a, b)` helper that prefers the state with more `completedBattles` (ties → newer timestamp). Also added an active-mirror rescue: if `currentSlot` is set, `GAME_STATE_KEY` is folded in as a third source so a dropped slot-cache write doesn't lose progress. `writeSave` no longer swallows errors silently — quota / serialization failures now `console.error`. DEV-only warning when `writeSave` is called with no `currentSlot`. Net: progress can never go backwards once it's been written to *any* of remote / slot cache / active mirror. |
 
 ---
 
