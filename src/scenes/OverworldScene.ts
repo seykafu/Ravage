@@ -35,14 +35,21 @@ export class OverworldScene extends Phaser.Scene {
       color: "#c9b07a"
     }).setOrigin(0.5);
 
-    // Layout: 3 rows × 7 columns of battle cards (21 total).
+    // Layout: 4 rows × 8 columns of battle cards (32 slots, 30 used).
+    // Bumped from 3 rows × 7 cols (21 total) when the chapter list
+    // expanded to 30. With the prior layout the bottom two rows
+    // overlapped the detail panel at y=510 and — since cards are
+    // created AFTER the panel in this scene — rendered ON TOP of it,
+    // hiding the hover-detail text behind a wall of card backgrounds.
+    // The new geometry keeps the grid above y=470 with a 40px breath
+    // before the detail panel begins.
     const startX = 60;
     const startY = 140;
-    const cardW = 158;
-    const cardH = 100;
+    const cardW = 136;
+    const cardH = 80;
     const gapX = 10;
     const gapY = 12;
-    const cols = 7;
+    const cols = 8;
 
     const save = loadSave();
 
@@ -208,48 +215,50 @@ export class OverworldScene extends Phaser.Scene {
 
       // index badge
       const badgeColor = playable ? "#f4d999" : (scaffolded ? "#6a6a72" : "#3a3a42");
-      const badge = this.add.text(x + 8, y + 6, `#${b.index}`, {
+      const badge = this.add.text(x + 6, y + 4, `#${b.index}`, {
         fontFamily: FAMILY_HEADING,
-        fontSize: "12px",
+        fontSize: "11px",
         color: badgeColor
       });
-      // title
+      // title — compact "Battle N" instead of "First/Second/..." so the
+      // narrow card width doesn't wrap two-word titles into a second line
+      // that would push the subtitle off the bottom of the card.
       const titleColor = playable ? "#dccfa8" : (scaffolded ? "#76747a" : "#46454a");
-      const t1 = this.add.text(x + cardW / 2, y + 26, b.title, {
+      const t1 = this.add.text(x + cardW / 2, y + 18, `Battle ${b.index}`, {
         fontFamily: FAMILY_HEADING,
-        fontSize: "13px",
+        fontSize: "12px",
         color: titleColor
       }).setOrigin(0.5, 0);
       // subtitle: hidden on locked battles to avoid spoilers in the grid view
       const subColor = playable ? "#f8f0d8" : (scaffolded ? "#9a9aa0" : "#46454a");
       const subText = locked ? "— locked —" : b.subtitle;
-      const t2 = this.add.text(x + cardW / 2, y + 46, subText, {
+      const t2 = this.add.text(x + cardW / 2, y + 35, subText, {
         fontFamily: FAMILY_BODY,
-        fontSize: "13px",
+        fontSize: "12px",
         color: subColor,
-        wordWrap: { width: cardW - 16 },
+        wordWrap: { width: cardW - 12 },
         align: "center",
         fontStyle: locked ? "italic" : "normal"
       }).setOrigin(0.5, 0);
       const diffColor = playable ? "#c9b07a" : (scaffolded ? "#5a5a62" : "#3a3a42");
-      const t3 = this.add.text(x + cardW / 2, y + cardH - 22, b.difficultyLabel, {
+      const t3 = this.add.text(x + cardW / 2, y + cardH - 16, b.difficultyLabel, {
         fontFamily: FAMILY_BODY,
-        fontSize: "11px",
+        fontSize: "10px",
         color: diffColor
       }).setOrigin(0.5, 0);
 
       if (completed) {
-        const dot = this.add.text(x + cardW - 18, y + 4, "✓", {
+        const dot = this.add.text(x + cardW - 14, y + 2, "✓", {
           fontFamily: FAMILY_HEADING,
-          fontSize: "18px",
+          fontSize: "14px",
           color: "#a4d36a"
         });
         void dot;
       }
       if (locked) {
-        const lockIcon = this.add.text(x + cardW - 18, y + 4, "🔒", {
+        const lockIcon = this.add.text(x + cardW - 16, y + 2, "🔒", {
           fontFamily: FAMILY_BODY,
-          fontSize: "14px",
+          fontSize: "12px",
           color: "#5a5a62"
         });
         void lockIcon;
