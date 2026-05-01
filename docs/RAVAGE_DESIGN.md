@@ -93,9 +93,70 @@ Tier 2 promotion adds a second ability slot — see §6.3.
 
 ### 3.6 Items
 
-- 5-slot battle inventory per unit. Currently only `potion` exists
-  (`POTION_HEAL = 10`).
-- Use during turn for 1 AP. Item count persists across battles (saved).
+Player-controlled, persistent **squad inventory pool** distributed
+pre-battle to deploying characters. No gold currency — items are the
+resource. The trading post in BattlePrepScene converts between item
+kinds at fixed recipes.
+
+**Item catalog** (`src/combat/items.ts:ITEM_CATALOG`):
+
+| Item | Kind | Effect | Stacks |
+|---|---|---|---|
+| Potion | consumable | Heals 10 HP (1 AP) | — |
+| Elixir | consumable | Heals 25 HP (1 AP) | — |
+| Mask | equipment | +2 MOV while carried | yes |
+| Fang | equipment | +10% crit chance while carried | yes |
+| Royal Lens | equipment | +15% hit chance while carried | yes |
+| Dactyl Food | equipment | +1 AP / -4 ARM while carried (dactyl-class only; inert otherwise) | yes |
+
+**Stacking**: equipment effects stack additively per copy. Five Fangs
+on one character = +50% crit. The 5-slot inventory cap is the only
+limiter — this is intentional. Players who want a glass-cannon crit
+build can over-stack one stat; players who want versatility can
+diversify. Both are valid.
+
+**Consumables vs equipment** distinction: items with `uses > 0` are
+consumables (use action available, item destroyed on use). Items with
+`uses === 0` are equipment (no use action; effect is passive while in
+inventory). `useItem()` rejects equipment so a misroute call doesn't
+silently destroy a Royal Lens.
+
+**Squad pool** (`SaveState.squadInventory`): the persistent shared
+stash. Items consumed in battle are removed permanently; items unused
+return to the pool when the battle resolves. New items enter the pool
+via battle rewards (TODO) or trading post conversion. Pre-battle, the
+player distributes from the pool to each deploying character (max 5
+each). Per-character assignment is staged in
+`SaveState.assignedInventory` so a browser refresh between BattlePrep
+and BattleScene doesn't lose the distribution.
+
+**Trading Post** (`src/data/trades.ts:TRADE_RECIPES`): recipe table
+read by `InventoryScene`. All trades are atomic (every cost-item must
+be present in the pool, then consumed; yields are minted). Unaffordable
+recipes render greyed in the UI.
+
+| Trade | Reasoning |
+|---|---|
+| 3 Potions → 1 Elixir | Compress healing into one inventory slot |
+| 2 Potions → 1 Mask | Mobility cost |
+| 3 Potions → 1 Fang | Crit equipment |
+| 2 Potions → 1 Dactyl Food | Niche, only useful for dactyl-class |
+| 4 Potions → 1 Royal Lens | Universal hit boost — priciest forward trade |
+| 2 Fangs → 1 Royal Lens | Lateral crit-stack → hit-stack upgrade |
+| 2 Masks → 1 Royal Lens | Lateral mobility → hit-stack upgrade |
+| 1 Elixir → 2 Potions | Emergency downgrade if Elixir is overkill |
+
+**Heal action** (in BattleScene): a single "Heal 1AP" button that
+auto-picks the smallest available consumable that covers the missing
+HP — so an Elixir isn't burned to top off 5 HP. Falls back to the
+larger one if needed. Player doesn't pick which item.
+
+**Why no currency**: tonally the game is a coup-survivor squad in
+exile, not a band of mercenaries. Trading items for items is what
+people in this position actually do. Mechanically it forces every
+trade to be a real sacrifice ("I give up two healing potions to get
+this Mask") rather than the abstracted "1 gold = 1 unit of nothing"
+of FE shops.
 
 ### 3.7 Mid-Battle Dialogue Triggers
 
@@ -746,6 +807,8 @@ when revisiting tradeoffs months later.
 | 2026-04 | Battle 8 (Orinhal) + Battle 9 (Ravine) authored; chapters 1–9 chain | Two more playable battles + four new arcs (`before_orinhal`, `post_orinhal`, `before_ravine`, `post_ravine`). post_monastery rerouted from `credits` → `before_orinhal`; new end-of-slice gate is post_ravine. b08 is a 14×11 cobblestone town square (squad vs King's tax detail + hired bandits, 5 vs 7); b09 is a 12×14 narrow canyon (squad ambushed mid-ravine, must escape through a south river ford OR rout the elite "regiment in disguise"; victory = `anyOf(surviveRounds(5), escapeToTile, routEnemies)`). post_orinhal fires Leo's promotion (Tier 2 = Dactyl King). post_ravine fires Maya's promotion (Tier 2 = Shinobi Master, the moment she names herself as Dawn's officer) AND Ning's promotion (Tier 2 = Robinhelm, the moment she stops being the bowyer's apprentice afraid of her draw). Three story-gated promotions in two arcs — first time multiple characters promote in adjacent beats. Slice copy bumped from "seven" → "nine" battles in landing page, README, CreditsScene, and EndScene's `isFinalPlayable` gate. |
 | 2026-04 | Save persistence hardening — `pickFresher` race protection | Player reported B1 completion not surviving a Title → SaveSlotScene round-trip. Root cause: `writeSave`'s Supabase push is fire-and-forget, so a fast-clicking player could reach SaveSlotScene before the push completed; `fetchSlotPreviews` then unconditionally overwrote the fresh local cache with the stale remote row, demoting the slot card to "empty." Fix: every `writeSave` now stamps a client-side `updatedAt`, and `fetchSlotPreviews` + `activateSlot` resolve via a new `pickFresher(a, b)` helper that prefers the state with more `completedBattles` (ties → newer timestamp). Also added an active-mirror rescue: if `currentSlot` is set, `GAME_STATE_KEY` is folded in as a third source so a dropped slot-cache write doesn't lose progress. `writeSave` no longer swallows errors silently — quota / serialization failures now `console.error`. DEV-only warning when `writeSave` is called with no `currentSlot`. Net: progress can never go backwards once it's been written to *any* of remote / slot cache / active mirror. |
 | 2026-05 | Ravage State + Interpose — combat differentiators | The mechanical + narrative signatures that distinguish Ravage from FE. **Ravage State** (§3.10): unit takes ≥50% max HP between turns → next turn they get +50% damage / half armor / +1 MOV with a crimson aura + RAVAGED! announcement. Symmetric (works on enemies too); rewards full-commit takedowns over chip-and-run. New UnitState fields (`damageTakenSinceLastTurn`, `ravagedNextTurn`, `ravagedActive`); promoted at `beginUnitTurn`, cleared at `endUnitTurn`; modifiers in `Damage.ts` + MOV bonus in `Actions.ts`. **Interpose** (§3.11): enemy attack would deal lethal damage to a player unit + adjacent ally available → InterposeScene modal pauses the battle, player picks an interposer (or declines). Damage redirects at full force (no armor recalc — they caught the literal blade), counter is suppressed, Destruct still fires on the interposer if they die. Required splitting `performAttack` into `rollAttackOnly` + `applyAttackOutcome` so the player-defended path can pause between roll and damage. New `interposeCandidates(state, defender, attacker)` finds eligible neighbors. New `InterposeScene` is a paused-overlay modal with portrait + HP cards (HP coloured red/amber/gold by surviveability). |
+| 2026-05 | Inventory overhaul — squad pool + per-character distribution + trading post | Inventory was 1-item (potion), 3-per-character-per-battle, no persistence. Now: 6 item kinds (potion, elixir, mask, fang, royal_lens, dactyl_food) split into consumables (`uses > 0`) and equipment (`uses === 0`, passive bonuses while carried). Squad pool persisted in `SaveState.squadInventory`; per-character pre-battle assignments staged in `SaveState.assignedInventory` (so a refresh between BattlePrep + BattleScene doesn't lose distribution). New `InventoryScene` modal launched from BattlePrepScene: 3-panel layout (squad pool / per-character bags / trading post), click-to-assign / click-to-unassign, atomic trade execution. New `TRADE_RECIPES` in `src/data/trades.ts` with 8 trades — 5 forward (Potion → others), 2 lateral upgrades (Fang/Mask → Royal Lens), 1 emergency downgrade (Elixir → Potions). Equipment effects wire through `equipmentBonuses(unit)` in `src/combat/items.ts`, applied in Damage.ts (crit/hit/armor) + Actions.ts (movement) + Unit.ts (AP). Equipment STACKS — five Fangs = +50% crit, capped only by 5-slot inventory. Heal action auto-picks smallest item that covers missing HP so Elixirs aren't wasted. Items consumed in battle are gone permanently; survivors return to pool via `returnInventoriesToPool` at battle end. No currency — trading IS the economy, tonally fits the exiled-survivor squad framing. |
+| 2026-05 | Chapter expansion 21 → 30 + Seven Paths structure | Per design intent, the slice grows to 30 chapters with the Seven Paths divergence anchored at B18 (after Grude arrival arc). Existing B18-B21 placeholders replaced with the new chain: B18 (Seven Paths divergence), B19 × 7 (path-specific openers — only chosen path's plays), B20-B22 (shared mid-finale), B23-B24 (path-specific climax pair, branched internally), B25-B27 (shared penultimate / Ravage fleet arrives), B28 (path-specific final battle), B29 (shared aftermath), B30 (path-flavoured epilogue). Total 30 chapters; single playthrough sees ~22-24 (skipping unchosen B19 openers + path-overrides). New `SevenPath` type in contentIds.ts (`vengeance` / `restoration` / `revolution` / `duty` / `exile` / `mercy` / `forgetting`). All new chapters scaffolded with `playable: false`; full authoring + path-routing in OverworldScene + B18 path-pick UI deferred to follow-up passes. See §16 for the full structural design. |
 
 ---
 
@@ -761,6 +824,8 @@ when revisiting tradeoffs months later.
 - **Selene / Ranatoli rejoin beats** — when exactly does Ranatoli rejoin? Doc references him at B21 but earlier rejoin would help the squad
 - **Tutorial/tooltips for the progression system** — first level-up should explain what's happening
 - **Save slot UI for Grave mode + difficulty** — currently set in code; needs the New Game flow
+- **Path-routing implementation** — Seven Paths chapter ids exist in the registry (§16), but OverworldScene doesn't yet filter B19+ visibility on `save.flags["seven_paths.choice"]`. B18 also needs the actual path-pick UI (modal listing the seven names with their stance descriptions).
+- **Battle-reward item drops** — pool currently grows only via trading post; no battles award items yet. Each playable battle should grant 1-2 items on victory tied to the chapter (e.g., B5 mountain → Mask, B8 royal-troops → Royal Lens).
 
 ---
 
@@ -775,6 +840,94 @@ when revisiting tradeoffs months later.
 - Save: `src/util/save.ts`
 - Scenes: `src/scenes/BattleScene.ts` (combat), `src/scenes/StoryScene.ts` (dialog),
   `src/scenes/BattlePrepScene.ts` (pre-battle roster), `src/scenes/EndScene.ts` (post-battle)
+
+---
+
+## 16. Seven Paths Campaign Structure
+
+The campaign's structural differentiator from Fire Emblem. The script
+already names seven coup comrades — Khonu, Tev, Yul, Sera + Selene,
+Ranatoli, Amar. Those seven names ARE the seven endings. Each
+represents a stance Amar chooses for the rest of his life; the player's
+choice at B18 sets `save.flags["seven_paths.choice"]` and gates which
+chapters from B19 onward are visible / playable in the OverworldScene.
+
+### 16.1 The seven paths
+
+Encoded as the `SevenPath` type in `src/data/contentIds.ts`:
+
+| Path | Token | Stance | Final framing |
+|---|---|---|---|
+| Selene's | `vengeance` | Kill the King personally | A duel ending |
+| Lucian's | `restoration` | Rebuild Anthros as a free state | A defense-of-the-throne ending |
+| Maya's | `revolution` | Burn down all kingdoms | A scorched-earth victory |
+| Khonu's | `duty` | Return to the army (Dawn's now) | A military officer ending |
+| Tev's | `exile` | Leave it all behind | A personal-survival ending |
+| Yul's | `mercy` | Spare what you can | A non-lethal climax |
+| Sera's | `forgetting` | Let the amnesia win | A "stop fighting" ending |
+
+### 16.2 Chapter chain
+
+| Chapter | Span | Branching |
+|---|---|---|
+| B1-B11 | Anthros coup → Thuling life → escape → cliffs | Linear, no branching |
+| B12-B17 | Grude arrival → Dawn's rebellion → origin reveal → proposal → lie | Linear |
+| **B18** | **Seven Paths divergence** | **Player picks** |
+| B19 | Path-specific opener | 7 distinct chapters; only chosen path's plays |
+| B20-B22 | Shared mid-finale (Dawn's war, Archbold advances, Grude burns) | Same maps, different cutscenes per path |
+| B23-B24 | Path-specific climax pair | Per-path overrides on shared chapter id |
+| B25-B27 | Shared penultimate (Ravage fleet arrives) | Same maps, path-flavoured arcs |
+| B28 | Path-specific final battle | 7 distinct boss encounters under one chapter id |
+| B29 | Shared aftermath | Last shared fight |
+| B30 | Path-flavoured epilogue | Text + portraits, no fight in most paths |
+
+Total **30 chapters**, of which a single playthrough sees ~22-24
+(skipping the 6 unchosen B19 openers + path-overrides on B23/B24/B28
+that branch internally rather than using separate ids).
+
+### 16.3 Authoring strategy — shared maps, branched arcs
+
+The biggest cost in Seven Paths content is authoring; the trick is
+**reusing maps and combat profiles across paths while only swapping
+the surrounding narrative**. B20-B22 and B25-B27 are explicitly
+"shared maps, path-flavoured arcs" — the BattleNode is one entry, the
+arcs that bracket it (`before_*` / `post_*`) get per-path variants
+selected at runtime.
+
+B19 (path opener) and B28 (path final) are the inverse — distinct
+chapters per path with unique maps and units. Authoring budget should
+focus here.
+
+B23/B24 are flexible: maps could be shared with arc variation, OR be
+distinct per path — depends on the specific stakes of each path's
+climax. Decided per-path during full authoring pass.
+
+### 16.4 Path-flagged units / abilities (future)
+
+Some characters' availability shifts by path. Tentative:
+
+- **Selene** rejoins on Vengeance path at B19; available throughout
+- **Lucian** dies at B11 on most paths; survives only on Restoration
+- **Maya** stays through Revolution + Mercy; departs on others
+- **Khonu** rejoins exclusively on Duty path
+- **Ranatoli** rejoins B25+ on Restoration / Duty paths only
+
+This isn't wired yet. Recruitment + departure beats live in story arcs;
+the gating logic plugs into the same `seven_paths.choice` flag.
+
+### 16.5 Why this beats FE's branching
+
+FE has 2-3 endings max (Three Houses being the outlier with 4). Each
+requires a separate save file from a fork point ~40% in. Ravage's
+seven endings come from a single decision point at ~60% in, and they
+share enough mid-content to be authored in roughly one campaign's
+worth of work — but they FEEL like seven different campaigns because
+the framing arcs land hard and the final 4-5 chapters are unique.
+
+The 1280×720 commitment is real: ~22 chapters per playthrough × 7
+paths = 154 chapter-instances, of which only 7×6 + 8 shared = 50
+unique chapters need to be authored. About 2.4× a single-playthrough
+FE campaign for 7× the replay value.
 
 ---
 

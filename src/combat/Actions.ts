@@ -2,6 +2,7 @@ import { Grid } from "./Grid";
 import { previewAttack } from "./Damage";
 import { canTriggerReadyCounter, canTriggerSpeedCounter } from "./Stances";
 import { beginUnitTurn, damageUnit, hasAbility, isAlive } from "./Unit";
+import { equipmentBonuses } from "./items";
 import type { AttackResult, Stance, Tile, TilePos, Unit } from "./types";
 import { RAVAGE_MOVE_BONUS } from "./types";
 import type { Rng } from "../util/rng";
@@ -24,8 +25,12 @@ export const mountBonus = (u: Unit): number => {
 const ravageMoveBonus = (u: Unit): number =>
   u.state.ravagedActive ? RAVAGE_MOVE_BONUS : 0;
 
+// Equipment bonus — sum of every Mask in the unit's inventory (+2 MOV
+// each). Stacks with mount bonus and Ravage. Sourced from items.ts.
+const equipmentMoveBonus = (u: Unit): number => equipmentBonuses(u).movement;
+
 export const effectiveMovement = (u: Unit): number =>
-  u.stats.movement + mountBonus(u) + ravageMoveBonus(u);
+  u.stats.movement + mountBonus(u) + ravageMoveBonus(u) + equipmentMoveBonus(u);
 
 export const unitAt = (state: BattleState, p: TilePos): Unit | null => {
   for (const u of state.units) {

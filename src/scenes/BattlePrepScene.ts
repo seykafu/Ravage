@@ -126,7 +126,7 @@ export class BattlePrepScene extends Phaser.Scene {
       "• Weapon triangle: Sword > Spear > Shield > Sword.",
       "• Triangle advantage = passive 1.5× counter.",
       "• Mounted units (Knight, Dactyl) get +2 move.",
-      "• Items: 5 max per battle; start with 3 Potions.",
+      "• Items: 5 max per character; assign from squad pool.",
       "• Abilities: Boss Fighter, Aide, Destruct, Roam.",
       "• Click a unit to inspect; click active to clear."
     ];
@@ -232,6 +232,25 @@ export class BattlePrepScene extends Phaser.Scene {
       primary: false,
       fontSize: 14,
       onClick: () => this.scene.start("OverworldScene")
+    });
+    // Inventory — opens the squad pool / per-character bag distribution
+    // / trading post modal as a paused overlay. Sits between the map
+    // and march buttons so the player naturally reaches for it after
+    // reading the brief and before committing to battle.
+    new Button(this, {
+      x: GAME_WIDTH - 460, y: GAME_HEIGHT - 56,
+      w: 200, h: 40,
+      label: "📦 Inventory + Trade",
+      primary: false,
+      fontSize: 14,
+      onClick: () => {
+        sfxClick();
+        this.scene.pause();
+        this.scene.run("InventoryScene", {
+          battleId: node.id,
+          resumeKey: this.scene.key
+        });
+      }
     });
     new Button(this, {
       x: GAME_WIDTH - 240, y: GAME_HEIGHT - 56,

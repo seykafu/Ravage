@@ -56,15 +56,44 @@ export type Ability =
 export const MAX_ABILITIES = 2;
 
 // Battle inventory. Capped at MAX_INVENTORY (5) per unit.
-export type ItemKind = "potion";
+//
+// Two kinds of items:
+//   * Consumables — `uses > 0`, spent on activation:
+//       - potion (heal 10), elixir (heal 25)
+//   * Equipment — `uses === 0`, passive while in inventory:
+//       - mask (+2 MOV), fang (+10% crit), royal_lens (+15% hit),
+//         dactyl_food (+1 AP / -4 ARM, dactyl-only)
+//
+// Equipment STACKS — two Masks = +4 MOV. The 5-slot inventory cap is
+// the only limiter. Players can choose to over-stack one stat or
+// diversify; both are valid builds.
+export type ItemKind =
+  | "potion"
+  | "elixir"
+  | "mask"
+  | "fang"
+  | "royal_lens"
+  | "dactyl_food";
 export interface Item {
   id: string;       // unique per-unit instance id
   kind: ItemKind;
   name: string;
-  uses: number;     // remaining uses (potion = 1)
+  // For consumables, remaining uses (always 1 in v1 — single-use). For
+  // equipment, 0 — the item's effect is permanent while it sits in
+  // inventory and there's no "use" action. useItem() rejects items
+  // with uses === 0.
+  uses: number;
 }
 export const MAX_INVENTORY = 5;
 export const POTION_HEAL = 10;
+export const ELIXIR_HEAL = 25;
+// Per-instance bonuses granted by an equipment item in inventory. These
+// stack additively when multiple of the same item type are carried.
+export const MASK_MOV_BONUS = 2;
+export const FANG_CRIT_BONUS = 10;        // +10% crit chance per Fang
+export const ROYAL_LENS_HIT_BONUS = 15;    // +15% hit chance per Royal Lens
+export const DACTYL_FOOD_AP_BONUS = 1;
+export const DACTYL_FOOD_ARMOR_PENALTY = 4;
 
 export interface UnitStats {
   hp: number;

@@ -1,15 +1,15 @@
 import type { Ability, Item, TilePos, Unit, UnitDef, UnitState } from "./types";
-import { MAX_INVENTORY, POTION_HEAL, RAVAGE_THRESHOLD_PCT } from "./types";
+import { ELIXIR_HEAL, MAX_INVENTORY, POTION_HEAL, RAVAGE_THRESHOLD_PCT } from "./types";
+import { equipmentBonuses } from "./items";
 
-const startingInventory = (def: UnitDef): Item[] => {
-  // Players begin every battle with three potions; enemies start empty.
-  if (def.faction !== "player") return [];
-  return [
-    { id: `${def.id}_potion_1`, kind: "potion", name: "Potion", uses: 1 },
-    { id: `${def.id}_potion_2`, kind: "potion", name: "Potion", uses: 1 },
-    { id: `${def.id}_potion_3`, kind: "potion", name: "Potion", uses: 1 }
-  ];
-};
+// Inventory is now a player-controlled, persistent squad pool that the
+// player distributes at BattlePrepScene before the fight. createUnit no
+// longer auto-grants potions — BattleScene's unit-hydration path passes
+// in the player-assigned inventory (or empty for enemies). This keeps
+// item flow honest: items consumed in battle are gone for good, items
+// found are added to the squad pool, and pre-battle distribution
+// becomes a real strategic moment.
+const startingInventory = (_def: UnitDef): Item[] => [];
 
 export const createUnit = (def: UnitDef, position: TilePos): Unit => {
   const state: UnitState = {
@@ -37,7 +37,12 @@ export const beginUnitTurn = (u: Unit): void => {
   // clicks away and back during the player phase) must not refill AP.
   if (u.state.hasStartedTurnThisRound) return;
   u.state.hasStartedTurnThisRound = true;
-  u.state.apRemaining = u.stats.ap;
+  // Equipment AP bonus — Dactyl Food (dactyl-class only) grants +1 AP
+  // per item carried. Folded into the per-turn refill so the bonus
+  // always applies cleanly without the AI / action buttons needing a
+  // separate hook. Non-dactyl carriers see no AP change (gated in
+  // equipmentBonuses).
+  u.state.apRemaining = u.stats.ap + equipmentBonuses(u).apBonus;
   u.state.hasUsedRepositionStep = false;
   u.state.roamUsedThisTurn = false;
   // Stances expire at the start of this unit's next turn.
@@ -90,13 +95,20 @@ export const hasAbility = (u: Unit, a: Ability): boolean =>
   !!u.abilities && u.abilities.includes(a);
 
 // Returns the amount actually healed (0 if the unit was at full HP).
+// Equipment items (uses === 0) are rejected — they're passive and have
+// no on-demand activation; the side panel / action buttons should
+// filter them out before offering a "Use" option, but we double-check
+// here so misroute calls don't silently destroy a Royal Lens.
 export const useItem = (u: Unit, itemId: string): { ok: boolean; healed: number; itemName: string } => {
   const idx = u.state.inventory.findIndex((it) => it.id === itemId);
   if (idx < 0) return { ok: false, healed: 0, itemName: "" };
   const item = u.state.inventory[idx]!;
+  if (item.uses <= 0) return { ok: false, healed: 0, itemName: item.name };
   let healed = 0;
   if (item.kind === "potion") {
     healed = healUnit(u, POTION_HEAL);
+  } else if (item.kind === "elixir") {
+    healed = healUnit(u, ELIXIR_HEAL);
   }
   // Consume the item (single use).
   u.state.inventory.splice(idx, 1);

@@ -54,12 +54,14 @@ import {
 } from "../audio/Sfx";
 import {
   completeBattle,
+  getAssignedInventory,
   getCharacterRecord,
   loadSave,
   setCharacterRecord,
   unlockBattle,
   writeSave
 } from "../util/save";
+import { returnInventoriesToPool } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
 import { playUnitState } from "../assets/unitAnim";
@@ -281,6 +283,14 @@ export class BattleScene extends Phaser.Scene {
           if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
         }
       }
+      // Inventory hydration. createUnit now returns an empty bag —
+      // BattlePrepScene's InventoryScene wrote each character's
+      // assignment to save.assignedInventory before "March to Battle"
+      // was clicked. Read it back here so the unit fights with the
+      // items the player handed them. Characters with no assignment
+      // (e.g., player skipped the inventory screen) deploy empty.
+      const assigned = getAssignedInventory(save, p.id);
+      if (assigned.length > 0) p.state.inventory = assigned;
     }
 
     enemies.forEach((e) => (e.state.facingX = -1));
@@ -1556,6 +1566,15 @@ export class BattleScene extends Phaser.Scene {
       });
     }
     writeSave(save);
+    // Inventory reconciliation. Items consumed in battle (potions used,
+    // elixirs drunk) are simply absent from each player's live
+    // inventory and so don't return to the pool — they're permanently
+    // gone. Equipment and unused consumables ARE still in the bag and
+    // get folded back. Then the per-character assignedInventory map
+    // is wiped so the next battle starts from a clean distribution.
+    // Runs on BOTH victory and defeat (player keeps anything that
+    // didn't get used even if the squad wiped at the end).
+    returnInventoriesToPool(this.state.units);
     // Analytics — capture outcome + duration so we can see pacing issues
     // (e.g., a battle averaging 12+ rounds is probably overlong).
     trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);
@@ -1637,8 +1656,12 @@ export class BattleScene extends Phaser.Scene {
     const hasAP = u.state.apRemaining >= 1;
     const canMove = hasAP && reachableForUnit(this.state, u).length > 0;
     const canAttack = hasAP && targetsForUnit(this.state, u).length > 0;
-    const hasPotion = u.state.inventory.some((it) => it.kind === "potion");
-    const canPotion = hasAP && hasPotion && u.state.hp < u.stats.hp;
+    // Healing is now any consumable in the bag — potion (10) or elixir
+    // (25). The auto-pick logic in useBestHeal picks the smallest item
+    // that covers the missing HP so an Elixir isn't burned to top off
+    // 5 HP. Both contribute to the canHeal gate.
+    const hasHealItem = u.state.inventory.some((it) => it.kind === "potion" || it.kind === "elixir");
+    const canHeal = hasAP && hasHealItem && u.state.hp < u.stats.hp;
     const canRoam = u.state.apRemaining === 0 && hasAbility(u, "Roam") && !u.state.roamUsedThisTurn
       && reachableForUnit(this.state, u).length > 0;
 
@@ -1655,7 +1678,7 @@ export class BattleScene extends Phaser.Scene {
       { label: "Defend  1AP", primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "defensive") }
     );
     placeRow(
-      { label: "Potion  1AP", primary: false, enabled: canPotion, onClick: () => this.useFirstPotion(u) },
+      { label: "Heal  1AP", primary: false, enabled: canHeal, onClick: () => this.useBestHeal(u) },
       canRoam ? { label: "Roam (free)", primary: false, enabled: true, onClick: () => this.enterRoamMode(u) } : null
     );
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
@@ -1670,11 +1693,21 @@ export class BattleScene extends Phaser.Scene {
     else this.endCurrentTurn();
   }
 
-  private useFirstPotion(u: Unit): void {
-    const item = u.state.inventory.find((it) => it.kind === "potion");
-    if (!item) return;
+  // Auto-pick the smallest healing consumable that covers the missing
+  // HP, so an Elixir isn't wasted topping off 5 HP. Falls back to the
+  // bigger one if the smaller one wouldn't be enough OR if the smaller
+  // one isn't in the bag.
+  private useBestHeal(u: Unit): void {
+    const missing = u.stats.hp - u.state.hp;
+    const potion = u.state.inventory.find((it) => it.kind === "potion");
+    const elixir = u.state.inventory.find((it) => it.kind === "elixir");
+    let pick = null as typeof potion | null;
+    if (potion && missing <= 10) pick = potion;          // potion fully covers
+    else if (elixir) pick = elixir;                      // bigger heal needed
+    else if (potion) pick = potion;                      // only potion left
+    if (!pick) return;
     sfxClick();
-    const result = useItem(u, item.id);
+    const result = useItem(u, pick.id);
     if (!result.ok) return;
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} drinks a ${result.itemName} (+${result.healed} HP).`);

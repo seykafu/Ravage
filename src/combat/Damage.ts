@@ -1,6 +1,7 @@
 import type { AttackPreview, Tile, Unit, WeaponKind } from "./types";
 import { RAVAGE_ARMOR_MULT, RAVAGE_POWER_MULT } from "./types";
 import { hasAbility } from "./Unit";
+import { equipmentBonuses } from "./items";
 import { clamp } from "../util/math";
 
 // Weapon triangle: 1.15× favored, 0.85× unfavored, 1.0× neutral.
@@ -66,10 +67,17 @@ export const attackerRavageModifier = (attacker: Unit): number =>
 // Ravage State halves a defender's effective armor while they're in their
 // Ravaged turn — they're committed forward and not blocking well. Combined
 // with the attacker bonus, a Ravaged-vs-Ravaged trade is genuinely lethal.
-export const effectiveArmor = (defender: Unit): number =>
-  defender.state.ravagedActive
-    ? Math.floor(defender.stats.armor * RAVAGE_ARMOR_MULT)
-    : defender.stats.armor;
+// Dactyl Food (an equipment item) imposes an additional flat -4 armor on
+// a dactyl-class carrier — bookkeeping centralized here so any path that
+// reads armor (preview, AI threat scoring) sees the same number.
+export const effectiveArmor = (defender: Unit): number => {
+  const equipPenalty = equipmentBonuses(defender).armorPenalty;
+  let armor = defender.stats.armor - equipPenalty;
+  if (defender.state.ravagedActive) {
+    armor = Math.floor(armor * RAVAGE_ARMOR_MULT);
+  }
+  return Math.max(0, armor);
+};
 
 const baseHitForWeapon = (w: WeaponKind): number => {
   switch (w) {
@@ -104,12 +112,18 @@ export const previewAttack = (
     armor;
   const damage = Math.max(1, Math.round(baseDamage));
 
+  // Equipment bonuses — Royal Lens (+15% hit per copy) and Fang (+10%
+  // crit per copy) stack additively. Read the attacker's inventory once.
+  const eq = equipmentBonuses(attacker);
+
   let hit = baseHitForWeapon(attacker.weapon) + (attacker.stats.speed - defender.stats.speed) * 2;
   hit -= defenderTile.hitPenalty;
+  hit += eq.hitPct;
   const hitRate = clamp(Math.round(hit), 50, 99);
 
   let crit = 10 + (attacker.stats.speed - defender.stats.speed) * 0.5;
   if (isCounter && attacker.state.stance === "ready") crit += 5;
+  crit += eq.critPct;
   const critRate = clamp(Math.round(crit), 0, 60);
 
   return { damage, hitRate, critRate, weaponMod, terrainMod, stanceMod };

@@ -15,7 +15,20 @@
 // Must stay in sync with the entries in src/data/battles.ts. The BattleNode
 // definition uses `Record<BattleId, ...>`-shaped checks so a missing entry
 // fails type-check the moment the union is wider than the data.
+// Seven Paths token. Set on save.flags["seven_paths.choice"] when the
+// player picks at B18; gates which path-specific chapters are visible
+// in the OverworldScene from B19 onward. See docs/RAVAGE_DESIGN.md §6.
+export type SevenPath =
+  | "vengeance"     // Selene's path — kill Archbold personally
+  | "restoration"   // Lucian's path — rebuild Anthros as a free state
+  | "revolution"    // Maya's path — burn down all kingdoms
+  | "duty"          // Khonu's path — return to the army
+  | "exile"         // Tev's path — leave it all behind
+  | "mercy"         // Yul's path — spare what you can
+  | "forgetting";   // Sera's path — let the amnesia win
+
 export type BattleId =
+  // First half — Anthros / Thuling / journey (linear; no path branching).
   | "b01_palace_coup"
   | "b02_farmland"
   | "b03_dawn_bandits"
@@ -27,16 +40,47 @@ export type BattleId =
   | "b09_ravine"
   | "b10_leaving_thuling"
   | "b11_cliffs"
+  // Grude arc — squad arrives in Grude, learns the Ravage truth, meets
+  // Madame Dawn, the proposal lands, the lie comes out.
   | "b12_ravage"
   | "b13_dawn_rebellion"
   | "b14_origin"
   | "b15_inner_coup"
   | "b16_proposal"
   | "b17_lie"
-  | "b18_choosing"
-  | "b19_archbold_or_anthros"
-  | "b20_kingdom"
-  | "b21_final_boss";
+  // B18 = Seven Paths divergence. Player picks Amar's stance; the
+  // remaining campaign branches from here.
+  | "b18_path_chosen"
+  // B19 = path-specific opener. Each path has its own chapter; only the
+  // chosen path's id plays in a given playthrough.
+  | "b19_path_opener_vengeance"
+  | "b19_path_opener_restoration"
+  | "b19_path_opener_revolution"
+  | "b19_path_opener_duty"
+  | "b19_path_opener_exile"
+  | "b19_path_opener_mercy"
+  | "b19_path_opener_forgetting"
+  // B20-B22 = shared mid-finale. All paths play these, but with
+  // path-flavoured cutscenes (dialogue / arcs differ per path while
+  // maps + win conditions stay the same — keeps authoring tractable).
+  | "b20_dawn_war"
+  | "b21_archbold_advances"
+  | "b22_grude_burns"
+  // B23-B24 = path-specific climax pair. Two unique chapters per
+  // chosen path exploring that ending's specific stakes.
+  | "b23_path_climax_a"
+  | "b24_path_climax_b"
+  // B25-B27 = shared penultimate. The Ravage fleet arrives no matter
+  // which path you walked.
+  | "b25_fleet_arrival"
+  | "b26_coastal_hold"
+  | "b27_orbital_descent"
+  // B28 = path-specific final battle (one of seven distinct boss /
+  // climax encounters). B29 shared cleanup. B30 = path-flavoured
+  // epilogue (text + portraits; not a fight in most paths).
+  | "b28_path_final"
+  | "b29_aftermath"
+  | "b30_epilogue";
 
 // ---- Story arcs -----------------------------------------------------------
 // Must stay in sync with the keys of ARCS in src/story/beats.ts. Currently

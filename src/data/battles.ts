@@ -709,39 +709,175 @@ export const BATTLES: BattleNode[] = [
     playable: false,
     difficultyLabel: "Reveal"
   },
+  // ---- B18: Seven Paths divergence point -------------------------------------
+  // The pivotal narrative beat — Amar chooses what kind of person he's
+  // going to be from this point onward. The choice writes
+  // save.flags["seven_paths.choice"] (one of SevenPath); subsequent
+  // battles filter visibility on that flag. See docs/RAVAGE_DESIGN.md §6.
   {
-    id: "b18_choosing",
+    id: "b18_path_chosen",
     index: 18,
     title: "Eighteenth Battle",
-    subtitle: "Choosing Sides",
-    intro: "If you side with Dawn — fight her dissenters. If you refuse her — fight her.",
-    outro: "Either way, sacrifice.",
+    subtitle: "Seven Names, One Choice",
+    intro: "Dawn's lie has come out. Selene's words from the cells return. Lucian is buried under a stone you helped lift. Maya watches you from across the firelight without saying anything. Khonu's old bow leans against the wall. You hold all seven names in your mouth at once. Pick the one you can still answer to. Then pick up your sword.",
+    outro: "The path is chosen. The world reorganizes itself around the choice. Some doors close behind you forever; others open ahead.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
     difficultyLabel: "Pivotal"
   },
+  // ---- B19: Path-specific openers (one per Seven Path) -----------------------
+  // Only the chosen path's chapter is visible / playable. Each opener
+  // establishes the immediate consequences of that choice — who walks
+  // away, who refuses to follow, what door closes first.
   {
-    id: "b19_archbold_or_anthros",
+    id: "b19_path_opener_vengeance",
     index: 19,
     title: "Nineteenth Battle",
-    subtitle: "Path of the Throne",
-    intro: "If you killed Dawn — return to Anthros and finish what your coup began. If you sided with her — march on Archbold.",
-    outro: "The world turns under your feet.",
+    subtitle: "The Hunter's First Step",
+    intro: "Selene's path. You leave Grude in the dark with two riders and a list of names. Archbold's nephew is the first.",
+    outro: "His blood is the first you've spilled in your own name. Selene says nothing for two days afterward, then quietly hands you a second list.",
+    music: MUSIC.danger,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Vengeance · Opener"
+  },
+  {
+    id: "b19_path_opener_restoration",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "The First Stone Laid",
+    intro: "Lucian's path. The squad rides for the Anthros border. There is a village that remembers your father — Khonu's village. They will let you stay if you can hold the road.",
+    outro: "Three families fly an old flag from their doorposts that night. It is not the King's flag. It is not Dawn's flag. It is yours, if you can keep them safe.",
+    music: MUSIC.battleTheme,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_thuling",
+    playable: false,
+    difficultyLabel: "Restoration · Opener"
+  },
+  {
+    id: "b19_path_opener_revolution",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "Burn the Granary",
+    intro: "Maya's path. The royal granary outside Grude feeds half the colony. If you burn it, the city revolts inside a week. Maya has been planning this since before she met you.",
+    outro: "The granary burns. The smoke is visible from the palace balcony. Inside the week, Maya's prediction holds.",
+    music: MUSIC.danger,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Revolution · Opener"
+  },
+  {
+    id: "b19_path_opener_duty",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "Reporting for Service",
+    intro: "Khonu's path. Dawn's army needs officers. You walk into the regimental tent in your father's old colors and accept a captaincy. Your first command is a column too thin to hold the bridge they've assigned it.",
+    outro: "The bridge holds. Your column does not, entirely. You learn the names of three soldiers who will be in your dreams.",
+    music: MUSIC.battleTheme,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Duty · Opener"
+  },
+  {
+    id: "b19_path_opener_exile",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "The Long Road North",
+    intro: "Tev's path. You leave the squad on the Grude road with the horses you came in on and ride for the cold country. Two days out, the assassins find you.",
+    outro: "You bury them where they fell. You ride on. The country gets colder. The names you carried lose syllables, one by one.",
+    music: MUSIC.strongholdMemories,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_cliffs",
+    playable: false,
+    difficultyLabel: "Exile · Opener"
+  },
+  {
+    id: "b19_path_opener_mercy",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "The Open Hand",
+    intro: "Yul's path. There is a fort that has surrendered three times already and been refused. You ride to it under your own banner and offer terms a fourth time.",
+    outro: "They lay down their weapons. Your squad spends the night reorganizing the fort's stores into a hospital. Selene watches from the gate without speaking.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Mercy · Opener"
   },
   {
-    id: "b20_kingdom",
+    id: "b19_path_opener_forgetting",
+    index: 19,
+    title: "Nineteenth Battle",
+    subtitle: "A Fisherman's Cottage",
+    intro: "Sera's path. You ride for the southern coast and stop pretending to be anyone. A cottage. A boat. A name that is not Amar. The squad finds you anyway.",
+    outro: "The squad does not stay. They leave a sword by the door. You spend a long evening looking at it.",
+    music: MUSIC.lifeInGrude,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_thuling",
+    playable: false,
+    difficultyLabel: "Forgetting · Opener"
+  },
+  // ---- B20-B22: Shared mid-finale (path-flavoured cutscenes only) -----------
+  // The world is at war by this point regardless of path; everyone fights
+  // these. The arcs that bracket them shift per chosen path so the same
+  // map plays differently across runs.
+  {
+    id: "b20_dawn_war",
     index: 20,
     title: "Twentieth Battle",
-    subtitle: "The Kingdom Falls",
-    intro: "The last kingdom-scale engagement before the sky changes.",
-    outro: "Anthros, or Grude, kneels.",
+    subtitle: "Dawn's War",
+    intro: "Dawn's rebellion has become a war. The first major clash. You are on a side now whether you wanted to be or not.",
+    outro: "The line moves. The cost is real.",
+    music: MUSIC.danger,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  {
+    id: "b21_archbold_advances",
+    index: 21,
+    title: "Twenty-First Battle",
+    subtitle: "Archbold Advances",
+    intro: "The King has marshalled the inner provinces and ridden west. The country between him and Grude is open road.",
+    outro: "He is closer than yesterday. Closer still tomorrow.",
+    music: MUSIC.danger,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  {
+    id: "b22_grude_burns",
+    index: 22,
+    title: "Twenty-Second Battle",
+    subtitle: "Grude Burns",
+    intro: "The granaries that fed the city are gone. The streets reorganize themselves around fire. Hold the upper district, or the upper district falls with the rest.",
+    outro: "What can be saved is saved. What cannot is named, so the city remembers it.",
+    music: MUSIC.lifeInGrude,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Heart"
+  },
+  // ---- B23-B24: Path-specific climax pair -----------------------------------
+  // These fire as different battles per chosen path; ids stay constant
+  // (b23_path_climax_a / b24_path_climax_b) but the maps + dialogues +
+  // win conditions get path-specific overrides selected at runtime.
+  // Marking them as playable: false here keeps the OverworldScene safe
+  // until the path-routing layer is wired.
+  {
+    id: "b23_path_climax_a",
+    index: 23,
+    title: "Twenty-Third Battle",
+    subtitle: "The Path Narrows",
+    intro: "The world's choices have narrowed to yours. The first of two tests, framed by the path you walked.",
+    outro: "What you did here will be remembered the specific way of your path.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -749,18 +885,101 @@ export const BATTLES: BattleNode[] = [
     difficultyLabel: "Climactic"
   },
   {
-    id: "b21_final_boss",
-    index: 21,
-    title: "Final Battle",
-    subtitle: "The Ravage Fleet",
-    intro:
-      "The off-world fleet arrives in orbit. They have weapons no human has seen. Hold the coast. Trust your mother to hold the inland. Refuse to be a vassal. Refuse to die a colony.",
-    outro: "The fleet is repelled. The cost is severe. You and Dawn meet on the cliffs where Kian fell, and part as neighbors.",
+    id: "b24_path_climax_b",
+    index: 24,
+    title: "Twenty-Fourth Battle",
+    subtitle: "The Bell Before the Sky",
+    intro: "The second test. The one you can't take back.",
+    outro: "The bell rings. The sky changes within the hour.",
+    music: MUSIC.danger,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_grude",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  // ---- B25-B27: Shared penultimate — the Ravage fleet arrives ---------------
+  // The off-world fleet's descent is the same threat across all paths;
+  // each path's perspective on it differs (Vengeance views it as
+  // Archbold's last betrayal, Restoration as a test of the new state,
+  // Revolution as the moment of unity, etc.) but the maps are shared.
+  {
+    id: "b25_fleet_arrival",
+    index: 25,
+    title: "Twenty-Fifth Battle",
+    subtitle: "The Sky Speaks",
+    intro: "The fleet drops out of orbit at sunrise. The sky speaks first — a sound no one alive has heard. Then the landing craft come.",
+    outro: "The first wave is repelled. The second wave is already burning the air on its way down.",
+    music: MUSIC.finalBoss,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_finalBoss",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  {
+    id: "b26_coastal_hold",
+    index: 26,
+    title: "Twenty-Sixth Battle",
+    subtitle: "Hold the Coast",
+    intro: "If the coast falls, the inland falls. If the inland falls, the war ends in a month. Hold the line.",
+    outro: "The coast holds. Barely. The line is rewritten in salt and rust.",
+    music: MUSIC.finalBoss,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_finalBoss",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  {
+    id: "b27_orbital_descent",
+    index: 27,
+    title: "Twenty-Seventh Battle",
+    subtitle: "Orbital Descent",
+    intro: "The Ravage commander descends in person. They want to see what they're killing.",
+    outro: "They have seen it. They are not deterred.",
+    music: MUSIC.finalBoss,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_finalBoss",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  // ---- B28-B30: Path-specific finale + epilogue -----------------------------
+  {
+    id: "b28_path_final",
+    index: 28,
+    title: "Twenty-Eighth Battle",
+    subtitle: "The Path Ends",
+    intro: "The final reckoning, framed by the path you walked. Different opponents per path; same gravity.",
+    outro: "The fight ends in the only way it could, given everything before it.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
     difficultyLabel: "Final Boss"
+  },
+  {
+    id: "b29_aftermath",
+    index: 29,
+    title: "Twenty-Ninth Battle",
+    subtitle: "The Aftermath",
+    intro: "The Ravage fleet is gone. The remaining fight is whatever survived your last decision.",
+    outro: "The war is over for the people who lived through it.",
+    music: MUSIC.lifeInGrude,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_finalBoss",
+    playable: false,
+    difficultyLabel: "Climactic"
+  },
+  {
+    id: "b30_epilogue",
+    index: 30,
+    title: "Final Battle",
+    subtitle: "Seven Names, One Life",
+    intro: "There is no fight here. There is the rest of your life, framed by the name you chose to answer to.",
+    outro: "Of the seven, one. Of the world that was, this. Of you, what's left.",
+    music: MUSIC.finalBoss,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_finalBoss",
+    playable: false,
+    difficultyLabel: "Epilogue"
   }
 ];
 

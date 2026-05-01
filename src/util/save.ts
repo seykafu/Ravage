@@ -1,6 +1,7 @@
 import { GAME_STATE_KEY } from "./constants";
 import { getSupabase } from "../auth/supabase";
-import type { Ability, ClassKind, UnitStats } from "../combat/types";
+import type { Ability, ClassKind, Item, ItemKind, UnitStats } from "../combat/types";
+import { createItem } from "../combat/items";
 
 // Per-character progression record. Persisted across battles. The unit's
 // authored UnitDef supplies the starting baseline; once a character has
@@ -36,17 +37,47 @@ export interface SaveState {
   // landed; missing characters fall back to factory defaults the first
   // time they appear in a battle.
   characters?: Record<string, CharacterRecord>;
+  // Squad-wide inventory pool. Persistent across battles. Items
+  // consumed in battle are removed from the pool permanently; items
+  // unused (still in a deployed character's bag at battle end) return
+  // to the pool. Pre-battle the player distributes from this pool to
+  // each deploying character (max 5 per character). Trades made at
+  // the trading post operate on this pool. Optional for back-compat
+  // with pre-inventory saves; defaultSave seeds a starter pack.
+  squadInventory?: Item[];
+  // Per-character assigned inventory carried forward from BattlePrep.
+  // Cleared back to squadInventory after each battle resolves; this
+  // field exists primarily so a player who closes the browser between
+  // BattlePrep and BattleScene doesn't lose their distribution. Keyed
+  // by UnitDef.id.
+  assignedInventory?: Record<string, Item[]>;
   // Bookkeeping (optional — only set when loaded from a remote slot).
   updatedAt?: string;
 }
 
 export type SlotIndex = 1 | 2 | 3;
 
+// Starter inventory pool for a fresh slot. Tuned so the player has
+// enough to experiment with distribution + the trading post in B1's
+// prep without being immediately resource-starved. 6 potions covers
+// 1-2 per starting character with room left to trade for an Elixir or
+// Mask. Equipment trickles in as battle rewards from B2 onward.
+const starterSquadInventory = (): Item[] => [
+  createItem("potion"),
+  createItem("potion"),
+  createItem("potion"),
+  createItem("potion"),
+  createItem("potion"),
+  createItem("potion")
+];
+
 export const defaultSave = (): SaveState => ({
   unlockedBattles: ["b01_palace_coup"],
   completedBattles: [],
   lastBattleResult: null,
-  flags: {}
+  flags: {},
+  squadInventory: starterSquadInventory(),
+  assignedInventory: {}
 });
 
 // --- Slot bookkeeping ---------------------------------------------------------
@@ -145,6 +176,74 @@ export const completeBattle = (s: SaveState, id: string): SaveState => {
 // defaults and apply the catch-up rule if applicable).
 export const getCharacterRecord = (s: SaveState, id: string): CharacterRecord | undefined =>
   s.characters?.[id];
+
+// ---- Inventory helpers ----------------------------------------------------
+//
+// Pure (return new SaveStates) so callers can compose without worrying
+// about mutating cached references. All callers still need to writeSave
+// the result.
+
+// Read the squad inventory, returning a defensively-copied snapshot. Empty
+// if the field is missing (pre-inventory save).
+export const getSquadInventory = (s: SaveState): Item[] =>
+  s.squadInventory ? [...s.squadInventory] : [];
+
+// Replace the squad inventory wholesale. Used by the trading post + by
+// post-battle reconciliation when items return from deployed bags to
+// the pool.
+export const setSquadInventory = (s: SaveState, items: Item[]): SaveState => ({
+  ...s,
+  squadInventory: [...items]
+});
+
+// Read a character's PRE-BATTLE assigned inventory. Empty if no
+// assignment has been made yet for this character. The
+// BattlePrepScene's inventory panel writes to this field via
+// setAssignedInventory; BattleScene's unit-hydration path reads from
+// it and falls back to [] so a character with no assignment fights
+// empty-handed.
+export const getAssignedInventory = (s: SaveState, characterId: string): Item[] =>
+  s.assignedInventory?.[characterId] ? [...s.assignedInventory[characterId]!] : [];
+
+export const setAssignedInventory = (
+  s: SaveState,
+  characterId: string,
+  items: Item[]
+): SaveState => ({
+  ...s,
+  assignedInventory: {
+    ...(s.assignedInventory ?? {}),
+    [characterId]: [...items]
+  }
+});
+
+// Wipe assigned-inventory after battle resolves. Caller has already
+// gathered survivor inventories back into squadInventory.
+export const clearAssignedInventory = (s: SaveState): SaveState => ({
+  ...s,
+  assignedInventory: {}
+});
+
+// Cumulative count of all assigned items across all characters. Used
+// by the trading post UI to show how many items are committed vs
+// available in the squad pool.
+export const totalAssignedCount = (s: SaveState): number => {
+  const a = s.assignedInventory;
+  if (!a) return 0;
+  let n = 0;
+  for (const id of Object.keys(a)) n += a[id]?.length ?? 0;
+  return n;
+};
+
+// Tally items in the squad pool by ItemKind. Used by the trading post
+// UI to show "you have 5 potions, 1 mask" at-a-glance.
+export const squadInventoryCounts = (s: SaveState): Partial<Record<ItemKind, number>> => {
+  const counts: Partial<Record<ItemKind, number>> = {};
+  for (const it of s.squadInventory ?? []) {
+    counts[it.kind] = (counts[it.kind] ?? 0) + 1;
+  }
+  return counts;
+};
 
 // Write or update a single character's progression record. Pure — returns
 // a new SaveState; caller still has to writeSave() the result.
