@@ -22,6 +22,13 @@ import type { DialogBeat } from "../story/beats";
 //     after a turn ends. Either unit being dead suppresses the trigger.
 //   - "ally_killed_target" (specific ally lands the killing blow on a
 //     specific enemy) — payoff, fires inline in the kill resolution path.
+//   - "before_victory" — fires after the victory condition resolves to
+//     "player" but BEFORE the EndScene transition. The dialogue plays
+//     out while the field is frozen; once the player advances past the
+//     last beat, BattleScene resumes and routes to EndScene normally.
+//     Used for B1's "you killed the guards but reinforcements caught
+//     you" capture beat — mechanical victory, narrative defeat folded
+//     into the same arc.
 //
 // Dedup: each dialogue has an `id` that goes into BattleScene.firedDialogues
 // (a Set per-battle) so re-entering an already-fired trigger is a no-op.
@@ -29,7 +36,8 @@ import type { DialogBeat } from "../story/beats";
 export type BattleDialogueTrigger =
   | { kind: "round_start"; round: number }
   | { kind: "adjacent_eot"; unitA: string; unitB: string }
-  | { kind: "ally_killed_target"; allyId: string; targetId: string };
+  | { kind: "ally_killed_target"; allyId: string; targetId: string }
+  | { kind: "before_victory" };
 
 export interface BattleDialogue {
   // Stable identifier within this battle's dialogues array. Used as the
@@ -96,7 +104,52 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalGuard("rg3", 125),
       ENEMIES.royalGuard("rg4", 126)
     ],
-    difficultyLabel: "Grand Engagement"
+    difficultyLabel: "Grand Engagement",
+    // Capture beat — fires the moment the player drops the last guard
+    // (mechanical victory). The squad believes it's over for one
+    // breath, then palace reinforcements pour out from behind the
+    // pillars on Amar's blind side. EndScene transition is deferred
+    // until the dialogue closes; technically the player still gets a
+    // VICTORY screen because the fight was won, but the post_palace
+    // arc immediately picks up at the hospital with Amar's amnesia,
+    // confirming the squad lost the larger engagement.
+    //
+    // The four named comrades (Khonu, Tev, Yul, Sera) are the unseen
+    // four of the original eight — referenced here once so the player
+    // has names to anchor the "seven comrades scattered through the
+    // back corridors" framing the script alludes to in pre_palace and
+    // post_palace. Their fates are dropped in passing because the
+    // squad won't learn the full story for several chapters.
+    dialogues: [
+      {
+        id: "b01_capture",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The last royal guard goes down hard against the third pillar from the dais. The torches gutter once and steady. For one breath the throne hall is silent and the squad believes it is over." },
+          { speaker: "Selene", portraitId: "selene", expression: "breaking",
+            body: "Amar — the side doors. The SIDE doors, get to —" },
+          { portraitId: "narrator",
+            body: "Three palace guards step out from behind the second-rank pillars at Amar's blind side. He turns half a second too late. A gauntlet closes around his wrist; another finds his throat. His sword goes out of his hand and he doesn't see where it lands." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "Selene — !" },
+          { portraitId: "narrator",
+            body: "Ranatoli is already moving. He covers the ten paces between him and Amar in two strides and drives his shield into the closest guard's ribs. Six more guards step out from the corridors he can't see. They take him down on the carpet without a word." },
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "alarmed",
+            body: "Hold on — Amar — hold on —" },
+          { portraitId: "narrator",
+            body: "Selene gets within striking distance of the closest guard before the loop closes around her. Two of them, then four, then her sword arm pinned against a pillar, then her knee folding the wrong way. She does not cry out. Her eyes find Amar's across the hall and she shakes her head once — don't — don't say anything — don't try." },
+          { portraitId: "narrator",
+            body: "At the south doors: Khonu, who was supposed to hold the threshold, has already been still for several minutes — a crossbow bolt through the lung at the first volley. In the eastern corridor: Yul went down on the stairs, her bow snapped beneath her. In the stables: Tev's mount fell with two arrows in its neck and Tev never made it back to standing. In the kitchens, where she was supposed to come up through the servants' passage with the second wave: Sera. The squad won't know about Sera for a long time." },
+          { speaker: "King Nebu IV", portraitId: "nebu", expression: "cruel_amusement",
+            body: "Eight of you. Ten months of planning. And it ends with a boy on his knees in MY throne hall, and a ledger entry for the carpenter who'll have to replace my pillars. Get this one out of my sight. The other two go to the cells. We'll decide tomorrow which of them I bother to remember the name of." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "(quietly, to no one) ...This was supposed to be the night." },
+          { portraitId: "narrator",
+            body: "A heavy sack closes over Amar's head. The throne hall vanishes." }
+        ]
+      }
+    ]
   },
   {
     id: "b02_farmland",
@@ -424,20 +477,31 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       // The Amar/Selene moment. First time they've stood face-to-face
-      // since the failed coup a year ago. Neither calls the other by
-      // their old role; both pretend not to recognize the other in
-      // public. Selene's "the bell" line is the bell tower — she's
-      // already planning her exit before the fight is over.
+      // since the failed coup a year ago. Selene recognizes Amar
+      // INSTANTLY and starts to say his name; Amar cuts her off
+      // before the squad behind him can hear it. Selene reads the
+      // signal in one breath — the year-old reflex of two coup
+      // members covering each other's identity at a glance comes
+      // back to both of them. Then she falls into the "don't follow
+      // me past the bell" line as the larger fight closes around
+      // them. Selene's "bell" is the bell tower — she's already
+      // planning her exit before the fight is over.
       {
         id: "b07_amar_selene_eyes",
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "selene_enemy" },
         beats: [
-          { speaker: "Selene", portraitId: "selene", expression: "cold_contempt",
-            body: "...You shouldn't be here." },
-          { speaker: "Amar", portraitId: "amar", expression: "shocked",
-            body: "Neither should you. They told us you were dead at the gate." },
           { speaker: "Selene", portraitId: "selene", expression: "breaking",
-            body: "Then we keep telling them. Don't follow me past the bell, Amar. Don't make me cut you here in front of the people you've kept alive this year." }
+            body: "Am—" },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "Sh!!" },
+          { portraitId: "narrator",
+            body: "Selene catches it before the second syllable. Her jaw closes. Her eyes finish the sentence she was going to start: *I thought you were dead.* His finish it back: *They have to keep thinking it.* Neither of them moves for a full second. The squad behind Amar hasn't heard a thing." },
+          { speaker: "Selene", portraitId: "selene", expression: "cold_contempt",
+            body: "(louder, for the room) ...You shouldn't be here, soldier. None of you should." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "(matching her register) Neither should you, raider. Stand down." },
+          { speaker: "Selene", portraitId: "selene", expression: "breaking",
+            body: "(quietly again, only to him) Don't follow me past the bell, Amar. Don't make me cut you here in front of the people you've kept alive this year." }
         ]
       }
     ]

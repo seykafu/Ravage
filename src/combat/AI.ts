@@ -92,6 +92,19 @@ export const planEnemyTurn = (
   state: BattleState,
   unit: Unit
 ): PlannedAction[] => {
+  // 0. Hold-position rule — see UnitDef.holdPositionUntil. Bosses with
+  //    a guard detail (King Nebu in B1) skip their turn entirely until
+  //    their faction is thinned out. Returns a single "end" action so
+  //    executePlan still advances the FSM through this unit's turn.
+  if (unit.holdPositionUntil) {
+    const aliveAllies = state.units.filter(
+      (u) => u.faction === unit.faction && u.id !== unit.id && isAlive(u)
+    );
+    if (aliveAllies.length > unit.holdPositionUntil.allyCount) {
+      return [{ kind: "end", score: 0 }];
+    }
+  }
+
   const plan: PlannedAction[] = [];
   // 1. Try attacks from current position.
   let bestAttack: { target: Unit; score: number } | null = null;

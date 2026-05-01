@@ -124,6 +124,14 @@ export interface UnitDef {
   // E.g., Kian is class "knight" mechanically (gets the +2 mount bonus) but
   // renders as "swordmaster" until knight sprites ship.
   spriteClassOverride?: ClassKind;
+  // AI hold-position rule. When set, this unit's turn ends without action
+  // (skips move + attack) until the count of OTHER alive units in the same
+  // faction drops to `allyCount` or below. Used for kingly bosses who only
+  // join the fight once their guard has been thinned out (e.g., King Nebu
+  // sits on the throne until only one Royal Guard remains, then engages).
+  // Implemented in src/combat/AI.ts:planEnemyTurn — the early-return runs
+  // before any attack/move scoring.
+  holdPositionUntil?: { allyCount: number };
   // Optional tag set used by AI scoring (e.g., "boss" forces the AI to be more aggressive).
   tags?: ReadonlySet<string>;
   // Up to MAX_ABILITIES special abilities granted at unit creation.

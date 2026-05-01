@@ -317,7 +317,13 @@ export const ENEMIES = {
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
     tags: new Set(["boss"]),
-    level
+    level,
+    // Sits on the throne and refuses to engage until only one of his
+    // guards remains alive. Reflects the script's framing of B1: the
+    // King doesn't expect to need to fight — he expects his guard to
+    // repel the assault, and only stirs once the line is nearly broken.
+    // The AI early-returns "end" until the threshold is crossed.
+    holdPositionUntil: { allyCount: 1 }
   }),
   // Selene as antagonist in Battle 7 (the monastery). She's one of Amar's
   // original coup comrades from B1, surfaced here on a King's wanted poster

@@ -1007,7 +1007,24 @@ export class BattleScene extends Phaser.Scene {
       case "ally_killed_target":
         // Fired inline in applyAttackEffects, never via this code path.
         return false;
+      case "before_victory":
+        // Fired explicitly via findBeforeVictoryDialogue() in checkEnd,
+        // never matched via the regular tick.
+        return false;
     }
+  }
+
+  // Look for an unfired before_victory dialogue. Called by checkEnd when
+  // the victory condition flips to "player" — if a match is found, the
+  // EndScene transition is deferred until the dialogue closes.
+  private findBeforeVictoryDialogue(): BattleDialogue | null {
+    const node = battleById(this.battleId);
+    if (!node?.dialogues) return null;
+    for (const dlg of node.dialogues) {
+      if (this.firedDialogues.has(dlg.id)) continue;
+      if (dlg.trigger.kind === "before_victory") return dlg;
+    }
+    return null;
   }
 
   // Mark a dialogue fired and launch BattleDialogueScene as an overlay.
@@ -1387,12 +1404,36 @@ export class BattleScene extends Phaser.Scene {
     // Analytics — capture outcome + duration so we can see pacing issues
     // (e.g., a battle averaging 12+ rounds is probably overlong).
     trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);
+
+    // before_victory dialogue check — fires after the victory condition
+    // resolves to "player" but before the EndScene transition. Used for
+    // B1's capture beat (mechanical victory, narrative defeat). The
+    // dialogue plays out as a paused overlay; on resume we complete the
+    // transition. If no before_victory dialogue is queued, transition
+    // immediately as before.
+    if (v === "player") {
+      const beforeVictory = this.findBeforeVictoryDialogue();
+      if (beforeVictory) {
+        this.events.once(Phaser.Scenes.Events.RESUME, () => {
+          this.transitionToEndScene(v);
+        });
+        this.fireDialogue(beforeVictory);
+        return true;
+      }
+    }
+    this.transitionToEndScene(v);
+    return true;
+  }
+
+  // Extracted from the tail of checkEnd so the EndScene transition can
+  // either fire immediately (no before_victory dialogue) or be deferred
+  // until after a before_victory dialogue closes.
+  private transitionToEndScene(v: "player" | "enemy"): void {
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.scene.start("EndScene", { battleId: this.battleId, outcome: v });
     });
-    return true;
   }
 
   // ---- Action buttons ----
