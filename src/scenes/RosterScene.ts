@@ -171,18 +171,51 @@ export class RosterScene extends Phaser.Scene {
       if (rec.classKind) u.classKind = rec.classKind;
       if (rec.spriteClassOverride) u.spriteClassOverride = rec.spriteClassOverride;
 
-      // Avatar — prefer the portrait PNG if shipped (named characters all
-      // have one); fall back to the procedural unit sprite for any future
-      // character without a portrait.
+      // Avatar — prefer the portrait PNG with a circular cover-fit crop
+      // (preserves source aspect ratio, no stretch). Falls back to the
+      // procedural unit sprite if no portrait shipped.
+      //
+      // Earlier version did `setDisplaySize(72, 72)` which forced any
+      // portrait into a square regardless of source aspect — most of our
+      // portraits are 2:3 paintings, so they squished horribly. The cover-
+      // fit + circular mask treatment matches BattleScene.setSidePanelAvatar:
+      // scale source to OVERFILL the avatar circle, anchor the face center
+      // (~24% down from top of source), then mask to a circle. Faces stay
+      // proportional, no stretch, no awkward chin crops.
       const portraitKey = `portrait:${u.portraitId ?? u.id}`;
       const hasPortrait = hasAsset(portraitKey) && this.textures.exists(portraitKey);
+      const avatarSize = 72;            // diameter of the circular avatar
+      const avatarCx = listLeft + 36;   // center x — same as old layout
+      const avatarCy = rowY + 48;       // center y
       let avatar: Phaser.GameObjects.Image;
       if (hasPortrait) {
-        // Square crop of the portrait, scaled down to fit the row.
-        avatar = this.add.image(listLeft + 36, rowY + 48, portraitKey).setDisplaySize(72, 72);
+        const tex = this.textures.get(portraitKey).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+        const srcW = tex.width || 600;
+        const srcH = tex.height || 600;
+        // Cover-fit: scale so the avatar circle is fully covered, then
+        // pull the image up so the face center lands on the circle's
+        // vertical center. Painted portraits put the eye line at ~22%
+        // and the face midline at ~24% down from the top.
+        const scale = Math.max(avatarSize / srcW, avatarSize / srcH);
+        const displayW = srcW * scale;
+        const displayH = srcH * scale;
+        const headCenterFromTop = displayH * 0.24;
+        avatar = this.add.image(avatarCx, avatarCy - headCenterFromTop, portraitKey)
+          .setOrigin(0.5, 0)
+          .setDisplaySize(displayW, displayH);
+        // Circular mask — drawn into a make.graphics, set as the avatar's
+        // mask, then added INSIDE rowsContainer so it scrolls with the
+        // row (otherwise it would stay at world position while the
+        // avatar scrolls past, exposing the cover-fit overflow).
+        const maskG = this.make.graphics({ x: 0, y: 0 }, false);
+        maskG.fillStyle(0xffffff);
+        maskG.fillCircle(avatarCx, avatarCy, avatarSize / 2);
+        avatar.setMask(maskG.createGeometryMask());
+        rowsContainer.add(maskG);
       } else {
+        // No portrait — show the procedural unit sprite at native aspect.
         const tex = ensureUnitTexture(this, u);
-        avatar = this.add.image(listLeft + 36, rowY + 48, tex).setDisplaySize(56, 70);
+        avatar = this.add.image(avatarCx, avatarCy, tex).setDisplaySize(56, 70);
         if (u.faction === "enemy") avatar.setFlipX(true);
       }
 
@@ -237,6 +270,15 @@ export class RosterScene extends Phaser.Scene {
       sep.strokePath();
 
       rowsContainer.add([avatar, nameTxt, lvTxt, classTxt, statTxt, ablTxt, sep]);
+      // Thin gold ring around the portrait, drawn LAST so it sits on top
+      // of the cover-fit portrait edge. Skipped for sprite-based avatars
+      // (procedural fallback) since they have no edge to clean up.
+      if (hasPortrait) {
+        const ring = this.add.graphics();
+        ring.lineStyle(2, 0xc9b07a, 0.85);
+        ring.strokeCircle(avatarCx, avatarCy, avatarSize / 2);
+        rowsContainer.add(ring);
+      }
       py += rowH;
     }
 
