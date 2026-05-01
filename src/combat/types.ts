@@ -169,7 +169,33 @@ export interface UnitState {
   inventory: Item[];
   // Roam tracks per-turn use: reset at the start of each turn.
   roamUsedThisTurn: boolean;
+  // ---- Ravage State ----
+  // Cumulative damage this unit has taken since their last turn started.
+  // Reset to 0 at beginUnitTurn. When this crosses RAVAGE_THRESHOLD_PCT of
+  // max HP, ravagedNextTurn is set so the unit enters Ravaged on their next
+  // turn. See src/combat/Unit.ts:damageUnit and docs/RAVAGE_DESIGN.md §3.10.
+  damageTakenSinceLastTurn: number;
+  // Set when damageTakenSinceLastTurn crosses the threshold. Promoted to
+  // ravagedActive at the unit's next beginUnitTurn, then cleared. So
+  // damaging a unit AFTER they cross the threshold but before their next
+  // turn doesn't double-apply.
+  ravagedNextTurn: boolean;
+  // True for the duration of a unit's turn when they entered it Ravaged.
+  // Read by Damage.ts (attackerRavageModifier / defenderRavageModifier)
+  // and Actions.ts (effectiveMovement adds +1). Cleared at endUnitTurn.
+  ravagedActive: boolean;
 }
+
+// Damage taken between two consecutive turns of a unit must reach this
+// fraction of their max HP to trigger Ravage state on the next turn.
+// Tuned to 0.5 — half-HP swings happen often enough that the loop fires
+// in most battles but not on every trade. See docs/RAVAGE_DESIGN.md §3.10.
+export const RAVAGE_THRESHOLD_PCT = 0.5;
+// Multipliers applied while ravagedActive is true. +50% outgoing damage,
+// armor halved (so they take ~2× damage), +1 effective MOV.
+export const RAVAGE_POWER_MULT = 1.5;
+export const RAVAGE_ARMOR_MULT = 0.5;
+export const RAVAGE_MOVE_BONUS = 1;
 
 export type Unit = UnitDef & { state: UnitState };
 

@@ -149,6 +149,87 @@ and add the inline check at the right hook point. New trigger kinds
 don't require touching BattleDialogueScene — it just renders the
 `beats[]`.
 
+### 3.10 Ravage State
+
+The game's mechanical signature. **A unit that takes ≥50% of their max
+HP in damage between two of their own turns enters Ravaged on their
+next turn** — a one-turn buff/debuff combo that turns the wounded unit
+into the most dangerous one on the field for one window:
+
+- **+50% outgoing damage** (`RAVAGE_POWER_MULT = 1.5`)
+- **Half armor** (`RAVAGE_ARMOR_MULT = 0.5`) — they take ~2× damage in return
+- **+1 effective MOV** — they press forward instead of retreating
+- **Crimson aura** under the sprite (additive blend, pulsing)
+- **`RAVAGED!` floater + camera shake** at the moment the buff lands
+
+Implementation lives in `src/combat/Unit.ts` (lifecycle), `src/combat/Damage.ts`
+(modifiers), `src/combat/Actions.ts` (MOV bonus), and `src/scenes/BattleScene.ts`
+(VFX + announcement). UnitState carries three new fields:
+
+- `damageTakenSinceLastTurn: number` — reset at `beginUnitTurn`, incremented in `damageUnit`
+- `ravagedNextTurn: boolean` — set when the threshold crosses; promoted at next `beginUnitTurn`
+- `ravagedActive: boolean` — true for the duration of the Ravaged turn; cleared at `endUnitTurn`
+
+**Why the threshold is "since last turn" rather than "this round"**: the
+unit needs the chance to ACT on the rage. If a slow tank takes 50%
+damage before the round even ends and we used round-based reset, they
+might enter Ravaged on a turn where the attackers have already left
+their reach. Per-unit reset means "you got hammered, here's your moment
+to hit back."
+
+**Symmetry**: applies to enemies too. A boss the player half-kills then
+fails to finish becomes genuinely dangerous on their next turn —
+encourages full-commit takedowns over chip-and-run.
+
+### 3.11 Interpose (the narrative signature)
+
+When an enemy attack would deal **lethal damage** to a player unit AND
+at least one OTHER player unit stands adjacent (Manhattan dist 1) to
+the defender, BattleScene pauses and runs `InterposeScene` as a modal
+overlay. The player picks an interposer to take the killing blow, or
+declines ("Let the blow land").
+
+**Mechanics:**
+
+- The full damage of the original swing redirects to the interposer
+  (no recalculation against their armor — narrative is "they caught
+  the literal blade"). Interposer's `damageTakenSinceLastTurn`
+  increments accordingly, so an interposer who survives can themselves
+  enter Ravaged on their next turn.
+- **Counter is suppressed** when interpose triggers. The original
+  defender wasn't hit; the interposer was caught off-position. No
+  retaliation.
+- **Destruct still fires on the interposer** if they had it and died —
+  "they caught the swing meant for Amar AND took the swordsman with
+  them." Mechanically appropriate because the interposer paid the
+  ultimate price.
+- Trigger condition is checked AFTER the attack roll: it requires
+  `roll.hit && roll.damage >= target.state.hp`. A miss or non-lethal
+  hit just resolves normally — no modal, no interruption.
+
+**Implementation:** `performAttack` was split into `rollAttackOnly` +
+`applyAttackOutcome` so BattleScene's player-defended path can pause
+between the roll and the damage application. `interposeCandidates`
+(also in `Actions.ts`) computes the eligible neighbors. `BattleScene.askInterpose`
+wraps the callback-style `InterposeScene` API in a Promise so
+`animateAttack` can await the decision inline.
+
+**UI:** `InterposeScene` shows headline (`INTERPOSE?` in red), subline
+(`{attacker}'s blow will kill {defender} ({damage} dmg).`), and a row
+of candidate cards (portrait + name + HP, with HP coloured red if
+they'd die / amber if cripple / gold if survive comfortably). One
+"Let the blow land" button at the bottom. ESC = decline.
+
+**Why suppress counter:** narratively the original defender's combat
+posture was disrupted by the interposer leaping in front, mechanically
+this gives interpose a real downside (you give up the counter swing in
+exchange for saving the unit). Otherwise interpose would be free.
+
+**Why not also enemy-on-enemy:** out of scope. The mechanic is a
+player-agency moment, not an AI behavior. Future expansion: enemy
+guards could automatically interpose for protected bosses (passive
+ability `Bodyguard`) — same data path, no modal because no decision.
+
 ---
 
 ## 4. Progression System
@@ -664,6 +745,7 @@ when revisiting tradeoffs months later.
 | 2026-05 | B1 capture beat + Nebu hold-position + B7 Selene "Sh!!" recognition | Three small narrative tightenings. (1) New `before_victory` BattleDialogue trigger fires after the victory condition resolves to `"player"` but BEFORE the EndScene transition; the dialogue plays out as a paused overlay and the transition resumes when the player advances past the last beat. Wired for B1's capture sequence — squad mechanically wins (royal guard wiped) but reinforcements pour out from behind the second-rank pillars and pounce Amar/Ranatoli/Selene; the four unseen coup members (Khonu, Tev, Yul, Sera) get name-checked here so the player has anchors for the seven-comrades framing. (2) New `holdPositionUntil: { allyCount }` field on UnitDef; AI early-returns "end" until the unit's faction count drops to/below the threshold. King Nebu sits the throne until only one Royal Guard remains, then engages — matches the script's "the King doesn't expect to need to fight" framing. (3) B7's `b07_amar_selene_eyes` reworked: Selene starts to say "Am—", Amar cuts her off with "Sh!!", a silent narrator beat sells the year-old reflex of two coup members covering each other at a glance, then both pivot to public-register lines before Selene drops the "don't follow me past the bell" beat. |
 | 2026-04 | Battle 8 (Orinhal) + Battle 9 (Ravine) authored; chapters 1–9 chain | Two more playable battles + four new arcs (`before_orinhal`, `post_orinhal`, `before_ravine`, `post_ravine`). post_monastery rerouted from `credits` → `before_orinhal`; new end-of-slice gate is post_ravine. b08 is a 14×11 cobblestone town square (squad vs King's tax detail + hired bandits, 5 vs 7); b09 is a 12×14 narrow canyon (squad ambushed mid-ravine, must escape through a south river ford OR rout the elite "regiment in disguise"; victory = `anyOf(surviveRounds(5), escapeToTile, routEnemies)`). post_orinhal fires Leo's promotion (Tier 2 = Dactyl King). post_ravine fires Maya's promotion (Tier 2 = Shinobi Master, the moment she names herself as Dawn's officer) AND Ning's promotion (Tier 2 = Robinhelm, the moment she stops being the bowyer's apprentice afraid of her draw). Three story-gated promotions in two arcs — first time multiple characters promote in adjacent beats. Slice copy bumped from "seven" → "nine" battles in landing page, README, CreditsScene, and EndScene's `isFinalPlayable` gate. |
 | 2026-04 | Save persistence hardening — `pickFresher` race protection | Player reported B1 completion not surviving a Title → SaveSlotScene round-trip. Root cause: `writeSave`'s Supabase push is fire-and-forget, so a fast-clicking player could reach SaveSlotScene before the push completed; `fetchSlotPreviews` then unconditionally overwrote the fresh local cache with the stale remote row, demoting the slot card to "empty." Fix: every `writeSave` now stamps a client-side `updatedAt`, and `fetchSlotPreviews` + `activateSlot` resolve via a new `pickFresher(a, b)` helper that prefers the state with more `completedBattles` (ties → newer timestamp). Also added an active-mirror rescue: if `currentSlot` is set, `GAME_STATE_KEY` is folded in as a third source so a dropped slot-cache write doesn't lose progress. `writeSave` no longer swallows errors silently — quota / serialization failures now `console.error`. DEV-only warning when `writeSave` is called with no `currentSlot`. Net: progress can never go backwards once it's been written to *any* of remote / slot cache / active mirror. |
+| 2026-05 | Ravage State + Interpose — combat differentiators | The mechanical + narrative signatures that distinguish Ravage from FE. **Ravage State** (§3.10): unit takes ≥50% max HP between turns → next turn they get +50% damage / half armor / +1 MOV with a crimson aura + RAVAGED! announcement. Symmetric (works on enemies too); rewards full-commit takedowns over chip-and-run. New UnitState fields (`damageTakenSinceLastTurn`, `ravagedNextTurn`, `ravagedActive`); promoted at `beginUnitTurn`, cleared at `endUnitTurn`; modifiers in `Damage.ts` + MOV bonus in `Actions.ts`. **Interpose** (§3.11): enemy attack would deal lethal damage to a player unit + adjacent ally available → InterposeScene modal pauses the battle, player picks an interposer (or declines). Damage redirects at full force (no armor recalc — they caught the literal blade), counter is suppressed, Destruct still fires on the interposer if they die. Required splitting `performAttack` into `rollAttackOnly` + `applyAttackOutcome` so the player-defended path can pause between roll and damage. New `interposeCandidates(state, defender, attacker)` finds eligible neighbors. New `InterposeScene` is a paused-overlay modal with portrait + HP cards (HP coloured red/amber/gold by surviveability). |
 
 ---
 

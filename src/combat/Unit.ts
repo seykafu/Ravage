@@ -1,5 +1,5 @@
 import type { Ability, Item, TilePos, Unit, UnitDef, UnitState } from "./types";
-import { MAX_INVENTORY, POTION_HEAL } from "./types";
+import { MAX_INVENTORY, POTION_HEAL, RAVAGE_THRESHOLD_PCT } from "./types";
 
 const startingInventory = (def: UnitDef): Item[] => {
   // Players begin every battle with three potions; enemies start empty.
@@ -24,7 +24,10 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
     facingX: def.faction === "enemy" ? -1 : 1,
     alive: true,
     inventory: startingInventory(def),
-    roamUsedThisTurn: false
+    roamUsedThisTurn: false,
+    damageTakenSinceLastTurn: 0,
+    ravagedNextTurn: false,
+    ravagedActive: false
   };
   return { ...def, state };
 };
@@ -41,11 +44,21 @@ export const beginUnitTurn = (u: Unit): void => {
   if (u.state.stance === "ready" || u.state.stance === "defensive") {
     u.state.stance = "none";
   }
+  // Ravage: promote the "next turn" flag into the active flag for this turn.
+  // Reset the damage counter so the next round of incoming damage measures
+  // from a clean baseline.
+  u.state.ravagedActive = u.state.ravagedNextTurn;
+  u.state.ravagedNextTurn = false;
+  u.state.damageTakenSinceLastTurn = 0;
 };
 
 export const endUnitTurn = (u: Unit): void => {
   u.state.apRemaining = 0;
   u.state.hasActedThisRound = true;
+  // Ravage state is a one-turn buff — the bonus and penalty both end
+  // here. New damage taken between now and this unit's next turn will
+  // accumulate fresh and may re-trigger ravagedNextTurn.
+  u.state.ravagedActive = false;
 };
 
 export const isAlive = (u: Unit): boolean => u.state.alive && u.state.hp > 0;
@@ -55,6 +68,15 @@ export const damageUnit = (u: Unit, amount: number): void => {
   if (u.state.hp <= 0) {
     u.state.hp = 0;
     u.state.alive = false;
+  }
+  // Track damage taken since this unit's last turn started. If the running
+  // total crosses the Ravage threshold AND the unit is still alive, queue
+  // them to enter Ravage state on their next turn. Dead units obviously
+  // don't ravage. The flag is sticky — once set, it stays set even if
+  // more damage piles on; beginUnitTurn promotes it on the next turn.
+  u.state.damageTakenSinceLastTurn += amount;
+  if (u.state.alive && u.state.damageTakenSinceLastTurn >= u.stats.hp * RAVAGE_THRESHOLD_PCT) {
+    u.state.ravagedNextTurn = true;
   }
 };
 

@@ -1,4 +1,5 @@
 import type { AttackPreview, Tile, Unit, WeaponKind } from "./types";
+import { RAVAGE_ARMOR_MULT, RAVAGE_POWER_MULT } from "./types";
 import { hasAbility } from "./Unit";
 import { clamp } from "../util/math";
 
@@ -56,6 +57,20 @@ export const attackerAbilityModifier = (attacker: Unit, defender: Unit): number 
   return 1.0;
 };
 
+// Ravage State multiplies the attacker's effective power for this swing
+// when they entered the turn Ravaged (took ≥ RAVAGE_THRESHOLD_PCT of max
+// HP since their last turn). The "wounded animal hits harder" loop.
+export const attackerRavageModifier = (attacker: Unit): number =>
+  attacker.state.ravagedActive ? RAVAGE_POWER_MULT : 1.0;
+
+// Ravage State halves a defender's effective armor while they're in their
+// Ravaged turn — they're committed forward and not blocking well. Combined
+// with the attacker bonus, a Ravaged-vs-Ravaged trade is genuinely lethal.
+export const effectiveArmor = (defender: Unit): number =>
+  defender.state.ravagedActive
+    ? Math.floor(defender.stats.armor * RAVAGE_ARMOR_MULT)
+    : defender.stats.armor;
+
 const baseHitForWeapon = (w: WeaponKind): number => {
   switch (w) {
     case "sword":
@@ -82,9 +97,11 @@ export const previewAttack = (
   const terrainMod = defenderTile.defendBonus;
   const stanceMod = attackerStanceModifier(attacker, isCounter) * defenderStanceModifier(defender);
   const abilityMod = attackerAbilityModifier(attacker, defender) * defenderAbilityModifier(defender, allUnits);
+  const ravageAtkMod = attackerRavageModifier(attacker);
+  const armor = effectiveArmor(defender);
   const baseDamage =
-    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod -
-    defender.stats.armor;
+    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * ravageAtkMod -
+    armor;
   const damage = Math.max(1, Math.round(baseDamage));
 
   let hit = baseHitForWeapon(attacker.weapon) + (attacker.stats.speed - defender.stats.speed) * 2;

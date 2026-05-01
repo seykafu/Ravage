@@ -3,6 +3,7 @@ import { previewAttack } from "./Damage";
 import { canTriggerReadyCounter, canTriggerSpeedCounter } from "./Stances";
 import { beginUnitTurn, damageUnit, hasAbility, isAlive } from "./Unit";
 import type { AttackResult, Stance, Tile, TilePos, Unit } from "./types";
+import { RAVAGE_MOVE_BONUS } from "./types";
 import type { Rng } from "../util/rng";
 
 export interface BattleState {
@@ -18,7 +19,13 @@ export const mountBonus = (u: Unit): number => {
   return 0;
 };
 
-export const effectiveMovement = (u: Unit): number => u.stats.movement + mountBonus(u);
+// Ravage State adds +1 MOV during the unit's Ravaged turn — wounded
+// units press forward instead of falling back. Stacks with mountBonus.
+const ravageMoveBonus = (u: Unit): number =>
+  u.state.ravagedActive ? RAVAGE_MOVE_BONUS : 0;
+
+export const effectiveMovement = (u: Unit): number =>
+  u.stats.movement + mountBonus(u) + ravageMoveBonus(u);
 
 export const unitAt = (state: BattleState, p: TilePos): Unit | null => {
   for (const u of state.units) {
@@ -60,12 +67,24 @@ export const moveUnit = (state: BattleState, u: Unit, dest: TilePos): boolean =>
   return true;
 };
 
-const rollAttack = (
+// Roll an attack to its outcome (hit/miss/crit/dmg) WITHOUT applying
+// damage. Used by both the sync performAttack and the async player-path
+// in BattleScene that needs to ask the player about Interpose before
+// committing damage. Damage is computed against the named defender's
+// stats — if Interpose redirects the blow, the caller is responsible
+// for re-rolling against the interposer's tile/armor.
+export interface AttackRoll {
+  hit: boolean;
+  crit: boolean;
+  damage: number;
+}
+
+export const rollAttackOnly = (
   state: BattleState,
   attacker: Unit,
   defender: Unit,
   isCounter = false
-): AttackResult => {
+): AttackRoll => {
   const tile = state.grid.tileAt(defender.state.position);
   const preview = previewAttack(attacker, defender, tile, isCounter, state.units);
   const hit = state.rng.rollPercent(preview.hitRate);
@@ -74,18 +93,41 @@ const rollAttack = (
   if (hit) {
     crit = state.rng.rollPercent(preview.critRate);
     dmg = crit ? preview.damage * 2 : preview.damage;
-    damageUnit(defender, dmg);
   }
+  return { hit, crit, damage: dmg };
+};
+
+// Apply a pre-rolled outcome to a (possibly redirected) defender. Returns
+// the AttackResult that the UI consumes. Counter logic is NOT in here —
+// it's still in performAttack so the AI path keeps the full single-call
+// behaviour, and BattleScene runs its own counter step after handling
+// Interpose so the counter targets / sources the right unit.
+export const applyAttackOutcome = (
+  attacker: Unit,
+  defender: Unit,
+  roll: AttackRoll
+): AttackResult => {
+  if (roll.hit) damageUnit(defender, roll.damage);
   return {
-    hit,
-    crit,
-    damage: dmg,
+    hit: roll.hit,
+    crit: roll.crit,
+    damage: roll.damage,
     attackerId: attacker.id,
     defenderId: defender.id,
     defenderRemainingHp: defender.state.hp,
     defenderKilled: !isAlive(defender),
     counterTriggered: false
   };
+};
+
+const rollAttack = (
+  state: BattleState,
+  attacker: Unit,
+  defender: Unit,
+  isCounter = false
+): AttackResult => {
+  const roll = rollAttackOnly(state, attacker, defender, isCounter);
+  return applyAttackOutcome(attacker, defender, roll);
 };
 
 export const performAttack = (state: BattleState, attacker: Unit, defender: Unit): AttackResult => {
@@ -122,6 +164,29 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
     defender.state.stance = "none";
   }
   return result;
+};
+
+// Returns the player-faction units adjacent to `defender` (Manhattan dist
+// 1) that could potentially interpose for a killing blow. Excludes the
+// defender themselves and the attacker (in case the attacker happens to
+// be adjacent, which they will be for melee). Excludes dead units. Used
+// by BattleScene's interpose flow.
+export const interposeCandidates = (
+  state: BattleState,
+  defender: Unit,
+  attacker: Unit
+): Unit[] => {
+  if (defender.faction !== "player") return [];
+  const out: Unit[] = [];
+  for (const u of state.units) {
+    if (u === defender || u === attacker) continue;
+    if (u.faction !== "player") continue;
+    if (!isAlive(u)) continue;
+    const dx = Math.abs(u.state.position.x - defender.state.position.x);
+    const dy = Math.abs(u.state.position.y - defender.state.position.y);
+    if (dx + dy === 1) out.push(u);
+  }
+  return out;
 };
 
 export const enterStance = (u: Unit, stance: Exclude<Stance, "none">): void => {

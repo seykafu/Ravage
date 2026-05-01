@@ -6,7 +6,7 @@ import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
-import { beginUnitTurn, createUnit, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
+import { beginUnitTurn, createUnit, damageUnit, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
 import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
@@ -15,17 +15,21 @@ import { FastForwardButton } from "../ui/FastForwardButton";
 import { battleById, type BattleDialogue, type BattleDialogueTrigger } from "../data/battles";
 import {
   BattleState,
+  applyAttackOutcome,
   effectiveMovement,
   enterStance,
+  interposeCandidates,
   moveUnit,
   performAttack,
   reachableForUnit,
+  rollAttackOnly,
   targetsForUnit,
   unitAt
 } from "../combat/Actions";
 import { routEnemies, type VictoryCondition } from "../combat/Victory";
 import { previewAttack } from "../combat/Damage";
-import { counterZoneTiles } from "../combat/Stances";
+import { canTriggerReadyCounter, canTriggerSpeedCounter, counterZoneTiles } from "../combat/Stances";
+import type { InterposeCandidate } from "./InterposeScene";
 import { executePlan, planEnemyTurn } from "../combat/AI";
 import {
   awardXp,
@@ -79,6 +83,13 @@ interface UnitView {
   // explicit move/lunge tween (which also targets sprite.y) and restarted
   // afterward to avoid two tweens fighting over the same property.
   breathTween?: Phaser.Tweens.Tween;
+  // Crimson glow rendered behind the sprite while the unit is in their
+  // Ravaged turn (UnitState.ravagedActive === true). Created lazily by
+  // refreshRavageAura(); pulses via a yoyo tween, removed when the turn
+  // ends. Sits below the sprite in z-order so the unit silhouettes on
+  // top of the glow rather than being washed out by it.
+  ravageAura?: Phaser.GameObjects.Image;
+  ravageAuraTween?: Phaser.Tweens.Tween;
 }
 
 const PANEL_W = 280;
@@ -617,6 +628,7 @@ export class BattleScene extends Phaser.Scene {
     v.hpBar.clear();
     if (!isAlive(u)) {
       v.stanceIcon.setText("");
+      this.clearRavageAura(v);
       return;
     }
     const barW = 36;
@@ -634,6 +646,110 @@ export class BattleScene extends Phaser.Scene {
     v.stanceIcon.setPosition(px.x, by - 14);
     v.stanceIcon.setText(u.state.stance === "ready" ? "▲" : u.state.stance === "defensive" ? "◆" : "");
     v.stanceIcon.setColor(u.state.stance === "ready" ? "#ffd45a" : "#8ad6ff");
+    // Ravage aura visibility tracks the live UnitState. Cheap reconciliation
+    // — refreshUnitView already runs after every action so the glow appears
+    // / disappears in step with turn boundaries without an explicit hook.
+    this.refreshRavageAura(v, u);
+  }
+
+  // ---- Ravage State VFX -----------------------------------------------------
+  // Lazily build (and tween) a soft red glow under the sprite while a unit
+  // is in their Ravaged turn. Pulses to draw the eye — the player should
+  // immediately notice "this character is Ravaged right now and hits 1.5×."
+  // Texture is built once per scene as a radial-gradient canvas.
+  private ensureRavageAuraTexture(): string {
+    const key = "ravage_aura";
+    if (this.textures.exists(key)) return key;
+    const size = 96;
+    const tex = this.textures.createCanvas(key, size, size);
+    if (!tex) return key;
+    const ctx = tex.getContext();
+    const cx = size / 2;
+    const grad = ctx.createRadialGradient(cx, cx, 4, cx, cx, cx);
+    grad.addColorStop(0, "rgba(255,90,80,0.85)");
+    grad.addColorStop(0.45, "rgba(220,40,30,0.35)");
+    grad.addColorStop(1, "rgba(120,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    tex.refresh();
+    return key;
+  }
+
+  private refreshRavageAura(v: UnitView, u: Unit): void {
+    if (!u.state.ravagedActive || !isAlive(u)) {
+      this.clearRavageAura(v);
+      return;
+    }
+    const px = tileToPixel(u.state.position, this.originX, this.originY);
+    if (!v.ravageAura) {
+      const key = this.ensureRavageAuraTexture();
+      const aura = this.add.image(px.x, px.y + 4, key)
+        .setOrigin(0.5)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(v.sprite.depth - 1);
+      v.ravageAura = aura;
+      v.ravageAuraTween = this.tweens.add({
+        targets: aura,
+        alpha: { from: 0.55, to: 0.95 },
+        scale: { from: 0.95, to: 1.1 },
+        yoyo: true,
+        repeat: -1,
+        duration: 600,
+        ease: "Sine.easeInOut"
+      });
+    } else {
+      v.ravageAura.setPosition(px.x, px.y + 4);
+    }
+  }
+
+  private clearRavageAura(v: UnitView): void {
+    if (v.ravageAuraTween) {
+      v.ravageAuraTween.stop();
+      v.ravageAuraTween = undefined;
+    }
+    if (v.ravageAura) {
+      v.ravageAura.destroy();
+      v.ravageAura = undefined;
+    }
+  }
+
+  // Called from beginCurrentTurn when a unit enters their turn with
+  // ravagedActive freshly promoted. Plays a one-shot "RAVAGED!" floater +
+  // brief camera shake + sound to mark the moment so the player feels the
+  // mechanical shift, then leaves the persistent aura up for the turn.
+  private announceRavaged(unit: Unit): void {
+    const view = this.unitViews.get(unit.id);
+    if (!view) return;
+    sfxCrit(); // reuse the heavy hit sting — same emotional register
+    this.cameras.main.shake(220, 0.014);
+    const floater = this.add.text(
+      view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 12, "RAVAGED!",
+      {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "20px",
+        color: "#ff7a5a",
+        stroke: "#1a0404",
+        strokeThickness: 5,
+        shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true }
+      }
+    ).setOrigin(0.5, 1).setDepth(45).setScale(0.4);
+    this.tweens.add({
+      targets: floater,
+      scale: { from: 0.4, to: 1.2 },
+      duration: 220,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: floater,
+          y: floater.y - 18,
+          alpha: 0,
+          duration: 1200,
+          ease: "Sine.easeOut",
+          onComplete: () => floater.destroy()
+        });
+      }
+    });
+    this.pushLog(`${unit.name} is RAVAGED — +50% damage, half armor, +1 MOV this turn.`);
   }
 
   private refreshAllUnits(): void {
@@ -860,6 +976,12 @@ export class BattleScene extends Phaser.Scene {
     const isNewPhase = !this.lastActorFaction || this.lastActorFaction !== u.faction;
     this.lastActorFaction = u.faction;
     beginUnitTurn(u);
+    // beginUnitTurn just promoted ravagedNextTurn → ravagedActive (if it
+    // was set). Surface that with a one-shot RAVAGED! floater + camera
+    // shake so the player sees the moment the buff lands. Persistent
+    // crimson aura is rendered by refreshUnitView() below and lives until
+    // endUnitTurn flips ravagedActive back off.
+    if (u.state.ravagedActive) this.announceRavaged(u);
     this.inspectedUnitId = null;
     this.inspectTag.setText("");
     this.activeUnitText.setText(u.name);
@@ -1995,13 +2117,40 @@ export class BattleScene extends Phaser.Scene {
   private applyAttackEffects(
     attacker: Unit,
     defender: Unit,
-    result: { hit: boolean; crit: boolean; damage: number; defenderKilled: boolean }
+    result: { hit: boolean; crit: boolean; damage: number; defenderKilled: boolean },
+    opts?: { interposedFrom?: Unit }
   ): void {
     const tv = this.unitViews.get(defender.id);
     const av = this.unitViews.get(attacker.id);
     if (!tv || !av) return;
     const tx = tv.sprite.x;
     const ty = tv.sprite.y;
+    // Interpose VFX: a sparse golden "INTERPOSED!" floater rises off the
+    // ORIGINAL target (the one who was saved) so the player sees the
+    // redirect register on the unit they protected. The big red damage
+    // number lands on the actual interposer below.
+    if (opts?.interposedFrom) {
+      const ov = this.unitViews.get(opts.interposedFrom.id);
+      if (ov) {
+        const banner = this.add.text(ov.sprite.x, ov.sprite.y - TILE_SIZE / 2 - 10, "INTERPOSED!", {
+          fontFamily: FAMILY_HEADING,
+          fontSize: "14px",
+          color: "#fff7c4",
+          stroke: "#1a0e04",
+          strokeThickness: 4,
+          shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
+        }).setOrigin(0.5, 1).setDepth(45);
+        this.tweens.add({
+          targets: banner,
+          y: banner.y - 22,
+          alpha: 0,
+          duration: 1300,
+          ease: "Sine.easeOut",
+          onComplete: () => banner.destroy()
+        });
+        this.pushLog(`${defender.name} steps in front of ${attacker.name}'s blow meant for ${opts.interposedFrom.name}.`);
+      }
+    }
     if (result.hit) {
       if (result.crit) {
         sfxCrit();
@@ -2141,42 +2290,187 @@ export class BattleScene extends Phaser.Scene {
 
   private async animateAttack(u: Unit, target: Unit): Promise<void> {
     await this.lunge(u, target);
-    const result = performAttack(this.state, u, target);
-    u.state.apRemaining -= 1;
-    this.applyAttackEffects(u, target, result);
-    // Hit-pause: on a crit, freeze the action for ~90ms so the camera shake
-    // and the CRIT damage number have a moment to land before the chain
-    // continues. Cheap "this hit mattered" feedback.
-    if (result.crit) await this.delay(90);
-    if (result.destructTriggered && result.attackerKilled) {
-      // Destruct: defender's death pulled the attacker down too.
-      const av = this.unitViews.get(u.id);
-      if (av) {
-        sfxDeath();
-        playUnitState(this, av.sprite, u, "death");
-        this.stopBreathing(av);
-        this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
-        this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
+
+    // Player path is interpose-aware: roll the attack outcome WITHOUT
+    // applying damage so we can pause and ask the player about Interpose
+    // when an enemy swing would kill a player unit. AI vs AI / player
+    // attacks on enemies skip this and go through the original
+    // performAttack path, which is identical to the inline split below
+    // minus the modal — kept for the AI test path and to minimize churn.
+    const interposeAware = u.faction !== "player" && target.faction === "player";
+
+    if (!interposeAware) {
+      const result = performAttack(this.state, u, target);
+      u.state.apRemaining -= 1;
+      this.applyAttackEffects(u, target, result);
+      if (result.crit) await this.delay(90);
+      if (result.destructTriggered && result.attackerKilled) {
+        const av = this.unitViews.get(u.id);
+        if (av) {
+          sfxDeath();
+          playUnitState(this, av.sprite, u, "death");
+          this.stopBreathing(av);
+          this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
+          this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
+        }
+        this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
       }
-      this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
+      if (result.counterTriggered && result.counterResult) {
+        await this.delay(260);
+        await this.lunge(target, u);
+        this.applyAttackEffects(target, u, result.counterResult);
+        if (result.counterResult.crit) await this.delay(90);
+      }
+      await this.delay(280);
+      this.refreshAllUnits();
+      this.refreshSidePanel(u);
+      this.clearActionButtons();
+      this.clearOverlays();
+      this.fsm.send({ tag: "ACTION_COMPLETE" });
+      if (this.checkEnd()) return;
+      if (u.faction !== "player") return;
+      this.continueOrEnd(u);
+      return;
     }
-    if (result.counterTriggered && result.counterResult) {
-      await this.delay(260);
-      await this.lunge(target, u);
-      this.applyAttackEffects(target, u, result.counterResult);
-      if (result.counterResult.crit) await this.delay(90);
+
+    // Interpose-aware path. We roll the attack first, then check for
+    // interpose, then apply. Counter logic moves out of performAttack and
+    // is run inline here because it's contingent on (a) which unit was
+    // ACTUALLY hit (interposer or original) and (b) whether the player
+    // chose to interpose at all (interpose suppresses the counter — the
+    // original defender's strike was deflected by their squadmate).
+    const roll = rollAttackOnly(this.state, u, target, false);
+    let actualDefender = target;
+    let interposed = false;
+    if (roll.hit && roll.damage >= target.state.hp) {
+      const cands = interposeCandidates(this.state, target, u);
+      if (cands.length > 0) {
+        const choice = await this.askInterpose(u, target, roll.damage, cands);
+        if (choice) {
+          actualDefender = choice;
+          interposed = true;
+        }
+      }
     }
+
+    const result = applyAttackOutcome(u, actualDefender, roll);
+    u.state.apRemaining -= 1;
+    this.applyAttackEffects(u, actualDefender, result, { interposedFrom: interposed ? target : undefined });
+    if (result.crit) await this.delay(90);
+
+    // Destruct fires on whoever actually took the killing blow — which
+    // means the interposer's Destruct can pull the attacker down even
+    // though they weren't the original target. Narratively perfect:
+    // "they caught the swing meant for Amar AND took the swordsman with
+    // them." Mechanically a fair outcome since the interposer paid the
+    // ultimate price.
+    if (result.defenderKilled && hasAbility(actualDefender, "Destruct") && isAlive(u)) {
+      damageUnit(u, u.state.hp);
+      result.destructTriggered = true;
+      result.attackerKilled = !isAlive(u);
+      if (result.attackerKilled) {
+        const av = this.unitViews.get(u.id);
+        if (av) {
+          sfxDeath();
+          playUnitState(this, av.sprite, u, "death");
+          this.stopBreathing(av);
+          this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
+          this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
+        }
+        this.pushLog(`${actualDefender.name}'s last act drags ${u.name} down.`);
+      }
+    }
+
+    // Counter — suppressed entirely when an interpose redirect happened.
+    // Otherwise mirrors performAttack's counter logic exactly: Ready
+    // takes priority over Speed, Ready spends the stance.
+    if (
+      !interposed
+      && result.hit
+      && !result.defenderKilled
+      && isAlive(actualDefender)
+      && isAlive(u)
+    ) {
+      let counterFired = false;
+      if (canTriggerReadyCounter(actualDefender, u, this.state.grid)) {
+        await this.delay(260);
+        await this.lunge(actualDefender, u);
+        const counterRoll = rollAttackOnly(this.state, actualDefender, u, true);
+        const counterRes = applyAttackOutcome(actualDefender, u, counterRoll);
+        actualDefender.state.stance = "none";
+        result.counterTriggered = true;
+        result.counterResult = counterRes;
+        this.applyAttackEffects(actualDefender, u, counterRes);
+        if (counterRes.crit) await this.delay(90);
+        counterFired = true;
+      }
+      if (!counterFired && canTriggerSpeedCounter(actualDefender, u)) {
+        await this.delay(260);
+        await this.lunge(actualDefender, u);
+        const counterRoll = rollAttackOnly(this.state, actualDefender, u, true);
+        const counterRes = applyAttackOutcome(actualDefender, u, counterRoll);
+        result.counterTriggered = true;
+        result.counterResult = counterRes;
+        this.applyAttackEffects(actualDefender, u, counterRes);
+        if (counterRes.crit) await this.delay(90);
+      }
+    } else if (
+      !interposed
+      && result.defenderKilled
+      && canTriggerReadyCounter(actualDefender, u, this.state.grid)
+    ) {
+      // Mirror performAttack's "primed corpse" cleanup so any post-mortem
+      // UI (autopsy, replay) doesn't show the dead unit still in Ready.
+      actualDefender.state.stance = "none";
+    }
+
     await this.delay(280);
     this.refreshAllUnits();
     this.refreshSidePanel(u);
     this.clearActionButtons();
     this.clearOverlays();
-    // Player path: playerAnimating → idle. Enemy path: stays in enemyTurn (no-op).
     this.fsm.send({ tag: "ACTION_COMPLETE" });
     if (this.checkEnd()) return;
-    // Enemy turns are driven by runEnemyTurn — don't advance the queue here.
     if (u.faction !== "player") return;
     this.continueOrEnd(u);
+  }
+
+  // Pause the battle and run InterposeScene as a modal overlay. Resolves
+  // to the chosen interposer Unit, or null if the player declined / let
+  // the original blow land. Wraps the callback-style InterposeScene API
+  // in a Promise so animateAttack can await the decision inline.
+  private askInterpose(
+    attacker: Unit,
+    defender: Unit,
+    incomingDamage: number,
+    candidates: Unit[]
+  ): Promise<Unit | null> {
+    return new Promise((resolve) => {
+      const candidatePayload: InterposeCandidate[] = candidates.map((c) => ({
+        id: c.id,
+        name: c.name,
+        portraitId: c.portraitId ?? c.id,
+        hp: c.state.hp,
+        maxHp: c.stats.hp
+      }));
+      this.scene.pause();
+      this.scene.run("InterposeScene", {
+        incomingDamage,
+        defenderName: defender.name,
+        defenderPortraitId: defender.portraitId ?? defender.id,
+        attackerName: attacker.name,
+        candidates: candidatePayload,
+        resumeKey: this.scene.key,
+        onResolve: (interposerId: string | null) => {
+          if (!interposerId) {
+            resolve(null);
+            return;
+          }
+          const picked = candidates.find((c) => c.id === interposerId) ?? null;
+          resolve(picked);
+        }
+      });
+    });
   }
 
   // ---- Enemy turn ----
