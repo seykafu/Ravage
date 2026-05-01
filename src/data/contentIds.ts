@@ -111,7 +111,16 @@ export type ArcId =
   | "before_orinhal"
   | "post_orinhal"
   | "before_ravine"
-  | "post_ravine";
+  | "post_ravine"
+  // -------- B10 + B11: Leaving Thuling + The Cliffs --------
+  // Mid-game pivot. Squad escapes Thuling under Kian's blockade,
+  // reaches the harbor, learns the colony truth from Kian on the
+  // cliffs above Madame Dawn's ship, and pays Lucian's life for the
+  // crossing. Closes out the first half of the campaign.
+  | "before_leaving_thuling"
+  | "post_leaving_thuling"
+  | "before_cliffs"
+  | "post_cliffs";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

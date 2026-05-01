@@ -65,7 +65,16 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   b06_caravan:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
   b07_monastery:      ["amar", "lucian", "ning", "maya", "kian", "leo"],           // Selene escapes (not recruited)
   b08_orinhal:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
-  b09_ravine:         ["amar", "lucian", "ning", "maya", "kian", "leo"]
+  b09_ravine:         ["amar", "lucian", "ning", "maya", "kian", "leo"],
+  // B10: Kian has revealed himself as Nebu's enforcer between B9 and
+  // B10 — squad enters the Thuling streets fight without him on
+  // their side. He's the boss of B10 + B11.
+  b10_leaving_thuling: ["amar", "lucian", "ning", "maya", "leo"],
+  // B11: Lucian dies in post_cliffs (sea burial off the western
+  // rail). The roster shown after B11 is post-Lucian. The squad
+  // crosses to Grude on Madame Dawn's ship as four — Amar, Ning,
+  // Maya, Leo — until the second-half rejoinings begin.
+  b11_cliffs:          ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's

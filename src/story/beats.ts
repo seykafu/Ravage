@@ -496,7 +496,6 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A clearing two miles south of the trap",
     music: "emotional",
     backdrop: "field_night_camp",
-    next: "credits",
     beats: [
       N("They break contact at the ford and ride hard for an hour before stopping. Lucian takes his shirt off in the clearing without asking; the bolt is shallow but the iron has bent. Maya cuts the head out with a knife she didn't say she had until just now. Ning is the one who can't stop watching."),
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. That whole lane. He pushed me into the rock." },
@@ -525,8 +524,153 @@ export const ARCS: Record<ArcId, StoryArc> = {
         promote: "ning"
       },
       { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we ride. Lucian — you take Mira and Tali to the cousin's farm. Catch up to us on the road." },
-      N("Lucian rides for his house at the edge of Thuling. The rest of the squad packs camp in silence and turns west."),
-      N("(End of the playable vertical slice — chapters 1 through 9. The remaining twelve battles are scaffolded — the full story continues through the streets of Thuling, the cliffs of Para, the year of travel in Grude, and the Ravage Fleet at the end of the world.)")
+      N("Lucian rides for his house at the edge of Thuling. The rest of the squad packs camp in silence and turns west toward the Para road. The plan was to meet Lucian back at his door, walk Mira and Tali out the back gate, and ride for Madame Dawn's harbor at first light. The plan is about to need adjusting.")
+    ],
+    next: "story:before_leaving_thuling"
+  },
+  // -------- Pre-Battle 10 (Kian's blockade at Lucian's house) --------
+  // Bridges post_ravine into B10's escape battle. The squad arrives
+  // back at Lucian's door at 3am. Kian is already there. The arc is
+  // brief — most of the dramatic work happens in B10's round-1
+  // dialogue trigger ("kian_blockade") so the player encounters the
+  // setup as part of the battle, not as a separate read-screen.
+  before_leaving_thuling: {
+    id: "before_leaving_thuling",
+    title: "Lucian's door, three in the morning",
+    subtitle: "The squad rides back into Thuling for the family",
+    music: "danger",
+    backdrop: "thuling",
+    next: "prep:b10_leaving_thuling",
+    beats: [
+      N("Three in the morning. The squad rides back into Thuling at a hard pace. The streets are wrong — too quiet, too lit. The night watch is doubled. Torches in places torches don't usually go."),
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Kian beat us here. The watch is his. He's at Lucian's door already." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "alarmed",
+        body: "Mira. Tali." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then we don't ride past. We ride through. Maya, take the back lane and get Mira and Tali out the rear gate while we hold the front. Lucian — you're with me." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+        body: "He'll have the front blockaded. Twelve men minimum. He'll talk first. He always talks first." },
+      { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+        body: "Then let him talk. We listen with arrows nocked." },
+      { speaker: "Leo", portraitId: "leo", expression: "ready",
+        body: "Maya — give me three minutes' head start. I'll ride my Dactyl over the back gate and clear whatever's between you and the lane." },
+      N("Maya peels off west; Leo rides east along the rear of the row. The rest of the squad walks their horses up to Lucian's front door at a slow pace. Kian's voice carries before they round the last corner.")
+    ]
+  },
+  // -------- Post-Battle 10 (the squad clears the gate; Mira & Tali safe) --------
+  // Brief breath between B10's escape and B11's cliff confrontation.
+  // The arc handles the "Mira and Tali made it" beat (sets up the
+  // weight of Lucian's death in post_cliffs) and gives Maya the
+  // clean call to ride for the harbor before the King's reinforcements
+  // arrive.
+  post_leaving_thuling: {
+    id: "post_leaving_thuling",
+    title: "The western road, before sunrise",
+    subtitle: "The squad rides for Para Harbor",
+    music: "danger",
+    backdrop: "thuling",
+    next: "story:before_cliffs",
+    beats: [
+      N("They clear the western gate at a run and don't slow until the Thuling spires are below the horizon behind them. Leo catches up an hour later with Maya behind him on the Dactyl, both of them breathing hard. Mira and Tali rode for the cousin's farm with two of Lucian's foreman friends; the cousin will move them north before sunrise. Lucian rides without speaking for a long time."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "(quietly, after a while) I told her this morning that we were going on a trip. Mira asked if she could bring her cat. I said no. I should have said yes. The cat would have ridden quiet in her lap. She'd have had something to hold onto." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "We can send for the cat. I'll write the cousin's wife once we make Grude." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "(small smile) ...That'd be all right. Thank you, Maya." },
+      N("Amar rides at the front and doesn't trust himself to speak. Kian's promise — the cliffs, sundown — has been working its way around in his head for the entire ride. He keeps trying to find a version of the next twelve hours where Kian doesn't have to fall. He hasn't found one."),
+      { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+        body: "Amar. The cliffs are four hours up the harbor road. We have time to plan, or time to grieve. Pick one." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Plan. We grieve on the boat. Maya — what do we know about the staircase down to Dawn's ship?" },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Two landings, both narrow. He'll position there. Three crown archers at the top, two guards on each landing, Kian center on the lower one. Standard royal-elite formation. We come in from the cliff plateau, we go out through the ship at the bottom. The middle is what costs." },
+      N("The squad rides on toward Para Harbor in the long blue hour before sunrise. The road climbs.")
+    ]
+  },
+  // -------- Pre-Battle 11 (the cliff plateau at sundown) --------
+  // Sets the visual frame for the cliff battle. Squad arrives on the
+  // plateau at sundown; Kian's contingent is already on the staircase
+  // below them. The colony-truth reveal is held back to B11's round-1
+  // dialogue (it's the in-fight beat that anchors the chapter), so
+  // this arc focuses on the squad's last preparations + Lucian's
+  // quiet acknowledgment of where he stands.
+  before_cliffs: {
+    id: "before_cliffs",
+    title: "Sundown above Para Harbor",
+    subtitle: "The cliff plateau, the staircase, the ship below",
+    music: "ravageDaredevil",
+    backdrop: "cliffs",
+    next: "prep:b11_cliffs",
+    beats: [
+      N("The harbor road ends in a stone plateau two hundred feet above Para Harbor. Madame Dawn's ship is moored at the south dock — a long-hulled merchanter with three masts and a crew already aboard, lanterns lit, sails ready to be cut loose. The only path down is the slate staircase carved into the cliff face. Kian is on the lower landing. The King's elite are with him. They have been waiting for some time."),
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Six guards visible. Kian on the lower landing. Two crown archers on the middle landing — they have line on the entire descent. Standard formation but the elite tier; these aren't Thuling watchmen. We push down the stairs and we trade." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+        body: "I'll take the rear and the bottleneck on the upper stair. Anything that gets behind the squad goes through me first." },
+      { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+        body: "Lucian — you're shoulder-bolted from the ravine. You're not at full strength." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "(simple) I know, Ning. I've thought about it. I'm taking the rear." },
+      N("Amar walks to the cliff edge for one breath alone. The light over the harbor is the color the script of his old life used to use for sundown. He thinks of his father. He thinks of Selene's hand on the practice yard rail. He thinks of Lucian putting his daughter to bed in the house they will never go back to."),
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "(to the squad, returning) We go down the staircase together. We don't break formation for any reason. Maya leads, Ning covers from the upper landing, Leo flanks east on the Dactyl. Lucian holds the rear. I take Kian. Nobody else takes Kian. Confirm." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "Confirmed." },
+      { speaker: "Ning", portraitId: "ning", body: "Confirmed." },
+      { speaker: "Leo", portraitId: "leo", expression: "ready", body: "Confirmed." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Confirmed, your highness." },
+      N("Lucian's smile is the one he uses when he's said something on purpose. Amar catches it, holds his eyes a second longer than usual, and turns toward the stairs. The squad descends.")
+    ]
+  },
+  // -------- Post-Battle 11 (Lucian's death, the boat, the crossing) --------
+  // The first half's emotional climax. Lucian's wound from B11 (the
+  // crossbow bolt at the end of the battle, narrated in the
+  // before_victory dialogue) lands here. He dies in the cabin of
+  // Dawn's ship as the boat clears the harbor. The arc ends with
+  // the squad on the open sea, no land in sight, the year of travel
+  // to Grude beginning. Closes out the playable slice for now;
+  // routes to credits with a "to be continued" sting.
+  post_cliffs: {
+    id: "post_cliffs",
+    title: "Below decks, the boat moving",
+    subtitle: "The crossing to Grude begins",
+    music: "emotional",
+    backdrop: "cliffs",
+    next: "credits",
+    beats: [
+      N("The squad makes the ship at moonrise. Dawn's captain is a woman in her fifties who introduces herself as Khione, says nothing else, and orders the lines cut the moment Amar's boots clear the dock. The boat pulls away from the harbor faster than its weight should allow. Kian's body is still on the lower landing. The squad does not look back."),
+      N("Below decks, the captain's mate brings a lantern and a bowl of water. The squad has time to stop moving for the first time in twelve hours. That's when Maya sees the dark spread across the back of Lucian's tunic."),
+      { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+        body: "Lucian. Off your feet. NOW. Ning — the bandages from my pack, the brown cord, MOVE." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "dying",
+        body: "(quietly, sitting down against the bulkhead) It's all right. It's all right, it's all right. The bolt went through. Front to back. Clean shot. Sit me up against the wall, Maya. I want to see Amar." },
+      N("They move him slowly. The bolt did not go clean through. It clipped the lung on the way out. Lucian knows this. He has seen this kind of wound before. He is not afraid."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "Amar. Come here, your highness. Closer than that. Right next to me. Good." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(quietly) Lucian. I'm sorry. I should have seen the archer at the cliff edge. I had Kian's eyes, I wasn't watching the —" },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "Stop. Stop. Listen to me. Three things, fast, before I forget them. One. Mira and Tali — you write to them every season. Even if there's nothing to say. Especially if there's nothing to say. They need to know there's a man out there who remembers their father. Promise me." },
+      { speaker: "Amar", portraitId: "amar", body: "Every season. I promise." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "Two. Maya is the smartest person in this squad. Including you. Listen to her like you used to listen to me. Three. Don't fight for the colony. Don't fight for the empire. Don't fight for Dawn's flag. Don't fight for the throne your father lost. Fight for the people standing next to you. Kian was right about that. He was wrong about almost everything else. He was right about that." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "Lucian." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+        body: "(soft) ...You're going to be all right, Amar. You're a good man under the man you've been hiding under. I saw that the first day at the forge. Take care of them. Take care of yourself." },
+      N("Lucian's breathing slows over the next quarter hour. The squad sits in the lantern-light around him without moving. Ning holds his hand. Maya keeps pressure on the wound long after pressure stops mattering. Leo sits at the door of the cabin with his back to it because nobody trusts the captain's crew yet and he doesn't want anyone walking in. Amar is the one Lucian dies looking at. The boat continues to move."),
+      N("Up on the deck, an hour later, the harbor lights are gone and the open sea is the only thing in any direction. The captain finds Amar at the stern rail. She speaks for the first time since Khione."),
+      { speaker: "Khione", portraitId: "khione", expression: "neutral",
+        body: "Madame Dawn extends her sympathies. The voyage is fourteen months. We will reach Grude in late summer next year. The squad has the run of the ship. The food is plain. The wine is good. We do not stop on the way." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Captain. I want a sea burial for Lucian. Off the western rail, before the sun comes up. With the squad present and the ship stopped." },
+      { speaker: "Khione", portraitId: "khione", expression: "neutral",
+        body: "We do not stop, your highness. But we will slow. The squad will be present. The western rail at dawn." },
+      N("The ship slows in the gray hour. The squad gathers at the western rail. Lucian goes into the sea wrapped in the flag the cousin's wife stitched two summers ago for the Thuling festival — Maya took it off the wall of his house on her way out the back gate and rode with it folded under her saddle the whole night. Nobody says anything. Ning is the one who lets the bundle slip from her hands. The water takes it without sound."),
+      N("The ship turns west again. The squad stands at the rail until the sun is fully up. Then Amar walks to the stern, opens his pack, and takes out the small wooden practice sword Lucian carved for him on the night they met at the forge. He holds it for a long time. He doesn't put it back in the pack."),
+      N("(End of the playable first half — chapters 1 through 11. The fourteen-month crossing and the year in Grude continue from here. The remaining nineteen chapters carry the squad through Madame Dawn's rebellion, Amar's true origin, and the Seven Paths divergence at the heart of the second half.)")
     ]
   }
 };

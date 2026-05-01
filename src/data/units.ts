@@ -351,5 +351,42 @@ export const ENEMIES = {
     portraitId: "selene",
     tags: new Set(["boss"]),
     level
+  }),
+  // Kian as enemy boss for B10 (Thuling streets) + B11 (Cliffs). He
+  // was a player unit in B4-B9; from B10 onward he's revealed as
+  // Nebu's enforcer and turns on the squad. Distinct id ("kian_enemy")
+  // mirrors the Selene pattern — separate save record so any future
+  // path that re-recruits him doesn't collide. Portrait shared via
+  // portraitId so the side-panel + dialog scenes route to the same
+  // artwork. Stats slightly above Selene's because Kian is the
+  // mechanical hard-stop on the player's escape, with a +mountBonus
+  // from the knight class.
+  kian: (level = 12): UnitDef => ({
+    id: "kian_enemy",
+    name: "Kian",
+    shortName: "Ki",
+    faction: "enemy",
+    classKind: "knight",
+    // Same sprite override as PLAYERS.kian — knight has no shipped
+    // sprite folder, falls back to swordmaster.
+    spriteClassOverride: "swordmaster",
+    weapon: "sword",
+    stats: { hp: 52, power: 15, armor: 7, speed: 9, movement: 4, ap: 3 },
+    artSeed: 8,
+    palette: PLAYER_PALETTES.kian,
+    portrait: true,
+    portraitId: "kian",
+    tags: new Set(["boss"]),
+    level,
+    // Kian holds his blockade position until his guard is thinned —
+    // mirrors B1 King Nebu's pattern. Won't break ranks and engage
+    // until only 2 of his 6 royal guards are still alive on the
+    // field. Narrative: he wants to talk first; combat is a last
+    // resort. Mechanical: the player can choose to thin the guard
+    // and fight him (full XP), OR rush past him on B10's escape
+    // win condition. On B11 the only path is through, but the
+    // hold-position buys the round-1 colony-truth dialogue time
+    // to land before swords meet.
+    holdPositionUntil: { allyCount: 2 }
   })
 };

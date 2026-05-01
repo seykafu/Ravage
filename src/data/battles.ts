@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravineMap, swampMap } from "./maps";
+import { caravanMap, cliffsMap, dawnBanditsMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -661,31 +661,229 @@ export const BATTLES: BattleNode[] = [
     // restock for several chapters.
     rewards: ["elixir", "elixir", "royal_lens", "royal_lens", "fang"]
   },
+  // ============== Battle 10 — Leaving Thuling ==============
+  // Kian's blockade. Squad's been ordered out of Thuling by Madame
+  // Dawn's offer; Kian arrives at Lucian's house with hostages and a
+  // contingent to ensure they don't make it to the road. Victory is
+  // ESCAPE — get any unit to the west edge — not rout. Kian himself
+  // uses holdPositionUntil so he doesn't break ranks until the squad
+  // has thinned his blocker line, mirroring B1's King Nebu pattern.
   {
     id: "b10_leaving_thuling",
     index: 10,
     title: "Tenth Battle",
     subtitle: "Leaving Thuling",
-    intro: "The streets you walked every day. Kian is waiting on the road outside Lucian's house. Lucian's family is already a hostage.",
-    outro: "Cut a path. Ride west. Kian's words follow you across the broken street.",
+    intro:
+      "The streets you walked every day, the shop fronts you knew the names of. Kian is waiting on the cobblestones outside Lucian's house with twelve guardsmen and a wax-sealed warrant from the King's hand. Lucian's wife and daughter are inside the house. Kian's voice carries the way it used to in the practice yard, when he was correcting your footwork. He says he's known about Amar since the second week. He says he hoped he was wrong. He says the warrant is for Amar alone — the squad can walk away if Amar surrenders. Lucian is already drawing his spear.",
+    outro:
+      "The blockade breaks at the third barricade. Mira and Tali make the cousin's farm before the squad makes the western road. Kian doesn't pursue. His voice carries down the street one last time as the squad clears the gate: \"The cliffs, Amar. I'll meet you on the cliffs and we'll finish what your father started, you and me, before Madame Dawn turns you into a weapon she can use.\"",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
-    playable: false,
-    difficultyLabel: "Escape"
+    playable: true,
+    map: leavingThulingMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Kian holds the road out and refuses to engage until the squad
+      // thins his guard — see holdPositionUntil. Six royal soldiers
+      // make up his blockade: 2 guards flanking him, 2 archers on the
+      // barricades, 2 guards advancing from the back line.
+      ENEMIES.kian(10),
+      ENEMIES.royalGuard("kbl_rg1", 1001, 9),
+      ENEMIES.royalGuard("kbl_rg2", 1002, 9),
+      ENEMIES.royalArcher("kbl_ra1", 1003, 9),
+      ENEMIES.royalArcher("kbl_ra2", 1004, 9),
+      ENEMIES.royalGuard("kbl_rg3", 1005, 8),
+      ENEMIES.royalGuard("kbl_rg4", 1006, 8)
+    ],
+    difficultyLabel: "Escape",
+    // Spoils: 2 elixirs from the Thuling chapel infirmary the squad
+    // raids on the way out + 1 royal lens stripped from the blockade
+    // archers. Modest because the squad is escaping with their lives,
+    // not looting at leisure.
+    rewards: ["elixir", "elixir", "royal_lens"],
+    // Victory is ESCAPE — push any unit to the west edge (col 0,
+    // anywhere along rows 4-6 where the road is unblocked). Routing
+    // the entire blockade is also a valid win condition for players
+    // who want full XP, but the cinematic intent is to break through
+    // and ride for the cliffs without finishing Kian here.
+    victory: anyOf(
+      escapeToTile({ x: 0, y: 5 }, { label: "Escape west to the road" }),
+      routEnemies
+    ),
+    dialogues: [
+      // Round 1: Kian's blockade speech. Sets the stakes — Amar's
+      // history, the warrant, the hostages, the choice. Lucian's
+      // response sets the squad's posture: nobody walks away.
+      {
+        id: "b10_kian_blockade",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+            body: "Amar. Or whatever you've been calling yourself this year. Stop. The warrant is for you alone. Surrender, and the rest of these people — Lucian's wife, his daughter, the squad behind you — they walk. Refuse, and I burn the house behind me with everyone in it. Choose now, before I count to three." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Mira and Tali are out the back gate. They have been for ten minutes. You burn an empty house, Kian. You always did love announcing things." },
+          { speaker: "Kian", portraitId: "kian", expression: "alarmed",
+            body: "...Lucian. You knew? How long have you known?" },
+          { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+            body: "About Amar? Maybe a year. About you? Since the practice yard. Move, or move out of the way." },
+          { speaker: "Kian", portraitId: "kian", expression: "cold_contempt",
+            body: "Then we do it the hard way. Hold the line, gentlemen. Nobody walks west tonight." }
+        ]
+      },
+      // adjacent_eot Kian/Amar: their first direct exchange as enemies.
+      // Amar asks the question every player will be asking too.
+      {
+        id: "b10_kian_amar_first_words",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "kian_enemy" },
+        beats: [
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "Why now? You had a year to turn me in. Why tonight?" },
+          { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+            body: "Because tonight Madame Dawn offered you a ship. The King doesn't care about a peasant who used to be a prince. The King cares very much about a piece on Dawn's board." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "And what do YOU care about, Kian." },
+          { speaker: "Kian", portraitId: "kian", expression: "wounded",
+            body: "(quietly) I cared about a thirteen-year-old who couldn't hold a sword without his shoulders rising. I trained that out of him. I watched him die in his own throne hall and I hoped — hoped — that whoever woke up in the hospital wasn't him. Now move, your highness. I don't want to do this in front of the people you've kept alive this year." }
+        ]
+      },
+      // before_victory: Kian doesn't pursue once the squad breaks
+      // through. His promise to meet Amar on the cliffs sets up B11.
+      {
+        id: "b10_kian_promise",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The squad punches through the south barricade. Maya goes first, Ning covers, Leo takes the eastern flank wide. Lucian holds the rear and walks backward through the gap with his spear levelled the entire way. Kian could close the line. He doesn't." },
+          { speaker: "Kian", portraitId: "kian", expression: "wounded",
+            body: "(calling after them) The cliffs, Amar. The cliffs above Para Harbor. Don't make me chase you to Dawn's ship. We finish this where your father finished his — on stone, in the open. You and me. Bring your friends if you want. They won't help." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "(over his shoulder, not slowing) The cliffs, Kian. Sundown." },
+          { portraitId: "narrator",
+            body: "The squad clears the western gate at a hard run. The road bends north toward the harbor road and the long climb up to the cliff plateau. Lucian doesn't look back at his house." }
+        ]
+      }
+    ]
   },
+  // ============== Battle 11 — The Cliffs ==============
+  // The first half's climax. Kian arrives with the King's elite to
+  // stop the squad from boarding Madame Dawn's ship. He brings the
+  // truth — Anthros is a colony of Grude, the empire across the sea.
+  // Lucian dies on the staircase down to the ship (narrated in the
+  // post arc, mechanically he survives B11 — the post-battle death
+  // pattern keeps the dying-character in player control until the
+  // narrative beat lands cleanly). Kian dies in a combined strike
+  // (defeatUnit victory).
   {
     id: "b11_cliffs",
     index: 11,
     title: "Eleventh Battle",
     subtitle: "The Truth About Anthros",
-    intro: "Kian catches you on the cliffs above Madame Dawn's harbor. He brings the truth: Anthros is a colony. Grude is the empire. Your fight has been smaller than you knew.",
-    outro: "Lucian falls on the staircase to the ship. Kian falls to a combined strike. The sea takes you both, in different ways.",
+    intro:
+      "Sundown over Para Harbor. The cliff road ends in a stone plateau that drops two hundred feet straight down to Madame Dawn's ship — a long slate-cut staircase the only way down. Kian is waiting on the lower landing with the King's elite: two royal guards on his flanks, four more positioned up the staircase to seal the descent. He looks tired in a way you've never seen him look. He waves a hand and the guards lower their weapons. He has something to say first. Lucian, on the cliff edge behind you, draws his spear anyway.",
+    outro:
+      "Kian falls to a combined strike on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The cost was severe. The full weight of it lands in the cabin, after the boat is moving.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_cliffs",
-    playable: false,
-    difficultyLabel: "Climactic"
+    playable: true,
+    map: cliffsMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Kian as boss + 6 elite King's troops. Elite levels — these
+      // are the King's personal guard, sent specifically to handle
+      // Amar before Dawn can extract him. Kian uses holdPositionUntil
+      // so he doesn't charge until his guard is thinned, giving the
+      // player the chance to fight his line down or rush past him to
+      // the ship.
+      ENEMIES.kian(12),
+      ENEMIES.royalGuard("clf_rg1", 1101, 11),
+      ENEMIES.royalGuard("clf_rg2", 1102, 11),
+      ENEMIES.royalArcher("clf_ra1", 1103, 10),
+      ENEMIES.royalArcher("clf_ra2", 1104, 10),
+      ENEMIES.royalGuard("clf_rg3", 1105, 10),
+      ENEMIES.royalGuard("clf_rg4", 1106, 10)
+    ],
+    difficultyLabel: "Climactic — Boss Kian",
+    // Spoils: large haul to outfit the squad for the long Grude
+    // crossing — they won't see a trading post for several chapters.
+    // 3 elixirs (the elite contingent's medical kit), 1 fang (Kian's
+    // razor-tooth charm — he wore it since the practice yard), 1
+    // royal lens (the captain's spotter), 1 mask (Kian's helm
+    // ornament — Amar takes it).
+    rewards: ["elixir", "elixir", "elixir", "fang", "royal_lens", "mask"],
+    // Victory: defeat Kian. Mirrors B5 Ndari + B7 Selene defeatUnit
+    // patterns. The combined-strike framing is narrative — any unit
+    // (or chain of units) bringing Kian's HP to zero counts.
+    victory: defeatUnit("kian_enemy", { label: "Defeat Kian" }),
+    dialogues: [
+      // Round 1: Kian's reveal. The colony truth is the worldbuilding
+      // pivot of the first half — the squad has been fighting a piece
+      // of the world, not the whole shape of it. Amar's reaction is
+      // the moment he realizes Madame Dawn's offer is the only path
+      // forward, even if she's playing him.
+      {
+        id: "b11_kian_colony_reveal",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+            body: "Hold. Before we do this. There's something you need to hear from someone who isn't trying to sell you a ship." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "Make it short, Kian." },
+          { speaker: "Kian", portraitId: "kian", expression: "wounded",
+            body: "Anthros is not a kingdom. Anthros is a colony. Grude is the empire. King Nebu was installed by King Archbold of Grude eighty years ago to hold this peninsula for the parent country. Your father knew. The original coup was not just against Nebu. It was against the colonial arrangement itself. You were trying to free a country from an empire. You died in that throne hall not because Nebu was strong but because Grude noticed." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "...He's not lying. Dawn briefed me on the colony structure six months ago. I never told you because the squad would have ridden for Grude that night without a plan." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "(quietly) Kian. Why are you telling me this NOW. With a sword in your hand." },
+          { speaker: "Kian", portraitId: "kian", expression: "wounded",
+            body: "Because Madame Dawn is going to use you, Amar. She will board you on that ship and she will sail you to Grude and she will put you in front of King Archbold's nephews and she will use the look on your face to start a war that gets a hundred thousand peasants killed. I can't stop you from going. I can stop you from going whole." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Then stop talking, Kian. The boat leaves at moonrise." }
+        ]
+      },
+      // adjacent_eot Kian/Amar: the moment they finally fight. Kian's
+      // last attempt to reach Amar before the swords meet.
+      {
+        id: "b11_kian_amar_face",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "kian_enemy" },
+        beats: [
+          { speaker: "Kian", portraitId: "kian", expression: "wounded",
+            body: "I taught you this stance. The half-step you do before a thrust. I taught you that one. You were eleven." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "I know, Kian." },
+          { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+            body: "(quietly) Whatever happens in the next ten seconds, your highness. Don't fight for it. Don't fight for the colony, don't fight for the empire, don't fight for Dawn's flag, don't fight for your father's flag. Fight for the people on this staircase. They're the only thing that's actually yours." }
+        ]
+      },
+      // before_victory: Kian's last words as he falls. The line lands
+      // hardest if the player hasn't yet realized Lucian is wounded —
+      // post_cliffs picks up the Lucian thread immediately after.
+      {
+        id: "b11_kian_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The combined strike comes from three directions at once. Maya from the upper landing, Ning's arrow from the cliff edge, Amar from the front. Kian doesn't try to parry the third. He looks at Amar across the steel and his face does the thing it used to do in the practice yard when Amar finally got a form right." },
+          { speaker: "Kian", portraitId: "kian", expression: "fatherly_smile",
+            body: "(softly) Good half-step, your highness." },
+          { portraitId: "narrator",
+            body: "Kian goes down on the lower landing. Lucian, who has been holding the staircase rear with one good arm and a spear gripped wrong, takes a crossbow bolt between the ribs from the last of the crown archers as the squad turns to descend. Nobody sees it land. Lucian doesn't make a sound. He keeps walking down the stairs to the ship." }
+        ]
+      }
+    ]
   },
   {
     id: "b12_ravage",

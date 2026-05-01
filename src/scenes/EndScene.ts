@@ -29,7 +29,9 @@ const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b06_caravan: "post_caravan",
   b07_monastery: "post_monastery",
   b08_orinhal: "post_orinhal",
-  b09_ravine: "post_ravine"
+  b09_ravine: "post_ravine",
+  b10_leaving_thuling: "post_leaving_thuling",
+  b11_cliffs: "post_cliffs"
 };
 
 export class EndScene extends Phaser.Scene {
@@ -142,7 +144,7 @@ export class EndScene extends Phaser.Scene {
     const gap = 24;
 
     if (isVictory) {
-      const isFinalPlayable = this.battleId === "b09_ravine"; // last in the slice
+      const isFinalPlayable = this.battleId === "b11_cliffs"; // last in the slice
       const continueLabel = isFinalPlayable ? "Continue ▸" : "Continue ▸";
       const onContinue = () => {
         sfxConfirm();

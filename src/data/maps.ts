@@ -484,3 +484,142 @@ export const ravineMap: MapDef = buildMap("ravine", "The Price of Doubt", ravine
     { x: 7,  y: 3 }  // "Bandit" swordsman pressing forward
   ]
 });
+
+// ============== Battle 10 — Leaving Thuling ==============
+// 16×11 cobblestone village street. Lucian's house (large wall block at
+// the EAST end, rows 4-6 cols 13-15) is where his family is being held
+// — narratively present, not a tactical objective. Squad spawns
+// CENTER-east, near the house, with the goal of breaking WEST through
+// Kian's blockade (col 0, rows 4-6) to reach the road out of Thuling.
+// Wood-shuttered shops on both sides of the street form the lateral
+// walls; barricades placed by Kian's contingent block the central
+// street to force the squad to fight, not run past.
+//
+// Victory is escape, not rout: the squad just needs to get a unit to
+// the west edge. The full contingent of 7 enemies (Kian + 6 royals)
+// is more than the squad can cleanly kill in 5-6 rounds, so the
+// player has to make the choice — fight long enough to thin the line,
+// or push hard west and accept the trades. Kian himself uses the
+// holdPositionUntil pattern (see B1 King Nebu) so he doesn't charge
+// out of his blocker tile until the squad has thinned his guard.
+const Co = t("cobblestone");
+const Ba = t("cobblestone", "barricade");
+const Wb = t("wall");                   // building wall — full obstacle
+const Tr = t("cobblestone", "torch");   // street torches for ambient
+
+const leavingThulingRows = [
+  [Wb, Wb, Wb, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Wb, Wb, Wb], // row 0 — north shop fronts
+  [Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co],
+  [Co, Tr, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Tr, Co],
+  [Co, Co, Co, Co, Co, Ba, Co, Co, Ba, Co, Co, Co, Co, Co, Co, Co], // row 3 — barricade line
+  [Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Wb, Wb, Wb], // row 4 — east edge: Lucian's house starts
+  [Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Wb, Wb, Wb], // row 5 — house wall
+  [Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Wb, Wb, Wb], // row 6 — house wall
+  [Co, Co, Co, Co, Co, Ba, Co, Co, Ba, Co, Co, Co, Co, Co, Co, Co], // row 7 — barricade line
+  [Co, Tr, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Tr, Co],
+  [Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co],
+  [Wb, Wb, Wb, Co, Co, Co, Co, Co, Co, Co, Co, Co, Co, Wb, Wb, Wb]  // row 10 — south shop fronts
+] as const;
+
+export const leavingThulingMap: MapDef = buildMap("leaving_thuling", "Thuling Streets", leavingThulingRows, {
+  // Squad spawns just west of Lucian's house — they were inside it
+  // when Kian arrived; they've come out into the street. Tight
+  // formation across rows 4-6 col 11-12 so the squad starts near each
+  // other and the two adjacent-eot triggers fire reliably.
+  player: [
+    { x: 11, y: 5 }, // Amar (center, lead — facing west into Kian's line)
+    { x: 12, y: 5 }, // Lucian (right of Amar — defending his own home)
+    { x: 11, y: 4 }, // Maya (north flank)
+    { x: 11, y: 6 }, // Ning (south flank)
+    { x: 12, y: 6 }  // Leo (rear-right)
+  ],
+  // Kian holds the central west blockade tile (col 1, row 5). Two
+  // royal guards flank him on rows 4 + 6. Two crown archers behind
+  // the barricades on cols 5 + 8 firing east. One royal guard at row
+  // 3, one at row 7 — the back line that chases the squad if they
+  // try to slip around Kian's center.
+  enemy: [
+    { x: 1,  y: 5 },  // Kian (center-west, blocking the road out — holdPositionUntil)
+    { x: 1,  y: 4 },  // Royal Guard, north flank
+    { x: 1,  y: 6 },  // Royal Guard, south flank
+    { x: 5,  y: 3 },  // Crown Archer, north barricade
+    { x: 5,  y: 7 },  // Crown Archer, south barricade
+    { x: 3,  y: 4 },  // Royal Guard, advancing north
+    { x: 3,  y: 6 }   // Royal Guard, advancing south
+  ]
+});
+
+// ============== Battle 11 — The Cliffs ==============
+// 12×15 vertical cliff-face map. Squad spawns NORTH on the cliff edge
+// (the road from Thuling lets out here). They must descend the long
+// stone STAIRCASE through the middle of the map (rows 4-12, col 5-6)
+// to reach Madame Dawn's ship at the SOUTH dock (rows 13-14). Kian
+// arrives with the King's elite to stop them. Cliff edges (Wb walls)
+// line both sides — falling off would kill anyone, so the staircase
+// is the only path down. Two stair landings (rows 7 and 10) widen
+// briefly to give cover and allow tactical maneuver.
+//
+// Victory is defeat Kian. The script's "combined strike" lands when
+// the player drops Kian's HP to zero. Lucian's death on the staircase
+// is narrated in the post arc — mechanically Lucian survives B11.
+//
+// Map exceeds viewport vertically (15 × 48 = 720 > ~588 visible) — the
+// camera scrolls. Player sees the squad on the cliff first; pans south
+// to see the ship + Kian's contingent assembling on the lower stairs.
+const Sn2 = t("stone");
+const StU = t("stone");                 // upper landing — stairs widen here
+const Mr = t("marble");                 // marble/stone polish on landings + staircase
+const Cl = t("stone", "rock");          // cliff edge — impassable
+const Wo = t("wood");                   // ship deck at the south end
+
+const cliffsRows = [
+  // rows 0-3: cliff plateau where the squad spawns coming down from Thuling road
+  [Cl, Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl, Cl],
+  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  // rows 4-6: staircase head — narrow descent begins (col 4-7 wide)
+  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
+  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
+  [Cl, Cl,  Cl,  StU, Mr, Mr, Mr, Mr, StU, Cl,  Cl,  Cl ],
+  // row 7: middle landing widens (col 2-9) — first tactical breathing room
+  [Cl, Cl,  StU, StU, Mr, Mr, Mr, Mr, StU, StU, Cl,  Cl ],
+  // rows 8-9: narrows again
+  [Cl, Cl,  Cl,  StU, Mr, Mr, Mr, Mr, StU, Cl,  Cl,  Cl ],
+  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
+  // row 10: lower landing (col 2-9) — Kian's stand
+  [Cl, Cl,  StU, StU, Mr, Mr, Mr, Mr, StU, StU, Cl,  Cl ],
+  // rows 11-12: final descent to the dock
+  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
+  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
+  // rows 13-14: ship deck — wood planks where Dawn's ship is moored
+  [Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo],
+  [Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo]
+] as const;
+
+export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", cliffsRows, {
+  // Squad spawns on the cliff plateau (north). Tight formation — they
+  // came down the Thuling road and met Kian's contingent already
+  // positioned on the staircase below them.
+  player: [
+    { x: 5, y: 1 },  // Amar (center, lead)
+    { x: 6, y: 1 },  // Lucian (right of Amar)
+    { x: 4, y: 2 },  // Maya (north-west)
+    { x: 7, y: 2 },  // Ning (north-east)
+    { x: 5, y: 3 }   // Leo (rear-center)
+  ],
+  // Kian holds the lower landing (row 10) — the squad has to come
+  // through him. Two royal guards flank him on the same landing. Two
+  // crown archers on the middle landing (row 7) firing south as the
+  // squad descends. Two royal guards on the upper-mid stairs (rows
+  // 8-9) sealing the descent so the squad can't simply rush past.
+  enemy: [
+    { x: 5,  y: 10 }, // Kian (lower landing center — tags["boss"])
+    { x: 4,  y: 10 }, // Royal Guard flanking Kian (west)
+    { x: 7,  y: 10 }, // Royal Guard flanking Kian (east)
+    { x: 3,  y: 7 },  // Crown Archer, middle landing west
+    { x: 8,  y: 7 },  // Crown Archer, middle landing east
+    { x: 5,  y: 8 },  // Royal Guard, mid-stair seal
+    { x: 6,  y: 8 }   // Royal Guard, mid-stair seal
+  ]
+});
