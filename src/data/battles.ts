@@ -20,6 +20,10 @@ import type { DialogBeat } from "../story/beats";
 //   - "adjacent_eot" (units A & B end turn melee-adjacent) — relational,
 //     fires the first time the two named units land next to each other
 //     after a turn ends. Either unit being dead suppresses the trigger.
+//   - "ally_attacks" (specific ally completes any attack) — reactive,
+//     fires the first time the named ally swings (hit, miss, or kill —
+//     outcome doesn't matter). Used for "Kian notices Amar's rehearsed
+//     technique the first time he picks up a sword in this battle."
 //   - "ally_killed_target" (specific ally lands the killing blow on a
 //     specific enemy) — payoff, fires inline in the kill resolution path.
 //   - "before_victory" — fires after the victory condition resolves to
@@ -33,9 +37,12 @@ import type { DialogBeat } from "../story/beats";
 // Dedup: each dialogue has an `id` that goes into BattleScene.firedDialogues
 // (a Set per-battle) so re-entering an already-fired trigger is a no-op.
 // IDs are scoped per battle, so collisions across battles don't matter.
+//
+// Full reference: docs/RAVAGE_DESIGN.md §3.7 "Mid-Battle Dialogue Triggers".
 export type BattleDialogueTrigger =
   | { kind: "round_start"; round: number }
   | { kind: "adjacent_eot"; unitA: string; unitB: string }
+  | { kind: "ally_attacks"; allyId: string }
   | { kind: "ally_killed_target"; allyId: string; targetId: string }
   | { kind: "before_victory" };
 
@@ -272,9 +279,16 @@ export const BATTLES: BattleNode[] = [
       // here in the swamp ambush he says it out loud for the first time.
       // Amar deflects by giving Kian a tactical instruction — taking the
       // tactical lead away from "the man who's watching me fight."
+      //
+      // Trigger fires the first time Amar swings in this battle (regardless
+      // of hit/miss/kill outcome) — Kian's "almost rehearsed" comment is
+      // reacting to Amar's combat technique, not to spatial proximity, so
+      // ally_attacks is the right cue. Earlier version was adjacent_eot
+      // which fired only when Kian and Amar happened to stand next to
+      // each other; the line landed less reliably.
       {
         id: "b04_kian_amar_test",
-        trigger: { kind: "adjacent_eot", unitA: "kian", unitB: "amar" },
+        trigger: { kind: "ally_attacks", allyId: "amar" },
         beats: [
           { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
             body: "You handled that one well, Amar. Almost rehearsed." },

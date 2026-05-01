@@ -1016,8 +1016,10 @@ export class BattleScene extends Phaser.Scene {
         if (!a || !b || !isAlive(a) || !isAlive(b)) return false;
         return this.state.grid.isMeleeAdjacent(a.state.position, b.state.position);
       }
+      case "ally_attacks":
       case "ally_killed_target":
-        // Fired inline in applyAttackEffects, never via this code path.
+        // Both fire inline in applyAttackEffects (checkAttackDialogue +
+        // checkKillDialogue), never via this code path.
         return false;
       case "before_victory":
         // Fired explicitly via findBeforeVictoryDialogue() in checkEnd,
@@ -1062,6 +1064,25 @@ export class BattleScene extends Phaser.Scene {
       if (this.firedDialogues.has(dlg.id)) continue;
       const t = dlg.trigger;
       if (t.kind === "ally_killed_target" && t.allyId === attacker.id && t.targetId === defender.id) {
+        this.fireDialogue(dlg);
+        return;
+      }
+    }
+  }
+
+  // Called from applyAttackEffects after every resolved attack (regardless
+  // of hit/miss/kill). Scans for an ally_attacks dialogue that matches the
+  // attacker and fires the first match. Used for "Kian sees Amar swing for
+  // the first time and notes how rehearsed it looks" — fires regardless
+  // of attack outcome, so the dialogue is reliable on the unit's first
+  // swing of the battle.
+  private checkAttackDialogue(attacker: Unit): void {
+    const node = battleById(this.battleId);
+    if (!node?.dialogues) return;
+    for (const dlg of node.dialogues) {
+      if (this.firedDialogues.has(dlg.id)) continue;
+      const t = dlg.trigger;
+      if (t.kind === "ally_attacks" && t.allyId === attacker.id) {
         this.fireDialogue(dlg);
         return;
       }
@@ -2049,6 +2070,12 @@ export class BattleScene extends Phaser.Scene {
       // resumes after the player advances through the dialogue.
       this.checkKillDialogue(attacker, defender);
     }
+    // Attack-based trigger fires regardless of kill outcome (hit, miss,
+    // OR kill — the kill-specific case above is its own check). Placed
+    // outside the defenderKilled block so it runs on every resolved
+    // attack, not just lethal ones. Used for character beats keyed on
+    // a unit swinging for the first time in this battle.
+    this.checkAttackDialogue(attacker);
   }
 
   // Surface an XP gain to the player: brief two-note "ding" + a small

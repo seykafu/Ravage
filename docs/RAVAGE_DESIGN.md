@@ -97,6 +97,58 @@ Tier 2 promotion adds a second ability slot — see §6.3.
   (`POTION_HEAL = 10`).
 - Use during turn for 1 AP. Item count persists across battles (saved).
 
+### 3.7 Mid-Battle Dialogue Triggers
+
+FE-style support conversations that fire during combat. Authored
+per-`BattleNode` in `src/data/battles.ts` via the `dialogues?: BattleDialogue[]`
+field; rendered by `BattleDialogueScene` (a paused-overlay variant of
+StoryScene). The `BattleDialogueTrigger` union defines all five trigger
+kinds. Each dialogue has a stable `id` for **once-per-battle dedup** —
+re-entering an already-fired trigger is a no-op (`firedDialogues` set
+on BattleScene, reset in `init()`).
+
+| Trigger | Args | Fires when | Hook |
+|---|---|---|---|
+| `round_start` | `{ round: number }` | Round counter reaches `round` (or any higher round on later checks). | `checkDialogueTriggers()` at top of `startTurn` |
+| `adjacent_eot` | `{ unitA: string; unitB: string }` | Both named units are alive AND in melee-adjacent tiles when the next unit's turn begins. Either being dead suppresses the trigger. | `checkDialogueTriggers()` at top of `startTurn` |
+| `ally_attacks` | `{ allyId: string }` | Named ally completes any attack — hit, miss, or kill, outcome doesn't matter. | `checkAttackDialogue(attacker)` inline in `applyAttackEffects` |
+| `ally_killed_target` | `{ allyId: string; targetId: string }` | Named ally lands the killing blow on the named enemy specifically. | `checkKillDialogue(attacker, defender)` inline in `applyAttackEffects`, after the XP award |
+| `before_victory` | (no args) | Victory condition resolves to `"player"` but BEFORE the EndScene transition. Dialogue plays as a paused overlay; on close, EndScene transition resumes. | `findBeforeVictoryDialogue()` in `checkEnd` before camera fade |
+
+**Choosing the right trigger:**
+
+- **Cinematic moments tied to fight pacing** → `round_start`. Maya commanding a flank in round 2; reinforcements at round 4; the fight changing tempo.
+- **Two characters happening to stand close** → `adjacent_eot`. Lucian buffering Kian off Amar's flank; Maya & Amar within one tile for a quiet line.
+- **Reactions to a character's combat** → `ally_attacks`. Kian noticing Amar's "rehearsed" technique the first time he swings.
+- **Payoff for a specific kill** → `ally_killed_target`. Amar drops the captain spearton → Lucian flags the body for the ledger search.
+- **Post-victory narrative beats** → `before_victory`. B1's capture sequence (squad mechanically wins, gets pounced).
+
+**Authoring example** (from `b04_swamp`):
+
+```ts
+dialogues: [
+  {
+    id: "b04_kian_amar_test",
+    trigger: { kind: "ally_attacks", allyId: "amar" },
+    beats: [
+      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
+        body: "You handled that one well, Amar. Almost rehearsed." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Reflex. Kian — eyes left. The archer behind the third tree." },
+      { speaker: "Kian", portraitId: "kian",
+        body: "...Right. I see him." }
+    ]
+  }
+]
+```
+
+**Adding a new trigger kind:** extend the `BattleDialogueTrigger` union
+in `src/data/battles.ts`, add a `case` to `matchesTrigger` in
+BattleScene (returning `false` if the trigger fires inline elsewhere),
+and add the inline check at the right hook point. New trigger kinds
+don't require touching BattleDialogueScene — it just renders the
+`beats[]`.
+
 ---
 
 ## 4. Progression System
