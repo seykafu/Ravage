@@ -23,7 +23,15 @@ export const MUSIC = {
 
   // Standalone single — heist/coup energy, used for the night-of-the-coup
   // story arc that briefs Amar's vanguard right before Battle 1.
-  ravageDaredevil: "music_ravage_daredevil"
+  ravageDaredevil: "music_ravage_daredevil",
+
+  // Sadness palette — used for grief beats that need a different texture
+  // than the broader "emotional" Spine cue. Sadness2 specifically scores
+  // the B1 capture sequence (Selene injured, Ranatoli pinned, Amar
+  // captured) — fades in when the before_victory dialogue starts and
+  // fades back to the previous track when EndScene transitions in.
+  sadness:  "music_sadness",
+  sadness2: "music_sadness2"
 } as const;
 export type MusicKey = (typeof MUSIC)[keyof typeof MUSIC];
 
@@ -44,7 +52,9 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.emotional,          src: "audio/Spine of the World - Emotional Scenes.mp3" },
   { key: MUSIC.everydayLife,       src: "audio/Spine of the World - Everyday.mp3" },
   { key: MUSIC.trailer,            src: "audio/Spine of the World - Trailer.mp3" },
-  { key: MUSIC.ravageDaredevil,    src: "audio/Ravage_Daredevil.mp3" }
+  { key: MUSIC.ravageDaredevil,    src: "audio/Ravage_Daredevil.mp3" },
+  { key: MUSIC.sadness,            src: "audio/Sadness.mp3" },
+  { key: MUSIC.sadness2,           src: "audio/Sadness2.mp3" }
 ];
 
 // Singleton-ish music manager. Lives across scenes via game.registry.

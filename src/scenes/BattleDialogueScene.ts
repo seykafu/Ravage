@@ -3,6 +3,7 @@ import { COLORS, FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "..
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
+import { getMusic, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import type { DialogBeat, PortraitId } from "../story/beats";
@@ -22,6 +23,16 @@ import type { DialogBeat, PortraitId } from "../story/beats";
 interface BattleDialogueArgs {
   beats: DialogBeat[];
   resumeKey: string;
+  // Optional music override. When set, the dialogue scene fades into
+  // this track on open and fades back to the previous (battle) track
+  // on close. Used by grief beats that need a different texture from
+  // the battle theme — see BattleDialogue.music in src/data/battles.ts.
+  music?: MusicKey;
+  // The track to restore on close — passed in by BattleScene since
+  // the music manager doesn't track a stack. Falls back silently if
+  // omitted (some beats may legitimately not want a restore, e.g.
+  // before_victory dialogues that hand off to EndScene's own music).
+  restoreMusic?: MusicKey;
 }
 
 // Dialog panel layout constants — mirror StoryScene's so the visual
@@ -77,6 +88,11 @@ export class BattleDialogueScene extends Phaser.Scene {
   private fullText = "";
   private currentBeatPages: string[] = [];
   private currentPageIdx = 0;
+  // Music takeover: when the dialogue specifies a `music` override, we
+  // fade into it on open and fade back to `restoreMusic` on close.
+  // Tracked across init/close so close() can restore even if create()
+  // bailed early on an empty beats array.
+  private restoreMusic?: MusicKey;
 
   constructor() { super("BattleDialogueScene"); }
 
@@ -84,6 +100,14 @@ export class BattleDialogueScene extends Phaser.Scene {
     this.resumeKey = data.resumeKey;
     this.beats = data.beats;
     this.idx = 0;
+    this.restoreMusic = data.restoreMusic;
+    // Apply the music override immediately at init() — earlier than
+    // create() so the new track is already fading in by the time the
+    // dialogue panel renders. fadeMs slightly longer than the default
+    // so the prior battle theme exits gracefully under the dim flash.
+    if (data.music) {
+      getMusic(this).play(data.music, { fadeMs: 900 });
+    }
   }
 
   create(): void {
@@ -266,6 +290,13 @@ export class BattleDialogueScene extends Phaser.Scene {
   }
 
   private close(): void {
+    // Restore the prior music if the dialogue took it over. Skipped for
+    // before_victory dialogues that hand off to EndScene (which plays
+    // its own victory/defeat sting); BattleScene declines to pass
+    // `restoreMusic` for those so we silently no-op here.
+    if (this.restoreMusic) {
+      getMusic(this).play(this.restoreMusic, { fadeMs: 700 });
+    }
     if (this.resumeKey) this.scene.resume(this.resumeKey);
     this.scene.stop();
   }

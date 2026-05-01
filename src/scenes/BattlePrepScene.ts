@@ -5,12 +5,14 @@ import { getMusic } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { battleById } from "../data/battles";
-import type { ClassKind, UnitDef, WeaponKind } from "../combat/types";
+import type { ClassKind, ItemKind, UnitDef, WeaponKind } from "../combat/types";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
+import { ITEM_CATALOG } from "../combat/items";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
+import { getAssignedInventory, loadSave } from "../util/save";
 import type { BattleId } from "../data/contentIds";
 
 interface PrepArgs { battleId: BattleId; }
@@ -154,21 +156,36 @@ export class BattlePrepScene extends Phaser.Scene {
     const players: UnitDef[] = node.buildPlayers ? node.buildPlayers() : [];
 
     // Scrollable roster region — clip rows to the panel interior.
+    // rowH bumped to 116 (was 80) to fit two new rows per character:
+    //   row 0: Name (16px)
+    //   row 1: Class · Weapon (12px)
+    //   row 2: Stat line (12px mono)
+    //   row 3: ABL — abilities (12px)         ← NEW
+    //   row 4: INV — assigned inventory (12px) ← NEW
     const listTop = rosterY + 50;
     const listBottom = rosterY + rosterH - 16;
     const listH = listBottom - listTop;
     const listLeft = rosterX + 12;
     const listW = rosterW - 24;
-    const rowH = 80;
+    const rowH = 116;
     const contentH = players.length * rowH;
     const maxScroll = Math.max(0, contentH - listH);
+
+    // Pre-load the save once so each row can read its assigned inventory
+    // without thrashing localStorage. The InventoryScene writes to
+    // assignedInventory each time the player makes a change; reopening
+    // BattlePrepScene re-reads here.
+    const saveSnapshot = loadSave();
 
     const rowsContainer = this.add.container(0, 0);
     let py = 0;
     for (const def of players) {
       const u = createUnit(def, { x: 0, y: 0 });
       const tex = ensureUnitTexture(this, u);
-      const portrait = this.add.image(rosterX + 40, listTop + py + 26, tex).setDisplaySize(48, 60);
+      // Portrait sits vertically centred on the row's top half so the
+      // name + stat block can run alongside it without overlap. Vertical
+      // centre at y=30 keeps it aligned with the top three text rows.
+      const portrait = this.add.image(rosterX + 40, listTop + py + 30, tex).setDisplaySize(48, 60);
       const nameTxt = this.add.text(rosterX + 80, listTop + py, def.name, {
         fontFamily: FAMILY_HEADING,
         fontSize: "16px",
@@ -184,7 +201,40 @@ export class BattlePrepScene extends Phaser.Scene {
         fontSize: "12px",
         color: "#9da7b8"
       });
-      rowsContainer.add([portrait, nameTxt, classTxt, statTxt]);
+      // Abilities row — full width below the stat block. "(none)" if the
+      // unit has no special abilities so the row's vertical rhythm
+      // doesn't collapse on rows where it's missing.
+      const ablLabel = def.abilities && def.abilities.length > 0
+        ? def.abilities.join(", ")
+        : "(none)";
+      const ablTxt = this.add.text(rosterX + 80, listTop + py + 60, `ABL  ${ablLabel}`, {
+        fontFamily: FAMILY_MONO,
+        fontSize: "12px",
+        color: "#a89a78"
+      });
+      // Inventory row — reads the player's assigned-inventory snapshot
+      // for this character. Tally by kind so "🧪 Potion ×3" reads more
+      // cleanly than three identical entries. "(unassigned)" prompts
+      // the player to hit the Inventory + Trade button before marching.
+      const assigned = getAssignedInventory(saveSnapshot, def.id);
+      let invLabel: string;
+      if (assigned.length === 0) {
+        invLabel = "(unassigned — visit the Inventory + Trade screen)";
+      } else {
+        const counts: Partial<Record<ItemKind, number>> = {};
+        for (const it of assigned) counts[it.kind] = (counts[it.kind] ?? 0) + 1;
+        invLabel = (Object.keys(counts) as ItemKind[])
+          .map((k) => `${ITEM_CATALOG[k].glyph} ${ITEM_CATALOG[k].name}${counts[k]! > 1 ? ` ×${counts[k]}` : ""}`)
+          .join("  ");
+      }
+      const invColor = assigned.length === 0 ? "#7a7165" : "#dad3bd";
+      const invTxt = this.add.text(rosterX + 80, listTop + py + 78, `INV  ${invLabel}`, {
+        fontFamily: FAMILY_MONO,
+        fontSize: "12px",
+        color: invColor,
+        wordWrap: { width: rosterW - 100 }
+      });
+      rowsContainer.add([portrait, nameTxt, classTxt, statTxt, ablTxt, invTxt]);
       py += rowH;
     }
 

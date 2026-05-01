@@ -225,6 +225,10 @@ export class InventoryScene extends Phaser.Scene {
       const assigned = getAssignedInventory(save, p.id);
 
       const row = this.add.container(bagX0, py);
+      // Row background — added FIRST so the slot rectangles below sit
+      // on top of it. Without this, the row bg's pointerdown listener
+      // intercepts clicks meant for the slots, breaking the
+      // click-slot-to-unassign affordance.
       const bg = this.add.rectangle(0, 0, bagW, rowH - 4, isSelected ? 0xc9b07a : 0x000000, isSelected ? 0.18 : 0.0)
         .setOrigin(0, 0)
         .setStrokeStyle(isSelected ? 2 : 0, 0xf4d999, isSelected ? 0.9 : 0)
@@ -234,8 +238,9 @@ export class InventoryScene extends Phaser.Scene {
         this.selectedCharacter = i;
         this.rebuild();
       });
+      row.add(bg);
 
-      // Name + class label
+      // Name + class label — drawn over the row bg.
       const name = this.add.text(12, 8, p.name, {
         fontFamily: FAMILY_HEADING, fontSize: "14px", color: "#f8f0d8"
       });
@@ -243,9 +248,24 @@ export class InventoryScene extends Phaser.Scene {
       const slotInfo = this.add.text(12, 28, `${slotsCount} carried`, {
         fontFamily: FAMILY_MONO, fontSize: "11px", color: "#9da7b8"
       });
+      // Hint that filled slots are clickable — sits between the name
+      // block and the slots, only shown when the row has at least one
+      // assigned item the player could remove.
+      if (assigned.length > 0) {
+        const hint = this.add.text(12, 44, "(click an item to return it to the pool)", {
+          fontFamily: FAMILY_BODY, fontSize: "10px", color: "#7a7165",
+          fontStyle: "italic"
+        });
+        row.add(hint);
+      }
+      row.add([name, slotInfo]);
 
       // Item slots — fixed grid of 5, populated left-to-right with
-      // assigned items, dotted-empty for unfilled slots.
+      // assigned items, dotted-empty for unfilled slots. Filled slots
+      // have a pointerdown handler that unassigns the item back to
+      // the pool. Slot input is registered AFTER the row bg, so
+      // Phaser's input pipeline routes clicks on a slot to the slot
+      // handler (topmost interactive object wins).
       const slotW = 36;
       const slotGap = 6;
       const slotsX0 = bagW - (MAX_INVENTORY * (slotW + slotGap)) - 4;
@@ -262,7 +282,15 @@ export class InventoryScene extends Phaser.Scene {
           const glyph = this.add.text(sx + slotW / 2, sy + slotW / 2, meta.glyph, {
             fontFamily: FAMILY_BODY, fontSize: "20px", color: "#f4d999"
           }).setOrigin(0.5);
-          slotBg.on("pointerdown", () => this.unassignItem(p.id, item.id));
+          // stopPropagation prevents the click from also firing the
+          // row bg's character-select handler — without this, clicking
+          // a slot to unassign would also reselect the character (a
+          // no-op visually but flicker-prone, and confusing if a
+          // future enhancement gives the row click a side effect).
+          slotBg.on("pointerdown", (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+            event.stopPropagation();
+            this.unassignItem(p.id, item.id);
+          });
           slotBg.on("pointerover", () => slotBg.setStrokeStyle(2, 0xff8a8a, 0.9));
           slotBg.on("pointerout", () => slotBg.setStrokeStyle(1, 0xc9b07a, 0.7));
           row.add([slotBg, glyph]);
@@ -274,7 +302,6 @@ export class InventoryScene extends Phaser.Scene {
         }
       }
 
-      row.add([bg, name, slotInfo]);
       this.bagsContainer.add(row);
       py += rowH;
     }

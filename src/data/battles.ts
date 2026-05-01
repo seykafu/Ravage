@@ -55,6 +55,13 @@ export interface BattleDialogue {
   // expression / body shape. Pagination (5 lines per page, "More ▾"
   // button) carries over from the StoryScene treatment.
   beats: DialogBeat[];
+  // Optional music override. When set, fades into this track when the
+  // dialogue opens and fades back to the battle's main music when the
+  // dialogue closes. Used for grief beats that need a different
+  // texture from the battle theme (e.g., B1's `b01_capture` switches
+  // to Sadness2 for the Selene-injured / Amar-captured sequence).
+  // BattleDialogueScene handles the fade in/out via getMusic().
+  music?: MusicKey;
 }
 
 export interface BattleNode {
@@ -144,6 +151,13 @@ export const BATTLES: BattleNode[] = [
       {
         id: "b01_capture",
         trigger: { kind: "before_victory" },
+        // Selene gets her knee folded the wrong way, Ranatoli is taken
+        // down on the carpet, Amar is hooded and dragged out — the
+        // battle theme is the wrong texture for the moment. Fade in
+        // Sadness2 for the duration of the dialogue; BattleDialogueScene
+        // restores the prior track on close so EndScene's victory sting
+        // lands on the music it expects.
+        music: MUSIC.sadness2,
         beats: [
           { portraitId: "narrator",
             body: "The last royal guard goes down hard against the third pillar from the dais. The torches gutter once and steady. For one breath the throne hall is silent and the squad believes it is over." },

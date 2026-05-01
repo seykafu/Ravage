@@ -191,10 +191,11 @@ export class BattleScene extends Phaser.Scene {
   private activeArrowTween?: Phaser.Tweens.Tween;
   private inspectedUnitId: string | null = null;
   private phaseBanner?: Phaser.GameObjects.Container;
-  // Hover tooltips for weapon and ability rows in the side panel.
+  // Hover tooltips for weapon, ability, and inventory rows in the side panel.
   private infoTooltip!: Phaser.GameObjects.Container;
   private wpnZone!: Phaser.GameObjects.Zone;
   private ablZone!: Phaser.GameObjects.Zone;
+  private invZone!: Phaser.GameObjects.Zone;
   private panelUnit?: Unit;
   // Circular headshot crop of the side-panel unit's portrait. Recreated each
   // time the panel target changes; absent when the unit has no portrait file.
@@ -486,9 +487,10 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Subtle divider + ACTIONS label sit just above the action button block.
-    // Stat block can grow to 7 lines (HP / PWR-ARM / SPD-MOV / WPN / STN / ABL
-    // / INV) ≈ 119px starting at y=272, ending near y=391. Leave breathing room.
-    this.add.text(px, 408, "ACTIONS", {
+    // Stat block can now grow to 8 lines (HP / PWR-ARM / SPD-MOV / WPN / STN /
+    // ABL / INV / EQ) ≈ 136px starting at y=272, ending near y=408 — bumped
+    // ACTIONS down by 12px so the equipment row never overlaps the header.
+    this.add.text(px, 420, "ACTIONS", {
       fontFamily: FAMILY_HEADING,
       fontSize: "11px",
       color: "#c9b07a"
@@ -549,17 +551,21 @@ export class BattleScene extends Phaser.Scene {
     this.infoTooltip.setData("body", ttBody);
     this.infoTooltip.setData("bg", ttBg);
 
-    // Hover zones over the WPN and ABL rows of statText. Position is recomputed
-    // in refreshSidePanel() each time the panel updates.
+    // Hover zones over the WPN, ABL, and INV rows of statText. Position is
+    // recomputed in refreshSidePanel() each time the panel updates.
     this.wpnZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
     this.ablZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    this.invZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
     this.wpnZone.on("pointerover", () => this.showInfoFor("weapon"));
     this.wpnZone.on("pointerout", () => this.infoTooltip.setVisible(false));
     this.ablZone.on("pointerover", () => this.showInfoFor("ability"));
     this.ablZone.on("pointerout", () => this.infoTooltip.setVisible(false));
+    this.invZone.on("pointerover", () => this.showInfoFor("inventory"));
+    this.invZone.on("pointerout", () => this.infoTooltip.setVisible(false));
     // Hidden until a unit is selected.
     this.wpnZone.disableInteractive();
     this.ablZone.disableInteractive();
+    this.invZone.disableInteractive();
 
     // Debug overlay
     this.debugText = this.add.text(20, GAME_HEIGHT - 22, "", {
@@ -1179,12 +1185,28 @@ export class BattleScene extends Phaser.Scene {
   // Mark a dialogue fired and launch BattleDialogueScene as an overlay.
   // BattleScene pauses; the dialogue scene resumes us when its Continue
   // button (or ENTER/SPACE) closes the panel.
+  //
+  // Music takeover: when the dialogue authored a `music` override,
+  // forward it along with the battle's main music as the restore
+  // target — UNLESS the trigger is `before_victory`, in which case
+  // EndScene is about to take the music over with its own sting and
+  // restoring the battle theme would just step on it. For
+  // before_victory beats, we skip restoreMusic so the dialogue's
+  // override holds until EndScene.
   private fireDialogue(dlg: BattleDialogue): void {
     this.firedDialogues.add(dlg.id);
     this.scene.pause();
+    const node = battleById(this.battleId);
+    const isBeforeVictory = dlg.trigger.kind === "before_victory";
     this.scene.run("BattleDialogueScene", {
       beats: dlg.beats,
-      resumeKey: this.scene.key
+      resumeKey: this.scene.key,
+      music: dlg.music,
+      // Only restore the battle theme if the dialogue actually took
+      // over the music AND the dialogue isn't about to hand off to
+      // EndScene. Avoids a 700ms cross-fade back to battle music
+      // immediately followed by EndScene fading it out again.
+      restoreMusic: dlg.music && !isBeforeVictory ? node?.music : undefined
     });
   }
 
@@ -1429,6 +1451,7 @@ export class BattleScene extends Phaser.Scene {
     // has the Royal Lens vs the Mask), then a single EQ line summing
     // the active passive bonuses. Both rows skipped when the bag is
     // empty.
+    let invIdx = -1;
     if (u.state.inventory.length > 0) {
       // Tally by kind so "🧪 Potion ×3" reads more cleanly than three
       // identical lines. Iteration preserves first-seen order which
@@ -1442,6 +1465,7 @@ export class BattleScene extends Phaser.Scene {
       const invStr = Object.values(counts)
         .map((c) => `${c.glyph}${c.count > 1 ? `×${c.count}` : ""}`)
         .join(" ");
+      invIdx = lines.length;
       lines.push(`INV  ${invStr}`);
       // Sum the equipment passives — only render the row when there's
       // something non-zero to report, so a unit carrying just two
@@ -1457,7 +1481,7 @@ export class BattleScene extends Phaser.Scene {
     }
     this.statText.setText(lines.join("\n"));
     this.panelUnit = u;
-    // Position the hover zones over the WPN and (optional) ABL rows. Use the
+    // Position the hover zones over the WPN, ABL, and INV rows. Use the
     // measured height per line so we stay pixel-aligned regardless of font.
     const lineH = lines.length > 0 ? this.statText.height / lines.length : 17;
     const panelTextW = PANEL_W - 24;
@@ -1470,15 +1494,25 @@ export class BattleScene extends Phaser.Scene {
       this.ablZone.setInteractive();
     } else {
       this.ablZone.disableInteractive();
-      this.infoTooltip.setVisible(false);
     }
+    if (invIdx >= 0) {
+      this.invZone.setPosition(sx, sy + invIdx * lineH).setSize(panelTextW, lineH);
+      this.invZone.setInteractive();
+    } else {
+      this.invZone.disableInteractive();
+    }
+    // Hide the tooltip on every panel refresh — pointerover from the new
+    // zones will re-show it. Without this, switching units mid-hover
+    // could leave a stale tooltip pinned to the screen.
+    this.infoTooltip.setVisible(false);
     this.refreshActiveRibbon(u);
   }
 
   // Shows the info tooltip anchored to the LEFT of the side panel, aligned
   // with whichever row the player is hovering. Content comes from the static
-  // WEAPON_INFO / ABILITY_INFO tables at the top of this file.
-  private showInfoFor(kind: "weapon" | "ability"): void {
+  // WEAPON_INFO / ABILITY_INFO tables at the top of this file, or — for
+  // inventory — the item descriptions in ITEM_CATALOG (src/combat/items.ts).
+  private showInfoFor(kind: "weapon" | "ability" | "inventory"): void {
     const u = this.panelUnit;
     if (!u) return;
     const title = this.infoTooltip.getData("title") as Phaser.GameObjects.Text;
@@ -1489,13 +1523,30 @@ export class BattleScene extends Phaser.Scene {
       if (!info) return;
       title.setText(info.title);
       body.setText(info.body);
-    } else {
+    } else if (kind === "ability") {
       if (!u.abilities || u.abilities.length === 0) return;
       const blocks = u.abilities
         .map((a) => ABILITY_INFO[a])
         .filter((info): info is { title: string; body: string } => Boolean(info))
         .map((info) => `${info.title}\n${info.body}`);
       title.setText(u.abilities.length === 1 ? (ABILITY_INFO[u.abilities[0]!]?.title ?? "Ability") : "Abilities");
+      body.setText(blocks.join("\n\n"));
+    } else {
+      // Inventory: tally by kind and render one block per kind with its
+      // description from ITEM_CATALOG. Stack count surfaces as " ×N"
+      // after the item name so the player understands their build at a
+      // glance ("Fang ×2 — +20% crit total" reads as one thought).
+      if (u.state.inventory.length === 0) return;
+      const counts: Record<string, number> = {};
+      for (const it of u.state.inventory) counts[it.kind] = (counts[it.kind] ?? 0) + 1;
+      const blocks: string[] = [];
+      for (const k of Object.keys(counts)) {
+        const meta = ITEM_CATALOG[k as keyof typeof ITEM_CATALOG];
+        const n = counts[k]!;
+        const header = `${meta.glyph} ${meta.name}${n > 1 ? ` ×${n}` : ""}`;
+        blocks.push(`${header}\n${meta.description}`);
+      }
+      title.setText(u.state.inventory.length === 1 ? "Inventory" : `Inventory (${u.state.inventory.length}/5)`);
       body.setText(blocks.join("\n\n"));
     }
     // Resize the background to fit the text dynamically — multi-ability blocks
@@ -1513,7 +1564,7 @@ export class BattleScene extends Phaser.Scene {
     void padX;
     // Anchor: open to the LEFT of the panel, vertically centred on the
     // hovered row (clamped to the visible play area).
-    const zone = kind === "weapon" ? this.wpnZone : this.ablZone;
+    const zone = kind === "weapon" ? this.wpnZone : kind === "ability" ? this.ablZone : this.invZone;
     const zy = zone.y + zone.height / 2 - h / 2;
     const x = (GAME_WIDTH - PANEL_W) - w - 12;
     const y = Phaser.Math.Clamp(zy, 80, GAME_HEIGHT - h - 12);
@@ -1664,7 +1715,7 @@ export class BattleScene extends Phaser.Scene {
 
   private buildActionButtons(u: Unit): void {
     const px = GAME_WIDTH - PANEL_W;
-    const top = 426;             // sits just under the ACTIONS label at y=408
+    const top = 438;             // sits just under the ACTIONS label at y=420
     const fullW = 256;           // panel inner width usable for buttons
     const colW = 126;            // two columns with a small gap
     const colGap = 4;
