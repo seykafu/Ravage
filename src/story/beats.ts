@@ -369,7 +369,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     title: "Camp below the monastery",
     music: "emotional",
     backdrop: "field_night_camp",
-    next: "credits",
+    next: "story:before_orinhal",
     beats: [
       N("Selene goes off the bell tower balcony with a coil of rope already in her hand. She does not look back. By the time Leo wheels his Dactyl around to the courtyard, she is gone into the high mist, and the squad is left with five bodies and a question Amar cannot answer in front of the others."),
       N("That night the camp is colder than the road. Maya takes first watch up the slope. Ning falls asleep before her stew is done. Leo checks his Dactyl's wing-leather one more time than necessary and then, finally, lies down. Lucian stays up. Amar stays up. The fire pops twice."),
@@ -394,7 +394,129 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "And Amar — tomorrow, on the climb back, walk on my shield side. I'm done covering one flank at a time.",
         promote: "lucian"
       },
-      N("(End of the playable vertical slice — chapters 1 through 7. The remaining fourteen battles are scaffolded — the full story continues through Orinhal, the ravine, the cliffs of Para, the year of travel in Grude, and the Ravage Fleet at the end of the world.)")
+      N("Tomorrow the squad climbs back down the pass to Thuling. Two days later, Fergus has another contract waiting at the keep — a tax dispute three days' ride northeast, in a mining town called Orinhal.")
+    ]
+  },
+  // -------- Pre-Battle 8 (Orinhal — the choice in the square) --------
+  // Fergus assigns the contract. The squad rides to Orinhal expecting
+  // a riot and finds a famine. The "choice" in the script — to break
+  // ranks and side with Dawn's partisans — is foreshadowed by Lucian's
+  // discomfort with the orders, made by Leo at the gate.
+  before_orinhal: {
+    id: "before_orinhal",
+    title: "Three days northeast of Thuling",
+    subtitle: "The road into Orinhal",
+    music: "danger",
+    backdrop: "orinhal",
+    next: "prep:b08_orinhal",
+    beats: [
+      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Tax riot in a mining town. Disperse the crowd, arrest the ringleaders, restore the King's peace. Routine work for soldiers of your tier." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Orinhal hasn't paid full tax in three years. It's a starvation case, not a riot." },
+      { speaker: "Fergus", portraitId: "fergus", body: "The orders aren't yours to weigh, Lucian. Disperse the crowd." },
+      N("Two days on the road. Maya rides at the back of the column without speaking, the way she always rides when she's already three steps ahead of everyone else."),
+      N("At the Orinhal gate at noon: not a riot but a famine. A hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. A green-cloaked column at the far end of the square — Madame Dawn's partisans, sent ahead to hold the line."),
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father would have had me arrest them. (a long pause) I'm not arresting anyone today." },
+      N("Leo dismounts, walks his Dactyl to the partisan side, and looks back at the squad. The squad follows.")
+    ]
+  },
+  // -------- Post-Battle 8 (Ndara's offer; Lucian's silver) --------
+  // Aftermath of Orinhal. The script's two key beats: (1) Ndara
+  // appears with Madame Dawn's invitation to meet, (2) Lucian
+  // distributes the recovered tax silver back to the townspeople.
+  // **Leo's promotion fires here** — committing to the squad's choice
+  // of conscience over orders is the moment Leo earns his Tier 2.
+  post_orinhal: {
+    id: "post_orinhal",
+    title: "After the square",
+    subtitle: "Orinhal, late afternoon",
+    music: "emotional",
+    backdrop: "orinhal",
+    next: "story:before_ravine",
+    beats: [
+      N("The tax collectors break before the squad does. Townspeople begin coming out from behind shutters and barrel stacks once the last of the King's men have run. A woman finds her husband alive at the edge of the square and they hold each other in a way the squad has to look away from."),
+      N("A figure in a gray cloak walks through the square as if she belongs there. She does not introduce herself to anyone but Amar."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral", body: "I'm Ndara. Not the bandit at the mountain village — same name, different woman, you'll get used to it. I serve a queen called Madame Dawn. She has been watching you for a long time, Amar." },
+      { speaker: "Amar", portraitId: "amar", body: "...Watching me how." },
+      { speaker: "Ndara", portraitId: "ndara", body: "She wants to meet when you're ready. She'll be ready before you are. Ride safely, all of you." },
+      N("Ndara leaves before Amar can answer. Lucian gathers the squad's contract pay into a leather sack, walks the line of foremen at the gate, and presses a coin into each man's hand on the way out."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "We were paid to put you down. We were paid wrong. That's the difference settled." },
+      // Leo's promotion fires after his choice has played out — turning
+      // his Dactyl from the King's tax detail to the partisans is the
+      // moment he earns Tier 2.
+      {
+        speaker: "Leo",
+        portraitId: "leo",
+        expression: "wounded_pride",
+        body: "I'm not riding back to the keep tonight. I'll meet you on the road home. There's something I have to do without my father's name on my back.",
+        promote: "leo"
+      },
+      N("Leo doesn't say where he's going. He's back at the campfire by midnight, his Dactyl's mantle freshly painted over with the squad's own colors instead of Fergus's heraldry.")
+    ]
+  },
+  // -------- Pre-Battle 9 (Fergus's trap) --------
+  // Fergus sends them out again before they can report Orinhal. The
+  // squad knows it's a trap. They go anyway because the alternative
+  // is admitting they don't trust the General.
+  before_ravine: {
+    id: "before_ravine",
+    title: "The same day, late",
+    subtitle: "Outside Thuling — Fergus's outrider waiting on the road",
+    music: "danger",
+    backdrop: "thuling",
+    next: "prep:b09_ravine",
+    beats: [
+      N("They don't even reach the keep. Fergus's outrider intercepts them on the road north of Orinhal with a fresh contract, sealed and dated three hours ago."),
+      { speaker: "Outrider", body: "Bandit column moving on the border village of Tharin. Twenty men, mounted. The General orders intercept and destroy. Coordinates inside the seal." },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "He's not letting us return to report Orinhal. He's keeping us moving until we miss a step." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "If we refuse, he knows we know. If we go, we go knowing." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we go knowing. Maya, you read the map for traps. Ning, full quiver. Leo, fly point. We don't get caught with our backs to anything." },
+      N("The coordinates lead to a narrow ravine an hour east. The squad rides in carefully, weapons already half-drawn. Inside thirty seconds of the river bend, an arrow lane opens from the cliffs above and the trap snaps shut behind them.")
+    ]
+  },
+  // -------- Post-Battle 9 (Lucian wounded; Maya speaks) --------
+  // Lucian takes the crossbow bolt for Ning (script-mandated, narrative
+  // injury — he keeps fighting). Maya finally identifies herself as
+  // Madame Dawn's. **Maya's and Ning's promotions fire here** — Maya's
+  // for committing to the squad as her real self instead of the
+  // peasant alias, Ning's for the moment Lucian takes a hit she would
+  // otherwise have died from.
+  post_ravine: {
+    id: "post_ravine",
+    title: "Out of the ravine",
+    subtitle: "A clearing two miles south of the trap",
+    music: "emotional",
+    backdrop: "field_night_camp",
+    next: "credits",
+    beats: [
+      N("They break contact at the ford and ride hard for an hour before stopping. Lucian takes his shirt off in the clearing without asking; the bolt is shallow but the iron has bent. Maya cuts the head out with a knife she didn't say she had until just now. Ning is the one who can't stop watching."),
+      { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. That whole lane. He pushed me into the rock." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) The lane was for whoever was standing in it. You were standing in it. Stop apologizing and finish that bandage." },
+      N("A prisoner taken at the river crossing answers a question of Maya's that she asked very quietly. He gives up Fergus by name, gives up the date the General learned about Amar's coup, and gives up the standing order to expend the squad on increasingly impossible contracts until they don't come back. The squad listens in silence. Lucian doesn't even react — he had already decided weeks ago."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "All right. I'll do this once and then we move." },
+      // Maya's promotion fires when she steps out of the alias.
+      {
+        speaker: "Maya",
+        portraitId: "maya",
+        expression: "steel_cold_confession_face",
+        body: "I'm Maya. That's true. I am not from the eastern farmland. I am an officer of Madame Dawn's, planted in this squad eleven months ago to read who Amar really was. I have read enough. Dawn is offering safe passage tonight. We ride for her harbor at dawn or we die in Thuling tomorrow. I'm sorry for the shape of the truth. I am not sorry for the answer.",
+        promote: "maya"
+      },
+      N("Nobody speaks for a long time. Lucian, of all people, smiles."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Maya. If I had a sister, I would want her to be exactly that complicated about it. We ride." },
+      // Ning's promotion fires after she processes the bolt incident —
+      // the moment she stops being the bowyer's apprentice afraid of
+      // her own draw and starts being the squad's archer who kept her
+      // line after Lucian took a hit for her.
+      {
+        speaker: "Ning",
+        portraitId: "ning",
+        expression: "focused_bow",
+        body: "If we ride for Dawn at dawn, then I'm walking the rear watch tonight. Nobody is taking another bolt for me. I learned what that feels like. I'm done being slow.",
+        promote: "ning"
+      },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we ride. Lucian — you take Mira and Tali to the cousin's farm. Catch up to us on the road." },
+      N("Lucian rides for his house at the edge of Thuling. The rest of the squad packs camp in silence and turns west."),
+      N("(End of the playable vertical slice — chapters 1 through 9. The remaining twelve battles are scaffolded — the full story continues through the streets of Thuling, the cliffs of Para, the year of travel in Grude, and the Ravage Fleet at the end of the world.)")
     ]
   }
 };

@@ -374,3 +374,113 @@ export const monasteryMap: MapDef = buildMap("monastery", "Abandoned Monastery",
     { x: 7,  y: 10 }  // Raider spearton (outer chapel funnel)
   ]
 });
+
+// ============== Battle 8 — The Town of Orinhal ==============
+// 14×11 cobblestone town square. Squad enters from the south (row 10),
+// tax collectors hold the north (rows 0–2) with a couple of hired-muscle
+// bandits posted mid-square. Scattered barricades give cover for both
+// sides — the central column at (5–8, 3–7) is the open killing ground.
+// Fits in the viewport without scrolling.
+//
+// The script's "three-sided battle" with Madame Dawn's partisans is
+// resolved narratively in the post arc (Leo's promotion beat triggers
+// the squad's choice to side with the partisans). Mechanically this
+// is a straight squad-vs-tax-collectors fight; the partisans + Ndara
+// + the silver distribution all fire in post_orinhal.
+const Cb = t("cobblestone");
+const Bd = t("cobblestone", "barricade");
+
+const orinhalRows = [
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb], // ← mid-square cover
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb]
+] as const;
+
+export const orinhalMap: MapDef = buildMap("orinhal", "Orinhal Town Square", orinhalRows, {
+  // Squad spreads across the south end of the square; civilians
+  // (off-field, narrative only) shelter behind the squad.
+  player: [
+    { x: 5,  y: 10 }, // Amar (center)
+    { x: 6,  y: 10 }, // Lucian
+    { x: 7,  y: 10 }, // Maya
+    { x: 4,  y: 9 },  // Ning
+    { x: 8,  y: 9 }   // Leo
+  ],
+  // Two royal guards + two crown archers represent the King's tax
+  // enforcement detail. Two bandit swordsmen (hired muscle) press
+  // the central square; one bandit spearton anchors the choke at row 6.
+  enemy: [
+    { x: 5,  y: 0 },  // Royal Guard, north-center left
+    { x: 8,  y: 0 },  // Royal Guard, north-center right
+    { x: 3,  y: 1 },  // Crown Archer, north-west
+    { x: 10, y: 1 },  // Crown Archer, north-east
+    { x: 4,  y: 4 },  // Hired bandit swordsman pressing west
+    { x: 9,  y: 4 },  // Hired bandit swordsman pressing east
+    { x: 6,  y: 6 }   // Bandit spearton, mid-square anchor
+  ]
+});
+
+// ============== Battle 9 — The Price of Doubt (ravine trap) ==============
+// 12×14 narrow canyon — Fergus's trap. Squad spawns mid-ravine (row 4)
+// after being ambushed; the King's regiment in disguise holds the high
+// ground at the north (rows 0–3); a river bottleneck at rows 8–9 forces
+// any escape attempt south through a single 4-tile-wide ford. Sheer
+// rock cliffs (Rk = stone+rock obstacle) line both sides, narrowing to
+// a 6-tile-wide gap at the south escape point (row 13).
+//
+// Map exceeds viewport vertically (14 × 48 = 672 > ~588 visible) — the
+// camera scrolls so the player sees the squad's predicament first and
+// has to pan up to see the entrenched enemy line.
+const Wt = t("water");
+
+const ravineRows = [
+  [SnR, SnR, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, SnR, SnR], // ← enemy high ground
+  [SnR, Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  SnR],
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],  // ← squad spawns here
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],
+  [SnR, Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  SnR],
+  [SnR, SnR, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, SnR, SnR],
+  [SnR, Sn,  Sn, Sn, Wt, Wt, Wt, Wt, Sn, Sn, Sn,  SnR], // ← river bottleneck
+  [SnR, SnR, Sn, Wt, Wt, Wt, Wt, Wt, Wt, Sn, SnR, SnR],
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],
+  [Sn,  Sn,  Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn,  Sn],
+  [Sn,  SnR, Sn, Sn, Sn, Sn, Sn, Sn, Sn, Sn, SnR, Sn],
+  [SnR, SnR, SnR, Sn, Sn, Sn, Sn, Sn, Sn, SnR, SnR, SnR] // ← south escape (gap rows 3–8)
+] as const;
+
+export const ravineMap: MapDef = buildMap("ravine", "The Price of Doubt", ravineRows, {
+  // Squad spawns mid-canyon at row 4, where the ambush hit. They have
+  // to fight back against the entrenched line OR push south through the
+  // river bottleneck to the escape gap at row 13.
+  player: [
+    { x: 4,  y: 4 }, // Amar
+    { x: 5,  y: 4 }, // Lucian
+    { x: 6,  y: 4 }, // Maya
+    { x: 7,  y: 4 }, // Ning
+    { x: 5,  y: 5 }  // Leo (rear)
+  ],
+  // King's regiment in disguise — three royal archers entrenched on
+  // the high ground (rows 0–2), two royal guards holding the line
+  // (row 2–3), two bandit-coded swordsmen pressing forward (row 5).
+  // Total 7 — same count as B7's monastery, level-bumped to reflect
+  // these being elite forces in disguise rather than rank-and-file.
+  enemy: [
+    { x: 5,  y: 0 }, // Crown Archer, top center
+    { x: 3,  y: 1 }, // Crown Archer, west
+    { x: 8,  y: 1 }, // Crown Archer, east
+    { x: 4,  y: 2 }, // Royal Guard, north line
+    { x: 7,  y: 2 }, // Royal Guard, north line
+    { x: 4,  y: 3 }, // "Bandit" swordsman pressing forward
+    { x: 7,  y: 3 }  // "Bandit" swordsman pressing forward
+  ]
+});

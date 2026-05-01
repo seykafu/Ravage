@@ -1,9 +1,9 @@
 import type { MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, palaceMap, swampMap } from "./maps";
+import { caravanMap, dawnBanditsMap, farmlandMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
-import { anyOf, defeatUnit, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
+import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
 import type { DialogBeat } from "../story/beats";
 
 // ---- Mid-battle dialogue --------------------------------------------------
@@ -447,26 +447,85 @@ export const BATTLES: BattleNode[] = [
     index: 8,
     title: "Eighth Battle",
     subtitle: "The Town of Orinhal",
-    intro: "A starving town. Tax collectors pretending to be enforcers of order. Leo decides for the squad before you can.",
-    outro: "Lucian distributes the squad's silver back to the townspeople on the way out.",
+    intro:
+      "Three days northeast. A mining town that hasn't seen its own gold in a decade. Fergus's orders were clear — disperse the crowd, arrest the ringleaders, restore the King's peace. The squad rides through the gate at noon and finds not a riot but a starving town: a hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. Then a green-cloaked column appears at the far end of the square — Madame Dawn's partisans, sent to hold the line for the townspeople. Three forces in the square. Leo dismounts without speaking and walks his Dactyl to the partisan side. The squad follows.",
+    outro:
+      "The tax collectors break before the squad does. Dawn's lieutenant — a quiet, gray-cloaked woman who introduces herself only as Ndara, not to be confused with the bandit at the mountain village — tells Amar that Madame Dawn has been watching him for a long time, and that she would like to meet him when he is ready. She leaves before Amar can answer. Lucian walks the line of bodies, gathers the squad's share of the recovered tax silver into a leather sack, and distributes it back to the townspeople on the road out.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_orinhal",
-    playable: false,
+    playable: true,
+    map: orinhalMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Two royal guards + two crown archers — the King's tax detail
+      // proper. Plus three "hired" mid-tier bandits to bulk out the
+      // line (the script implies the tax collectors had hired muscle
+      // for the inevitable resistance).
+      ENEMIES.royalGuard("orn_rg1", 801, 7),
+      ENEMIES.royalGuard("orn_rg2", 802, 7),
+      ENEMIES.royalArcher("orn_ra1", 803, 7),
+      ENEMIES.royalArcher("orn_ra2", 804, 7),
+      ENEMIES.banditSwordsman("orn_sw1", 805, 6),
+      ENEMIES.banditSwordsman("orn_sw2", 806, 6),
+      ENEMIES.banditSpearton("orn_sp1", 807, 7)
+    ],
     difficultyLabel: "Choice"
+    // Defaults to routEnemies. The Ndara meeting + silver
+    // distribution fire in the post arc regardless of damage taken.
   },
   {
     id: "b09_ravine",
     index: 9,
     title: "Ninth Battle",
     subtitle: "The Price of Doubt",
-    intro: "Fergus expended you in a ravine. Survive long enough to escape. Maya finally speaks.",
-    outro: "She was Madame Dawn's, all along. Lucian takes a crossbow bolt for Ning.",
+    intro:
+      "Word of Orinhal reaches Thuling faster than the squad can. Fergus dispatches them again before they can even report — a bandit column moving on a border village, intercept and destroy. The coordinates are a trap. The \"bandit column\" is a King's regiment dressed in commoners' clothes, waiting in a narrow ravine with prepared archer positions on the high ground and a river bottleneck cutting off the south retreat. The squad takes fire from three directions inside thirty seconds. Maya's mouth is set in a line none of them have seen before.",
+    outro:
+      "Lucian takes a crossbow bolt to the shoulder pulling Ning out of an archer's lane and keeps fighting the rest of the engagement on one good arm. By the time the squad breaks contact and clears the ravine, three things are clear: Fergus knew about the original coup all along; he has been deliberately sending the squad into harder and harder missions; and Maya is no longer pretending. She speaks for the first time as herself, not as a peasant from the eastern farmland — she was planted in the squad by Madame Dawn months ago, and Dawn is ready to bring them in from the cold. Staying in Thuling another night would be suicide.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
-    playable: false,
-    difficultyLabel: "Survival"
+    playable: true,
+    map: ravineMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.lucian(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Elite King's regiment, level-bumped to reflect "these are the
+      // best Fergus could marshal on short notice, posing as bandits."
+      // Mix of crown archers entrenched on high ground + royal guards
+      // holding the line + two "bandit" swordsmen pressing forward
+      // (the disguise muscle).
+      ENEMIES.royalArcher("rav_ra1", 901, 8),
+      ENEMIES.royalArcher("rav_ra2", 902, 8),
+      ENEMIES.royalArcher("rav_ra3", 903, 8),
+      ENEMIES.royalGuard("rav_rg1", 904, 8),
+      ENEMIES.royalGuard("rav_rg2", 905, 8),
+      ENEMIES.banditSwordsman("rav_sw1", 906, 7),
+      ENEMIES.banditSwordsman("rav_sw2", 907, 7)
+    ],
+    difficultyLabel: "Survival",
+    // The script frames this as "survive long enough to break contact
+    // and escape the ravine." Two paths to victory: rout the regiment
+    // OR get any player unit to the south escape gap (row 13). The
+    // surviveRounds(5) fallback covers the "we held them off long
+    // enough for them to break off the pursuit" reading.
+    victory: anyOf(
+      surviveRounds(5),
+      escapeToTile({ x: 6, y: 13 }, { label: "Escape south through the ford" }),
+      routEnemies
+    )
   },
   {
     id: "b10_leaving_thuling",

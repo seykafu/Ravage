@@ -1,12 +1,12 @@
 # Ravage
 
-A tactical RPG vertical slice — seven battles from a 21-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — nine battles from a 21-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
 Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
 ## Vertical slice contents
 
-Seven playable battles drawn from the larger 21-battle script:
+Nine playable battles drawn from the larger 21-battle script:
 
 | # | Title | Music |
 |---|-------|-------|
@@ -17,8 +17,10 @@ Seven playable battles drawn from the larger 21-battle script:
 | 5 | The Mountain Bandits — Ndari (first boss) | *Stronghold of Memories* |
 | 6 | The Caravan | *Spine of the World — Battle* |
 | 7 | The Ghost from Para (Selene the Swordmaster) | *Spine of the World — Battle 2* |
+| 8 | The Town of Orinhal (the choice in the square) | *Danger* |
+| 9 | The Price of Doubt (Fergus's trap, Maya's reveal) | *Danger* |
 
-Battles 8–21 exist as data stubs in the world map for narrative continuity but are not playable in the slice.
+Battles 10–21 exist as data stubs in the world map for narrative continuity but are not playable in the slice.
 
 ## Setup
 

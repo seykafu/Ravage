@@ -57,7 +57,7 @@ const CREDITS: CreditLine[] = [
   { kind: "spacer", text: "" },
   { kind: "spacer", text: "" },
 
-  { kind: "header", text: "Vertical Slice — Seven Battles" },
+  { kind: "header", text: "Vertical Slice — Nine Battles" },
   ...BATTLES.filter(b => b.playable).map((b): CreditLine => ({
     kind: "name",
     text: `Battle ${b.index} — ${b.subtitle}`
