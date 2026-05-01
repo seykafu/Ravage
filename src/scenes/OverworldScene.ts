@@ -121,6 +121,20 @@ export class OverworldScene extends Phaser.Scene {
         sfxClick();
         const b = BATTLES.find((x) => x.id === selectedId);
         if (!b) return;
+        // Defensive check: same gating as the cards. The button is
+        // disabled on locked-card hover so this branch shouldn't fire,
+        // but a future code path that enables the button should still
+        // be blocked from routing into a locked battle.
+        const isUnlocked = save.unlockedBattles.includes(b.id);
+        if (!isUnlocked) {
+          const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Locked — complete previous battles to unlock.", {
+            fontFamily: FAMILY_BODY,
+            fontSize: "16px",
+            color: "#ff9c7a"
+          }).setOrigin(0.5);
+          this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
+          return;
+        }
         if (b.playable) {
           this.scene.start("BattlePrepScene", { battleId: b.id });
         } else {
@@ -144,46 +158,84 @@ export class OverworldScene extends Phaser.Scene {
       onClick: () => this.scene.start("TitleScene")
     });
 
+    // Roster button — opens RosterScene as a paused overlay so the player
+    // can review their party's current levels / stats / abilities between
+    // battles. Sits next to the Title button at the bottom-left.
+    new Button(this, {
+      x: 196, y: GAME_HEIGHT - 56,
+      w: 140, h: 40,
+      label: "📋 Roster",
+      primary: false,
+      fontSize: 14,
+      onClick: () => {
+        sfxClick();
+        this.scene.pause();
+        this.scene.run("RosterScene", { from: this.scene.key });
+      }
+    });
+
     BATTLES.forEach((b, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = startX + col * (cardW + gapX);
       const y = startY + row * (cardH + gapY);
 
+      // Three-state cascade per battle:
+      //   - LOCKED: not in save.unlockedBattles. Player hasn't reached this
+      //     point in the story. Card visible (builds anticipation) but
+      //     darker; hover hides intro to avoid spoilers; click is no-op
+      //     with a floater explaining how to unlock.
+      //   - SCAFFOLDED: unlocked but b.playable === false. Battle is in
+      //     the data but no map/units authored yet. Hover shows intro +
+      //     "Story Scaffold ▸" affordance; click shows the existing
+      //     "scaffolded for the full story" floater.
+      //   - PLAYABLE: unlocked AND b.playable. Click enters the battle.
+      const unlocked = save.unlockedBattles.includes(b.id);
+      const playable = b.playable && unlocked;
+      const scaffolded = !b.playable && unlocked;
+      const locked = !unlocked;
+      const completed = save.completedBattles.includes(b.id) && unlocked;
+
       const cardG = this.add.graphics();
-      const playable = b.playable;
-      const completed = save.completedBattles.includes(b.id);
-      const fillTop = playable ? 0x141a2a : 0x0d0f17;
-      const fillBot = playable ? 0x070912 : 0x05060a;
+      // Color tier: playable = blue/gold, scaffolded = grey, locked = darker grey.
+      const fillTop = playable ? 0x141a2a : (scaffolded ? 0x0d0f17 : 0x07090f);
+      const fillBot = playable ? 0x070912 : (scaffolded ? 0x05060a : 0x030408);
       cardG.fillGradientStyle(fillTop, fillTop, fillBot, fillBot, 1);
       cardG.fillRect(x, y, cardW, cardH);
-      const border = playable ? 0xc9b07a : 0x4a4a52;
+      const border = playable ? 0xc9b07a : (scaffolded ? 0x4a4a52 : 0x2a2a32);
       cardG.lineStyle(1, border, 1);
       cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
 
       // index badge
+      const badgeColor = playable ? "#f4d999" : (scaffolded ? "#6a6a72" : "#3a3a42");
       const badge = this.add.text(x + 8, y + 6, `#${b.index}`, {
         fontFamily: FAMILY_HEADING,
         fontSize: "12px",
-        color: playable ? "#f4d999" : "#6a6a72"
+        color: badgeColor
       });
       // title
+      const titleColor = playable ? "#dccfa8" : (scaffolded ? "#76747a" : "#46454a");
       const t1 = this.add.text(x + cardW / 2, y + 26, b.title, {
         fontFamily: FAMILY_HEADING,
         fontSize: "13px",
-        color: playable ? "#dccfa8" : "#76747a"
+        color: titleColor
       }).setOrigin(0.5, 0);
-      const t2 = this.add.text(x + cardW / 2, y + 46, b.subtitle, {
+      // subtitle: hidden on locked battles to avoid spoilers in the grid view
+      const subColor = playable ? "#f8f0d8" : (scaffolded ? "#9a9aa0" : "#46454a");
+      const subText = locked ? "— locked —" : b.subtitle;
+      const t2 = this.add.text(x + cardW / 2, y + 46, subText, {
         fontFamily: FAMILY_BODY,
         fontSize: "13px",
-        color: playable ? "#f8f0d8" : "#9a9aa0",
+        color: subColor,
         wordWrap: { width: cardW - 16 },
-        align: "center"
+        align: "center",
+        fontStyle: locked ? "italic" : "normal"
       }).setOrigin(0.5, 0);
+      const diffColor = playable ? "#c9b07a" : (scaffolded ? "#5a5a62" : "#3a3a42");
       const t3 = this.add.text(x + cardW / 2, y + cardH - 22, b.difficultyLabel, {
         fontFamily: FAMILY_BODY,
         fontSize: "11px",
-        color: playable ? "#c9b07a" : "#5a5a62"
+        color: diffColor
       }).setOrigin(0.5, 0);
 
       if (completed) {
@@ -194,30 +246,59 @@ export class OverworldScene extends Phaser.Scene {
         });
         void dot;
       }
+      if (locked) {
+        const lockIcon = this.add.text(x + cardW - 18, y + 4, "🔒", {
+          fontFamily: FAMILY_BODY,
+          fontSize: "14px",
+          color: "#5a5a62"
+        });
+        void lockIcon;
+      }
 
-      // Hit area
+      // Hit area — locked cards are interactive (hover + click) but the
+      // hover suppresses the intro and the click shows a "locked" floater
+      // instead of routing into BattlePrepScene.
       const zone = this.add.zone(x, y, cardW, cardH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+      const hoverBorder = playable ? 0xffd97a : (scaffolded ? 0x8a8a92 : 0x4a4a52);
       zone.on("pointerover", () => {
-        cardG.lineStyle(2, playable ? 0xffd97a : 0x8a8a92, 1);
+        cardG.lineStyle(2, hoverBorder, 1);
         cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
         selectedId = b.id;
-        detailTitle.setText(`${b.title} — ${b.subtitle}`);
-        detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
-        // Full intro shown — scrollable when it overflows. setText resets
-        // scroll to the top so the player sees the start of every new
-        // hovered battle.
-        bodyHandle.setText(b.intro);
-        playBtn.setEnabled(true);
-        playBtn.setLabel(playable ? "Enter Battle ▸" : "Story Scaffold ▸");
+        if (locked) {
+          detailTitle.setText(`Battle ${b.index} — Locked`);
+          detailSub.setText("Complete previous battles to unlock");
+          bodyHandle.setText("This battle hasn't been unlocked yet. Progress through the story to reach it.");
+          playBtn.setEnabled(false);
+          playBtn.setLabel("Locked 🔒");
+        } else {
+          detailTitle.setText(`${b.title} — ${b.subtitle}`);
+          detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
+          // Full intro shown — scrollable when it overflows. setText resets
+          // scroll to the top so the player sees the start of every new
+          // hovered battle.
+          bodyHandle.setText(b.intro);
+          playBtn.setEnabled(true);
+          playBtn.setLabel(playable ? "Enter Battle ▸" : "Story Scaffold ▸");
+        }
       });
       zone.on("pointerout", () => {
         cardG.lineStyle(1, border, 1);
         cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
       });
       zone.on("pointerup", () => {
-        if (b.playable) {
+        if (playable) {
           this.scene.start("BattlePrepScene", { battleId: b.id });
+        } else if (locked) {
+          // Floater: "Locked — complete previous battles to unlock"
+          const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Locked — complete previous battles to unlock.", {
+            fontFamily: FAMILY_BODY,
+            fontSize: "16px",
+            color: "#ff9c7a"
+          }).setOrigin(0.5);
+          this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
         }
+        // Scaffolded (unlocked but unauthored) is handled by the playBtn
+        // onClick — the floater there is the same "story scaffold" message.
       });
 
       void badge; void t1; void t2; void t3;

@@ -159,15 +159,21 @@ scales tactical reach, and movement creep breaks map design.
 |---|---|---|
 | 1 (Palace Coup) | Amar (`amarHidden`) | 10 |
 | 1 | Selene, Ranatoli, the 5 unseen comrades | 10 |
-| 2+ | Amar (`amar`, post-amnesia) | 3 |
+| 2+ | Amar (`amar`, post-amnesia) | 1 |
 | 2+ | Lucian | 1 |
 | 2+ | Ning | 1 |
-| 3+ | Maya | 2 |
-| 4+ | Kian | 4 |
-| 5+ | Leo | 3 |
+| 3+ | Maya | 1 |
+| 4+ | Kian | 1 |
+| 5+ | Leo | 1 |
 
-The post-amnesia drop on Amar (10 → 3) is the script's "muscle memory
-intact, raw stats reset" framing made mechanical.
+The post-amnesia drop on Amar (10 → 1) is the script's "muscle memory
+intact, raw stats reset" framing made mechanical. From Battle 2
+onward, every character starts at L1 — the player's own progression
+decides the curve, not factory defaults. The original-8 veterans
+(Selene, Ranatoli) keep their L10 baseline because they're authored
+into Battle 1 specifically as veterans of the original coup attempt;
+when they rejoin later, the catch-up rule (§4.5) handles their
+re-integration into the current squad's level band.
 
 ### 4.5 Original-8 Catch-Up Rule
 
@@ -564,6 +570,9 @@ when revisiting tradeoffs months later.
 | 2026-04 | Vertical slice expanded 5 → 7 battles | Copy bumps in landing page (OG + section lede), README (table of playable battles), CreditsScene header, and EndScene's `isFinalPlayable` gate. post_mountain rerouted from `credits` → `before_caravan`; new end-of-slice gate is post_monastery. |
 | 2026-04 | Scrollable text panels | Long battle intros (b07's monastery briefing, ~6 wrapped lines) overflowed both the BattlePrepScene Field Brief panel and the OverworldScene battle-card hover panel. New `src/ui/scrollableText.ts` helper wraps text in a geometry-masked Container with mouse-wheel scroll + auto-show/hide gold scrollbar. Both panels migrated; OverworldScene's old "truncate to 3 lines + ellipsis" hack deleted. |
 | 2026-04 | Mid-battle dialogue framework | FE-style support conversations. New BattleDialogue types (`round_start`, `adjacent_eot`, `ally_killed_target` triggers) on BattleNode. New BattleDialogueScene (modal overlay, mirrors StoryScene panel + pagination, doesn't touch music). BattleScene checks triggers at startTurn (round + adjacency) + applyAttackEffects (kill). Starter set of 7 dialogues authored across b03/b04/b06/b07 — Maya recognizing Amar's footwork, Kian probing Amar in the swamp, Lucian buffering Kian, Maya commanding the caravan flank in round 2, Lucian flagging the captain's pouch, Lucian covering Amar at the monastery, the Amar/Selene face-to-face moment. |
+| 2026-04 | Progression-decided stats (B2+ chars start at L1) | Earlier factories pre-bumped Maya / Leo / Kian / post-amnesia Amar to L2-4 to reflect "narrative training." Per design intent the player's curve should decide character strength, not the factory. All B2+ characters now start at L1; original-8 veterans (Selene / Ranatoli) keep their L10 baseline for B1 + the catch-up rule when they rejoin. Save's CharacterRecord still overrides factory defaults on every battle after the first appearance — replays of past battles use current stats, not the L1 first-appearance numbers. |
+| 2026-04 | Battle gating in OverworldScene | Battles now have three states: locked (not in `save.unlockedBattles` — visible but darker, intro hidden, click shows "Locked — complete previous battles" floater), scaffolded (unlocked but not authored), and playable. Lock icon (🔒) on locked cards; subtitle replaced with "— locked —" so the grid view stays spoiler-free. Existing unlock-on-victory chain in BattleScene.checkEnd handles forward unlocks; loading a fresh save restricts the player to b01_palace_coup until they win it. |
+| 2026-04 | RosterScene (party-status modal) | New scene launched from the OverworldScene "📋 Roster" button. Shows every player character with a save record, in chronological-recruit order. Each row has portrait/sprite avatar, name, current class (post-promotion), level + XP-toward-next, full current stat block (HP/PWR/ARM/SPD/MOV/AP from the save, not the factory defaults), and ability list. Geometry-masked scrollable list (reuses the BattlePrepScene roster pattern). Synthesizes a fallback "amar" entry from the "amar_true" record when the player has fought B1 but not B2 — keeps the roster from being empty between those two battles. |
 
 ---
 

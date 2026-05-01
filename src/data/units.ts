@@ -41,11 +41,11 @@ export const PLAYERS = {
     palette: PLAYER_PALETTES.amar,
     portrait: true,
     abilities: ["BossFighter"],
-    // Post-amnesia Amar starts at L3 — the script's "muscle memory intact,
-    // raw stats reset" framing made mechanical. He levels back up over
-    // the course of Acts 1-2 and is expected to hit promotion at L~12+
-    // around the cliffs reveal (Battle 11).
-    level: 3,
+    // Post-amnesia Amar starts at L1 — the script's "muscle memory intact,
+    // raw stats reset" is now a true reset. The player's progression,
+    // not the factory default, decides how strong he is. The save's
+    // CharacterRecord overrides this on every battle after his first.
+    level: 1,
     growths: G_AMAR
   }),
   amarHidden: (): UnitDef => ({
@@ -110,9 +110,11 @@ export const PLAYERS = {
     palette: PLAYER_PALETTES.maya,
     portrait: true,
     abilities: ["Aide"],
-    // Maya joins mid-fight in B3 with a touch of training already; she's
-    // intentionally not a fresh recruit (Dawn planted her in the squad).
-    level: 2,
+    // Maya joins at L1 — the player's progression decides her curve, not
+    // a factory bump. (Earlier versions started her at L2 to reflect her
+    // narrative training under Dawn; that's now expressed via the
+    // catch-up rule when she joins late, not via the factory.)
+    level: 1,
     growths: G_MAYA
   }),
   leo: (): UnitDef => ({
@@ -127,9 +129,12 @@ export const PLAYERS = {
     palette: PLAYER_PALETTES.leo,
     portrait: true,
     abilities: ["Destruct", "Roam"],
-    // Fergus's son — trained as a Dactyl Rider, joins the squad in B5
-    // already capable. Mid-tier starting level.
-    level: 3,
+    // Leo joins at L1. The script casts him as Fergus's trained son but
+    // mechanically he starts where every other post-amnesia recruit
+    // starts — the player's level curve decides how strong he gets,
+    // not a factory bump. The catch-up rule applies if he joins late
+    // relative to the squad's average.
+    level: 1,
     growths: G_LEO
   }),
   ranatoli: (): UnitDef => ({
@@ -183,9 +188,9 @@ export const PLAYERS = {
     artSeed: 8,
     palette: PLAYER_PALETTES.kian,
     portrait: true,
-    // Kian is a King's man with formal training — he's a step ahead of the
-    // farm/factory recruits when he joins the squad in B4.
-    level: 4,
+    // Kian joins at L1. Same reasoning as Maya/Leo — progression is
+    // earned through play, not authored into the factory default.
+    level: 1,
     growths: G_KIAN
   })
 };
