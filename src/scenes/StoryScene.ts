@@ -398,7 +398,14 @@ export class StoryScene extends Phaser.Scene {
       this.scene.start("CreditsScene");
       return;
     }
+    if (next === "camp") {
+      this.scene.start("CampScene");
+      return;
+    }
     if (next === "overworld") {
+      // Legacy route, kept as an escape hatch for arcs that explicitly
+      // want to drop the player into the world map without going
+      // through camp. New arcs should prefer "camp".
       this.scene.start("OverworldScene");
       return;
     }

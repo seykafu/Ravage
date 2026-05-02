@@ -156,18 +156,22 @@ export class OverworldScene extends Phaser.Scene {
       }
     });
 
+    // Back to Camp — the world map is now reached FROM the camp via
+    // its "Where to Next?" hotspot, so the natural back action is to
+    // return to camp (which itself has a Title button for quitting).
+    // Camp Hub commit 1.
     new Button(this, {
       x: 40, y: GAME_HEIGHT - 56,
       w: 140, h: 40,
-      label: "◂ Title",
+      label: "◂ Camp",
       primary: false,
       fontSize: 14,
-      onClick: () => this.scene.start("TitleScene")
+      onClick: () => this.scene.start("CampScene")
     });
 
     // Roster button — opens RosterScene as a paused overlay so the player
     // can review their party's current levels / stats / abilities between
-    // battles. Sits next to the Title button at the bottom-left.
+    // battles. Sits next to the Camp button at the bottom-left.
     new Button(this, {
       x: 196, y: GAME_HEIGHT - 56,
       w: 140, h: 40,

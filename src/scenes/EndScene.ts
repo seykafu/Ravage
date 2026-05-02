@@ -154,7 +154,10 @@ export class EndScene extends Phaser.Scene {
           if (arc) {
             this.scene.start("StoryScene", { arcId: arc });
           } else {
-            this.scene.start("OverworldScene");
+            // No post arc — return to camp (the new home), not the
+            // world map directly. Player can re-open the map from the
+            // camp's signpost. Camp Hub commit 1.
+            this.scene.start("CampScene");
           }
         });
       };

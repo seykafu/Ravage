@@ -147,7 +147,10 @@ export type BackdropKey =
 //   "story:<ArcId>"   — chain into another arc
 //   "prep:<BattleId>" — open the battle-prep screen for that battle
 //   "credits"         — roll the credits scene
-//   "overworld"       — return to the overworld map
+//   "camp"            — return to the squad's camp (the new home base)
+//   "overworld"       — return to the world map directly (legacy/escape hatch;
+//                       most arcs should use "camp" so the player passes
+//                       through home before picking the next battle)
 //
 // Because BattleId and ArcId are themselves typed unions, a typo like
 // "prep:b04_swmap" (or pointing at a battle that doesn't exist) is a
@@ -156,4 +159,5 @@ export type RouteRef =
   | `story:${ArcId}`
   | `prep:${BattleId}`
   | "credits"
+  | "camp"
   | "overworld";

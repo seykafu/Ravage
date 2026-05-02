@@ -98,8 +98,11 @@ export class TitleScene extends Phaser.Scene {
         sfxConfirm();
         unlockAudio();
         this.cameras.main.fadeOut(450, 0, 0, 0);
+        // Route into the camp (the new home base), not directly to
+        // the world map. CampScene's "Where to Next?" hotspot opens
+        // the world map one click in.
         this.cameras.main.once("camerafadeoutcomplete", () =>
-          this.scene.start("OverworldScene")
+          this.scene.start("CampScene")
         );
       }
     });

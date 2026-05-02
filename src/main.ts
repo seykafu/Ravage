@@ -16,6 +16,7 @@ import { BattleDialogueScene } from "./scenes/BattleDialogueScene";
 import { RosterScene } from "./scenes/RosterScene";
 import { InterposeScene } from "./scenes/InterposeScene";
 import { InventoryScene } from "./scenes/InventoryScene";
+import { CampScene } from "./scenes/CampScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 
@@ -50,7 +51,8 @@ const config: Phaser.Types.Core.GameConfig = {
     BattleDialogueScene,
     RosterScene,
     InterposeScene,
-    InventoryScene
+    InventoryScene,
+    CampScene
   ]
 };
 

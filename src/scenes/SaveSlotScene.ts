@@ -178,7 +178,10 @@ export class SaveSlotScene extends Phaser.Scene {
     sfxConfirm();
     this.cameras.main.fadeOut(300, 0, 0, 0);
     await activateSlot(slot);
-    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
+    // Route into the camp instead of straight to the world map. The
+    // camp is the new home base — the world map is one click away
+    // via the "Where to Next?" hotspot. See CampScene.
+    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("CampScene"));
   }
 
   private async startNew(slot: SlotIndex): Promise<void> {

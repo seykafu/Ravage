@@ -278,7 +278,7 @@ export class BattlePrepScene extends Phaser.Scene {
     new Button(this, {
       x: 60, y: GAME_HEIGHT - 56,
       w: 180, h: 40,
-      label: "◂ Back to map",
+      label: "◂ Back to Map",
       primary: false,
       fontSize: 14,
       onClick: () => this.scene.start("OverworldScene")
