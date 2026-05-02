@@ -211,7 +211,43 @@ export const BATTLES: BattleNode[] = [
     // raider was wearing as intimidation. First taste of equipment for
     // the player — Lucian or Ning gets a permanent +2 MOV they can lean
     // into for B3.
-    rewards: ["potion", "potion", "potion", "mask"]
+    rewards: ["potion", "potion", "potion", "mask"],
+    dialogues: [
+      // Round 1: Lucian's tactical brief — first time the player sees
+      // him take command in a fight. Establishes his foreman voice and
+      // gives Ning a small character moment (her nerves).
+      {
+        id: "b02_lucian_tactical",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Right. Archer at the back fence first — Ning, that's yours, take her clean. Spearton in the road comes to me. Amar, hold the line at the wagons. Anyone breaks past us, the wagons get burned and the workers behind them die. Don't let anyone past." },
+          { speaker: "Ning", portraitId: "ning", expression: "startled",
+            body: "Lucian — I haven't drawn on a person before. The fences and the haybales, fine, but a person is —" },
+          { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+            body: "Then today's the day, Ning. Same draw. Same release. The arrow doesn't know what it's hitting. You do. Make it count." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "...I've got the line." }
+        ]
+      },
+      // ally_attacks Amar (first swing). Lucian privately notices something
+      // about Amar's technique — but doesn't articulate it. The player
+      // sees a one-syllable beat that primes the mystery; the full
+      // articulation lands in Kian's b04_kian_amar_test ("almost
+      // rehearsed"). This is the first crack in Amar's cover.
+      {
+        id: "b02_lucian_notices",
+        trigger: { kind: "ally_attacks", allyId: "amar" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Amar swings — once, clean, with a half-step before the strike that doesn't belong to a forge worker. Lucian sees it. Lucian does not look surprised. Lucian does not look anything." },
+          { speaker: "Lucian", portraitId: "lucian",
+            body: "...Hm." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "(quietly, to himself) ...That wasn't supposed to come out clean." }
+        ]
+      }
+    ]
   },
   {
     id: "b03_dawn_bandits",
@@ -397,7 +433,41 @@ export const BATTLES: BattleNode[] = [
     // intended cinematic ending is to drop Ndari and let the mooks scatter —
     // so victory triggers the moment Ndari falls, regardless of remaining
     // bandits. Demonstrates the new defeatUnit primitive in src/combat/Victory.ts.
-    victory: defeatUnit("ndari", { label: "Defeat Ndari" })
+    victory: defeatUnit("ndari", { label: "Defeat Ndari" }),
+    dialogues: [
+      // adjacent_eot Amar/Ndari — Ndari's stand. The script's "holding
+      // the line so his sister can run" line gets articulated when Amar
+      // reaches him at the gate. Sets up the player to understand WHY
+      // Ndari fights to the death (it's not pride, it's protection).
+      {
+        id: "b05_ndari_stand",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "ndari" },
+        beats: [
+          { speaker: "Ndari", portraitId: "ndari", expression: "grim_resolve",
+            body: "You think this is YOUR line, soldier? Look up the path. Up. There — the dactyl on the rim. That's my sister. She has thirty seconds to clear the ridge before her wing's in range. You don't get past me until she's clear. I don't care how many of you there are." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "...General Fergus called you marauders, Ndari. He didn't say anything about a sister." },
+          { speaker: "Ndari", portraitId: "ndari", expression: "knowing_smile",
+            body: "Of course he didn't. Fergus knows what we are. So does the King. Your captain just doesn't tell you. You'll figure it out. Or you won't. Either way — twenty seconds." }
+        ]
+      },
+      // before_victory — Ndari falls at the gate, Ndara escapes on the
+      // dactyl. Her shouted question lands as the player's first crack
+      // in the "Nebu's loyal soldier" framing — the same question Maya
+      // and Madame Dawn will hammer at for chapters to come.
+      {
+        id: "b05_ndara_escape",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Ndari folds at the gate. He doesn't fall — he sits down with his back against the post and watches the path. The remaining bandits scatter into the snow. On the rim, a dactyl beats its wings once and is suddenly thirty feet up, wheeling east toward the pass. Its rider stops. Hovers. Looks down at the squad in the broken square." },
+          { speaker: "Ndara", portraitId: "ndari", expression: "grim_resolve",
+            body: "(shouted, over the wing-beats) WHY ARE YOU FIGHTING ON NEBU'S SIDE, AMAR! ASK YOUR CAPTAIN WHO HE WORKS FOR! ASK HIM WHO ORDERED THE FOURTH HARVEST!" },
+          { portraitId: "narrator",
+            body: "She doesn't wait for an answer. The dactyl wheels and is gone behind the ridge in three wing-beats. The squad stands in the cold. Lucian, beside Amar, doesn't say anything. Lucian sees Amar's face do the thing it does. Lucian files it away." }
+        ]
+      }
+    ]
   },
   {
     id: "b06_caravan",
@@ -616,9 +686,51 @@ export const BATTLES: BattleNode[] = [
     // Lens is the spotter's, the Mask is from the captain's kit. The
     // squad now has TWO royal-issue items — visible material proof
     // they're fighting the King's own forces, not bandits.
-    rewards: ["royal_lens", "mask", "potion"]
+    rewards: ["royal_lens", "mask", "potion"],
     // Defaults to routEnemies. The Ndara meeting + silver
     // distribution fire in the post arc regardless of damage taken.
+    dialogues: [
+      // Round 2: Leo's declaration. The script's "Leo dismounts and
+      // walks his Dactyl to the partisan side" beat made mechanical —
+      // happens after round 1 has committed everyone, the squad has
+      // realized this isn't a riot, and the choice is in the air.
+      // Foreshadows the squad's collective side-take in post_orinhal.
+      {
+        id: "b08_leo_declaration",
+        trigger: { kind: "round_start", round: 2 },
+        beats: [
+          { portraitId: "narrator",
+            body: "Round two. The first wave of arrows has stopped. The town's foremen are still standing in the square between the squad and the King's tax detail. None of them have moved. None of them have run. They are watching the fight to see what kind of soldiers Anthros sends." },
+          { speaker: "Leo", portraitId: "leo", expression: "ready",
+            body: "Captain. I'm dismounting. The dactyl walks to the partisan side. The squad is welcome to follow. I'll explain to my father later. Or I won't. Either's fine." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
+            body: "Lad — your father sent you with US. You break ranks here, you don't get to go back to him." },
+          { speaker: "Leo", portraitId: "leo", expression: "resolute",
+            body: "I know, Lucian. The townspeople behind us are unarmed. The tax men in front of us are not. I know which side I'm on. The rest of you do what you have to." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "(after a beat) ...The squad's with you, Leo. Lucian — pivot the line. We're fighting south now." }
+        ]
+      },
+      // adjacent_eot Maya/Leo — quieter character moment after the
+      // pivot. Maya's the only one who isn't surprised by Leo's call.
+      // Foreshadows that she's been reading the squad for months.
+      {
+        id: "b08_maya_leo_aside",
+        trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "leo" },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "(quietly, between strikes) Leo. That call. You'd been thinking about it for weeks." },
+          { speaker: "Leo", portraitId: "leo", expression: "ready",
+            body: "Since the last village. The one Fergus told us was 'noncompliant.' I went back the next day on patrol. There was nothing left to be noncompliant. You knew?" },
+          { speaker: "Maya", portraitId: "maya",
+            body: "I read your face when we got the briefing. Same face Lucian made. You've both been waiting for an excuse. Today's the day." },
+          { speaker: "Leo", portraitId: "leo", expression: "ready",
+            body: "...How do YOU read faces like that, exactly?" },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "(half-smile, no answer) Watch your west flank, Leo. There's a spearton coming around the barricade." }
+        ]
+      }
+    ]
   },
   {
     id: "b09_ravine",
@@ -673,7 +785,45 @@ export const BATTLES: BattleNode[] = [
     // "regiment" was royal. Strong loadout for the final B9 → endgame
     // gap because the squad's about to be on the run with no
     // restock for several chapters.
-    rewards: ["elixir", "elixir", "royal_lens", "royal_lens", "fang"]
+    rewards: ["elixir", "elixir", "royal_lens", "royal_lens", "fang"],
+    dialogues: [
+      // Round 1: the trap snaps shut. The squad realizes inside thirty
+      // seconds that Fergus set them up. Sets the tone for everything
+      // that follows in the post arc.
+      {
+        id: "b09_trap_snaps",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { portraitId: "narrator",
+            body: "Three crossbow bolts hit the rocks behind Lucian inside the first thirty seconds. They're not from one direction. They're from three. The 'bandit column' Fergus described is on the rim, in the trees, behind the river. Royal kit, royal discipline, royal everything. The 'commoners' clothes' are draped over the chainmail." },
+          { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+            body: "These aren't bandits. Lucian — TOP RIM, three archers, entrenched. Crown gear under the cloaks. This is a regiment. We were sent into a regiment." },
+          { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
+            body: "Fergus." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "...He set us up. He sent us here to die." },
+          { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+            body: "Then we don't. South, through the ford. Hold five rounds, then break contact." }
+        ]
+      },
+      // Round 3: Maya's preview. The full reveal lands in post_ravine,
+      // but a mid-fight beat where she half-tells Amar primes the
+      // player for it. Maya's "Amar — when this is done, we need to
+      // talk" is the kind of in-fight aside that sticks because it
+      // happens IN the danger.
+      {
+        id: "b09_maya_preview",
+        trigger: { kind: "round_start", round: 3 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "Amar. When we clear this ravine. We need to talk. I should have told you in Thuling. I didn't. I'm sorry. The reason I didn't is the same reason we're getting out of here alive — but you need to hear it from me, not from Fergus's body when we get back to camp." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "...When we clear this ravine, Maya. Not before. I can't lose focus." },
+          { speaker: "Maya", portraitId: "maya",
+            body: "Agreed. South ford. We move." }
+        ]
+      }
+    ]
   },
   // ============== Battle 10 — Leaving Thuling ==============
   // Kian's blockade. Squad's been ordered out of Thuling by Madame
@@ -910,7 +1060,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Reveal"
+    difficultyLabel: "Reveal",
+    // Spoils: Dawn's people resupply the squad after the colony reveal.
+    // 3 elixirs from the Grude infirmary + 1 royal lens (a Grude-issue
+    // optic Khione gifts as a gesture of welcome — strictly better than
+    // anything the squad carries from Anthros).
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
   },
   {
     id: "b13_dawn_rebellion",
@@ -923,7 +1078,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Heart"
+    difficultyLabel: "Heart",
+    // Spoils: modest because the night ends in grief. 2 elixirs from
+    // Rose's medical kit + a Fang she carried — the squad keeps it as
+    // a memorial. Dawn explicitly does not let the squad take more
+    // than this; the field is hers to mourn.
+    rewards: ["elixir", "elixir", "fang"]
   },
   {
     id: "b14_origin",
@@ -936,7 +1096,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Reveal"
+    difficultyLabel: "Reveal",
+    // Spoils: a single Royal Lens — Khione gives Amar his birth
+    // father's old optic as proof the parentage claim is real.
+    // Mechanically a strong piece of equipment; narratively the
+    // weight of it lands on Amar before any combat use.
+    rewards: ["royal_lens"]
   },
   {
     id: "b15_inner_coup",
@@ -949,7 +1114,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Intrigue"
+    difficultyLabel: "Intrigue",
+    // Spoils: the traitor's confiscated kit. 2 elixirs + 1 mask + 1
+    // fang. Dawn lets the squad keep all of it because none of her
+    // remaining officers want to wear a dead traitor's gear.
+    rewards: ["elixir", "elixir", "mask", "fang"]
   },
   {
     id: "b16_proposal",
@@ -962,7 +1131,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Choice"
+    difficultyLabel: "Choice",
+    // Spoils: a single Royal Lens, ceremonially presented. Dawn
+    // gives Amar the lens her own father wore — a gift signaling
+    // her commitment to the proposal. The squad can equip it on
+    // anyone but the narrative weight is Amar's.
+    rewards: ["royal_lens"]
   },
   {
     id: "b17_lie",
@@ -975,7 +1149,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Reveal"
+    difficultyLabel: "Reveal",
+    // Spoils: 2 potions + 1 fang from a confrontation with Dawn's
+    // intelligence officers — the squad takes what they can carry
+    // out of the proverbial side door. Modest because the squad is
+    // exiting Dawn's hospitality whether they like it or not.
+    rewards: ["potion", "potion", "fang"]
   },
   // ---- B18: Seven Paths divergence point -------------------------------------
   // The pivotal narrative beat — Amar chooses what kind of person he's
@@ -993,7 +1172,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Pivotal"
+    difficultyLabel: "Pivotal",
+    // Spoils: 3 elixirs + 1 royal lens. Last "neutral" reward set
+    // before the path-specific openers branch the loadouts in B19.
+    // The squad outfits for whatever comes next.
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
   },
   // ---- B19: Path-specific openers (one per Seven Path) -----------------------
   // Only the chosen path's chapter is visible / playable. Each opener
@@ -1010,7 +1193,10 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Vengeance · Opener"
+    difficultyLabel: "Vengeance · Opener",
+    // Vengeance loadout — kill harder. Two Fangs (the nephew's
+    // ceremonial daggers, kept by Selene as trophies).
+    rewards: ["fang", "fang", "potion"]
   },
   {
     id: "b19_path_opener_restoration",
@@ -1023,7 +1209,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
     playable: false,
-    difficultyLabel: "Restoration · Opener"
+    difficultyLabel: "Restoration · Opener",
+    // Restoration loadout — village gifts. The villagers contribute
+    // what they have: 3 potions from the dispensary + 2 masks (the
+    // courier's pair, traditionally given to a returning lord).
+    rewards: ["potion", "potion", "potion", "mask", "mask"]
   },
   {
     id: "b19_path_opener_revolution",
@@ -1036,7 +1226,10 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Revolution · Opener"
+    difficultyLabel: "Revolution · Opener",
+    // Revolution loadout — burn it down. Two Fangs from the granary
+    // guards + the captain's Royal Lens (Maya keeps it pointedly).
+    rewards: ["fang", "fang", "royal_lens"]
   },
   {
     id: "b19_path_opener_duty",
@@ -1049,7 +1242,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Duty · Opener"
+    difficultyLabel: "Duty · Opener",
+    // Duty loadout — military precision. Standard officer kit: 1
+    // royal lens + 1 mask + 2 potions. The quartermaster gives Amar
+    // exactly what regulations specify, no more.
+    rewards: ["royal_lens", "mask", "potion", "potion"]
   },
   {
     id: "b19_path_opener_exile",
@@ -1062,7 +1259,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_cliffs",
     playable: false,
-    difficultyLabel: "Exile · Opener"
+    difficultyLabel: "Exile · Opener",
+    // Exile loadout — survival only. 3 elixirs from the assassins'
+    // packs (they came prepared to take a long time killing him).
+    // No equipment — Amar carries no signature gear on this path.
+    rewards: ["elixir", "elixir", "elixir"]
   },
   {
     id: "b19_path_opener_mercy",
@@ -1075,7 +1276,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Mercy · Opener"
+    difficultyLabel: "Mercy · Opener",
+    // Mercy loadout — heal others. Heavy on consumables, light on
+    // weapons. The fort's medical stores reorganized into a
+    // hospital give the squad 4 elixirs + 2 potions, no equipment.
+    rewards: ["elixir", "elixir", "elixir", "elixir", "potion", "potion"]
   },
   {
     id: "b19_path_opener_forgetting",
@@ -1088,7 +1293,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
     playable: false,
-    difficultyLabel: "Forgetting · Opener"
+    difficultyLabel: "Forgetting · Opener",
+    // Forgetting loadout — minimal. The squad leaves a single
+    // potion at the cottage door alongside the sword. Mechanically
+    // brutal; narratively the point.
+    rewards: ["potion"]
   },
   // ---- B20-B22: Shared mid-finale (path-flavoured cutscenes only) -----------
   // The world is at war by this point regardless of path; everyone fights
@@ -1105,7 +1314,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: 3 elixirs + 1 royal lens. First major engagement of
+    // the war proper — the squad earns a real haul from a battlefield
+    // they actually controlled at the end.
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
   },
   {
     id: "b21_archbold_advances",
@@ -1118,7 +1331,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: siege prep — 2 potions + 1 mask + 1 fang. A mixed
+    // haul because the engagement was a probing skirmish, not a
+    // decisive battle; the squad collects what they can carry.
+    rewards: ["potion", "potion", "mask", "fang"]
   },
   {
     id: "b22_grude_burns",
@@ -1131,7 +1348,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Heart"
+    difficultyLabel: "Heart",
+    // Spoils: 4 potions + 1 elixir, salvaged from the burning
+    // upper district's apothecaries. Heavy on consumables because
+    // the next engagements are coming fast and the squad needs
+    // bandages more than weapons.
+    rewards: ["potion", "potion", "potion", "potion", "elixir"]
   },
   // ---- B23-B24: Path-specific climax pair -----------------------------------
   // These fire as different battles per chosen path; ids stay constant
@@ -1150,7 +1372,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: 2 elixirs + 1 fang. First climactic test of the
+    // chosen path; rewards are consistent across paths but the
+    // narrative around them flexes per path.
+    rewards: ["elixir", "elixir", "fang"]
   },
   {
     id: "b24_path_climax_b",
@@ -1163,7 +1389,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: 2 elixirs + 1 royal lens. Symmetric to B23's haul
+    // (one Lens vs B23's Fang) — last loadout chance before the
+    // Ravage fleet arrives. The bell ringing at the end of B24 is
+    // also the last quiet moment in the campaign.
+    rewards: ["elixir", "elixir", "royal_lens"]
   },
   // ---- B25-B27: Shared penultimate — the Ravage fleet arrives ---------------
   // The off-world fleet's descent is the same threat across all paths;
@@ -1181,7 +1412,13 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: alien-tech salvage. 2 elixirs + 1 royal lens + 1
+    // fang — the lens and fang are recovered from the Ravage
+    // landing craft and are notably better-made than anything the
+    // squad has carried. Mechanically the same; narratively the
+    // squad realizes the enemy is more advanced.
+    rewards: ["elixir", "elixir", "royal_lens", "fang"]
   },
   {
     id: "b26_coastal_hold",
@@ -1194,7 +1431,10 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: 3 elixirs + 1 mask. Defense battle, casualties on
+    // both sides — the squad takes what they need to keep moving.
+    rewards: ["elixir", "elixir", "elixir", "mask"]
   },
   {
     id: "b27_orbital_descent",
@@ -1207,7 +1447,12 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: heaviest haul yet — 4 elixirs + 1 fang + 1 royal
+    // lens. The squad strips what they can carry off the
+    // commander's elite escort. Outfits the squad for the path-
+    // specific final battle in B28.
+    rewards: ["elixir", "elixir", "elixir", "elixir", "fang", "royal_lens"]
   },
   // ---- B28-B30: Path-specific finale + epilogue -----------------------------
   {
@@ -1221,7 +1466,13 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
-    difficultyLabel: "Final Boss"
+    difficultyLabel: "Final Boss",
+    // Spoils: the campaign's last big haul — 5 elixirs + 1 mask +
+    // 1 royal lens. Carries the squad through B29's cleanup.
+    // The narrative around what gets carried out flexes per path
+    // (Vengeance: Archbold's signet ring; Restoration: the
+    // throne crown; Mercy: the surrendered sword).
+    rewards: ["elixir", "elixir", "elixir", "elixir", "elixir", "mask", "royal_lens"]
   },
   {
     id: "b29_aftermath",
@@ -1234,7 +1485,11 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: false,
-    difficultyLabel: "Climactic"
+    difficultyLabel: "Climactic",
+    // Spoils: 2 elixirs + 1 royal lens. Cleanup engagement,
+    // modest haul — the squad isn't fighting for resources at
+    // this point, they're fighting to close the door.
+    rewards: ["elixir", "elixir", "royal_lens"]
   },
   {
     id: "b30_epilogue",
