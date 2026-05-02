@@ -195,20 +195,22 @@ const uiEntries: ManifestEntry[] = [
 // graphics CampScene draws procedurally. Missing files silently fall
 // back to the procedural draw paths (renderWagon / renderCampfire).
 //
-// To upgrade either:
-//   - Wagon: drop a single transparent PNG at public/assets/camp/wagon.png
-//     (recommended ~400×300, painted with sundown lighting baked in).
-//   - Fire:  drop a horizontal spritesheet at public/assets/camp/fire.png
-//     containing 4 frames, each 96×96 (so total dimensions 384×96).
-//     CampScene will load it as a Phaser spritesheet and play the
-//     animation at ~6fps.
+// CURRENT ASSETS (shipped in public/assets/camp/):
+//   wagon.png  — 1536×1024 single transparent PNG, painted covered wagon.
+//                CampScene auto-scales to fit the wagon footprint.
+//   fire.png   — 1536×1024 horizontal spritesheet, 4 frames at 384×1024
+//                each (frames laid out left-to-right). CampScene loads
+//                this and plays a 6fps loop. Each frame's actual fire
+//                content occupies the bottom-center quarter of its
+//                384×1024 cell — CampScene scales the sprite down so
+//                the visible fire reads at ~150-180px tall in the camp.
 //
-// The frame size for `camp:fire` MUST match the dimensions in the
-// generated spritesheet; if you change the size in your prompt,
-// update the frame block here too.
+// If you regenerate either asset at different dimensions, update the
+// frame block below to match — Phaser slices the spritesheet using
+// the exact pixel dimensions registered here.
 const campEntries: ManifestEntry[] = [
   { id: "camp:wagon", path: "assets/camp/wagon.png", kind: "image" },
-  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 96, h: 96 } }
+  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 384, h: 1024 } }
 ];
 
 export const MANIFEST: ManifestEntry[] = [

@@ -35,6 +35,14 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   fps: { target: 60, forceSetTimeOut: false },
   scene: [
+    // Page scenes — register first so overlay scenes (added below)
+    // render ON TOP of them. Phaser draws scenes in array order;
+    // later-added scenes have higher render priority. Camp Hub
+    // commit shipped CampScene at the END of the array, which made
+    // its overlay launches (BattleDialogueScene for character idle
+    // talk, RosterScene, InventoryScene) render BEHIND the camp
+    // and disappear. Fixed by moving CampScene up here with the
+    // other "page" scenes.
     BootScene,
     TitleScene,
     IntroVideoScene,
@@ -42,17 +50,20 @@ const config: Phaser.Types.Core.GameConfig = {
     SaveSlotScene,
     StoryScene,
     OverworldScene,
+    CampScene,
     BattlePrepScene,
     BattleScene,
     EndScene,
     CreditsScene,
+    // Overlay scenes — register last so they render ON TOP of any
+    // active page scene. Each is launched via scene.run() while the
+    // launcher is paused via scene.pause().
     SettingsScene,
     PromotionScene,
     BattleDialogueScene,
     RosterScene,
     InterposeScene,
-    InventoryScene,
-    CampScene
+    InventoryScene
   ]
 };
 

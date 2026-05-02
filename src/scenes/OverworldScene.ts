@@ -53,6 +53,24 @@ export class OverworldScene extends Phaser.Scene {
 
     const save = loadSave();
 
+    // Dedupe BATTLES by index for the grid display. The 7 B19
+    // path-opener variants (b19_path_opener_vengeance / restoration /
+    // revolution / duty / exile / mercy / forgetting) all share
+    // index=19 — showing all 7 as separate cards would (a) push the
+    // grid to 5 rows and overlap the detail panel below, and (b)
+    // confuse the player by showing 7 identical "Battle 19" cards
+    // before they've even reached the path divergence at B18.
+    // Picking the FIRST entry per index gives one canonical card
+    // per chapter number; the actual path routing happens at click
+    // time once Seven Paths gating ships in a future commit.
+    const visibleBattles: typeof BATTLES = [];
+    const seenIndexes = new Set<number>();
+    for (const b of BATTLES) {
+      if (seenIndexes.has(b.index)) continue;
+      seenIndexes.add(b.index);
+      visibleBattles.push(b);
+    }
+
     const detailG = this.add.graphics();
     const detailX = 40;
     const detailY = 510;
@@ -185,7 +203,7 @@ export class OverworldScene extends Phaser.Scene {
       }
     });
 
-    BATTLES.forEach((b, i) => {
+    visibleBattles.forEach((b, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = startX + col * (cardW + gapX);

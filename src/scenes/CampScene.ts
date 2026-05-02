@@ -214,10 +214,12 @@ export class CampScene extends Phaser.Scene {
     halo.setBlendMode(Phaser.BlendModes.ADD);
 
     if (hasAsset("camp:fire")) {
-      // Real pixel-art animation — register the anim once per scene
-      // (idempotent via key check), play it on the sprite. Frame
-      // dimensions match the manifest's frame block (96×96, 4 frames
-      // arranged horizontally → spritesheet 384×96).
+      // Real pixel-art animation. Frame dimensions match the manifest
+      // (384×1024, 4 frames arranged horizontally → spritesheet
+      // 1536×1024). Each frame's actual fire content sits in the
+      // bottom-center quarter of its 384×1024 cell, so we scale the
+      // sprite down by ~7× and anchor by the bottom so the fire's
+      // base lands on the stone ring rather than floating above it.
       const animKey = "camp_fire_loop";
       if (!this.anims.exists(animKey)) {
         this.anims.create({
@@ -227,8 +229,12 @@ export class CampScene extends Phaser.Scene {
           repeat: -1
         });
       }
-      const sprite = this.add.sprite(cx, cy + 4, "camp:fire");
-      sprite.setOrigin(0.5);
+      // Scale: target visible fire ~180px tall. Frame is 1024 tall but
+      // the fire content is roughly the bottom half (~512px), so
+      // scale ~= 180 / 512 ≈ 0.35. Width auto-scales proportionally.
+      const sprite = this.add.sprite(cx, cy + 40, "camp:fire");
+      sprite.setOrigin(0.5, 1); // bottom-center anchor
+      sprite.setScale(0.35);
       sprite.play(animKey);
       return sprite;
     }
