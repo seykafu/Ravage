@@ -315,6 +315,23 @@ export const BACKDROPS = {
     hasFire: true,
     ridges: 2
   },
+  // Warmer cousin of field_night_camp — used by CampScene as the
+  // squad's home base backdrop. Sundown amber + warm hill silhouettes
+  // so the camp reads as "home fire" rather than "tense bivouac." The
+  // hasFire flag adds the bottom-edge orange glow that becomes the
+  // base of the campfire CampScene paints on top.
+  campHome: {
+    sky: 0x2c1a14,
+    glow: 0xefa45a,
+    far: 0x3a2818,
+    mid: 0x241510,
+    near: 0x0e0806,
+    ground: 0x2a1c12,
+    seed: 13250,
+    hasFire: true,
+    hasFog: true,
+    ridges: 3
+  },
   rusty_house: {
     sky: 0x2a1a10,
     glow: 0xc88a52,
