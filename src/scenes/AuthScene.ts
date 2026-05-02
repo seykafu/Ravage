@@ -4,7 +4,7 @@ import { TextInput } from "../ui/TextInput";
 import { drawPanel } from "../ui/Panel";
 import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
-import { isAuthEnabled, signIn, signUp, currentUser } from "../auth/session";
+import { isAuthEnabled, signIn, signUp, currentUser, resendConfirmation, resetPassword } from "../auth/session";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
 
 type Mode = "signin" | "signup";
@@ -45,11 +45,12 @@ export class AuthScene extends Phaser.Scene {
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.7, 0.7, 0.92, 0.92);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Panel
+    // Panel — height bumped 380 → 460 to fit the Resend confirmation
+    // and Forgot password links added in the email-confirmation fix.
     const panelW = 480;
-    const panelH = 380;
+    const panelH = 460;
     const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = 160;
+    const panelY = 130;
     const pg = this.add.graphics();
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
@@ -94,17 +95,21 @@ export class AuthScene extends Phaser.Scene {
       onSubmit: () => this.submit()
     });
 
-    // Status (errors / info)
-    this.statusText = this.add.text(GAME_WIDTH / 2, panelY + 264, "", {
+    // Status (errors / info). Larger word-wrap room and a max of
+    // ~5 lines so the friendly error messages from session.ts can
+    // breathe ("Your email isn't confirmed yet. Check your inbox..."
+    // wraps to 3-4 lines at this font size).
+    this.statusText = this.add.text(GAME_WIDTH / 2, panelY + 260, "", {
       fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#d05a4a",
       align: "center",
-      wordWrap: { width: panelW - 72 }
+      wordWrap: { width: panelW - 72 },
+      lineSpacing: 4
     }).setOrigin(0.5, 0);
 
     // Submit + toggle buttons
-    const btnRowY = panelY + 308;
+    const btnRowY = panelY + 348;
     this.submitBtn = new Button(this, {
       x: panelX + 36,
       y: btnRowY,
@@ -126,6 +131,25 @@ export class AuthScene extends Phaser.Scene {
       fontSize: 14,
       onClick: () => this.toggleMode()
     });
+
+    // Recovery links — text-only "buttons" below the action row.
+    // Forgot password works in any mode; Resend confirmation only
+    // makes sense in signin mode (when the user has an unconfirmed
+    // account they can't log into). Both read the email field, so
+    // the user fills in their email first and then clicks the link.
+    this.renderTextLink(
+      panelX + 36,
+      panelY + panelH - 36,
+      "Resend confirmation email",
+      () => this.handleResendConfirmation()
+    );
+    this.renderTextLink(
+      panelX + panelW - 36,
+      panelY + panelH - 36,
+      "Forgot password?",
+      () => this.handleForgotPassword(),
+      /* alignRight */ true
+    );
 
     // Skip-to-offline button below the panel
     this.guestBtn = new Button(this, {
@@ -219,10 +243,20 @@ export class AuthScene extends Phaser.Scene {
     }
 
     sfxConfirm();
-    if (this.mode === "signup" && !result.user) {
-      // Email confirmation is enabled in Supabase — no immediate session.
+
+    // Email-confirmation gate. Earlier code checked `!result.user`
+    // here, but Supabase returns a user object even for unconfirmed
+    // accounts — only the SESSION is missing. session.ts now sets
+    // `needsEmailConfirmation` based on the actual session check, so
+    // we never let an unconfirmed user think they're signed in.
+    // Without this fix, the user would proceed past AuthScene with
+    // a "user" but no session, then be unable to sign back in next
+    // visit because the account exists but is unconfirmed.
+    if (this.mode === "signup" && result.needsEmailConfirmation) {
       this.statusText.setColor("#c9b07a");
-      this.statusText.setText("Account created. Check your inbox to confirm, then sign in.");
+      this.statusText.setText(
+        "Account created! Check your inbox for the confirmation link from Supabase, then come back here and sign in. (Check spam if you don't see it within a minute.)"
+      );
       this.mode = "signin";
       this.applyMode();
       return;
@@ -230,6 +264,74 @@ export class AuthScene extends Phaser.Scene {
 
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("SaveSlotScene"));
+  }
+
+  // Re-send the confirmation email for an account that was created
+  // but never confirmed. Reads the email field; surfaces clear
+  // success / failure messaging in the status line.
+  private async handleResendConfirmation(): Promise<void> {
+    if (this.busy) return;
+    const email = this.emailInput.value().trim();
+    if (!email || !email.includes("@")) {
+      this.fail("Type your email above first, then click Resend.");
+      return;
+    }
+    this.busy = true;
+    this.statusText.setColor("#c9b07a");
+    this.statusText.setText("Sending confirmation email…");
+    const result = await resendConfirmation(email);
+    this.busy = false;
+    if (!result.ok) {
+      this.fail(result.error ?? "Couldn't resend the confirmation email.");
+      return;
+    }
+    sfxConfirm();
+    this.statusText.setColor("#c9b07a");
+    this.statusText.setText(`Confirmation email sent to ${email}. Check your inbox (and spam folder).`);
+  }
+
+  // Send a password reset email. Supabase hosts the actual reset
+  // flow; the user clicks the link in their inbox and changes their
+  // password on Supabase's hosted page, then comes back here to
+  // sign in with the new password.
+  private async handleForgotPassword(): Promise<void> {
+    if (this.busy) return;
+    const email = this.emailInput.value().trim();
+    if (!email || !email.includes("@")) {
+      this.fail("Type your email above first, then click Forgot password.");
+      return;
+    }
+    this.busy = true;
+    this.statusText.setColor("#c9b07a");
+    this.statusText.setText("Sending password reset link…");
+    const result = await resetPassword(email);
+    this.busy = false;
+    if (!result.ok) {
+      this.fail(result.error ?? "Couldn't send the reset link.");
+      return;
+    }
+    sfxConfirm();
+    this.statusText.setColor("#c9b07a");
+    this.statusText.setText(`Reset link sent to ${email}. Click it, set a new password, then come back to sign in.`);
+  }
+
+  // Render a text-only "link" — small underlined text with a click
+  // handler. Used for the recovery affordances (Resend confirmation,
+  // Forgot password) below the main action row. Cheaper visual
+  // weight than a Button so the user knows these are secondary.
+  private renderTextLink(x: number, y: number, label: string, onClick: () => void, alignRight = false): void {
+    const t = this.add.text(x, y, label, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "12px",
+      color: "#c9b07a",
+      fontStyle: "italic"
+    }).setOrigin(alignRight ? 1 : 0, 0).setInteractive({ useHandCursor: true });
+    t.on("pointerover", () => t.setColor("#f4d999"));
+    t.on("pointerout", () => t.setColor("#c9b07a"));
+    t.on("pointerdown", () => {
+      sfxClick();
+      onClick();
+    });
   }
 
   private fail(msg: string): void {
