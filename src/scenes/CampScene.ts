@@ -12,6 +12,7 @@ import { SettingsButton } from "../ui/SettingsButton";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import type { UnitDef } from "../combat/types";
+import { resolveCampBeat } from "../data/campTalk";
 
 // CampScene — the squad's home base between battles.
 //
@@ -340,10 +341,29 @@ export class CampScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     // Click hotspot — a transparent zone over the sprite. Opens a
-    // stub talk modal in commit 2; commit 3 wires up CampTalkScene
-    // with portraits + paginated dialogue per chapter.
-    this.attachHotspot(x - 36, y - 80, 72, 100, () => this.showCharacterStub(def));
+    // BattleDialogueScene overlay with the character's resolved
+    // idle line. Reusing BattleDialogueScene avoids a redundant
+    // scene; the styling (paused-overlay portrait + dim parent
+    // showing through) translates perfectly to "click on Amar at
+    // the fire."
+    this.attachHotspot(x - 36, y - 80, 72, 100, () => this.openCharacterTalk(def.id));
     void sprite;
+  }
+
+  // Resolve the character's current-era idle line, then pause the
+  // camp and run BattleDialogueScene as a single-beat overlay.
+  // BattleDialogueScene's resume contract returns control here when
+  // the player clicks Continue — same flow the in-battle dialogues
+  // use, no new plumbing needed.
+  private openCharacterTalk(characterId: string): void {
+    sfxClick();
+    const save = loadSave();
+    const beat = resolveCampBeat(characterId, save.completedBattles);
+    this.scene.pause();
+    this.scene.run("BattleDialogueScene", {
+      beats: [beat],
+      resumeKey: this.scene.key
+    });
   }
 
   // Shared hotspot helper — adds a transparent interactive zone +
@@ -556,48 +576,6 @@ export class CampScene extends Phaser.Scene {
       label: "Close",
       primary: false,
       fontSize: 13,
-      onClick: () => {
-        dim.destroy(); pg.destroy(); title.destroy(); body.destroy(); closeBtn.destroy();
-      }
-    });
-  }
-
-  // Stub character-talk modal. Commit 3 replaces this with a proper
-  // CampTalkScene that mirrors BattleDialogueScene's portrait-+-paginated
-  // dialogue treatment. For commit 2 the click registers + the player
-  // gets a placeholder line so the affordance is honest.
-  private showCharacterStub(def: UnitDef): void {
-    sfxClick();
-    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.65).setInteractive();
-    const panelW = 480;
-    const panelH = 200;
-    const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = GAME_HEIGHT - panelH - 60;
-    const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
-    const title = this.add.text(panelX + 24, panelY + 18, def.name, {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "20px",
-      color: "#f4d999"
-    });
-    const body = this.add.text(panelX + 24, panelY + 56,
-      `(${def.name} looks up from the fire.)\n\n"...\"\n\n— Idle dialogue ships in a future update. Each character will have a state-aware line per chapter.`,
-      {
-        fontFamily: FAMILY_BODY,
-        fontSize: "13px",
-        color: "#dad3bd",
-        wordWrap: { width: panelW - 48 },
-        lineSpacing: 5
-      }
-    );
-    const closeBtn = new Button(this, {
-      x: panelX + panelW - 100 - 16,
-      y: panelY + panelH - 44,
-      w: 100,
-      h: 32,
-      label: "Close",
-      primary: false,
-      fontSize: 12,
       onClick: () => {
         dim.destroy(); pg.destroy(); title.destroy(); body.destroy(); closeBtn.destroy();
       }
