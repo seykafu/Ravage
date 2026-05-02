@@ -191,6 +191,26 @@ const uiEntries: ManifestEntry[] = [
   { id: "ui:button_hover", path: "assets/ui/button_hover.png", kind: "image" }
 ];
 
+// Camp props — optional PNG / spritesheet overrides for the painted
+// graphics CampScene draws procedurally. Missing files silently fall
+// back to the procedural draw paths (renderWagon / renderCampfire).
+//
+// To upgrade either:
+//   - Wagon: drop a single transparent PNG at public/assets/camp/wagon.png
+//     (recommended ~400×300, painted with sundown lighting baked in).
+//   - Fire:  drop a horizontal spritesheet at public/assets/camp/fire.png
+//     containing 4 frames, each 96×96 (so total dimensions 384×96).
+//     CampScene will load it as a Phaser spritesheet and play the
+//     animation at ~6fps.
+//
+// The frame size for `camp:fire` MUST match the dimensions in the
+// generated spritesheet; if you change the size in your prompt,
+// update the frame block here too.
+const campEntries: ManifestEntry[] = [
+  { id: "camp:wagon", path: "assets/camp/wagon.png", kind: "image" },
+  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 96, h: 96 } }
+];
+
 export const MANIFEST: ManifestEntry[] = [
   ...portraitEntries,
   ...unitAnimEntries,
@@ -198,7 +218,8 @@ export const MANIFEST: ManifestEntry[] = [
   ...tileEntries,
   ...obstacleEntries,
   ...vfxEntries,
-  ...uiEntries
+  ...uiEntries,
+  ...campEntries
 ];
 
 // --------- Runtime check: is a given asset id loaded? ------------------------

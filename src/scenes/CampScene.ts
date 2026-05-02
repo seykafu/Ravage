@@ -13,6 +13,7 @@ import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import type { UnitDef } from "../combat/types";
 import { resolveCampBeat } from "../data/campTalk";
+import { hasAsset } from "../assets/manifest";
 
 // CampScene — the squad's home base between battles.
 //
@@ -112,9 +113,11 @@ export class CampScene extends Phaser.Scene {
 
     // ---- Bottom strip: Roster + Memories Wall -----------------------------
     // Two compact panels for the lighter actions that don't deserve
-    // a full painted prop. Sit below the tableau but above the
-    // footer so they don't crowd the campfire visually.
-    const stripY = 580;
+    // a full painted prop. Bumped from y=580 to y=548 so the strip
+    // doesn't crowd the Title button at GAME_HEIGHT-56 (664). Sits
+    // ~26px below the character labels (which end ~y=522) and
+    // leaves ~36px of breath above the Title button.
+    const stripY = 548;
     this.renderStripPanel(80, stripY, 360, 80,
       "📋 The Roster",
       "Review levels, stats, and abilities for every soul in the squad.",
@@ -164,13 +167,15 @@ export class CampScene extends Phaser.Scene {
 
   // ---- Painted props -------------------------------------------------------
 
-  // Pulsing campfire — central anchor of the tableau. Tweened scale
-  // gives the impression of flicker without any actual particle
-  // system. Cheap and on-brand with the procedural-painting house style.
-  // Returns the glow object so the caller can stagger its fade-in
-  // timing alongside other props.
-  private renderCampfire(cx: number, cy: number): Phaser.GameObjects.Graphics {
-    // Stone ring at the fire's base
+  // Pulsing campfire — central anchor of the tableau. Prefers the
+  // animated pixel-art spritesheet at assets/camp/fire.png (4 frames,
+  // 96×96 each) when loaded; falls back to a procedural pulsing glow
+  // so the scene stays usable until the asset ships. The outer warm
+  // halo is drawn in either case to spill firelight onto the
+  // surrounding ground.
+  private renderCampfire(cx: number, cy: number): Phaser.GameObjects.GameObject {
+    // Stone ring at the fire's base — drawn in both paths so the
+    // animated sprite has something to sit in.
     const stones = this.add.graphics();
     stones.fillStyle(0x3a2a1c, 1);
     for (let i = 0; i < 8; i++) {
@@ -182,7 +187,37 @@ export class CampScene extends Phaser.Scene {
     stones.fillStyle(0x2a1a10, 1);
     stones.fillEllipse(cx, cy + 28, 100, 28);
 
-    // Fire glow — additive-blended orange disc + tween.
+    // Soft outer halo of warm light spilling onto the ground —
+    // additive-blended orange disc, drawn under both paths so the
+    // fire reads as illuminating the camp regardless of which
+    // version renders.
+    const halo = this.add.graphics();
+    halo.fillStyle(0xefa45a, 0.18);
+    halo.fillCircle(cx, cy + 12, 120);
+    halo.setBlendMode(Phaser.BlendModes.ADD);
+
+    if (hasAsset("camp:fire")) {
+      // Real pixel-art animation — register the anim once per scene
+      // (idempotent via key check), play it on the sprite. Frame
+      // dimensions match the manifest's frame block (96×96, 4 frames
+      // arranged horizontally → spritesheet 384×96).
+      const animKey = "camp_fire_loop";
+      if (!this.anims.exists(animKey)) {
+        this.anims.create({
+          key: animKey,
+          frames: this.anims.generateFrameNumbers("camp:fire", { start: 0, end: 3 }),
+          frameRate: 6,
+          repeat: -1
+        });
+      }
+      const sprite = this.add.sprite(cx, cy + 4, "camp:fire");
+      sprite.setOrigin(0.5);
+      sprite.play(animKey);
+      return sprite;
+    }
+
+    // Procedural fallback — additive-blended orange disc + scale/
+    // alpha tween. Same look as before the asset slot existed.
     const glow = this.add.graphics();
     glow.fillStyle(0xff7a2a, 0.55);
     glow.fillCircle(cx, cy + 8, 36);
@@ -198,13 +233,6 @@ export class CampScene extends Phaser.Scene {
       duration: 700,
       ease: "Sine.easeInOut"
     });
-
-    // Soft outer ring of warm light spilling onto the ground
-    const halo = this.add.graphics();
-    halo.fillStyle(0xefa45a, 0.18);
-    halo.fillCircle(cx, cy + 12, 120);
-    halo.setBlendMode(Phaser.BlendModes.ADD);
-
     return glow;
   }
 
@@ -226,33 +254,49 @@ export class CampScene extends Phaser.Scene {
   }
 
   // The wagon — clickable hotspot that opens the inventory + trade
-  // screen. Painted as a wood-box silhouette with a canvas top.
+  // screen. Prefers the painted PNG at assets/camp/wagon.png when
+  // loaded; falls back to a procedural wood-box silhouette so the
+  // scene stays usable until the asset ships.
   private renderWagon(cx: number, cy: number, onClick: () => void): void {
-    const w = 200;
-    const h = 130;
-    const g = this.add.graphics();
-    // Wagon body — dark wood
-    g.fillStyle(0x3a2818, 1);
-    g.fillRect(cx - w / 2, cy - h / 2, w, h - 24);
-    g.lineStyle(2, 0x5a3e22, 1);
-    g.strokeRect(cx - w / 2, cy - h / 2, w, h - 24);
-    // Canvas top (rounded with a simple arc)
-    g.fillStyle(0xc9b07a, 0.92);
-    g.fillEllipse(cx, cy - h / 2 + 4, w, 50);
-    g.lineStyle(2, 0x9a8458, 1);
-    g.strokeEllipse(cx, cy - h / 2 + 4, w, 50);
-    // Wheels
-    g.fillStyle(0x1a0e04, 1);
-    g.fillCircle(cx - w / 2 + 22, cy + h / 2 - 22, 16);
-    g.fillCircle(cx + w / 2 - 22, cy + h / 2 - 22, 16);
-    g.fillStyle(0x5a3e22, 1);
-    g.fillCircle(cx - w / 2 + 22, cy + h / 2 - 22, 6);
-    g.fillCircle(cx + w / 2 - 22, cy + h / 2 - 22, 6);
+    const w = 240;
+    const h = 200;
 
-    this.add.text(cx, cy - h / 2 + 8, "📦", {
-      fontFamily: FAMILY_BODY, fontSize: "32px"
-    }).setOrigin(0.5);
-    this.add.text(cx, cy + h / 2 + 12, "Wagon — Inventory + Trade", {
+    if (hasAsset("camp:wagon")) {
+      // Real painted asset — display centered at (cx, cy), scaled to
+      // fit the same hotspot footprint the procedural draw uses so
+      // the click target is consistent regardless of asset choice.
+      const img = this.add.image(cx, cy, "camp:wagon");
+      // Scale to fit within w×h while preserving aspect ratio.
+      const tex = this.textures.get("camp:wagon").getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+      const sx = w / (tex.width || w);
+      const sy = h / (tex.height || h);
+      const scale = Math.min(sx, sy);
+      img.setScale(scale);
+    } else {
+      // Procedural fallback — wood box + canvas top + wheels.
+      const fbW = 200;
+      const fbH = 130;
+      const g = this.add.graphics();
+      g.fillStyle(0x3a2818, 1);
+      g.fillRect(cx - fbW / 2, cy - fbH / 2, fbW, fbH - 24);
+      g.lineStyle(2, 0x5a3e22, 1);
+      g.strokeRect(cx - fbW / 2, cy - fbH / 2, fbW, fbH - 24);
+      g.fillStyle(0xc9b07a, 0.92);
+      g.fillEllipse(cx, cy - fbH / 2 + 4, fbW, 50);
+      g.lineStyle(2, 0x9a8458, 1);
+      g.strokeEllipse(cx, cy - fbH / 2 + 4, fbW, 50);
+      g.fillStyle(0x1a0e04, 1);
+      g.fillCircle(cx - fbW / 2 + 22, cy + fbH / 2 - 22, 16);
+      g.fillCircle(cx + fbW / 2 - 22, cy + fbH / 2 - 22, 16);
+      g.fillStyle(0x5a3e22, 1);
+      g.fillCircle(cx - fbW / 2 + 22, cy + fbH / 2 - 22, 6);
+      g.fillCircle(cx + fbW / 2 - 22, cy + fbH / 2 - 22, 6);
+      this.add.text(cx, cy - fbH / 2 + 8, "📦", {
+        fontFamily: FAMILY_BODY, fontSize: "32px"
+      }).setOrigin(0.5);
+    }
+
+    this.add.text(cx, cy + h / 2 + 4, "Wagon — Inventory + Trade", {
       fontFamily: FAMILY_HEADING,
       fontSize: "13px",
       color: "#f4d999",
@@ -260,10 +304,13 @@ export class CampScene extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
 
-    this.attachHotspot(cx - w / 2, cy - h / 2 - 10, w, h + 20, onClick);
+    this.attachHotspot(cx - w / 2, cy - h / 2, w, h + 20, onClick);
   }
 
   // The signpost — clickable hotspot that opens the world map.
+  // No glyph on the sign board itself (the user explicitly asked to
+  // remove the map icon — kept the label below clean too: "Go to
+  // Map" is enough framing for what the affordance does).
   private renderSignpost(cx: number, cy: number, onClick: () => void): void {
     const g = this.add.graphics();
     // Pole
@@ -271,16 +318,18 @@ export class CampScene extends Phaser.Scene {
     g.fillRect(cx - 4, cy - 10, 8, 140);
     g.lineStyle(2, 0x1a0e04, 1);
     g.strokeRect(cx - 4, cy - 10, 8, 140);
-    // Sign board
+    // Sign board — bare wood with a darker grain stripe so it reads
+    // as a signpost without any glyph pinned to it.
     g.fillStyle(0x5a3e22, 1);
     g.fillRoundedRect(cx - 50, cy - 40, 100, 50, 4);
     g.lineStyle(2, 0x1a0e04, 1);
     g.strokeRoundedRect(cx - 50, cy - 40, 100, 50, 4);
+    // Subtle grain — two horizontal darker lines across the board
+    g.lineStyle(1, 0x3a2818, 0.6);
+    g.lineBetween(cx - 44, cy - 24, cx + 44, cy - 24);
+    g.lineBetween(cx - 44, cy - 8, cx + 44, cy - 8);
 
-    this.add.text(cx, cy - 15, "🗺", {
-      fontFamily: FAMILY_BODY, fontSize: "24px"
-    }).setOrigin(0.5);
-    this.add.text(cx, cy + 150, "Where to Next?", {
+    this.add.text(cx, cy + 150, "Go to Map", {
       fontFamily: FAMILY_HEADING,
       fontSize: "13px",
       color: "#f4d999",
