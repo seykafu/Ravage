@@ -84,11 +84,9 @@ export class CampScene extends Phaser.Scene {
     // memorial spot anchors the bottom-left when fallen exist.
     this.renderCampfire(640, 380);
     this.renderWagon(280, 290, () => this.openWagon(save.completedBattles));
-    this.renderSignpost(990, 320, () => {
-      sfxClick();
-      this.cameras.main.fadeOut(350, 0, 0, 0);
-      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
-    });
+    // Signpost prop removed — replaced with the top-right "Go to Map"
+    // button below. Frees up the right half of the camp's middle band
+    // for character sprites when the squad expands past 6.
     // Memorial spot only renders when at least one character has
     // fallen (post-cliffs in the current slice; future commits will
     // surface scripted character deaths from later chapters too).
@@ -150,6 +148,25 @@ export class CampScene extends Phaser.Scene {
         sfxClick();
         this.cameras.main.fadeOut(300, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("TitleScene"));
+      }
+    });
+
+    // Top-right action: "Go to Map". Replaces the signpost prop —
+    // sits in the corner so the camp's middle band stays clear for
+    // character sprites. Settings gear sits to the right of it so
+    // the corner cluster reads as "scene controls" together.
+    new Button(this, {
+      x: GAME_WIDTH - 80 - 160,
+      y: 24,
+      w: 160,
+      h: 36,
+      label: "🗺 Go to Map",
+      primary: true,
+      fontSize: 14,
+      onClick: () => {
+        sfxClick();
+        this.cameras.main.fadeOut(350, 0, 0, 0);
+        this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
       }
     });
 
@@ -307,38 +324,9 @@ export class CampScene extends Phaser.Scene {
     this.attachHotspot(cx - w / 2, cy - h / 2, w, h + 20, onClick);
   }
 
-  // The signpost — clickable hotspot that opens the world map.
-  // No glyph on the sign board itself (the user explicitly asked to
-  // remove the map icon — kept the label below clean too: "Go to
-  // Map" is enough framing for what the affordance does).
-  private renderSignpost(cx: number, cy: number, onClick: () => void): void {
-    const g = this.add.graphics();
-    // Pole
-    g.fillStyle(0x3a2818, 1);
-    g.fillRect(cx - 4, cy - 10, 8, 140);
-    g.lineStyle(2, 0x1a0e04, 1);
-    g.strokeRect(cx - 4, cy - 10, 8, 140);
-    // Sign board — bare wood with a darker grain stripe so it reads
-    // as a signpost without any glyph pinned to it.
-    g.fillStyle(0x5a3e22, 1);
-    g.fillRoundedRect(cx - 50, cy - 40, 100, 50, 4);
-    g.lineStyle(2, 0x1a0e04, 1);
-    g.strokeRoundedRect(cx - 50, cy - 40, 100, 50, 4);
-    // Subtle grain — two horizontal darker lines across the board
-    g.lineStyle(1, 0x3a2818, 0.6);
-    g.lineBetween(cx - 44, cy - 24, cx + 44, cy - 24);
-    g.lineBetween(cx - 44, cy - 8, cx + 44, cy - 8);
-
-    this.add.text(cx, cy + 150, "Go to Map", {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "13px",
-      color: "#f4d999",
-      stroke: "#1a0e04",
-      strokeThickness: 3
-    }).setOrigin(0.5);
-
-    this.attachHotspot(cx - 60, cy - 50, 120, 220, onClick);
-  }
+  // (renderSignpost removed — "Go to Map" lives as a top-right
+  // corner button now so the camp's middle band stays clear for
+  // character sprites as the squad expands past 6.)
 
   // Memorial spot — only renders when fallen characters exist.
   // One small stone marker per fallen name, with the name carved
@@ -535,20 +523,87 @@ export class CampScene extends Phaser.Scene {
 
   // Anchored positions for character sprites around the fire. Layout
   // changes by squad size so 1-character posts look intentional and
-  // 6-character posts don't crowd. Fire is at (640, 380); these
-  // positions sit on a rough arc south of the fire so faces orient
-  // toward it.
+  // big-squad posts don't crowd or overlap props.
+  //
+  // Spatial budget (informs the per-count layouts below):
+  //   * Wagon footprint — x=160-400, y=190-390. Characters can
+  //     sit BELOW the wagon (y >= 430) at any x, but shouldn't
+  //     overlap horizontally if positioned at the wagon's y.
+  //   * Fire stones — x=580-700, y=380-440. Characters' top edge
+  //     at y=fy-80 enters this zone if fy <= 520; positioning
+  //     directly south of the fire is the canonical look.
+  //   * Strip panels (Roster + Memories Wall) — y=548-628. Front-
+  //     row character labels sit at y=fy+12, so fy=510 puts the
+  //     label at 522 with 26px to the strip top — comfortable.
+  //   * Title button — y=664. ~36px below the strip's bottom edge.
+  //
+  // SQUAD-SIZE LAYOUTS:
+  //   1-6: single arc south of the fire. Center characters slightly
+  //        forward (fy + 20-30) so the arc curves toward the fire.
+  //   7-8: wider single arc. Spacing tightens; arc curves less.
+  //   9-10: two rows. Front row (5 characters at fy+10) takes
+  //         priority for the new joiners; back row (4-5 characters
+  //         at fy-30) takes the originals + later additions. Back-
+  //         row sprites sit BEHIND the front row visually but the
+  //         click hotspots layer correctly because back-row is
+  //         rendered first.
+  //
+  // BACK ROW + FIRE COLLISION:
+  //   The fire's stone ring extends from x=580 to x=700 at y=380-440.
+  //   Back row at y=480 (sprite top y=400) would clip the fire's
+  //   stones if positioned at x=580-700. To avoid this, the back row
+  //   layouts skip the x=580-700 band — characters sit either side
+  //   of the fire (3 left of x=560, 2-3 right of x=720), with the
+  //   front row covering the central x band.
+  //
+  // BEYOND 10 CHARACTERS:
+  //   Not designed for. The campaign tops out around 10 active
+  //   members per the script. If we ever exceed that, the next
+  //   layout step is a third row OR scrolling the camp horizontally.
   private characterPositions(count: number): { x: number; y: number }[] {
-    const fy = 510; // baseline ground line for character sprites
+    const fy = 510; // baseline ground line for the front row
+    const fyBack = 480; // back-row baseline (sprite top y=400, ~30px above front)
+
     const layouts: Record<number, { x: number; y: number }[]> = {
       1: [{ x: 640, y: fy }],
       2: [{ x: 580, y: fy }, { x: 700, y: fy }],
       3: [{ x: 540, y: fy }, { x: 640, y: fy + 20 }, { x: 740, y: fy }],
       4: [{ x: 500, y: fy }, { x: 600, y: fy + 20 }, { x: 700, y: fy + 20 }, { x: 800, y: fy }],
       5: [{ x: 460, y: fy }, { x: 560, y: fy + 20 }, { x: 660, y: fy + 30 }, { x: 760, y: fy + 20 }, { x: 860, y: fy }],
-      6: [{ x: 440, y: fy }, { x: 530, y: fy + 20 }, { x: 620, y: fy + 30 }, { x: 700, y: fy + 30 }, { x: 790, y: fy + 20 }, { x: 880, y: fy }]
+      6: [{ x: 440, y: fy }, { x: 530, y: fy + 20 }, { x: 620, y: fy + 30 }, { x: 700, y: fy + 30 }, { x: 790, y: fy + 20 }, { x: 880, y: fy }],
+      // Single-row stretches — tighten spacing as count grows.
+      7: [
+        { x: 410, y: fy }, { x: 490, y: fy + 15 }, { x: 570, y: fy + 25 },
+        { x: 640, y: fy + 30 },
+        { x: 710, y: fy + 25 }, { x: 790, y: fy + 15 }, { x: 870, y: fy }
+      ],
+      8: [
+        { x: 380, y: fy }, { x: 460, y: fy + 12 }, { x: 540, y: fy + 22 }, { x: 610, y: fy + 28 },
+        { x: 680, y: fy + 28 }, { x: 750, y: fy + 22 }, { x: 830, y: fy + 12 }, { x: 910, y: fy }
+      ],
+      // Two-row layouts. Back row STRADDLES the fire (3 left, 2 right
+      // for 9; 3 left, 3 right for 10) — never sits in the x=580-700
+      // band where the fire's stone ring is. Front row takes 5 spots
+      // across the full arc.
+      9: [
+        // Back row (4 — left+right of fire, none center)
+        { x: 380, y: fyBack }, { x: 460, y: fyBack }, { x: 760, y: fyBack }, { x: 840, y: fyBack },
+        // Front row (5 — full arc south of fire)
+        { x: 420, y: fy + 10 }, { x: 530, y: fy + 25 }, { x: 640, y: fy + 30 },
+        { x: 750, y: fy + 25 }, { x: 860, y: fy + 10 }
+      ],
+      10: [
+        // Back row (5 — 3 left of fire, 2 right; the asymmetry
+        // mirrors how the squad usually clusters around someone
+        // talking on the right)
+        { x: 360, y: fyBack }, { x: 440, y: fyBack }, { x: 520, y: fyBack },
+        { x: 760, y: fyBack }, { x: 840, y: fyBack },
+        // Front row (5)
+        { x: 400, y: fy + 10 }, { x: 510, y: fy + 25 }, { x: 620, y: fy + 30 },
+        { x: 730, y: fy + 25 }, { x: 840, y: fy + 10 }
+      ]
     };
-    return layouts[Math.min(6, Math.max(1, count))] ?? [];
+    return layouts[Math.min(10, Math.max(1, count))] ?? [];
   }
 
   private resolvePlayerFactory(id: string): (() => UnitDef) | undefined {
