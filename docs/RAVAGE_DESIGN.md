@@ -842,6 +842,7 @@ when revisiting tradeoffs months later.
 | 2026-05 | Battle rewards + in-battle inventory display | Closes the inventory loop. Without rewards the squad pool only shrinks (consumables get burned in battle, trading just shuffles existing items). New `BattleNode.rewards: ItemKind[]` field; minted into the squad pool in `BattleScene.checkEnd` on victory before `returnInventoriesToPool`. Each playable battle (B1-B9) authors a thematic reward set tied to the chapter — B5 Mountain drops Ndari's war-trophy Mask, B6 Caravan drops the bandit captain's royal-issue Lens (ties to the ledger reveal), B9 Ravine drops a Dawn-issue Fang from the lieutenant (early hint not all enemies were royal). EndScene shows a "Spoils:" line with kind-aware tallying. Side panel `INV` row now shows glyphs + stack counts (`🧪×3 🎭`) instead of comma-separated names; new `EQ` row sums active equipment passives (`+2 MOV, +10% CRIT`); attack preview tooltip adds `Eq` line + RAVAGED badges so the player understands why their numbers shift. |
 | 2026-05 | B10 (Leaving Thuling) + B11 (The Cliffs) authored — first half closes | Two playable battles closing out the first half of the campaign. **B10 — Leaving Thuling**: 16×11 cobblestone street, Kian's blockade outside Lucian's house. New `ENEMIES.kian` factory (mirrors `ENEMIES.selene` pattern: distinct id `kian_enemy`, shared portrait, boss tag, `holdPositionUntil { allyCount: 2 }`). Victory is `escapeToTile` to the west edge OR full rout — playable to either resolution. Three mid-battle dialogues (`b10_kian_blockade` round 1, `b10_kian_amar_first_words` adjacent_eot, `b10_kian_promise` before_victory). Rewards: 2 elixirs + 1 royal lens. **B11 — The Cliffs**: 12×15 vertical cliff-face map with stone staircase down to Madame Dawn's ship (camera scrolls vertically). `defeatUnit("kian_enemy")` victory. Round 1 dialogue is the colony-truth reveal — Anthros is a colony of Grude, the empire across the sea, the worldbuilding pivot of the first half. Two more dialogues (`b11_kian_amar_face` adjacent_eot, `b11_kian_falls` before_victory). Rewards: 3 elixirs + 1 fang + 1 royal lens + 1 mask (large haul to outfit the squad for the long Grude crossing). Four new arcs (`before_leaving_thuling`, `post_leaving_thuling`, `before_cliffs`, `post_cliffs`); post_ravine.next rerouted from `credits` to `story:before_leaving_thuling`. Lucian's death lands in `post_cliffs` as a quiet cabin scene + sea burial — mechanically he survives B11 (no in-battle character permadeath plumbing required); narratively he dies in the post arc. New slice end is post_cliffs; `EndScene.isFinalPlayable` gate moved from `b09_ravine` to `b11_cliffs`. RosterScene's ACTIVE_ROSTER updated: B10 drops Kian (he's the boss), B11 drops Lucian (post-cliffs the squad is four — Amar, Ning, Maya, Leo — until the Grude rejoinings begin). README + index.html copy bumped from "9 battles, 21-chapter story" to "11 battles, 30-chapter story." |
 | 2026-05 | Dialogue passes for B2/B5/B8/B9 + reward sets for B12-B30 | Filled the four flat playable battles with mid-battle dialogues so the slice reads as uniformly hand-crafted instead of "rich on some, mechanical on others." **B2 Farmland** — Lucian's tactical brief at round 1 (Ning's first kill nerves, Amar's "I've got the line"); Lucian's silent "...Hm." on Amar's first swing — first crack in Amar's cover, primes Kian's later "almost rehearsed" beat at B4. **B5 Mountain** — Ndari's stand at the gate ("look up the path; that's my sister; you don't get past me until she's clear"), Ndara's escape on the dactyl with the shouted question "WHY ARE YOU FIGHTING ON NEBU'S SIDE?" — first crack in the loyal-soldier framing. **B8 Orinhal** — Leo's declaration at round 2 ("Captain — I'm dismounting. The dactyl walks to the partisan side."), Maya/Leo aside revealing Maya's been reading the squad. **B9 Ravine** — round 1 trap-realization beat (Maya identifies the regiment, Lucian says "Fergus" out loud), round 3 Maya preview ("when we clear this we need to talk") priming the post_ravine reveal. Five new dialogues, ~1500 words of in-fight text. Also added `rewards: ItemKind[]` to all 19 scaffolded battles (B12-B30) with thematic loadouts: Dawn's hospitality items in B12, Rose's memorial fang in B13, Khione's birth-father lens in B14, traitor's confiscated kit in B15, Dawn's father's lens in B16, side-door haul in B17, neutral pre-divergence haul in B18, then path-themed loadouts for each B19 opener (Vengeance: 2 fangs; Restoration: 3 potions + 2 masks; Revolution: 2 fangs + 1 lens; Duty: standard officer kit; Exile: 3 elixirs only; Mercy: 4 elixirs + 2 potions; Forgetting: 1 potion). B20-B27 carry the war + fleet escalation; B28 final battle gives the campaign's biggest haul; B29 cleanup; B30 epilogue (no fight, no rewards). |
+| 2026-05 | Camp Hub — the squad's home base between battles (4 commits) | Structural differentiator from FE at the between-battle layer. Replaces the "menu lobby" pattern with a painted tableau where the squad lives between fights. **Commit 1 (shell + routing):** new CampScene with placeholder hotspot grid; `"camp"` added to RouteRef; SaveSlot Continue / Title Resume / EndScene-with-no-arc all route to camp instead of OverworldScene; OverworldScene Title button repurposed as "◂ Camp"; Memories Wall greyed-stub explaining the future Bonds system. **Commit 2 (painted tableau):** new `BACKDROPS.campHome` warm sundown variant; painted props on top of backdrop — pulsing campfire (additive-blend orange glow + scale/alpha tween), wagon (wood box + canvas top), signpost (pole + sign board), memorial spot (only renders when fallen exist; Lucian's festival flag from post_cliffs hangs by his marker); character sprites at anchored positions south of the fire (positions adapt to squad size 1-6); shared `attachHotspot` helper for transparent-zone-with-gold-ring-on-hover. **Commit 3 (idle dialogues):** `src/data/campTalk.ts` with CAMP_TALK table — per-character per-era (pre_b1 / post_b1 / post_thuling / post_field / post_doubt / post_para / crossing) line lists with random selection per click; ~30 authored lines across 6 characters; click character → `BattleDialogueScene` with single-beat resolved line (reusing the existing scene avoids redundant code). **Commit 4 (polish + docs):** staggered fade-in for character sprites (250ms + 120ms × index) so the squad "populates" the camp rather than slamming in; new §17 in design doc capturing architecture / layout / state-aware presentation / Bonds-Memories future design. The camp doesn't break narrative momentum — when post arcs chain into the next battle's prep, the player goes through seamlessly; the camp is the resting point at session boundaries + when the player explicitly visits. |
 
 ---
 
@@ -961,6 +962,152 @@ The 1280×720 commitment is real: ~22 chapters per playthrough × 7
 paths = 154 chapter-instances, of which only 7×6 + 8 shared = 50
 unique chapters need to be authored. About 2.4× a single-playthrough
 FE campaign for 7× the replay value.
+
+---
+
+## 17. Camp Hub (the squad's home base)
+
+The structural differentiator from FE at the **between-battle** layer.
+The camp is where the squad lives between fights — a painted tableau
+with characters anchored around a fire, props you click on, and
+state-aware idle dialogue. Replaces the FE-canonical "menu lobby"
+approach with a place that feels lived-in and changes as the campaign
+progresses.
+
+### 17.1 Architecture
+
+The camp adds a **layer**, not a replacement, in the scene flow:
+
+```
+Title → SaveSlot → CampScene → [signpost] → OverworldScene
+     → BattlePrep → Battle → EndScene → arc → next prep
+     (or back to CampScene when no post arc fires)
+```
+
+- `CampScene` is the new home base. Continue Slot lands here.
+- `OverworldScene` (the world map) is reached via the camp's **signpost**.
+- After a battle, the player returns to camp (unless a post arc chains
+  forward into the next battle's prep — most do, so the camp gets
+  visited mostly between sessions, not between every fight).
+- Title is reachable from the camp footer.
+
+The camp does NOT break narrative momentum: when a post arc routes
+into the next pre arc, the player goes through the chain seamlessly.
+The camp is the resting point at session boundaries + when the player
+explicitly chooses to visit.
+
+### 17.2 Visual layout
+
+Painted backdrop (`BACKDROPS.campHome` — warm sundown variant of
+`field_night_camp`) with painted props rendered on top via Phaser
+Graphics:
+
+| Anchor | Prop | Click → |
+|---|---|---|
+| (640, 380) | **Campfire** — pulsing orange glow with stone ring + halo | (decorative; visual center of gravity) |
+| (280, 290) | **Wagon** — wood box with canvas top + wheels | `InventoryScene` (resolves next playable battle as deploying-squad context) |
+| (990, 320) | **Signpost** — pole + sign board | `OverworldScene` (the world map) |
+| (180, 510) | **Memorial** — only when fallen exist; stone markers per name + Lucian's festival flag | Per-character memorial beat ("Lucian — foreman of Thuling, husband to Mira...") |
+| Around fire | **Character sprites** — squad members from `ACTIVE_ROSTER` | `BattleDialogueScene` with the resolved camp idle line |
+
+**Bottom strip** (compact panels for lighter actions):
+- 📋 **Roster** → existing `RosterScene` overlay
+- 📜 **Memories Wall** → greyed-out stub explaining the future Bonds system
+
+**Footer:** Title button (back to title) + Settings gear (top-right).
+
+### 17.3 State-aware presentation
+
+The camp reads the save and reflects the campaign:
+
+- **Subtitle** varies by most-recent completed battle ("Lucian's forge yard, Thuling — the squad takes shape" through "Below decks, Madame Dawn's ship — the long crossing has begun")
+- **Squad count** in the status line ("N souls at the fire tonight")
+- **Character sprites** sourced from `ACTIVE_ROSTER` — drops Kian after B9, drops Lucian after B11
+- **Memorial markers** appear when fallen characters exist (Lucian post-cliffs)
+- **Lucian's festival flag** specifically renders by his marker if he died at B11
+- **Character idle dialogue** changes per chapter era (see §17.4)
+
+### 17.4 Character idle dialogues
+
+Source: `src/data/campTalk.ts:CAMP_TALK`. Click a character at the
+camp; CampScene resolves the player's most recent completed battle
+into an era token, looks up the character's lines for that era, and
+runs `BattleDialogueScene` with a single-beat idle line.
+
+**Why reuse `BattleDialogueScene` instead of building a CampTalkScene:**
+the styling (paused-overlay portrait + dim parent showing through +
+single dialog panel) translates perfectly. No new scene needed.
+
+**Era resolution:**
+
+| Token | Triggered by completed battle | Theme |
+|---|---|---|
+| `pre_b1` | (none) | The cold open — coup planning |
+| `post_b1` | b01_palace_coup | Hospital — Amar wakes alone |
+| `post_thuling` | b02 / b03 / b04 | Thuling settles in |
+| `post_field` | b05 / b06 / b07 | Fergus's contracts pile up |
+| `post_doubt` | b08 / b09 | The truth about Fergus |
+| `post_para` | b10 | Leaving Thuling |
+| `crossing` | b11+ | The Grude crossing begins |
+
+**Per-character coverage** (currently authored): AMAR all 7 eras,
+LUCIAN B2-B10 (dies in post_cliffs so no crossing entries), NING
+post_thuling onward, MAYA post_thuling onward, LEO post_field onward
+(joins in B5), KIAN only post_field (the brief in-squad pre-betrayal
+window). Multiple lines per era surface randomly per click so
+repeated visits don't feel canned.
+
+**Fallback:** characters without authored content for the current era
+get a generic "(quiet at the fire)" beat so the click affordance never
+feels broken.
+
+### 17.5 What's NOT in v1 (deferred)
+
+- **Multiple camp locations** — only the warm Thuling field camp ships.
+  The ship's deck during the Grude crossing, Dawn's compound in Grude,
+  and any path-specific home (Restoration's village square, Exile's
+  cottage) come in follow-up commits. The current camp's subtitle
+  shifts per-era but the visual stays.
+- **Wounded indicators** — would require persisting end-of-battle HP
+  state across battles. Currently every unit restores to full HP at
+  battle start; the data layer to surface "Lucian's bandaged" doesn't
+  exist yet.
+- **Real Bonds/Memories system** — Memories Wall is a stub. Future
+  commit ships the structurally-distinct-from-FE bond mechanism we
+  sketched (story-set memories, active combined techniques, cross-
+  faction bonds, death-as-weight). See §17.6 for the design.
+- **Multi-character group scenes** — clicking a character opens a 1-on-1
+  idle beat. Cross-character group scenes ("Maya and Ning at the fire
+  arguing about archer formations") ship later if needed.
+- **Camp activities** (training, repairing equipment) — observe-and-talk
+  for v1, not minigame-y.
+
+### 17.6 Bonds / Memories (future, sketched here for reference)
+
+Distinct from FE supports along multiple axes:
+
+| Axis | FE Supports | Ravage "Memories" |
+|---|---|---|
+| Build mechanism | Stand adjacent to grind points | Forged at story beats only — no grind |
+| Trigger | Number ticks up | "Forge this memory?" prompt at battle end when conditions met |
+| Reward | Passive stat bump when adjacent | Active **combined technique** in both characters' action menus when adjacent |
+| Capacity | Many per character (web) | 3-4 slots max — player has to pick |
+| Vocabulary | "C / B / A / S support" | Named scenes ("The South Ford", "The Practice Yard") |
+| Cross-faction | Player units only | NPCs and enemies count (Amar+Kian's bond is real) |
+| Death cost | Nothing | **Bonds are weight** — surviving partner takes lasting debuff scaled to bond rank |
+
+Conditions that can forge a memory:
+- Save someone's life via Interpose
+- Kill the enemy attacking them
+- Share a Ravaged turn together (both Ravaged + adjacent)
+- Stand back-to-back at a scripted moment (round-3 surrounded, etc.)
+- Be selected by a story-arc beat (`forgeMemory` field on DialogBeat)
+
+**Memories Wall UI** — the camp's current placeholder becomes the
+real memory journal. Each forged memory shows as a card with: name
+("The South Ford"), the two characters, the rank (Echo / Memory /
+Vow), the unlocked combined technique, and the moment it was forged
+in 1-2 sentences.
 
 ---
 

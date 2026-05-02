@@ -99,12 +99,15 @@ export class CampScene extends Phaser.Scene {
     // Character sprites around the fire. Positions arranged so each
     // character has breathing room and the click hotspots don't
     // overlap. Defaults to a clockwise layout starting from Amar at
-    // the fire's south side.
+    // the fire's south side. Each sprite stagger-fades in 100ms
+    // after the previous so the camp "populates" rather than
+    // slamming the squad into view all at once.
     const positions = this.characterPositions(squadIds.length);
     squadIds.forEach((id, i) => {
       const pos = positions[i];
       if (!pos) return;
-      this.renderCharacter(id, pos.x, pos.y);
+      const fadeDelay = 250 + i * 120;
+      this.renderCharacter(id, pos.x, pos.y, fadeDelay);
     });
 
     // ---- Bottom strip: Roster + Memories Wall -----------------------------
@@ -164,7 +167,9 @@ export class CampScene extends Phaser.Scene {
   // Pulsing campfire — central anchor of the tableau. Tweened scale
   // gives the impression of flicker without any actual particle
   // system. Cheap and on-brand with the procedural-painting house style.
-  private renderCampfire(cx: number, cy: number): void {
+  // Returns the glow object so the caller can stagger its fade-in
+  // timing alongside other props.
+  private renderCampfire(cx: number, cy: number): Phaser.GameObjects.Graphics {
     // Stone ring at the fire's base
     const stones = this.add.graphics();
     stones.fillStyle(0x3a2a1c, 1);
@@ -199,6 +204,25 @@ export class CampScene extends Phaser.Scene {
     halo.fillStyle(0xefa45a, 0.18);
     halo.fillCircle(cx, cy + 12, 120);
     halo.setBlendMode(Phaser.BlendModes.ADD);
+
+    return glow;
+  }
+
+  // Helper for the staggered entry animation. Sets the target's
+  // alpha to 0 immediately, then tweens it to 1 after `delay` ms.
+  // Used on every prop + character sprite so the camp "settles in"
+  // rather than slamming into view all at once. Subtle but reads
+  // as intentional pacing — the player feels they've ARRIVED at a
+  // place.
+  private stagger(target: Phaser.GameObjects.GameObject & { alpha: number }, delay: number, duration = 350): void {
+    target.alpha = 0;
+    this.tweens.add({
+      targets: target,
+      alpha: 1,
+      delay,
+      duration,
+      ease: "Sine.easeOut"
+    });
   }
 
   // The wagon — clickable hotspot that opens the inventory + trade
@@ -319,7 +343,10 @@ export class CampScene extends Phaser.Scene {
   // Name label below in the squad's gold-on-black house style.
   // Click hotspot is bigger than the sprite to give a generous
   // click target on the character's full silhouette.
-  private renderCharacter(id: string, x: number, y: number): void {
+  // The optional fadeDelay staggers the entry animation so squad
+  // members appear one at a time, ~120ms apart, when the camp
+  // loads.
+  private renderCharacter(id: string, x: number, y: number, fadeDelay = 0): void {
     const factory = this.resolvePlayerFactory(id);
     if (!factory) return;
     const def = factory();
@@ -332,13 +359,22 @@ export class CampScene extends Phaser.Scene {
     void shadow;
 
     // Name label
-    this.add.text(x, y + 12, def.name, {
+    const name = this.add.text(x, y + 12, def.name, {
       fontFamily: FAMILY_HEADING,
       fontSize: "13px",
       color: "#f4d999",
       stroke: "#1a0e04",
       strokeThickness: 3
     }).setOrigin(0.5, 0);
+
+    // Stagger entry — sprite + name fade in together so the
+    // character "arrives" at their spot rather than just appearing.
+    // Cheap pacing detail; the camera's own fadeIn handles the
+    // overall scene reveal.
+    if (fadeDelay > 0) {
+      this.stagger(sprite as unknown as Phaser.GameObjects.GameObject & { alpha: number }, fadeDelay);
+      this.stagger(name as unknown as Phaser.GameObjects.GameObject & { alpha: number }, fadeDelay);
+    }
 
     // Click hotspot — a transparent zone over the sprite. Opens a
     // BattleDialogueScene overlay with the character's resolved
