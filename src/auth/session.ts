@@ -28,6 +28,29 @@ export const currentSession = async (): Promise<Session | null> => {
   return data.session ?? null;
 };
 
+// Resolve the URL Supabase should redirect to after the user clicks
+// a confirmation or password-reset link in their email. We use the
+// CURRENT page origin + path so the email link returns the player
+// to whatever domain they signed up from — works on localhost
+// (http://localhost:5173/play/), Vercel previews, and production
+// (https://ravage.game/play/) without per-environment config.
+//
+// IMPORTANT: this only takes effect if the URL is also added to
+// Supabase's "Redirect URLs" allowlist in the project dashboard
+// (Authentication → URL Configuration). Without that allowlist
+// entry, Supabase falls back to the project's Site URL setting —
+// which is `http://localhost:3000` by default for new projects,
+// hence the "link goes to localhost" bug. See docs in commit
+// message + the README's Supabase section.
+const emailRedirectUrl = (): string => {
+  if (typeof window === "undefined") return "";
+  // Strip any trailing query / hash so the redirect lands on a clean
+  // canonical URL. Supabase appends its own hash params with the
+  // session tokens — those are read by detectSessionInUrl on the
+  // resulting page load.
+  return `${window.location.origin}${window.location.pathname}`;
+};
+
 // Translate Supabase's technical error messages into something a
 // player can act on. The default messages ("Invalid login
 // credentials", "Email not confirmed") are accurate but read as
@@ -55,7 +78,17 @@ const friendlyError = (raw: string): string => {
 export const signUp = async (email: string, password: string): Promise<AuthResult> => {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "Auth not configured." };
-  const { data, error } = await sb.auth.signUp({ email, password });
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      // Where Supabase should send the user after they click the
+      // confirmation link in their email. Without this, the link
+      // hardcodes the project's Site URL (default: localhost:3000)
+      // and the player ends up on localhost instead of the game.
+      emailRedirectTo: emailRedirectUrl()
+    }
+  });
   if (error) return { ok: false, error: friendlyError(error.message) };
   // CRITICAL: when "Confirm email" is enabled in Supabase (the
   // default for new projects), signUp returns data.user with
@@ -96,7 +129,15 @@ export const signOut = async (): Promise<void> => {
 export const resendConfirmation = async (email: string): Promise<AuthResult> => {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "Auth not configured." };
-  const { error } = await sb.auth.resend({ type: "signup", email });
+  const { error } = await sb.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      // Same redirect override as signUp — without this, resent
+      // confirmation links also hardcode Supabase's Site URL.
+      emailRedirectTo: emailRedirectUrl()
+    }
+  });
   if (error) return { ok: false, error: friendlyError(error.message) };
   return { ok: true };
 };
@@ -108,7 +149,12 @@ export const resendConfirmation = async (email: string): Promise<AuthResult> => 
 export const resetPassword = async (email: string): Promise<AuthResult> => {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "Auth not configured." };
-  const { error } = await sb.auth.resetPasswordForEmail(email);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    // Where Supabase's hosted password-reset flow should redirect
+    // the user after they finish setting a new password. Same
+    // current-page-origin trick as signUp's emailRedirectTo.
+    redirectTo: emailRedirectUrl()
+  });
   if (error) return { ok: false, error: friendlyError(error.message) };
   return { ok: true };
 };
