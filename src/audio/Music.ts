@@ -39,7 +39,7 @@ interface AudioFile { key: MusicKey; src: string; }
 export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.enteringStronghold, src: "audio/entering_the_stronghold.mp3" },
   { key: MUSIC.strongholdMemories, src: "audio/stronghold_of_memories.mp3" },
-  { key: MUSIC.finalBoss,          src: "audio/final_boss_battle.mp3" },
+  { key: MUSIC.finalBoss,          src: "audio/final_boss1.mp3" },
   { key: MUSIC.adventure1,         src: "audio/adventure_1.mp3" },
   { key: MUSIC.adventureAnthros,   src: "audio/adventure_in_anthros.mp3" },
   { key: MUSIC.battlePrep,         src: "audio/battle_preparation.mp3" },

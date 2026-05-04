@@ -155,12 +155,14 @@ export class CampScene extends Phaser.Scene {
     // sits in the corner so the camp's middle band stays clear for
     // character sprites. Settings gear sits to the right of it so
     // the corner cluster reads as "scene controls" together.
+    // Plain-text label — emoji glyphs were not rendering reliably
+    // on every platform/font combination.
     new Button(this, {
       x: GAME_WIDTH - 80 - 160,
       y: 24,
       w: 160,
       h: 36,
-      label: "🗺 Go to Map",
+      label: "Go to Map",
       primary: true,
       fontSize: 14,
       onClick: () => {
