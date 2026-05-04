@@ -54,31 +54,31 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
     portraitId: "amar",
     eras: {
       pre_b1: [
-        { body: "Tonight is the night, Selene says. The squad has been moving for ten months toward this hour. I've been moving for thirty years. I just don't remember most of them. (You move on quietly.)", expression: "guarded" },
-        { body: "Ranatoli's at the south door checking the hinge. Selene's at the east corridor. Khonu, Yul, Tev, Sera — they all know their post. Eight of us. Ten months. One night. (You let the moment hold.)", expression: "resolute" }
+        { body: "Tonight is the night, Selene says. The squad has been moving for ten months toward this hour. I've been moving for thirty years. I just don't remember most of them. (The hour drifts on.)", expression: "guarded" },
+        { body: "Ranatoli's at the south door checking the hinge. Selene's at the east corridor. Khonu, Yul, Tev, Sera — they all know their post. Eight of us. Ten months. One night. (The moment holds.)", expression: "resolute" }
       ],
       post_b1: [
-        { body: "I was a forge worker yesterday. I am a forge worker again tonight. I was something else for ten minutes in the throne hall and the something else still has my hands. (You don't push it.)", expression: "wounded" },
-        { body: "The doctor in the ward said I tried to walk with a sword that wasn't there. Three times in my sleep. He said it like it was funny. I'm trying not to think about it. (You sit with him a while.)", expression: "shocked" }
+        { body: "I was a forge worker yesterday. I am a forge worker again tonight. I was something else for ten minutes in the throne hall and the something else still has my hands. (He says no more about it.)", expression: "wounded" },
+        { body: "The doctor in the ward said I tried to walk with a sword that wasn't there. Three times in my sleep. He said it like it was funny. I'm trying not to think about it. (The fire crackles between the words.)", expression: "shocked" }
       ],
       post_thuling: [
-        { body: "Lucian gave me a half-smile when I came back from the road. He hasn't asked. He hasn't NOT asked, either. I don't know which I'm more afraid of. (You let the silence hold.)", expression: "guarded" },
-        { body: "Ning's getting better with the bow every week. Thirty arrows last night, all in the same hand-span on the target. She won't say it but she's proud. I'm proud for her. (You smile and move on.)", expression: "fatherly_smile" }
+        { body: "Lucian gave me a half-smile when I came back from the road. He hasn't asked. He hasn't NOT asked, either. I don't know which I'm more afraid of. (The silence holds.)", expression: "guarded" },
+        { body: "Ning's getting better with the bow every week. Thirty arrows last night, all in the same hand-span on the target. She won't say it but she's proud. I'm proud for her. (A small smile.)", expression: "fatherly_smile" }
       ],
       post_field: [
         { body: "Fergus sent us against the mountain bandits and they had a sister waiting on the ridge. Nobody at the captain's tent told us about the sister. I've been thinking about the sister.", expression: "guarded" },
-        { body: "Maya watches me when she thinks I'm not looking. She's not afraid. She's measuring. I'd rather she ask. I don't know what I'd say if she did. (You let her decide her own pace.)", expression: "wounded" }
+        { body: "Maya watches me when she thinks I'm not looking. She's not afraid. She's measuring. I'd rather she ask. I don't know what I'd say if she did. (The thought trails off.)", expression: "wounded" }
       ],
       post_doubt: [
         { body: "Fergus knew. The whole time. He sent us into Orinhal hoping the King would solve his problem for him. Lucian figured it out before I did. Lucian figures most things out before I do.", expression: "resolute" },
-        { body: "I've been trying to remember the throne hall since the ravine. Pieces are coming back. Selene's voice. The carpet. King Nebu's face. I don't want most of it. I keep trying anyway. (You let him sit with it.)", expression: "wounded" }
+        { body: "I've been trying to remember the throne hall since the ravine. Pieces are coming back. Selene's voice. The carpet. King Nebu's face. I don't want most of it. I keep trying anyway. (The fire crackles low.)", expression: "wounded" }
       ],
       post_para: [
-        { body: "Kian on the road outside Lucian's house, with a warrant in his hand and twelve men behind him. He looked tired in a way I'd never seen him look. We rode west and didn't look back. (You let him hold the moment.)", expression: "wounded" },
-        { body: "Mira and Tali made the cousin's farm. Lucian wrote a letter at the first inn and gave it to a courier. He didn't tell me what it said. I think it was a goodbye. (You don't ask which kind.)", expression: "guarded" }
+        { body: "Kian on the road outside Lucian's house, with a warrant in his hand and twelve men behind him. He looked tired in a way I'd never seen him look. We rode west and didn't look back. (He goes quiet for a while.)", expression: "wounded" },
+        { body: "Mira and Tali made the cousin's farm. Lucian wrote a letter at the first inn and gave it to a courier. He didn't tell me what it said. I think it was a goodbye. (The kind goes unsaid.)", expression: "guarded" }
       ],
       crossing: [
-        { body: "The harbor lights have been gone for an hour. The sea is the only thing in any direction. Lucian's wood practice sword is in my pack. I've taken it out twice and put it back. (You let him be.)", expression: "wounded" },
+        { body: "The harbor lights have been gone for an hour. The sea is the only thing in any direction. Lucian's wood practice sword is in my pack. I've taken it out twice and put it back. (He looks back at the sea.)", expression: "wounded" },
         { body: "Khione says fourteen months to Grude. Fourteen months to think about every name. Fourteen months to decide who I want to be when we land. I'll let you know what I come up with. (Half-smile.)", expression: "fatherly_smile" }
       ]
     }
@@ -102,7 +102,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
         { body: "Ning took her first bolt-rescue this morning. Pushed me out of an archer's lane and gave me a black eye doing it. (Smile.) She'll do.", expression: "fatherly_smile" }
       ],
       post_para: [
-        { body: "We rode out of Thuling at three in the morning. I haven't slept since. The cousin will move Mira and Tali north before sunrise. They'll be all right. (You let him say it.)", expression: "grim_resolve" },
+        { body: "We rode out of Thuling at three in the morning. I haven't slept since. The cousin will move Mira and Tali north before sunrise. They'll be all right. (He doesn't quite believe it.)", expression: "grim_resolve" },
         { body: "Whatever happens at the cliffs, your highness — and don't tell me to stop calling you that — the squad needs to make the boat. That's the only thing that matters. We make the boat.", expression: "fatherly_smile" }
       ]
       // No crossing entries — Lucian dies in post_cliffs.
@@ -140,7 +140,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
     portraitId: "maya",
     eras: {
       post_thuling: [
-        { body: "The squad's tighter than the briefing suggested. Lucian holds it together. Amar holds himself apart. Ning holds her line. The shape's good for what's coming. (You don't ask what's coming.)", expression: "calculating_side_glance" },
+        { body: "The squad's tighter than the briefing suggested. Lucian holds it together. Amar holds himself apart. Ning holds her line. The shape's good for what's coming. (She doesn't elaborate on what's coming.)", expression: "calculating_side_glance" },
         { body: "Amar's footwork is from a courtyard, not a wagon yard. I haven't said it out loud. I might not for a while. He's listening for the question and I want to know what he does when I don't ask it.", expression: "calculating_side_glance" }
       ],
       post_field: [
