@@ -193,20 +193,20 @@ export class CampScene extends Phaser.Scene {
   // The outer warm halo is drawn in either case to spill firelight
   // onto the surrounding ground.
   private renderCampfire(cx: number, cy: number): Phaser.GameObjects.GameObject {
-    // Warm halo around the fire — additive-blended orange disc,
-    // drawn under both paths so the fire reads as illuminating the
-    // camp regardless of which version renders.
+    // Warm halo at the fire's BASE — additive-blended orange disc
+    // positioned directly under the fire's logs so the fire visually
+    // rises from the center of the glow (think: a fire pit, not a
+    // disc on the ground next to the fire).
     //
-    // Sized + positioned to be a HALO around the fire's body, not
-    // a big disc on the ground that the fire sits on top of. Earlier
-    // version was 240px wide centered at cy+12, which extended ~92px
-    // below the fire's base and read as "fire on top of a circle"
-    // rather than "fire centered in a glow." Shrunk to 75px radius
-    // and centered higher (cy-30) so the halo wraps the fire's body
-    // and the painted sprite sits naturally INSIDE the glow.
+    // The painted fire sprite is anchored bottom-center at (cx, cy+40)
+    // — see the asset path below. Centering the halo at the same y
+    // (cy+40) puts the disc PERFECTLY UNDER the logs, so the fire
+    // appears to rise from the center of the warm glow. Earlier
+    // versions had the halo offset (cy+12 then cy-30) which read as
+    // "fire above a separate circle" instead of "fire in the pit."
     const halo = this.add.graphics();
-    halo.fillStyle(0xefa45a, 0.28);
-    halo.fillCircle(cx, cy - 30, 75);
+    halo.fillStyle(0xefa45a, 0.32);
+    halo.fillCircle(cx, cy + 40, 90);
     halo.setBlendMode(Phaser.BlendModes.ADD);
 
     if (hasAsset("camp:fire")) {
