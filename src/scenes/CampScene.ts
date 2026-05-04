@@ -193,13 +193,20 @@ export class CampScene extends Phaser.Scene {
   // The outer warm halo is drawn in either case to spill firelight
   // onto the surrounding ground.
   private renderCampfire(cx: number, cy: number): Phaser.GameObjects.GameObject {
-    // Soft outer halo of warm light spilling onto the ground —
-    // additive-blended orange disc, drawn under both paths so the
-    // fire reads as illuminating the camp regardless of which
-    // version renders.
+    // Warm halo around the fire — additive-blended orange disc,
+    // drawn under both paths so the fire reads as illuminating the
+    // camp regardless of which version renders.
+    //
+    // Sized + positioned to be a HALO around the fire's body, not
+    // a big disc on the ground that the fire sits on top of. Earlier
+    // version was 240px wide centered at cy+12, which extended ~92px
+    // below the fire's base and read as "fire on top of a circle"
+    // rather than "fire centered in a glow." Shrunk to 75px radius
+    // and centered higher (cy-30) so the halo wraps the fire's body
+    // and the painted sprite sits naturally INSIDE the glow.
     const halo = this.add.graphics();
-    halo.fillStyle(0xefa45a, 0.18);
-    halo.fillCircle(cx, cy + 12, 120);
+    halo.fillStyle(0xefa45a, 0.28);
+    halo.fillCircle(cx, cy - 30, 75);
     halo.setBlendMode(Phaser.BlendModes.ADD);
 
     if (hasAsset("camp:fire")) {
