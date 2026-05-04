@@ -116,8 +116,11 @@ export class CampScene extends Phaser.Scene {
     // ~26px below the character labels (which end ~y=522) and
     // leaves ~36px of breath above the Title button.
     const stripY = 548;
+    // Plain-text labels. Emoji glyphs were not rendering reliably
+    // on every platform/font combination — same issue that hit the
+    // "Go to Map" button.
     this.renderStripPanel(80, stripY, 360, 80,
-      "📋 The Roster",
+      "The Roster",
       "Review levels, stats, and abilities for every soul in the squad.",
       () => {
         sfxClick();
@@ -126,7 +129,7 @@ export class CampScene extends Phaser.Scene {
       }
     );
     this.renderStripPanel(GAME_WIDTH - 80 - 360, stripY, 360, 80,
-      "📜 Memories Wall",
+      "Memories Wall",
       "(no memories forged yet — bonds will surface here in a future update)",
       () => {
         sfxClick();
@@ -329,9 +332,8 @@ export class CampScene extends Phaser.Scene {
       g.fillStyle(0x5a3e22, 1);
       g.fillCircle(cx - fbW / 2 + 22, cy + fbH / 2 - 22, 6);
       g.fillCircle(cx + fbW / 2 - 22, cy + fbH / 2 - 22, 6);
-      this.add.text(cx, cy - fbH / 2 + 8, "📦", {
-        fontFamily: FAMILY_BODY, fontSize: "32px"
-      }).setOrigin(0.5);
+      // No emoji glyph on the procedural wagon — same rendering
+      // concern that hit the Roster / Memories Wall buttons.
     }
 
     this.add.text(cx, cy + h / 2 + 4, "Wagon — Inventory + Trade", {
