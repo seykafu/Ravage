@@ -196,31 +196,19 @@ export class CampScene extends Phaser.Scene {
   // The outer warm halo is drawn in either case to spill firelight
   // onto the surrounding ground.
   private renderCampfire(cx: number, cy: number): Phaser.GameObjects.GameObject {
-    // Warm halo at the fire's BASE — additive-blended orange disc
-    // positioned directly under the fire's logs so the fire visually
-    // rises from the center of the glow (think: a fire pit, not a
-    // disc on the ground next to the fire).
-    //
-    // The painted fire sprite is anchored bottom-center at (cx, cy+40)
-    // — see the asset path below. Centering the halo at the same y
-    // (cy+40) puts the disc PERFECTLY UNDER the logs, so the fire
-    // appears to rise from the center of the warm glow. Earlier
-    // versions had the halo offset (cy+12 then cy-30) which read as
-    // "fire above a separate circle" instead of "fire in the pit."
-    const halo = this.add.graphics();
-    halo.fillStyle(0xefa45a, 0.32);
-    halo.fillCircle(cx, cy + 40, 90);
-    halo.setBlendMode(Phaser.BlendModes.ADD);
-
     if (hasAsset("camp:fire")) {
       // Real pixel-art animation. Frame dimensions match the manifest
       // (384×1024, 4 frames arranged horizontally → spritesheet
       // 1536×1024). The asset includes its own logs/embers at the
-      // base, so we DO NOT draw the procedural stone ring on this
-      // path — it would render under/around the painted logs and
-      // look ugly. The procedural fallback below still draws stones
-      // because the procedural fire is just a glow and needs visual
-      // structure under it.
+      // base AND its own warm glow — so we DO NOT draw the procedural
+      // halo OR stone ring on this path. The painted asset is the
+      // entire visual; nothing should compete with it.
+      //
+      // Fire dropped from cy+40 to cy+100 so it sits closer to the
+      // ground / characters and reads as anchored to the camp's
+      // floor rather than floating mid-screen. Earlier offsets had
+      // a 90px gap between the fire's base and the character row at
+      // fy=510 — now ~30px, much tighter.
       const animKey = "camp_fire_loop";
       if (!this.anims.exists(animKey)) {
         this.anims.create({
@@ -230,22 +218,21 @@ export class CampScene extends Phaser.Scene {
           repeat: -1
         });
       }
-      // Scale: target visible fire ~180px tall. Frame is 1024 tall but
-      // the fire content is roughly the bottom half (~512px), so
-      // scale ~= 180 / 512 ≈ 0.35. Width auto-scales proportionally.
-      // Bottom-center anchor so the fire's base lands at (cx, cy+40)
-      // — same spot the stones used to occupy, so other props that
-      // anchored to the fire's footprint don't shift.
-      const sprite = this.add.sprite(cx, cy + 40, "camp:fire");
-      sprite.setOrigin(0.5, 1);
+      const sprite = this.add.sprite(cx, cy + 100, "camp:fire");
+      sprite.setOrigin(0.5, 1); // bottom-center anchor
       sprite.setScale(0.35);
       sprite.play(animKey);
       return sprite;
     }
 
-    // Procedural fallback path — stone ring under the procedural
-    // glow so the procedural fire has something to sit in. Only
-    // drawn when the painted asset isn't loaded.
+    // Procedural fallback path — only drawn when the painted asset
+    // isn't loaded. Halo + stone ring give the procedural glow some
+    // visual structure to sit on.
+    const halo = this.add.graphics();
+    halo.fillStyle(0xefa45a, 0.18);
+    halo.fillCircle(cx, cy + 12, 120);
+    halo.setBlendMode(Phaser.BlendModes.ADD);
+
     const stones = this.add.graphics();
     stones.fillStyle(0x3a2a1c, 1);
     for (let i = 0; i < 8; i++) {
