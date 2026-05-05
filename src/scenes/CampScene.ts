@@ -158,10 +158,16 @@ export class CampScene extends Phaser.Scene {
     // sits in the corner so the camp's middle band stays clear for
     // character sprites. Settings gear sits to the right of it so
     // the corner cluster reads as "scene controls" together.
-    // Plain-text label — emoji glyphs were not rendering reliably
-    // on every platform/font combination.
+    //
+    // Spacing: Settings gear has a 24px hit-radius (48px touch
+    // target) centered at (GAME_WIDTH - 32, 32) — its hit zone
+    // reaches x=1224. Putting Go to Map right edge at x=1200
+    // (the previous layout) gave only 24px gap which felt cramped.
+    // Bumped left by 30px so the button right edge lands at
+    // x=1170 — 54px of breathing room between the two corner
+    // controls, well clear on any display scale.
     new Button(this, {
-      x: GAME_WIDTH - 80 - 160,
+      x: GAME_WIDTH - 110 - 160,
       y: 24,
       w: 160,
       h: 36,

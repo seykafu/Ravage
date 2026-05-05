@@ -286,6 +286,17 @@ export class OverworldScene extends Phaser.Scene {
         void lockIcon;
       }
 
+      // Path-specific battles need different hover + click handling.
+      // The deduped B19 card represents one of seven path-opener
+      // variants; the actual battle to launch isn't decided until
+      // B18's pick. B23/B24 climax + B28 final are path-flavored
+      // similarly. For all of them, surface generic copy on hover
+      // and a "pick a path first" message on click rather than
+      // routing the player into the wrong variant's prep.
+      const isPathBattle = b.id.includes("path_opener")
+        || b.id.includes("path_climax")
+        || b.id.includes("path_final");
+
       // Hit area — locked cards are interactive (hover + click) but the
       // hover suppresses the intro and the click shows a "locked" floater
       // instead of routing into BattlePrepScene.
@@ -301,6 +312,15 @@ export class OverworldScene extends Phaser.Scene {
           bodyHandle.setText("This battle hasn't been unlocked yet. Progress through the story to reach it.");
           playBtn.setEnabled(false);
           playBtn.setLabel("Locked 🔒");
+        } else if (isPathBattle) {
+          // Path-flavored chapter — the actual content depends on
+          // which path the player picked at B18. Show generic copy
+          // so we don't spoil any specific path's intro.
+          detailTitle.setText(`Battle ${b.index} — Path-Specific`);
+          detailSub.setText(`Resolves based on your Seven Paths choice at Battle 18`);
+          bodyHandle.setText("This chapter's contents are determined by the path you choose at Battle 18 (Seven Names, One Choice). Visit the camp signpost when you reach the divergence point to pick your path; the chapter's specific shape will resolve from that decision.");
+          playBtn.setEnabled(false);
+          playBtn.setLabel("Pick path at B18");
         } else {
           detailTitle.setText(`${b.title} — ${b.subtitle}`);
           detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
@@ -317,6 +337,21 @@ export class OverworldScene extends Phaser.Scene {
         cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
       });
       zone.on("pointerup", () => {
+        if (isPathBattle) {
+          // Show "pick a path first" floater instead of routing into
+          // a specific variant's prep. Once Seven Paths gating ships
+          // and the player has picked a path, this branch resolves
+          // the path-specific battle id and routes appropriately.
+          const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Pick your path at Battle 18 first — this chapter resolves from that choice.", {
+            fontFamily: FAMILY_BODY,
+            fontSize: "16px",
+            color: "#ff9c7a",
+            wordWrap: { width: GAME_WIDTH - 80 },
+            align: "center"
+          }).setOrigin(0.5);
+          this.tweens.add({ targets: t, alpha: 0, duration: 2400, onComplete: () => t.destroy() });
+          return;
+        }
         if (playable) {
           this.scene.start("BattlePrepScene", { battleId: b.id });
         } else if (locked) {
