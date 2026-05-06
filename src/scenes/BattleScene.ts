@@ -341,6 +341,40 @@ export class BattleScene extends Phaser.Scene {
     this.setupCameraDragPan();
     this.setupCameraKeyboardPan();
 
+    // Initial camera centering. Phaser's main camera defaults to scroll
+    // (0, 0) which shows the world's TOP-LEFT. For maps taller than
+    // the viewport (B1 Palace Coup, B5 Mountain, B7 Monastery, B9
+    // Ravine, B11 Cliffs), the player squad spawns at the BOTTOM of
+    // the map and so was off-screen on battle entry — the player saw
+    // an empty top-of-map view with no characters anywhere.
+    //
+    // Scroll the camera so the player squad's average tile position
+    // sits at the center of the playfield viewport. Phaser clamps
+    // automatically to the camera bounds set above, so for maps that
+    // fit in the viewport this is a no-op (camera stays at 0, 0).
+    if (players.length > 0) {
+      const playW = GAME_WIDTH - PANEL_W - 40;
+      const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
+      let sumX = 0;
+      let sumY = 0;
+      for (const p of players) {
+        const px = tileToPixel(p.state.position, this.originX, this.originY);
+        sumX += px.x;
+        sumY += px.y;
+      }
+      const cx = sumX / players.length;
+      const cy = sumY / players.length;
+      // Compute the scroll offset that centers the squad in the
+      // playable viewport (which excludes the right side panel and
+      // the top bar). The camera's scroll is the world coordinate
+      // of the top-left of the viewport — so to center cx in playW,
+      // scroll by cx - playW/2 (and similarly for y, accounting for
+      // the top-bar offset).
+      const targetScrollX = cx - (20 + playW / 2);
+      const targetScrollY = cy - (MAP_TOP_OFFSET + playH / 2);
+      this.cameras.main.setScroll(targetScrollX, targetScrollY);
+    }
+
     // Defensive RESUME handler — fires every time BattleScene comes
     // back from a paused overlay (BattleDialogueScene, InterposeScene,
     // PromotionScene, RosterScene, SettingsScene, InventoryScene).
