@@ -338,7 +338,14 @@ export class InventoryScene extends Phaser.Scene {
         bg.setInteractive();
         bg.on("pointerover", () => bg.setFillStyle(0xc9b07a, 0.18));
         bg.on("pointerout", () => bg.setFillStyle(0xc9b07a, 0.08));
-        bg.on("pointerdown", () => this.executeTrade(recipe.id));
+        // Open a confirmation modal instead of executing immediately.
+        // Trades are atomic + irreversible (an Elixir minted from 3
+        // Potions can't be undone) so a misclick deserves a guard.
+        // The modal also surfaces both items' descriptions inline,
+        // which fixes a UI gap: items the player has never owned
+        // (and so don't appear in the squad pool tooltip) had no
+        // way to be inspected before this.
+        bg.on("pointerdown", () => this.confirmTrade(recipe.id));
       }
       row.add([bg, label]);
       this.tradesContainer.add(row);
@@ -346,7 +353,7 @@ export class InventoryScene extends Phaser.Scene {
     }
 
     const hint = this.add.text(tradeX0, TOP_Y + PANEL_H - 36,
-      "Trades operate on the squad pool. Greyed = can't afford.", {
+      "Trades operate on the squad pool. Click to review + confirm before committing.", {
         fontFamily: FAMILY_BODY, fontSize: "11px", color: "#7a7165",
         fontStyle: "italic", wordWrap: { width: tradeW }
       });
@@ -393,6 +400,156 @@ export class InventoryScene extends Phaser.Scene {
     next = setSquadInventory(next, pool);
     writeSave(next);
     this.rebuild();
+  }
+
+  // Open a confirmation modal for the chosen trade. Renders a paused-
+  // overlay-style panel (high depth so it sits over the 3-panel
+  // inventory layout) showing the cost items + yield items side by
+  // side WITH their full descriptions. Solves two problems at once:
+  //   1. Misclick guard — trades are atomic + irreversible, so a
+  //      "click to commit" gesture deserves a "yes, really" prompt.
+  //   2. Description gap — items appearing as trade YIELDS (e.g.,
+  //      Royal Lens) might not exist in the squad pool yet, so the
+  //      player has no other surface to learn what they do. The
+  //      confirm modal carries both items' descriptions inline.
+  private confirmTrade(recipeId: string): void {
+    const recipe = TRADE_RECIPES.find((r) => r.id === recipeId);
+    if (!recipe) return;
+    sfxClick();
+
+    // Modal dimensions
+    const panelW = 520;
+    const panelH = 360;
+    const panelX = (GAME_WIDTH - panelW) / 2;
+    const panelY = (GAME_HEIGHT - panelH) / 2;
+
+    // Dim backdrop covers the whole scene — interactive so clicks
+    // outside the modal are swallowed (player must use Confirm or
+    // Cancel rather than dismissing-by-clicking-elsewhere, which
+    // would be ambiguous).
+    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.78)
+      .setInteractive()
+      .setDepth(900);
+
+    const pg = this.add.graphics().setDepth(901);
+    drawPanel(pg, panelX, panelY, panelW, panelH);
+
+    // Cleanup helper — destroys every modal element together.
+    const close = (): void => {
+      dim.destroy();
+      pg.destroy();
+      title.destroy();
+      giveLabel.destroy();
+      receiveLabel.destroy();
+      arrow.destroy();
+      giveBlock.destroy(true);
+      receiveBlock.destroy(true);
+      confirmBtn.destroy();
+      cancelBtn.destroy();
+      escListener?.removeAllListeners();
+    };
+
+    const title = this.add.text(panelX + panelW / 2, panelY + 24, "Confirm Trade", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "22px",
+      color: "#f4d999",
+      stroke: "#1a0e04",
+      strokeThickness: 4
+    }).setOrigin(0.5, 0).setDepth(902);
+
+    // Two-column give / receive layout.
+    const colW = 220;
+    const colY = panelY + 70;
+    const giveX = panelX + 20;
+    const receiveX = panelX + panelW - 20 - colW;
+
+    const giveLabel = this.add.text(giveX + colW / 2, colY, "GIVE", {
+      fontFamily: FAMILY_HEADING, fontSize: "12px", color: "#c9b07a"
+    }).setOrigin(0.5, 0).setLetterSpacing(2).setDepth(902);
+    const receiveLabel = this.add.text(receiveX + colW / 2, colY, "RECEIVE", {
+      fontFamily: FAMILY_HEADING, fontSize: "12px", color: "#c9b07a"
+    }).setOrigin(0.5, 0).setLetterSpacing(2).setDepth(902);
+
+    // Big arrow between the columns
+    const arrow = this.add.text(panelX + panelW / 2, colY + 80, "→", {
+      fontFamily: FAMILY_HEADING, fontSize: "44px", color: "#f4d999"
+    }).setOrigin(0.5).setDepth(902);
+
+    const giveBlock = this.renderItemDetailColumn(giveX, colY + 28, colW, recipe.costs);
+    giveBlock.setDepth(902);
+    const receiveBlock = this.renderItemDetailColumn(receiveX, colY + 28, colW, recipe.yields);
+    receiveBlock.setDepth(902);
+
+    // Buttons
+    const btnY = panelY + panelH - 56;
+    const confirmBtn = new Button(this, {
+      x: panelX + panelW / 2 - 180,
+      y: btnY,
+      w: 170,
+      h: 40,
+      label: "Confirm Trade",
+      primary: true,
+      fontSize: 14,
+      onClick: () => {
+        close();
+        this.executeTrade(recipe.id);
+      }
+    });
+    confirmBtn.setDepth(902);
+    const cancelBtn = new Button(this, {
+      x: panelX + panelW / 2 + 10,
+      y: btnY,
+      w: 170,
+      h: 40,
+      label: "Cancel",
+      primary: false,
+      fontSize: 14,
+      onClick: () => {
+        sfxCancel();
+        close();
+      }
+    });
+    cancelBtn.setDepth(902);
+
+    // ESC closes — same affordance as the Memorial / Memories Wall
+    // overlay modals already provide. Captured into a variable so
+    // the close() helper can detach it.
+    const escListener = this.input.keyboard?.on("keydown-ESC", () => {
+      sfxCancel();
+      close();
+    });
+  }
+
+  // Render a single column of item details (cost OR yield side of a
+  // trade). Returns a Container so the caller can set depth + destroy
+  // it as a unit. Each item row shows glyph, name (with stack count),
+  // and the catalog description — the description is the part that
+  // fixes the "I've never seen this item before, what does it do?"
+  // gap for items appearing as trade yields.
+  private renderItemDetailColumn(
+    x: number, y: number, w: number,
+    items: { kind: ItemKind; count: number }[]
+  ): Phaser.GameObjects.Container {
+    const container = this.add.container(0, 0);
+    let py = y;
+    for (const it of items) {
+      const meta = ITEM_CATALOG[it.kind];
+      const header = this.add.text(x, py, `${meta.glyph} ${meta.name}${it.count > 1 ? ` ×${it.count}` : ""}`, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "14px",
+        color: "#f4d999"
+      });
+      const desc = this.add.text(x, py + 22, meta.description, {
+        fontFamily: FAMILY_BODY,
+        fontSize: "11px",
+        color: "#dad3bd",
+        wordWrap: { width: w - 8 },
+        lineSpacing: 3
+      });
+      container.add([header, desc]);
+      py += 22 + desc.height + 14;
+    }
+    return container;
   }
 
   private executeTrade(recipeId: string): void {
