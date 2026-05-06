@@ -341,6 +341,33 @@ export class BattleScene extends Phaser.Scene {
     this.setupCameraDragPan();
     this.setupCameraKeyboardPan();
 
+    // Defensive RESUME handler — fires every time BattleScene comes
+    // back from a paused overlay (BattleDialogueScene, InterposeScene,
+    // PromotionScene, RosterScene, SettingsScene, InventoryScene).
+    // Re-syncs every unit view to the live UnitState and redraws the
+    // active marker.
+    //
+    // Without this, B7 specifically had a bug where the player's unit
+    // sprites would not appear after the b07_lucian_amar_cover dialogue
+    // closed. The exact cause (mask/depth/alpha state from the dialogue
+    // scene leaking into BattleScene's rendering, or a Phaser quirk
+    // around scene resume on a vertical-scroll camera) was hard to
+    // pin down — but a wholesale refresh on RESUME is a no-op in the
+    // healthy case AND a recovery in the broken case. Cheap insurance.
+    //
+    // Listener is `on` not `once` because the same scene resumes many
+    // times across a battle (every dialogue, every modal). The
+    // SHUTDOWN listener registered separately tears it down.
+    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+      this.refreshAllUnits();
+      const cur = this.initiative.current();
+      if (cur) this.drawActiveMarker(cur);
+      // Also re-render the side panel so the active-turn ribbon and
+      // unit detail stay in sync with whatever the dialogue may have
+      // changed (XP awards from before_victory beats, etc.).
+      if (this.panelUnit) this.refreshSidePanel(this.panelUnit);
+    });
+
     // Tiles
     const tileSeed = map.id.length * 31 + 7;
     for (let y = 0; y < map.height; y++) {
