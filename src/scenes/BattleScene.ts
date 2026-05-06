@@ -614,9 +614,15 @@ export class BattleScene extends Phaser.Scene {
 
     // Hover zones over the WPN, ABL, and INV rows of statText. Position is
     // recomputed in refreshSidePanel() each time the panel updates.
-    this.wpnZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
-    this.ablZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
-    this.invZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive();
+    // Pinned with setScrollFactor(0) so the hit areas stay aligned with
+    // the (also-pinned) statText rows when the world camera scrolls.
+    // Without pinning, the camera-scroll on tall maps offsets the hit
+    // areas from the visually-rendered side panel — the player would
+    // hover the WPN row and trigger the ability tooltip at a different
+    // y, or vice versa.
+    this.wpnZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive().setScrollFactor(0);
+    this.ablZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive().setScrollFactor(0);
+    this.invZone = this.add.zone(0, 0, 1, 1).setOrigin(0, 0).setInteractive().setScrollFactor(0);
     this.wpnZone.on("pointerover", () => this.showInfoFor("weapon"));
     this.wpnZone.on("pointerout", () => this.infoTooltip.setVisible(false));
     this.ablZone.on("pointerover", () => this.showInfoFor("ability"));
@@ -1435,29 +1441,46 @@ export class BattleScene extends Phaser.Scene {
     const cx = px + PANEL_W / 2 - 12; // centered in panel content area (matches header text)
     const cy = 102 + size / 2;        // top y = 102 (just below the ribbon at 82–96)
 
-    const tex = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-    const srcW = tex.width || 1024;
-    const srcH = tex.height || 1536;
-    // Scale the portrait modestly wider than the circle. Less zoom than before
-    // (1.5× vs 1.95×) means the whole head — crown to chin — lands inside the
-    // circle even when the character's head sits slightly off-center in the
-    // source. Then pull the image up so the face center lands on the circle's
-    // vertical center. Our portraits put the eye-line at roughly y=22% of the
-    // source height (per public/assets/portraits/README.md), so the face midline
-    // is around 24% down.
-    const displayW = size * 1.5;
-    const displayH = displayW * (srcH / srcW);
-    const headCenterFromTop = displayH * 0.24;
-
-    const img = this.add.image(cx, cy - headCenterFromTop, key)
-      .setOrigin(0.5, 0)
-      .setDisplaySize(displayW, displayH)
-      .setDepth(2);
-
-    const maskG = this.make.graphics({ x: 0, y: 0 }, false);
-    maskG.fillStyle(0xffffff);
-    maskG.fillCircle(cx, cy, size / 2);
-    img.setMask(maskG.createGeometryMask());
+    // Pre-crop the portrait to a circular canvas texture ONCE per
+    // portrait id, then use that as the avatar image. Earlier
+    // version used a runtime geometry mask to crop the portrait to
+    // a circle — but the mask graphics wasn't camera-scroll aware
+    // and the avatar image was pinned via setScrollFactor(0). When
+    // the camera scrolled (after the per-battle camera-centering
+    // fix landed), the mask scrolled away from the pinned avatar
+    // and the circle came back empty.
+    //
+    // Same pattern that fixed RosterScene's scroll-breaks-portraits
+    // bug. Pre-cropping bakes the cover-fit + circular crop into
+    // the texture itself; the avatar is then a simple Image with
+    // no runtime mask, no container/camera transform issues, and
+    // strictly cheaper rendering.
+    const cropKey = `battle_avatar_crop:${u.portraitId ?? u.id}`;
+    if (!this.textures.exists(cropKey)) {
+      const cropTex = this.textures.createCanvas(cropKey, size, size);
+      if (cropTex) {
+        const ctx = cropTex.getContext();
+        const src = this.textures.get(key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+        const srcW = src.width || 1024;
+        const srcH = src.height || 1536;
+        // Cover-fit at 1.5× the circle width so the head fits with
+        // some headroom, then anchor so the face midline (~24% down
+        // from the top of source) lands at the canvas's vertical
+        // center. Same math the runtime-mask version used.
+        const displayW = size * 1.5;
+        const displayH = displayW * (srcH / srcW);
+        const dx = (size - displayW) / 2;
+        const dy = size / 2 - displayH * 0.24;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(src, dx, dy, displayW, displayH);
+        ctx.restore();
+        cropTex.refresh();
+      }
+    }
+    const img = this.add.image(cx, cy, cropKey).setOrigin(0.5).setDepth(2);
 
     const ring = this.add.graphics().setDepth(3);
     ring.lineStyle(2, COLORS.gold, 0.92);
@@ -1465,12 +1488,12 @@ export class BattleScene extends Phaser.Scene {
     ring.lineStyle(1, 0x000000, 0.5);
     ring.strokeCircle(cx, cy, size / 2 + 3);
 
-    // Pin avatar + ring so they stay anchored to the side panel when the
-    // camera pans. (The mask graphics is invisible — no need to pin.)
+    // Pin avatar + ring so they stay anchored to the side panel when
+    // the camera pans. No mask graphics anymore — the crop is baked
+    // into the texture, no per-frame mask state to keep in sync.
     this.pin(img);
     this.pin(ring);
     this.avatarImg = img;
-    this.avatarMaskG = maskG;
     this.avatarRing = ring;
   }
 
