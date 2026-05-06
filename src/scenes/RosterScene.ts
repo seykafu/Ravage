@@ -256,29 +256,47 @@ export class RosterScene extends Phaser.Scene {
       const avatarCy = rowY + 48;       // center y
       let avatar: Phaser.GameObjects.Image;
       if (hasPortrait) {
-        const tex = this.textures.get(portraitKey).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-        const srcW = tex.width || 600;
-        const srcH = tex.height || 600;
-        // Cover-fit: scale so the avatar circle is fully covered, then
-        // pull the image up so the face center lands on the circle's
-        // vertical center. Painted portraits put the eye line at ~22%
-        // and the face midline at ~24% down from the top.
-        const scale = Math.max(avatarSize / srcW, avatarSize / srcH);
-        const displayW = srcW * scale;
-        const displayH = srcH * scale;
-        const headCenterFromTop = displayH * 0.24;
-        avatar = this.add.image(avatarCx, avatarCy - headCenterFromTop, portraitKey)
-          .setOrigin(0.5, 0)
-          .setDisplaySize(displayW, displayH);
-        // Circular mask — drawn into a make.graphics, set as the avatar's
-        // mask, then added INSIDE rowsContainer so it scrolls with the
-        // row (otherwise it would stay at world position while the
-        // avatar scrolls past, exposing the cover-fit overflow).
-        const maskG = this.make.graphics({ x: 0, y: 0 }, false);
-        maskG.fillStyle(0xffffff);
-        maskG.fillCircle(avatarCx, avatarCy, avatarSize / 2);
-        avatar.setMask(maskG.createGeometryMask());
-        rowsContainer.add(maskG);
+        // Pre-crop the portrait to a circular canvas texture ONCE per
+        // portrait id, then use that as the avatar image. Earlier
+        // version used a runtime geometry mask to crop the portrait
+        // to a circle — which broke when the rowsContainer scrolled
+        // because Phaser's geometry-mask renderer can get out of sync
+        // with container transforms (the mask stayed at scene-world
+        // coords while the masked image moved with the container).
+        // Result: scrolling the roster pop-up turned the portraits
+        // into white circles. Pre-cropping bakes the circular crop
+        // into the texture itself, so the avatar is just a simple
+        // Image with no runtime mask and no scroll-related desync.
+        const cropKey = `roster_avatar_crop:${u.portraitId ?? u.id}`;
+        if (!this.textures.exists(cropKey)) {
+          const cropTex = this.textures.createCanvas(cropKey, avatarSize, avatarSize);
+          if (cropTex) {
+            const ctx = cropTex.getContext();
+            const src = this.textures.get(portraitKey).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+            const srcW = src.width || 600;
+            const srcH = src.height || 600;
+            // Cover-fit: scale so the avatar circle is fully covered,
+            // then pull the image up so the face center lands on the
+            // circle's vertical center. Painted portraits put the
+            // face midline at ~24% down from the top of source.
+            const scale = Math.max(avatarSize / srcW, avatarSize / srcH);
+            const dW = srcW * scale;
+            const dH = srcH * scale;
+            const dx = (avatarSize - dW) / 2;
+            // Y offset: shift so the source's 24%-from-top point lands
+            // at the canvas's vertical center.
+            const dy = avatarSize / 2 - dH * 0.24;
+            // Circular clip, then draw the portrait into it.
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(avatarSize / 2, avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(src, dx, dy, dW, dH);
+            ctx.restore();
+            cropTex.refresh();
+          }
+        }
+        avatar = this.add.image(avatarCx, avatarCy, cropKey).setOrigin(0.5);
       } else {
         // No portrait — show the procedural unit sprite at native aspect.
         const tex = ensureUnitTexture(this, u);
