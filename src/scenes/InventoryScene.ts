@@ -597,30 +597,78 @@ export class InventoryScene extends Phaser.Scene {
 // ---- Post-battle reconciliation -------------------------------------------
 //
 // Called from BattleScene.checkEnd after the player's outcome resolves
-// (and after writeSave for character progression). Walks every player
-// unit's CURRENT in-battle inventory and folds it back into the squad
-// pool — items consumed during battle are simply absent from the live
-// inventory so they don't return; surviving items rejoin the pool. Then
-// clears the per-character assignedInventory slot so the next battle
-// starts from a clean distribution slate.
+// (and after writeSave for character progression).
 //
-// We keep this here so the inventory ownership story stays in one
-// module: BattleScene only knows "call returnInventoriesToPool(units)"
-// and the save layer handles the rest.
+// Behavior (per-character persistence — items carry forward):
+//
+// For each player unit:
+//   * If the character SURVIVED — their CURRENT in-battle inventory is
+//     saved back to assignedInventory[characterId]. Items they used in
+//     battle are simply absent from the live inventory (already gone),
+//     so the persisted snapshot reflects what they're still holding.
+//     Equipment they carried in (Mask, Royal Lens, etc.) stays with
+//     them for the next deployment without the player having to
+//     redistribute. The next time they show up at the camp or
+//     BattlePrep, their bag is already populated.
+//
+//   * If the character FELL in battle — their items go back to the
+//     squad pool (the squad salvages off the body) and their
+//     assignedInventory entry is cleared. If they later rejoin the
+//     squad alive (no permadeath outside Grave mode), they start
+//     with an empty bag and the player redistributes from the pool
+//     for that next battle.
+//
+// Characters NOT in this battle aren't touched — their existing
+// assignedInventory persists across battles they sat out.
+//
+// Earlier behavior dumped EVERY survivor's items back to the pool +
+// wiped assignedInventory wholesale, forcing a full redistribution
+// every battle. The new behavior matches the player's mental model:
+// "I gave Maya the Royal Lens; Maya still has the Royal Lens."
 
-export const returnInventoriesToPool = (units: { id: string; faction: string; state: { inventory: Item[] } }[]): void => {
+export const reconcilePostBattleInventory = (
+  units: { id: string; faction: string; state: { inventory: Item[]; alive: boolean } }[]
+): void => {
   let save = loadSave();
   const pool = getSquadInventory(save);
+  // Snapshot the existing assignment map so characters NOT in this
+  // battle (e.g., Selene if she's recruited but not deployed) keep
+  // their previously-assigned inventory untouched.
+  const assigned: Record<string, Item[]> = save.assignedInventory
+    ? { ...save.assignedInventory }
+    : {};
+
   for (const u of units) {
     if (u.faction !== "player") continue;
-    for (const it of u.state.inventory) {
-      pool.push(it);
+    if (u.state.alive) {
+      // Survivor — persist their current in-battle bag back to disk.
+      // Spread to defensively copy in case BattleScene mutates the
+      // unit's inventory after this call (it shouldn't, but the cost
+      // of the copy is negligible and the safety is real).
+      assigned[u.id] = [...u.state.inventory];
+    } else {
+      // Fallen — squad salvages whatever's left in the bag back to
+      // the pool. Clear their assignment so they don't show up at
+      // BattlePrep with stale inventory if they rejoin via revival.
+      for (const it of u.state.inventory) pool.push(it);
+      delete assigned[u.id];
     }
   }
+
   save = setSquadInventory(save, pool);
-  save = clearAssignedInventory(save);
+  save = { ...save, assignedInventory: assigned };
   writeSave(save);
 };
 
+// Backward-compat alias — kept only because earlier commits wired
+// BattleScene against this name. Routes to the new function so
+// existing call sites keep working unchanged. Safe to remove once
+// we audit + update the BattleScene import.
+export const returnInventoriesToPool = reconcilePostBattleInventory;
+
 // Suppress unused-lint COLORS — kept for future panel styling.
+// clearAssignedInventory used to be called here for the wholesale
+// wipe pattern; the per-character-persistence rewrite no longer
+// needs it. Import is preserved for callers that may still use it.
 void COLORS;
+void clearAssignedInventory;

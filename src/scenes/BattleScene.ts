@@ -64,7 +64,7 @@ import {
   writeSave
 } from "../util/save";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
-import { returnInventoriesToPool } from "./InventoryScene";
+import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import type { TilePos, Unit } from "../combat/types";
 import { playUnitState } from "../assets/unitAnim";
@@ -1650,10 +1650,11 @@ export class BattleScene extends Phaser.Scene {
     writeSave(save);
     // Battle rewards (victory only). Mint each ItemKind in the node's
     // rewards array as a fresh Item and drop it directly into the
-    // squad pool. Done BEFORE returnInventoriesToPool so a single
-    // writeSave from there captures both. EndScene reads the same
-    // rewards array off the node to render the "Spoils" line — no
-    // need to plumb the actual Item ids through the scene transition.
+    // squad pool. Done BEFORE reconcilePostBattleInventory so a
+    // single writeSave from there captures both. EndScene reads the
+    // same rewards array off the node to render the "Spoils" line —
+    // no need to plumb the actual Item ids through the scene
+    // transition.
     if (v === "player") {
       const node = battleById(this.battleId);
       if (node?.rewards && node.rewards.length > 0) {
@@ -1663,15 +1664,17 @@ export class BattleScene extends Phaser.Scene {
         writeSave(setSquadInventory(reloaded, pool));
       }
     }
-    // Inventory reconciliation. Items consumed in battle (potions used,
-    // elixirs drunk) are simply absent from each player's live
-    // inventory and so don't return to the pool — they're permanently
-    // gone. Equipment and unused consumables ARE still in the bag and
-    // get folded back. Then the per-character assignedInventory map
-    // is wiped so the next battle starts from a clean distribution.
-    // Runs on BOTH victory and defeat (player keeps anything that
-    // didn't get used even if the squad wiped at the end).
-    returnInventoriesToPool(this.state.units);
+    // Per-character inventory reconciliation. Items consumed in
+    // battle (potions used, elixirs drunk) are simply absent from
+    // each character's live inventory so they don't survive — they're
+    // permanently gone. Surviving items STAY in each character's
+    // assignedInventory across battles, so a player who gave Maya the
+    // Royal Lens doesn't have to re-give it next battle.
+    //
+    // Fallen characters' items go back to the squad pool (the squad
+    // salvages off the body). Runs on BOTH victory and defeat. Full
+    // behavior + edge cases documented at reconcilePostBattleInventory.
+    reconcilePostBattleInventory(this.state.units);
     // Analytics — capture outcome + duration so we can see pacing issues
     // (e.g., a battle averaging 12+ rounds is probably overlong).
     trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);
