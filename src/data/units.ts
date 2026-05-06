@@ -361,6 +361,37 @@ export const ENEMIES = {
   // artwork. Stats slightly above Selene's because Kian is the
   // mechanical hard-stop on the player's escape, with a +mountBonus
   // from the knight class.
+  // Captain Volos — Archbold's interception officer at Grude harbor.
+  // First named enemy of the second-half (post-crossing) campaign.
+  // Distinct from the Anthros royal-guard line: he's an empire
+  // officer, slightly higher level than B11's elites, holds the
+  // marble customs platform with the holdPositionUntil pattern so
+  // his line gets thinned before he engages personally.
+  archboldCaptain: (level = 13): UnitDef => ({
+    id: "archbold_captain",
+    name: "Captain Volos",
+    shortName: "Vo",
+    faction: "enemy",
+    classKind: "swordmaster",
+    weapon: "sword",
+    stats: { hp: 50, power: 14, armor: 8, speed: 11, movement: 4, ap: 3 },
+    artSeed: 21,
+    // Reuse Kian's palette as a stand-in until a Volos portrait /
+    // palette ships. Visually the player will read him as "another
+    // tall officer in royal kit," which matches the narrative
+    // (Archbold's empire officers carry themselves the same way as
+    // Anthros's; that's part of the colony reveal).
+    palette: PLAYER_PALETTES.kian,
+    portrait: true,
+    portraitId: "kian",
+    tags: new Set(["boss"]),
+    level,
+    // Holds the customs platform until 2 of his line are still up,
+    // mirroring B1 King Nebu / B10-B11 Kian. Gives the player time
+    // to engage the line and gives the round-1 dialogue room to
+    // land before Volos personally engages.
+    holdPositionUntil: { allyCount: 2 }
+  }),
   kian: (level = 12): UnitDef => ({
     id: "kian_enemy",
     name: "Kian",

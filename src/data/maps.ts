@@ -623,3 +623,61 @@ export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", 
     { x: 6,  y: 8 }   // Royal Guard, mid-stair seal
   ]
 });
+
+// ============== Battle 12 — The Ravage (Grude harbor district) ==============
+// 14×11 cobblestone harbor district at the foot of Grude's east port.
+// Squad disembarks from Dawn's ship at the south wooden dock (rows 9-10)
+// and must push north through Archbold's interception detail to reach
+// the city interior (north edge, where Dawn's safe house waits). Stone
+// warehouses line both sides of the street (col 0-2 + col 11-13 are
+// solid wall) — only the central corridor is passable. Two stacked
+// crates serve as cover at row 5; a marble customs platform at row 3
+// gives the King's elite a small height advantage.
+//
+// Map fits in the viewport (no camera scrolling required). Victory:
+// rout the elite OR escape any unit to row 0 (push into the city).
+//
+// Reuses tile aliases declared earlier: Cb (cobblestone), Wo (wood),
+// Wb (wall), Tr (cobblestone+torch), Mr (marble), Bd (cobblestone+barricade).
+const Wt2 = t("water"); // harbor edge
+
+const ravageRows = [
+  [Wb, Wb, Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb, Wb, Wb], // row 0 — north city gate (escape edge)
+  [Wb, Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb, Wb], // row 1
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb], // row 2 — warehouse fronts narrow to street
+  [Wb, Cb, Cb, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Cb, Cb, Wb], // row 3 — marble customs platform
+  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // row 4 — street with corner torches
+  [Wb, Cb, Cb, Cb, Bd, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Cb, Wb], // row 5 — barricade cover
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // row 6 — open street
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // row 7 — open street
+  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // row 8 — dock-side torches
+  [Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo], // row 9 — wooden dock (squad spawn)
+  [Wt2,Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wt2] // row 10 — water/dock edge
+] as const;
+
+export const ravageMap: MapDef = buildMap("ravage", "Grude Harbor District", ravageRows, {
+  // Squad steps off Dawn's ship onto the south dock. Tight formation —
+  // they're all four still finding their land legs after fourteen
+  // months at sea, which is how Archbold's spotter knew when to
+  // signal the interception.
+  player: [
+    { x: 6, y: 9 },  // Amar (center, just off the gangway)
+    { x: 5, y: 9 },  // Maya (left of Amar)
+    { x: 7, y: 9 },  // Ning (right of Amar)
+    { x: 6, y: 10 }  // Leo (rear-center, dactyl on the dock)
+  ],
+  // Archbold's interception detail. Captain on the marble customs
+  // platform (row 3, center) — has full sight down the street and
+  // commands the line. Two royal guards mid-street (row 5) behind
+  // the barricades. Two crown archers flanking on the customs
+  // platform (row 3 east + west). One royal guard advancing south
+  // (row 6) to engage the squad before they can find cover.
+  enemy: [
+    { x: 7,  y: 3 },  // Captain (named — see ENEMIES.archboldCaptain)
+    { x: 4,  y: 3 },  // Crown Archer, customs west
+    { x: 10, y: 3 },  // Crown Archer, customs east
+    { x: 4,  y: 5 },  // Royal Guard behind west barricade
+    { x: 9,  y: 5 },  // Royal Guard behind east barricade
+    { x: 7,  y: 6 }   // Royal Guard advancing south
+  ]
+});

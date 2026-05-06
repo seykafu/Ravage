@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, cliffsMap, dawnBanditsMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravineMap, swampMap } from "./maps";
+import { caravanMap, cliffsMap, dawnBanditsMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1054,18 +1054,121 @@ export const BATTLES: BattleNode[] = [
     index: 12,
     title: "Twelfth Battle",
     subtitle: "The Ravage",
-    intro: "A year of travel. Then Archbold's men close in. The truth of the Ravage is revealed.",
-    outro: "You are not the heroes of the world. You are the survivors of a colony.",
-    music: MUSIC.lifeInGrude,
+    intro:
+      "Fourteen months at sea ends at first light. Khione brings the ship in to the east port of Grude under the empire's own customs flag — Madame Dawn's papers are good enough to dock anywhere on the coast — and the squad steps off the gangway onto cobblestone they have never seen before. The buildings are taller than anything in Para. The signage is in three languages. The harbor smells of pitch and lemon and cold smoke. They have ten breaths to take it in before alarm bells ring at the customs platform: someone in a captain's cloak has recognized them. Archbold knew exactly when to send the welcome.",
+    outro:
+      "You are not the heroes of the world. You are the survivors of a colony. Madame Dawn meets you at the inner gate and tells you both at once: yes, the bells were for you; yes, Captain Volos answers to King Archbold of Grude; yes, your father's coup eleven years ago was against an empire, not a kingdom; and yes, she has a great deal more to say. Come inside before the second wave arrives.",
+    music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Reveal",
+    playable: true,
+    map: ravageMap,
+    buildPlayers: () => [
+      // Post-Lucian squad: the four who walked off Madame Dawn's ship
+      // after the cabin scene + sea burial. Maya leads field-tactics
+      // now in Lucian's place; Ning has his bowstring on her belt.
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Captain Volos on the customs platform + 5 elite. First named
+      // enemy of the empire. Levels bumped above the elite Crown
+      // forces at B11 — these are Archbold's officers, not Nebu's.
+      ENEMIES.archboldCaptain(13),
+      ENEMIES.royalArcher("rav_xa1", 1201, 12),
+      ENEMIES.royalArcher("rav_xa2", 1202, 12),
+      ENEMIES.royalGuard("rav_rg1", 1203, 12),
+      ENEMIES.royalGuard("rav_rg2", 1204, 12),
+      ENEMIES.royalGuard("rav_rg3", 1205, 12)
+    ],
+    difficultyLabel: "Reveal — Empire Welcome",
     // Spoils: Dawn's people resupply the squad after the colony reveal.
     // 3 elixirs from the Grude infirmary + 1 royal lens (a Grude-issue
     // optic Khione gifts as a gesture of welcome — strictly better than
     // anything the squad carries from Anthros).
-    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"],
+    // Victory: rout the interception detail OR push any unit through
+    // the north gate (row 0) into the city interior. The cinematic
+    // intent is escape — the second wave is coming and Dawn's safe
+    // house is north — but a player who wants to clear the dock
+    // outright can also win that way (extra XP).
+    victory: anyOf(
+      escapeToTile({ x: 7, y: 0 }, { label: "Push north into the city" }),
+      routEnemies
+    ),
+    dialogues: [
+      // Round 1: Dawn's voice from a window above the customs
+      // platform, narrating the situation while the squad fights.
+      // The colony truth that Kian articulated in B11 lands HARDER
+      // here because the player is now standing in the empire's
+      // capital looking at the empire's officers wearing the same
+      // kit as the King's Anthros guard. Same kit. Same drill.
+      // Different flag.
+      {
+        id: "b12_dawn_voice_window",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { portraitId: "narrator",
+            body: "Alarm bells from the customs platform. Captain Volos in royal blue at the marble podium, six elite around him, two crossbows already drawn. The squad takes cover behind the dock-side crates inside ten seconds — Maya signals the formation without a word." },
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "(from a second-story window, half-shouted) Amar. Look at his shoulder rig. Look at his belt buckle. Look at his sword's pommel. Now look at the dead king's guard you put down at the Para palace eleven months ago. It's the SAME KIT. The same drill. The same officer-school. Eighty years of it. You are not fighting a kingdom, my son. You are fighting an empire." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "She's right. The crossbow stance is identical. They learned it from the same manual. Amar — focus. Volos first only when his line thins. Crown archers right now." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "(quietly, to himself, while drawing) ...Eighty years." }
+        ]
+      },
+      // Round 3: a smaller follow-up beat — Dawn finishes the thought
+      // she started on round 1. This is the moment the player hears
+      // her use the word "son" and probably notes it (the family
+      // reveal lands fully at B14; here it's a planted seed).
+      {
+        id: "b12_dawn_son_beat",
+        trigger: { kind: "round_start", round: 3 },
+        beats: [
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "(from the window, calmer now, only Amar near enough to hear) When you clear the platform, the gate behind you opens to the inner district. Don't take the main avenue. Cut left at the second alley. The safe house door has no number. I'll be there before you are." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "(over his shoulder, between strikes) ...You said \"my son\"." },
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "I did. There's a great deal more I have not said yet. The second alley, Amar. Move." }
+        ]
+      },
+      // adjacent_eot Maya + Amar: Maya finally says out loud what
+      // she's been holding for fourteen months on the ship. Lands in
+      // the middle of the fight because the alternative is letting
+      // Dawn say it for her and Maya promised not to do that.
+      {
+        id: "b12_maya_finally_says_it",
+        trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "amar" },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+            body: "Amar. Before Dawn finishes the speech she's about to give you. The thing I've been waiting fourteen months to tell you. (Quick, while parrying.) Your father wasn't only Anthros's prince. Your mother wasn't only the woman who raised you." },
+          { speaker: "Amar", portraitId: "amar", expression: "shocked",
+            body: "Maya — wait —" },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "(strike, recover) Wait nothing. Fight first, listen on the way to the safe house. The shape of it: half of you is from this side of the sea. I'll fill in the rest when nobody is shooting at us." }
+        ]
+      },
+      // before_victory: Dawn at the inner gate as the squad pushes
+      // through. The line that becomes the chapter's outro frame.
+      {
+        id: "b12_dawn_at_the_gate",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The line breaks at the customs platform. Volos goes down to a combined arrow-and-blade exchange with Maya commanding the angle. The remaining crossbows scatter into the warehouse alleys. The squad runs the length of the central street to the inner gate. Dawn is waiting under the arch in a long gray cloak, hood down, hands empty." },
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "You made it through faster than I expected. The second wave is twelve minutes behind you. Ndara has tea on the second floor. Khione has your packs already inside. Maya — your old room is the one at the end of the upstairs hall, the linens are fresh." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "(quietly) ...You knew which room was hers. You knew which room was hers eleven months before I did. How long has she been yours, Dawn." },
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "(soft) Eleven years, Amar. Same as you. Come inside. Both wars are about to find us, and we have a lot to talk about before they do." }
+        ]
+      }
+    ]
   },
   {
     id: "b13_dawn_rebellion",

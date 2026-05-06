@@ -74,7 +74,11 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   // rail). The roster shown after B11 is post-Lucian. The squad
   // crosses to Grude on Madame Dawn's ship as four — Amar, Ning,
   // Maya, Leo — until the second-half rejoinings begin.
-  b11_cliffs:          ["amar", "ning", "maya", "leo"]
+  b11_cliffs:          ["amar", "ning", "maya", "leo"],
+  // B12: same four step off Khione's ship at Grude. Future rejoins
+  // (Selene, Ranatoli, Ndara as ally) plug in here as those story
+  // beats land.
+  b12_ravage:          ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's

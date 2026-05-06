@@ -120,7 +120,14 @@ export type ArcId =
   | "before_leaving_thuling"
   | "post_leaving_thuling"
   | "before_cliffs"
-  | "post_cliffs";
+  | "post_cliffs"
+  // -------- B12: The Ravage (Grude arrival) --------
+  // Opens the second half. Squad arrives at Grude's east port after
+  // the 14-month crossing; Archbold's interception meets them on
+  // the dock; Madame Dawn finishes the colony-truth speech Kian
+  // started at the cliffs.
+  | "before_ravage"
+  | "post_ravage";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

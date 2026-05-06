@@ -31,7 +31,12 @@ export const MUSIC = {
   // captured) — fades in when the before_victory dialogue starts and
   // fades back to the previous track when EndScene transitions in.
   sadness:  "music_sadness",
-  sadness2: "music_sadness2"
+  sadness2: "music_sadness2",
+
+  // Grude battle palette — first track in the second-half of the campaign
+  // (B12+). Used for the Grude harbor district fight where the squad lands
+  // in the empire's capital and Archbold's men intercept them on the dock.
+  grudeBattle1: "music_grude_battle1"
 } as const;
 export type MusicKey = (typeof MUSIC)[keyof typeof MUSIC];
 
@@ -54,7 +59,8 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.trailer,            src: "audio/Spine of the World - Trailer.mp3" },
   { key: MUSIC.ravageDaredevil,    src: "audio/Ravage_Daredevil.mp3" },
   { key: MUSIC.sadness,            src: "audio/Sadness.mp3" },
-  { key: MUSIC.sadness2,           src: "audio/Sadness2.mp3" }
+  { key: MUSIC.sadness2,           src: "audio/Sadness2.mp3" },
+  { key: MUSIC.grudeBattle1,       src: "audio/GrudeBattle1.mp3" }
 ];
 
 // Singleton-ish music manager. Lives across scenes via game.registry.

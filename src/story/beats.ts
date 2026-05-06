@@ -40,7 +40,8 @@ export interface StoryArc {
   next: RouteRef;
   music:
     | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
-    | "mainTheme" | "emotional" | "everydayLife" | "trailer" | "ravageDaredevil";
+    | "mainTheme" | "emotional" | "everydayLife" | "trailer" | "ravageDaredevil"
+    | "sadness" | "sadness2" | "grudeBattle1";
   // Optional backdrop key — must match a key in BACKDROPS (see BackdropArt).
   // If omitted, StoryScene falls back to the generic Thuling sky.
   // NOTE: this is the camelCase BACKDROPS key, NOT the bg_<label> BackdropKey
@@ -638,7 +639,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The crossing to Grude begins",
     music: "emotional",
     backdrop: "cliffs",
-    next: "credits",
+    next: "story:before_ravage",
     beats: [
       N("The squad makes the ship at moonrise. Dawn's captain is a woman in her fifties who introduces herself as Khione, says nothing else, and orders the lines cut the moment Amar's boots clear the dock. The boat pulls away from the harbor faster than its weight should allow. Kian's body is still on the lower landing. The squad does not look back."),
       N("Below decks, the captain's mate brings a lantern and a bowl of water. The squad has time to stop moving for the first time in twelve hours. That's when Maya sees the dark spread across the back of Lucian's tunic."),
@@ -670,7 +671,86 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "We do not stop, your highness. But we will slow. The squad will be present. The western rail at dawn." },
       N("The ship slows in the gray hour. The squad gathers at the western rail. Lucian goes into the sea wrapped in the flag the cousin's wife stitched two summers ago for the Thuling festival — Maya took it off the wall of his house on her way out the back gate and rode with it folded under her saddle the whole night. Nobody says anything. Ning is the one who lets the bundle slip from her hands. The water takes it without sound."),
       N("The ship turns west again. The squad stands at the rail until the sun is fully up. Then Amar walks to the stern, opens his pack, and takes out the small wooden practice sword Lucian carved for him on the night they met at the forge. He holds it for a long time. He doesn't put it back in the pack."),
-      N("(End of the playable first half — chapters 1 through 11. The fourteen-month crossing and the year in Grude continue from here. The remaining nineteen chapters carry the squad through Madame Dawn's rebellion, Amar's true origin, and the Seven Paths divergence at the heart of the second half.)")
+      N("Khione confirms it: fourteen months west across open water. The squad has the run of the ship. The weather will be hard for a long stretch in the middle. The crew will keep its distance unless asked. There is wine if the squad wants wine. There is not enough sky for the dactyl, who refuses to settle until the third week. The crossing has begun.")
+    ]
+  },
+  // -------- Pre-Battle 12 (the long crossing + first sight of Grude) --------
+  // Bridges post_cliffs across the fourteen-month sea voyage and lands
+  // the squad at the gangway of Khione's ship in Grude's east port.
+  // Compresses the year into a handful of montage beats — the script's
+  // original "year of travel" framing in one arc rather than a full
+  // mini-season of per-month chapters. Closes on the alarm bells that
+  // open B12.
+  before_ravage: {
+    id: "before_ravage",
+    title: "Fourteen months west",
+    subtitle: "The crossing, then the gangway at Grude",
+    music: "emotional",
+    backdrop: "grude",
+    next: "prep:b12_ravage",
+    beats: [
+      N("The first month is grief. The squad moves through it the way the ship moves through dead water — slowly, on someone else's clock, without comment."),
+      N("The second month is reading. Maya, mostly. She sits cross-legged on the foredeck with stacks of Grude political pamphlets she had stowed in the cargo hold before they boarded — bills of attainder, harbor regulations, council membership lists. She makes notes in three colors of ink. She doesn't share them yet."),
+      N("The fourth month is Ning teaching herself to fletch in a moving wind. Khione gives her a windrose without comment one afternoon and walks away. Ning works it out alone over the next four weeks."),
+      N("The seventh month is Leo and the dactyl finally walking the full length of the ship together without incident. The dactyl — Ash, the squad has been calling him Kid — stops being afraid of the deck. Leo stops being afraid he made the wrong call."),
+      N("The ninth month is Amar opening Lucian's wood practice sword in the cabin he shares with Leo, holding it for an hour, and quietly carving a single word into the underside of the grip. He doesn't show anyone what the word is."),
+      N("The eleventh month, Maya breaks her own rule and sits down across from Amar in the mess one night with a stack of Grude maps and a single sheet of paper. She doesn't open the paper. She doesn't speak. Amar looks at the paper. Amar looks at Maya."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "I promised you I'd wait until you asked. You haven't asked. I want to ask you a question instead. May I tell you ONE thing about your old life — one — before we land?" },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "...One thing. Yes." },
+      { speaker: "Maya", portraitId: "maya",
+        body: "Your father didn't die in the war you remember him dying in. He died before you were born. The man you called your father was your mother's older brother, who raised you because your mother was elsewhere doing something complicated. Your mother is alive. She wrote me the letter that's under this map. I'm not going to read it. You're not going to read it tonight. But I wanted you to know it exists, before Madame Dawn meets us at the gangway and tries to be the first one to tell you anything." },
+      N("Amar doesn't ask whose letter it is. He doesn't have to. He sits with Maya for a long time without speaking. The lantern burns down. Maya leaves the letter under the map and goes to bed without looking back."),
+      N("Three months later, in late summer, Khione brings the ship around the southern headland into Grude's east port. The squad lines the rail. The city is taller than anything they have ever seen. The buildings climb a hill in three terraces. The signage is in three languages. The harbor smells like a different country."),
+      { speaker: "Khione", portraitId: "khione", expression: "neutral",
+        body: "Ten minutes to dockside. Madame Dawn's papers are good at every customs platform on the coast — we're flying her flag in the foreflag and the empire's in the back. The captain on the platform won't look twice. (Pause.) Unless he's been told what to look for." },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "He's been told. The crossbow stance from a hundred meters out is wrong for routine customs. Amar — formation. Ning, fletching check. Leo, dactyl on the gangway with us, not in the hold. We're walking off the ship in arrowhead." },
+      N("The gangway lowers. The squad steps off into the empire. The alarm bell at the customs platform begins to ring before Amar's boots clear the wood.")
+    ]
+  },
+  // -------- Post-Battle 12 (Dawn's safe house, the rest of the speech) --------
+  // The squad reaches Dawn's inner-district safe house, takes off armor
+  // for the first time in fourteen months, and listens. Dawn finishes
+  // the colony-truth speech she started from the window. The "my son"
+  // remark from the battle gets contextualized but NOT fully resolved —
+  // the family-tie reveal lands in B14. Closes on the squad's first
+  // night under a roof in Grude.
+  post_ravage: {
+    id: "post_ravage",
+    title: "The safe house, second floor",
+    subtitle: "Dawn finishes the speech she started from the window",
+    music: "lifeInGrude",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("Dawn's safe house is the upstairs of a chandler's shop on a quiet inner-district street. The chandler downstairs nods to Khione without speaking and does not look at the squad at all. Up two flights of stairs is a long room with a bay window facing the harbor, a low table, four sleeping pallets already made up with fresh linens, and tea steeping in a clay pot. Ndara stands at the table pouring."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
+        body: "The mountain village. Eleven months ago. You came after my brother. He held the gate for me. He went down at the gate. I ride a dactyl. I asked you the question on my way out. (Pause.) I am Madame Dawn's lieutenant. I have been since before any of you were born. The mountain village was not a job I chose. It was a job I did. I would like to apologize to the squad for what I cannot give back, and then I would like to pour you tea." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked",
+        body: "...Ndara. Your brother said your name was Ndara on the ridge before he fell. I — I have been thinking about him for eleven months." },
+      { speaker: "Ndara", portraitId: "ndara",
+        body: "I have been thinking about him for eleven months as well. Tea, your highness." },
+      N("Maya takes the tea first, which is how Maya signals to the squad that the room is safe. The squad sits. Dawn enters from a side door and stands at the window with her back to them for a long moment before she speaks."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Eighty years ago, King Archbold of Grude — that's the great-grandfather of the man on the throne now, also called Archbold — looked across the western sea at the long peninsula you call Anthros and decided he wanted the iron under it. He didn't have the army for an outright conquest. So he found a local strongman in Para — a minor noble named Nebu — and he installed him as king. Nebu's grandson, the man your father tried to kill, is the one your generation knows. The arrangement has been in place since before any of you were alive. Anthros is a colony. Grude is the empire. The harvest failures your villages have been blaming on the Para crown for sixty years are because the iron under Anthros is being shipped here, to the empire, to be turned into the swords that just tried to kill you on the dock." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "(quietly, to the squad) I've known this for nine years. I'm sorry I didn't tell any of you. I needed the ground under your feet to be the ground under MY feet first." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Your father knew it, Amar. Your father's coup wasn't against Nebu. It was against the colonial arrangement. The reason he died in his own throne hall is that Grude noticed. The reason YOU survived your own coup eleven years later is that I was paying close attention to which boy in the hospital ward was the one who'd been calling himself a forge worker — and I sent for you. Through Maya. Through Lucian, indirectly. Through Ndara at the village. Through Kian, in his own awful way. (Pause.) I have been pulling you toward this room for a long time, Amar. I owe you the courtesy of saying it out loud now that you're here." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(quietly) ...You said \"my son\" from the window." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "(holds his eyes) I did. I'd like to leave the rest of THAT conversation for the morning, Amar. There is a great deal of it, and you have a great deal still to process tonight, and Lucian's brother is here in Grude to meet you tomorrow at noon and I'd rather you sleep first." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked",
+        body: "Lucian had a brother in Grude?" },
+      { speaker: "Madame Dawn", portraitId: "dawn",
+        body: "Lucian had a brother in Grude. His name is Aren. He runs the inland courier route for my organization. He has known about the squad for eleven months. He has a letter from Lucian, written in the cabin before the bolt. (Pause.) Tomorrow, Amar. Sleep tonight." },
+      N("The squad doesn't speak for a long time. Ning is the one who eventually picks up her tea. Leo follows. Maya is already halfway through hers. Amar sits with the cup between his hands and watches the harbor lights through the bay window. Dawn excuses herself before midnight. Ndara stays."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
+        body: "(quiet, to the room) I will take the watch tonight. None of you slept on the ship. None of you slept on the dock. Sleep here. There is no second wave coming through this door tonight. I am personally responsible for that." },
+      N("The squad sleeps under a roof for the first time in fourteen months. The dactyl, in the courtyard below, settles at last. The harbor lights go out one by one. The empire continues around them in the dark.")
     ]
   }
 };
