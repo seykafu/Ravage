@@ -1,12 +1,12 @@
 # Ravage
 
-A tactical RPG vertical slice — twelve battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — thirteen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
 Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
 ## Vertical slice contents
 
-Twelve playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, and the empire's welcome at the Grude harbor:
+Thirteen playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, the empire's welcome at the Grude harbor, and the rebellion strike where Madame Dawn's lieutenant Rose pays the cost:
 
 | # | Title | Music |
 |---|-------|-------|
@@ -22,8 +22,9 @@ Twelve playable battles closing out the first half of the campaign and opening t
 | 10 | Leaving Thuling (Kian's blockade) | *Danger* |
 | 11 | The Cliffs (Kian's truth, Lucian's farewell) | *Stronghold of Memories* |
 | 12 | The Ravage (Grude harbor, the colony reveal lands) | *Grude Battle 1* |
+| 13 | Madame Dawn's Rebellion (Rose dies for the captain) | *Stronghold of Memories* |
 
-Battles 13–30 exist as data stubs in the world map for narrative continuity (Madame Dawn's rebellion, Amar's origin, the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
+Battles 14–30 exist as data stubs in the world map for narrative continuity (Amar's origin, the inner coup, the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
 
 ## Setup
 

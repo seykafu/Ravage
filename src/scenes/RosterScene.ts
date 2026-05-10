@@ -78,7 +78,13 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   // B12: same four step off Khione's ship at Grude. Future rejoins
   // (Selene, Ranatoli, Ndara as ally) plug in here as those story
   // beats land.
-  b12_ravage:          ["amar", "ning", "maya", "leo"]
+  b12_ravage:          ["amar", "ning", "maya", "leo"],
+  // B13: Madame Dawn's lieutenant Rose is loaned to the squad for
+  // the rebellion strike at the Grude plaza. She fights as a fifth
+  // unit on the field, then dies in the closing scene shielding
+  // Madame Dawn from a back-door volley — she does NOT carry forward
+  // into the post-B13 roster.
+  b13_dawn_rebellion:  ["amar", "ning", "maya", "leo", "rose"]
 };
 
 // Resolve the player's current active squad based on their save's

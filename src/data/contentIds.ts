@@ -127,7 +127,10 @@ export type ArcId =
   // the dock; Madame Dawn finishes the colony-truth speech Kian
   // started at the cliffs.
   | "before_ravage"
-  | "post_ravage";
+  | "post_ravage"
+  // -------- B13: Madame Dawn's Rebellion (Rose's death) --------
+  | "before_dawn_rebellion"
+  | "post_dawn_rebellion";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

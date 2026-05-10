@@ -7,6 +7,7 @@ export type PortraitId =
   | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
+  | "rose"
   | "narrator";
 
 export interface DialogBeat {
@@ -723,7 +724,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "Dawn finishes the speech she started from the window",
     music: "lifeInGrude",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_dawn_rebellion",
     beats: [
       N("Dawn's safe house is the upstairs of a chandler's shop on a quiet inner-district street. The chandler downstairs nods to Khione without speaking and does not look at the squad at all. Up two flights of stairs is a long room with a bay window facing the harbor, a low table, four sleeping pallets already made up with fresh linens, and tea steeping in a clay pot. Ndara stands at the table pouring."),
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
@@ -751,6 +752,77 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
         body: "(quiet, to the room) I will take the watch tonight. None of you slept on the ship. None of you slept on the dock. Sleep here. There is no second wave coming through this door tonight. I am personally responsible for that." },
       N("The squad sleeps under a roof for the first time in fourteen months. The dactyl, in the courtyard below, settles at last. The harbor lights go out one by one. The empire continues around them in the dark.")
+    ]
+  },
+  // -------- Pre-Battle 13 (the rebellion plan + Rose's introduction) --------
+  // Bridges three weeks of quiet life-in-Grude into the night the
+  // rebellion lands. Squad has settled into the safe house, met
+  // Madame Dawn's lieutenants properly, started training together
+  // in the courtyard. Tonight is the night Dawn moves. Rose is
+  // introduced HERE so the player has a baseline read on her
+  // before B13's combat starts — without this arc her death would
+  // land as a bullet point.
+  before_dawn_rebellion: {
+    id: "before_dawn_rebellion",
+    title: "Three weeks in Grude",
+    subtitle: "The safe house common room, the night the rebellion moves",
+    music: "lifeInGrude",
+    backdrop: "grude",
+    next: "prep:b13_dawn_rebellion",
+    beats: [
+      N("Three weeks in the safe house. The squad has slept on real beds. The dactyl has settled into the courtyard. Ndara has poured a great deal of tea. Amar has not yet taken the second-room conversation Dawn promised him at the gate — Dawn has not pressed the matter, and Amar has not asked, and the gap between them has been a quiet adult thing both of them have agreed to honor for now. Maya has been reading. Ning has been training with Dawn's archers in a courtyard a quarter mile away. Leo's dactyl is friends with three of Dawn's couriers' horses now. The squad has begun, in small ways, to live in Grude."),
+      N("And then on a Tuesday at sundown Dawn comes into the common room with a folded map under her arm and asks the squad to come up to her study, and the three weeks end."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Tonight. I have been assembling for nine years. Twelve coordinated strikes across this city in a single hour, starting at 11:14 PM when the river bell rings second watch. The targets are King Archbold's three nephews, the four customs wardens who personally collect the colony's iron tax, four ledger-keepers who can identify the financiers, and one man who runs the prison the original organizers' families have been held in for seven years. The aim is not to kill an empire in one night. The aim is to make the empire know it CAN be killed. After tonight the rest of Grude knows there is a war. We are not asking the squad to participate. We are inviting it." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "We're in. What's our target?" },
+      { speaker: "Madame Dawn", portraitId: "dawn",
+        body: "The youngest nephew's residence. Upper district, off Oran Lane. Lightly garrisoned — the boy has never had to be afraid in this city, and the captain assigned to him is a politically-promoted incompetent. Rose has been mapping the plaza for weeks. She'll lead you in." },
+      N("The door to Dawn's study opens and a woman the squad has not yet been introduced to walks in. Mid-thirties, dark hair pulled back, a long teal officer's coat over a homespun shirt, a thin sword at her hip and a row of throwing blades along her belt. She nods to the squad without smiling. She has the Maya look — the careful, measuring read."),
+      { speaker: "Madame Dawn", portraitId: "dawn",
+        body: "Squad, this is Rose. She has been one of my lieutenants for twelve years. She and Maya were in the same officer cohort. Rose, the squad you've been writing reports about for eleven months." },
+      { speaker: "Rose", portraitId: "rose", expression: "neutral",
+        body: "(small nod) Amar. Maya. Ning. Leo. (Pause.) I'm glad to finally put faces to names. I have read everything Maya has sent for eleven months. I have a great deal of respect for each of you. Tonight will be hard. I would like to walk you through the plaza layout one more time before we move." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "Rose. Hi. (Quiet, between them.) ...It's good to see you in person. Eleven years through letters. It's a lot." },
+      { speaker: "Rose", portraitId: "rose", expression: "neutral",
+        body: "(half-smile, only at Maya) It is. Talk later. We move at 11:14." },
+      N("Rose unfolds the map. She walks the squad through the plaza three times — captain's positions, archer angles, fountain cover, the two stone benches, the south alley approach. She is precise. She is forward-leaning. She is very obviously the person Dawn trusts more than anyone else alive. The squad does not need to be told this; they can see it in the way Dawn watches Rose work the map without interrupting once."),
+      { speaker: "Rose", portraitId: "rose",
+        body: "Eight minutes from approach to plaza-clear. We move." },
+      N("The squad collects their weapons. Madame Dawn pulls Amar aside at the door for half a sentence Maya does not hear. Rose is already on the stairs. The river bell, somewhere in the distance, begins to ring second watch.")
+    ]
+  },
+  // -------- Post-Battle 13 (the morning after Rose) --------
+  // The chapter's emotional core lands here. Lucian's death at
+  // post_cliffs was about Lucian saying his three things and going.
+  // Rose's death is about Dawn — Dawn's grief, her forty-eight
+  // hours of silence, the moment she breaks. The squad is the
+  // witness, not the bereaved.
+  post_dawn_rebellion: {
+    id: "post_dawn_rebellion",
+    title: "After the plaza",
+    subtitle: "Three days of quiet in the safe house",
+    music: "emotional",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("Dawn does not move from the plaza for an hour. The squad keeps a perimeter without being asked. Ndara arrives at some point with a horse-drawn cart and a cloak the same teal as Rose's coat. The four of them — Ndara, Amar, Maya, Leo — lift Rose into the cart. Dawn walks alongside the cart on foot the whole way back to the safe house. Ning takes the rear with her bow nocked. Nobody speaks."),
+      N("The other eleven strikes in Dawn's plan succeeded. All twelve targets are dead. The city wakes up the next morning to flyers nailed to every public board, written in three languages, listing the names of the dead and the names of the original organizers whose families had been held in the prison and the names of the colony villages whose harvests had been taxed for the iron under their feet. By noon the upper district is in chaos. By sundown the empire has issued its first formal acknowledgment that an organized armed opposition exists. Dawn has been right about everything she said the rebellion would do."),
+      N("Rose is buried at dawn the next day in the small private courtyard behind the chandler's shop, in the shade of the lemon tree. Dawn is the one who speaks. She speaks for less than a minute. Nobody who is there will remember exactly what she said afterward, only that she did not weep and her hands did not shake and her voice was the same flat measured register the squad has heard her use in every briefing and every meeting since they arrived in Grude."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Rose Eseldra. Born in the Tarvas valley fifty-one years ago. Joined the resistance at nineteen. Officer at twenty-two. Lieutenant at twenty-six. With me for thirty-two years. Loved by — (pause) — by the people who knew her. By me. By Maya, who she trained. By many others. Killed by four bolts she stepped in front of for me. The plaza will be renamed in her honor in due course. The lemon tree will stay. The squad has the rest of the morning to themselves. I have meetings." },
+      N("Dawn walks back into the safe house and is in meetings for the rest of the day and the day after that. The squad doesn't see her at meals. Maya knocks on her study door at sundown on the second day and is not let in. Ndara makes tea every evening that Dawn does not drink. The fourth night, Amar finds Dawn at the courtyard wall, sitting on the bench under the lemon tree, with the empty teacup from a previous evening in her hand. He sits down next to her without asking. They do not speak for a long time."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "(eventually) She wanted to retire next year. Twelve more months. We had picked a cottage on the south coast. She was going to teach combat history to officers' children. I was going to come visit. I haven't been to the south coast in nine years. I was looking forward to the visits more than she was, I think. She was looking forward to the cottage. (Long pause.) The plan worked, Amar. Every piece of it. Twelve targets, twelve down. Rose is the only one of ours who fell. The math is the best math we have ever produced. I have done the math twice. I cannot make myself feel better about the math." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "...Dawn. You don't have to do the math. Not tonight." },
+      { speaker: "Madame Dawn", portraitId: "dawn",
+        body: "I do, though. (Quiet.) I am the only person alive who knew Rose for thirty-two years. I am the only person alive who can do the math on what Rose was for. If I don't do it, no one does. (Pause.) Tomorrow we go back to work. The empire will respond inside a week and we have to be ready. Tonight I sit here with the cup. (Pause.) Thank you for sitting." },
+      N("Amar sits with her until the lemon tree is in shadow and the courtyard goes dark. He doesn't speak again. Dawn never quite weeps, but there is a moment near midnight where she sets the cup down and puts her face in her hands for a quarter of an hour, and Amar simply does not look at her until she lifts her head again. When she stands up to go inside, she pauses at the back door."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Amar. There is a conversation you and I have been not having for three weeks. I would like to have it tomorrow afternoon. In the study. Maya should be there. Ndara should be there. There is a great deal you do not yet know about who you are, and tonight has clarified that I do not have indefinite time to put off telling you. (Pause.) ...Sleep well." },
+      N("She goes inside. Amar stays in the courtyard another hour. The empire continues, somewhere beyond the chandler's wall, in the dark.")
     ]
   }
 };

@@ -81,6 +81,7 @@ const PORTRAIT_IDS = [
   "amar", "lucian", "ning", "maya", "leo", "ranatoli", "selene",
   "kian", "ndari", "nebu",
   "dawn", "fergus", "ndara", "archbold", "khione", "mira", "tali",
+  "rose",
   "narrator",
   // Generic enemy classes
   "bandit", "raider", "reaver", "royal_guard", "crown_archer"

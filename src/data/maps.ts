@@ -681,3 +681,69 @@ export const ravageMap: MapDef = buildMap("ravage", "Grude Harbor District", rav
     { x: 7,  y: 6 }   // Royal Guard advancing south
   ]
 });
+
+// ============== Battle 13 — Madame Dawn's Rebellion =====================
+// 14×11 cobblestone city plaza outside Archbold's nephew's residence
+// in Grude's upper district. Dawn's coordinated strike — one of
+// twelve operations across the city in a single coordinated night,
+// per Madame Dawn's plan. The squad strikes the nephew's estate
+// alongside Rose, Dawn's most senior lieutenant. The estate's
+// ornate marble steps run across the north (row 0-1, the captain's
+// firing position). Stone walls flank east + west (the residential
+// neighbors). A central plaza with a dry fountain at the middle
+// gives both sides something to fight around. Two stone benches at
+// rows 4 + 7 act as low-cover barricades.
+//
+// Map fits in the viewport (14*48=672w, 11*48=528h — both under
+// the playable area). Camera doesn't scroll, players see the whole
+// engagement at once. Tight + intimate, fitting the heart-tier
+// difficulty label.
+//
+// Reuses tile aliases declared earlier: Cb (cobblestone), Wb (wall),
+// Bd (cobblestone+barricade), Mr (marble), Tr (cobblestone+torch).
+// Pl = stone+pillar (the plaza's ornamental columns).
+const Pl = t("stone", "pillar");
+
+const dawnRebellionRows = [
+  [Wb, Wb, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Wb, Wb], // ← residence steps (captain's stand)
+  [Wb, Mr, Mr, Pl, Mr, Mr, Mr, Mr, Mr, Mr, Pl, Mr, Mr, Wb], // ← marble podium with ornamental columns
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← plaza north
+  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // ← street torches at the corners
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← stone benches (low cover)
+  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← dry fountain at plaza center
+  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← (fountain ring continues)
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← matching south benches
+  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // ← south torches
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← squad approach line
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb]  // ← south plaza entrance (squad spawn)
+] as const;
+
+export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Archbold's Nephew", dawnRebellionRows, {
+  // Squad enters the plaza from the south alley with Rose at the
+  // lead — she knows the layout. Tight formation across rows 9-10
+  // so the round-1 dialogue with Rose adjacent fires reliably and
+  // the squad can choose flanks without committing immediately.
+  player: [
+    { x: 6, y: 10 }, // Amar (center, just behind Rose)
+    { x: 7, y: 10 }, // Rose (lead — she's been the eyes on this estate for weeks)
+    { x: 5, y: 10 }, // Maya (left of Amar)
+    { x: 8, y: 10 }, // Ning (right, bowline)
+    { x: 6, y: 9 },  // Leo (forward-left, dactyl)
+    { x: 7, y: 9 }   // (front-right, open slot — see buildPlayers)
+  ],
+  // Royal Captain on the marble residence steps. Two crown archers
+  // flanking him on the podium (row 1 cols 4 + 9) with full sight
+  // down the plaza. Two royal guards behind the north benches
+  // (row 4 cols 2 + 11). One royal guard advancing south through
+  // the fountain channel (row 7 col 7) to engage the squad
+  // directly. Total 6 enemies — same count as B7, level-bumped to
+  // reflect Grude empire elite.
+  enemy: [
+    { x: 6,  y: 0 },  // Royal Captain (boss — holdPositionUntil)
+    { x: 3,  y: 1 },  // Crown Archer, podium west
+    { x: 10, y: 1 },  // Crown Archer, podium east
+    { x: 2,  y: 4 },  // Royal Guard, north bench west
+    { x: 11, y: 4 },  // Royal Guard, north bench east
+    { x: 7,  y: 7 }   // Royal Guard, advancing through fountain
+  ]
+});

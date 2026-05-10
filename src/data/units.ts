@@ -18,6 +18,14 @@ const G_LEO:      GrowthTable = { hp: 65, power: 60, armor: 50, speed: 45, movem
 const G_RANATOLI: GrowthTable = { hp: 80, power: 40, armor: 70, speed: 25, movement: 5 };
 const G_SELENE:   GrowthTable = { hp: 60, power: 70, armor: 35, speed: 65, movement: 15 };
 const G_KIAN:     GrowthTable = { hp: 65, power: 55, armor: 55, speed: 50, movement: 10 };
+// Rose joins the squad at B13 (Madame Dawn's Rebellion) as Dawn's
+// most senior lieutenant — quick, deadly, devoted. Dies in
+// post_dawn_rebellion (mechanically she survives B13; the death is
+// narrated in the post arc, same pattern Lucian uses at B11).
+// Single-battle appearance for the playable slice — growths matter
+// only if she's revived in a future commit. High speed + crit
+// matches her shinobi class kit.
+const G_ROSE:     GrowthTable = { hp: 55, power: 60, armor: 30, speed: 75, movement: 20 };
 
 // Generic enemy growth tables. Used when a battle author actively chooses
 // to give an enemy growths (rare — most enemies are single-encounter). The
@@ -192,6 +200,27 @@ export const PLAYERS = {
     // earned through play, not authored into the factory default.
     level: 1,
     growths: G_KIAN
+  }),
+  // Rose — Madame Dawn's senior lieutenant, joins the squad for B13
+  // only (Madame Dawn's Rebellion). Mechanically a shinobi: high
+  // speed, low armor, blade-and-blade. Dies in post_dawn_rebellion
+  // (mechanically she survives B13; the death is narrated in the
+  // post arc, same pattern Lucian uses at B11). Joins at L13 — the
+  // squad's around L13-15 by Grude, and the catch-up rule will
+  // bump her further if needed.
+  rose: (): UnitDef => ({
+    id: "rose",
+    name: "Rose",
+    shortName: "Ro",
+    faction: "player",
+    classKind: "shinobi",
+    weapon: "sword",
+    stats: { hp: 36, power: 12, armor: 4, speed: 14, movement: 5, ap: 3 },
+    artSeed: 9,
+    palette: PLAYER_PALETTES.rose,
+    portrait: true,
+    level: 13,
+    growths: G_ROSE
   })
 };
 
@@ -390,6 +419,30 @@ export const ENEMIES = {
     // mirroring B1 King Nebu / B10-B11 Kian. Gives the player time
     // to engage the line and gives the round-1 dialogue room to
     // land before Volos personally engages.
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  // Royal Captain — boss-tier officer for Archbold's nephew's
+  // residence guard at B13 (Madame Dawn's Rebellion). Higher level
+  // than the squad's earlier royal-tier encounters because B13
+  // takes place after the Grude crossing — the squad has been
+  // gone for a year, the King's elite have hardened in the
+  // meantime. Holds position until the guard is thinned (mirrors
+  // King Nebu / Kian patterns) so the round-1 dialogue lands
+  // before swords meet.
+  royalCaptain: (level = 14): UnitDef => ({
+    id: "royal_captain",
+    name: "Royal Captain",
+    shortName: "Cp",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 60, power: 15, armor: 8, speed: 10, movement: 4, ap: 3 },
+    artSeed: 77,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
     holdPositionUntil: { allyCount: 2 }
   }),
   kian: (level = 12): UnitDef => ({

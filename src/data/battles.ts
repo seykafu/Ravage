@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, cliffsMap, dawnBanditsMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { caravanMap, cliffsMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1170,23 +1170,140 @@ export const BATTLES: BattleNode[] = [
       }
     ]
   },
+  // ============== Battle 13 — Madame Dawn's Rebellion =====================
+  // Three weeks after the squad arrives in Grude. Dawn has been
+  // assembling for years — twelve coordinated strikes across the city
+  // in a single night, hitting King Archbold's nephews, financiers,
+  // and the customs wardens who collect the colony's iron tax. The
+  // squad's job is the nephew's estate: a residence in the upper
+  // district, lightly garrisoned because the nephew never expected
+  // anyone to come for him. Rose, Dawn's most senior lieutenant,
+  // leads the squad in. She knows the layout of the plaza by heart.
+  // She doesn't make it home.
   {
     id: "b13_dawn_rebellion",
     index: 13,
     title: "Thirteenth Battle",
     subtitle: "Madame Dawn's Rebellion",
-    intro: "Dawn's rebellion is real. Rose dies saving her.",
-    outro: "Dawn weeps without sound for the rest of the night.",
+    intro:
+      "Three weeks in Grude. Dawn's plan has been moving for nine years and tonight it lands. Twelve strikes across the city in a single coordinated hour — the nephews, the customs wardens, the iron-shipment ledger-keepers. The squad's target is the nephew's estate in the upper district: a residence on the marble plaza off Oran Lane, lightly garrisoned because the nephew has never had to be afraid in his own city. Rose leads the squad in. She has been mapping the plaza for weeks. She knows where the captain stands during the night watch, which alley the courier uses, where the dry fountain breaks the line of fire. She is calm. She is calm the way only people who have rehearsed the worst version of their own night out loud can be.",
+    outro:
+      "The captain falls. Three crown archers fall. The plaza is the squad's. Then the back door of the residence opens and a second wave the intelligence said wasn't there comes through it, four crossbows already drawn at Madame Dawn's silhouette where she stands at the alley mouth giving instructions. Rose moves before any of the squad sees the bolts in flight. She takes all four. She is dead before her body finishes hitting the cobblestones. Dawn does not move for a long second. Then she crosses the plaza in seven strides and kneels in Rose's blood without a sound and stays there for the rest of the night.",
     music: MUSIC.lifeInGrude,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Heart",
-    // Spoils: modest because the night ends in grief. 2 elixirs from
-    // Rose's medical kit + a Fang she carried — the squad keeps it as
-    // a memorial. Dawn explicitly does not let the squad take more
-    // than this; the field is hers to mourn.
-    rewards: ["elixir", "elixir", "fang"]
+    playable: true,
+    map: dawnRebellionMap,
+    buildPlayers: () => [
+      // The Grude squad + Rose. Rose is Dawn's lieutenant — joins
+      // as a player unit for B13 only and dies in post_dawn_rebellion
+      // (the second-wave bolts come AFTER the mechanical victory, in
+      // the before_victory beat below + the post arc).
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.maya(),
+      PLAYERS.leo(),
+      PLAYERS.rose()
+    ],
+    buildEnemies: () => [
+      // Royal Captain on the marble podium + 5 elite. Lower count
+      // than B12 (6 vs B12's 5+1) reflects the script's "lightly
+      // garrisoned" framing. Levels bumped over B12 because the
+      // squad has had three weeks to recover and equip in Grude.
+      ENEMIES.royalCaptain(14),
+      ENEMIES.royalArcher("dr_xa1", 1301, 13),
+      ENEMIES.royalArcher("dr_xa2", 1302, 13),
+      ENEMIES.royalGuard("dr_rg1", 1303, 13),
+      ENEMIES.royalGuard("dr_rg2", 1304, 13),
+      ENEMIES.royalGuard("dr_rg3", 1305, 13)
+    ],
+    difficultyLabel: "Heart — Rebellion Strike",
+    // Spoils: modest because the night ends in grief. Rose's medical
+    // kit (2 elixirs) + a Fang from her belt — the squad keeps it
+    // as a memorial, the way Ning kept Lucian's bowstring. Dawn
+    // explicitly tells the squad not to strip the rest of the
+    // captain's kit; the plaza is hers to mourn now.
+    rewards: ["elixir", "elixir", "fang"],
+    // Victory: defeat the Royal Captain. Mirrors the b05/b07/b11
+    // defeatUnit pattern. The before_victory beat then plays Rose's
+    // death immediately after — the second wave the squad's
+    // intelligence missed comes through the back door.
+    victory: defeatUnit("royal_captain", { label: "Defeat the Captain" }),
+    dialogues: [
+      // Round 1: Rose briefs the squad in two sentences and the
+      // strike begins. Establishes her voice (precise, calm,
+      // forward-leaning) before she dies — without that minute of
+      // her IN COMMAND, her death lands as a name on a list. With
+      // it, she's a person.
+      {
+        id: "b13_rose_brief",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "Plaza, three watch positions. Captain on the marble. Two archers flanking on the podium. Two guards behind the north benches. One walking the fountain perimeter clockwise — he's south of the dry basin right now, give it forty seconds and he's between us and the captain. Maya, north flank with me. Ning, take the south bench archer first — she's slow on the reload. Leo, the dactyl behind the south bench gives you a clean angle on the captain when his line thins. Amar — center, with me. We end this in eight minutes. Madame Dawn is at the alley mouth giving the same brief to two other teams — every minute we take here is a minute her cover thins." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Confirmed. Rose, when did you sleep last." },
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "(half-smile) Tomorrow morning, Amar. Plenty of time. Move." }
+        ]
+      },
+      // adjacent_eot Amar/Rose: a moment between them mid-strike.
+      // Establishes that Rose has been with Dawn for as long as
+      // Maya has — they trained together, share a similar shape.
+      // Plants Rose as a real person before the loss.
+      {
+        id: "b13_rose_amar_brief",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "rose" },
+        beats: [
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "(quietly, between strikes) Maya and I were in the same officer cohort under Dawn. Twelve years. She got the planted-asset assignment because she could play a peasant — I look too obvious in a homespun. I got the strike-team assignment because I look too obvious in a homespun. Same training. Different shapes." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "...You knew about me as long as Maya did, then." },
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "Longer. I'm the one Maya wrote the reports to, your highness. (Soft.) I'm glad you made it. The version of you Maya described eleven months in was not the version I expected. Easier." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "Easier than what." },
+          { speaker: "Rose", portraitId: "rose",
+            body: "Than the version your father was, near the end. Move — the captain just shifted his stance." }
+        ]
+      },
+      // ally_killed_target Amar drops the captain — fires Rose's
+      // approval. Sets up the before_victory beat that follows
+      // immediately when the victory condition resolves.
+      {
+        id: "b13_amar_drops_captain",
+        trigger: { kind: "ally_killed_target", allyId: "amar", targetId: "royal_captain" },
+        beats: [
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "Clean. Half-step before the thrust — your father's. (Half-smile.) Madame Dawn will have noticed from the alley." }
+        ]
+      },
+      // before_victory: Rose's death. The second wave through the
+      // back door, four bolts at Dawn, Rose stepping into the line.
+      // This is the chapter's spine — the rebellion is real not
+      // when the captain falls but when Rose does. Dawn's grief
+      // closes the post arc.
+      {
+        id: "b13_rose_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The captain's body settles into the marble. The crown archers' bolts go quiet. The squad takes one breath and the plaza is theirs." },
+          { portraitId: "narrator",
+            body: "Then the residence's back door — the door the intelligence said had been bricked over six months ago — swings open and four men in royal blue step through with crossbows already shouldered. Their angle is the alley mouth. Madame Dawn is in the alley mouth. She is giving instructions to two other strike teams over a small folded map and her hood is down and the streetlight is on her face." },
+          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+            body: "DAWN — " },
+          { portraitId: "narrator",
+            body: "Rose covers the twenty paces between her position and Dawn's in three strides. She does not draw her sword. She does not call out a second time. She arrives at Dawn's left shoulder and turns her body to the back door so her back is to the four crossbows and her front is to Dawn." },
+          { portraitId: "narrator",
+            body: "Four bolts. All four land. Rose does not fall right away. She holds the angle long enough for Dawn to register what is happening, and then her knees give and she goes down on the cobblestones at Dawn's feet without a sound. The four crossbowmen are dead inside the next four seconds — Maya's blade, Ning's bow, Leo's dactyl, Amar's sword, all moving together. Rose is dead before the fourth crossbowman finishes falling." },
+          { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+            body: "(quietly) ...Rose. Rose. Rose, look at me. Rose. Rose. Rose." },
+          { portraitId: "narrator",
+            body: "Dawn does not raise her voice. She does not weep. She kneels in the blood spreading across the marble and she picks Rose's hand up off the cobblestones and she holds it. The squad does not move. Nobody knows what to do with their faces. Maya is the first to look away." }
+        ]
+      }
+    ]
   },
   {
     id: "b14_origin",

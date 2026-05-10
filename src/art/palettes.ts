@@ -20,7 +20,13 @@ export const PLAYER_PALETTES: Record<string, UnitPalette> = {
   // ambush, b07/b08 escort), and turns hostile from b10 onward when his
   // suspicion crystallizes. Same character — same palette — appears here
   // and in ENEMY_PALETTES so either-side factories resolve correctly.
-  kian:   { primary: 0x1a3a6a, secondary: 0x0a1838, accent: 0xefcf6a, skin: 0xc8a07e, hair: 0x202020 }
+  kian:   { primary: 0x1a3a6a, secondary: 0x0a1838, accent: 0xefcf6a, skin: 0xc8a07e, hair: 0x202020 },
+  // Rose joins the squad for B13 only — Madame Dawn's most senior
+  // lieutenant, dies in post_dawn_rebellion. Cool-toned palette
+  // (deep teal + dusty rose accent) reads as a poised officer who
+  // chose her colors carefully, not a fighter who took whatever
+  // armor the quartermaster had on hand.
+  rose:   { primary: 0x2c5a5a, secondary: 0x163030, accent: 0xc77a82, skin: 0xd9aa84, hair: 0x4a2820 }
 };
 
 export const ENEMY_PALETTES: Record<string, UnitPalette> = {
