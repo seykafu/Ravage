@@ -841,7 +841,7 @@ export const BATTLES: BattleNode[] = [
       "The streets you walked every day, the shop fronts you knew the names of. Kian is waiting on the cobblestones outside Lucian's house with twelve guardsmen and a wax-sealed warrant from the King's hand. Lucian's wife and daughter are inside the house. Kian's voice carries the way it used to in the practice yard, when he was correcting your footwork. He says he's known about Amar since the second week. He says he hoped he was wrong. He says the warrant is for Amar alone — the squad can walk away if Amar surrenders. Lucian is already drawing his spear.",
     outro:
       "The blockade breaks at the third barricade. Mira and Tali make the cousin's farm before the squad makes the western road. Kian doesn't pursue. His voice carries down the street one last time as the squad clears the gate: \"The cliffs, Amar. I'll meet you on the cliffs and we'll finish what your father started, you and me, before Madame Dawn turns you into a weapon she can use.\"",
-    music: MUSIC.danger,
+    music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
     playable: true,

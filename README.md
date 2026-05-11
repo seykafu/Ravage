@@ -19,7 +19,7 @@ Thirteen playable battles closing out the first half of the campaign and opening
 | 7 | The Ghost from Para (Selene the Swordmaster) | *Spine of the World — Battle 2* |
 | 8 | The Town of Orinhal (the choice in the square) | *Danger* |
 | 9 | The Price of Doubt (Fergus's trap, Maya's reveal) | *Danger* |
-| 10 | Leaving Thuling (Kian's blockade) | *Danger* |
+| 10 | Leaving Thuling (Kian's blockade) | *Stronghold of Memories* |
 | 11 | The Cliffs (Kian's truth, Lucian's farewell) | *Stronghold of Memories* |
 | 12 | The Ravage (Grude harbor, the colony reveal lands) | *Grude Battle 1* |
 | 13 | Madame Dawn's Rebellion (Rose dies for the captain) | *Stronghold of Memories* |
