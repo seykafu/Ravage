@@ -1118,23 +1118,14 @@ export class BattleScene extends Phaser.Scene {
   // default scrollFactor of 1 so they move with the world.
   // Pin a game object so it stays on the screen when the world camera scrolls
   // (B5 mountain, B7 monastery, B11 cliffs, etc. all scroll on entry to centre
-  // the squad). For plain objects this is just setScrollFactor(0).
-  //
-  // For Containers there's a Phaser gotcha: setScrollFactor on a Container only
-  // affects its own transform — interactive children keep their default
-  // scrollFactor of 1, so hit-testing happens in world coordinates while the
-  // visual is screen-pinned. Symptom: visible button at screen y=438, but the
-  // cursor has to hover ~80px above it (the camera scroll delta) for the hit
-  // zone to register. This bit `Button` instances created in buildActionButtons,
-  // which add a transparent `hitZone` Rectangle child that owns input.
-  //
-  // Phaser's Container.setScrollFactor takes a third `updateChildren` arg that
-  // recurses through the child list. Pass `true` so child hit zones get pinned
-  // alongside the container they live in.
+  // the squad). For plain objects this is just setScrollFactor(0). For our
+  // custom Container subclasses (Button, etc.) the override on the class itself
+  // is responsible for propagating the pin to internal display objects + hit
+  // zones — see the long comment in src/ui/Button.ts for the Phaser quirk that
+  // forces us to do this by hand instead of relying on Container's
+  // setScrollFactor(x, y, true) recursion.
   private pin<T extends Phaser.GameObjects.GameObject>(obj: T): T {
-    if (obj instanceof Phaser.GameObjects.Container) {
-      obj.setScrollFactor(0, 0, true);
-    } else if ("setScrollFactor" in obj) {
+    if ("setScrollFactor" in obj) {
       (obj as unknown as { setScrollFactor: (x: number, y?: number) => void }).setScrollFactor(0);
     }
     return obj;

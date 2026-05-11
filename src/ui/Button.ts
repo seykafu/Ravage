@@ -118,6 +118,31 @@ export class Button extends Phaser.GameObjects.Container {
     this.redraw();
   }
 
+  // Override so callers that screen-pin the button (BattleScene.pin → setScrollFactor(0))
+  // also pin the visible bg/text + the interactive hitZone child.
+  //
+  // Why this is hand-rolled instead of just calling super.setScrollFactor(x, y, true):
+  // Phaser 3.80's Container.setScrollFactor(x, y, updateChildren=true) iterates
+  // children via ArrayUtils.SetAll, which guards each assignment with
+  // `hasOwnProperty('scrollFactorX')`. scrollFactorX/Y are defined on the prototype
+  // by the Components.ScrollFactor mixin and only become own properties after
+  // setScrollFactor() has been called once on that specific instance. Freshly-built
+  // Button children fail the hasOwnProperty check, so the recursion is a silent
+  // no-op — the Container itself gets pinned (visual stays put when the camera
+  // scrolls) but the hit zone keeps scrollFactor=1 (hit-test runs in world space).
+  // Symptom: cursor has to hover ABOVE the visible button by the camera scroll
+  // delta to register a click. Calling .setScrollFactor() explicitly on each child
+  // invokes the prototype method, which assigns the property as an own property,
+  // sidestepping the quirk.
+  setScrollFactor(x: number, y?: number): this {
+    super.setScrollFactor(x, y);
+    const sy = y ?? x;
+    this.bg.setScrollFactor(x, sy);
+    this.text.setScrollFactor(x, sy);
+    this.hitZone.setScrollFactor(x, sy);
+    return this;
+  }
+
   setLabel(s: string): void {
     this.text.setText(s);
   }
