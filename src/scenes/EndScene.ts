@@ -86,11 +86,19 @@ export class EndScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // Outro panel
+    // Outro panel.
+    //
+    // panelH was 200 originally, but the longest outros (B9 post-ravine
+    // at 631 chars) wrap to ~8 lines and were overflowing into the
+    // spoils row pinned to the bottom. Bumped to 280 so even worst-case
+    // outros have headroom, with a gold divider separating the prose
+    // from the spoils line so the eye doesn't read them as one block.
+    // panelY moved up 20 to keep the buttons + stats line where they
+    // already had room below.
     const panelW = 880;
-    const panelH = 200;
+    const panelH = 280;
     const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = 330;
+    const panelY = 310;
     const pg = this.add.graphics();
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
@@ -98,19 +106,36 @@ export class EndScene extends Phaser.Scene {
       ? (node?.outro ?? "The field is yours.")
       : "The line broke. You wake to the smell of damp stone and someone else's bandages. Try again — the harvest will not wait.";
 
+    // Reserve the bottom strip for the spoils row + divider so the outro
+    // text wraps above it instead of running underneath it. Strip height
+    // (50px) covers a 14px line of spoils text + padding above and below
+    // the divider.
+    const SPOILS_STRIP_H = 50;
+    const outroAreaH = panelH - 22 - SPOILS_STRIP_H;
     this.add.text(panelX + 28, panelY + 22, outroText, {
       fontFamily: FAMILY_BODY,
       fontSize: "18px",
       color: "#e6e0d0",
       wordWrap: { width: panelW - 56 },
-      lineSpacing: 6
+      lineSpacing: 6,
+      // Phaser respects fixedHeight only for the visible-area calculation,
+      // not for hard clipping — our panelH math above is what guarantees
+      // the prose actually fits. fixedHeight here just helps the line
+      // metrics behave consistently across battles.
+      fixedHeight: outroAreaH
     });
 
     // Spoils — only on victory and only if the BattleNode authored a
     // rewards array. Tally by kind (so "potion ×3" reads more cleanly
     // than three identical lines), build a single comma-separated
-    // line, anchor it to the bottom of the outro panel.
+    // line, anchor it to the bottom of the outro panel below a faint
+    // gold divider so it reads as a separate block from the prose.
     if (isVictory && node?.rewards && node.rewards.length > 0) {
+      const dividerY = panelY + panelH - SPOILS_STRIP_H + 4;
+      const dg = this.add.graphics();
+      dg.lineStyle(1, 0xc9b07a, 0.45);
+      dg.lineBetween(panelX + 28, dividerY, panelX + panelW - 28, dividerY);
+
       const counts: Partial<Record<ItemKind, number>> = {};
       for (const k of node.rewards) counts[k] = (counts[k] ?? 0) + 1;
       const parts: string[] = [];
@@ -119,28 +144,28 @@ export class EndScene extends Phaser.Scene {
         const meta = ITEM_CATALOG[k];
         parts.push(`${meta.glyph} ${meta.name}${n > 1 ? ` ×${n}` : ""}`);
       }
-      this.add.text(panelX + 28, panelY + panelH - 38, `Spoils: ${parts.join("  ")}`, {
+      this.add.text(panelX + 28, panelY + panelH - 28, `Spoils: ${parts.join("  ")}`, {
         fontFamily: FAMILY_HEADING,
         fontSize: "14px",
         color: "#f4d999",
         stroke: "#1a0e04",
         strokeThickness: 2,
         wordWrap: { width: panelW - 56 }
-      });
+      }).setOrigin(0, 0.5);
     }
 
     // Stats line
     const save = loadSave();
     const completedCount = save.completedBattles.length;
     const totalPlayable = BATTLES.filter(b => b.playable).length;
-    this.add.text(GAME_WIDTH / 2, panelY + panelH + 24, `Battles completed: ${completedCount} / ${totalPlayable} playable`, {
+    this.add.text(GAME_WIDTH / 2, panelY + panelH + 18, `Battles completed: ${completedCount} / ${totalPlayable} playable`, {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#7a7165"
     }).setOrigin(0.5);
 
-    // Buttons row
-    const btnY = GAME_HEIGHT - 90;
+    // Buttons row — nudged down 10px to keep clearance from the taller panel.
+    const btnY = GAME_HEIGHT - 80;
     const btnH = 48;
     const btnW = 220;
     const gap = 24;
