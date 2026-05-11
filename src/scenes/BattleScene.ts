@@ -717,6 +717,18 @@ export class BattleScene extends Phaser.Scene {
       this.clearRavageAura(v);
       return;
     }
+    // Spent state — dim + desaturate units that have already taken their
+    // turn this round (player or enemy). Without this the player can't
+    // tell at a glance whose turn it is — they see a spent character
+    // sitting on the map looking identical to fresh ones, click an action
+    // button thinking they're acting on that character, and the action
+    // applies to whoever the initiative queue has actually advanced to.
+    // The "Active" gold ring drawn by drawActiveMarker covers the
+    // positive case (who IS acting); this covers the negative case
+    // (everyone else who's done this round). Cleared the moment the
+    // round wraps because Initiative.advance resets hasActedThisRound on
+    // every unit when it bumps the round counter.
+    this.applySpentTint(v.sprite, u);
     const barW = 36;
     const barH = 4;
     const bx = px.x - barW / 2;
@@ -2255,9 +2267,31 @@ export class BattleScene extends Phaser.Scene {
     this.continueOrEnd(u);
   }
 
-  private flashSprite(s: Phaser.GameObjects.Sprite, color: number): void {
+  // Apply (or clear) the "spent" dim+desaturate to a unit's sprite based on
+  // whether it has acted this round. Called from refreshUnitView so the
+  // visual stays in sync with hasActedThisRound automatically. Cool-grey
+  // tint multiplies down the colour; alpha drop reinforces it.
+  private applySpentTint(s: Phaser.GameObjects.Sprite, u: Unit): void {
+    if (u.state.hasActedThisRound) {
+      s.setTint(0x707888);
+      s.setAlpha(0.55);
+    } else {
+      s.clearTint();
+      s.setAlpha(1);
+    }
+  }
+
+  // Brief impact flash on a defender's sprite. Takes the unit too so the
+  // post-flash restore can reinstate the spent dim if the unit was already
+  // dim before the flash — without this the flash would silently strip
+  // the spent tint and the player would see a fresh-looking sprite for a
+  // unit that's already acted.
+  private flashSprite(s: Phaser.GameObjects.Sprite, color: number, u?: Unit): void {
     s.setTintFill(color);
-    this.time.delayedCall(120, () => s.clearTint());
+    this.time.delayedCall(120, () => {
+      s.clearTint();
+      if (u) this.applySpentTint(s, u);
+    });
   }
 
   private spawnDamageNumber(
@@ -2400,7 +2434,7 @@ export class BattleScene extends Phaser.Scene {
       }
       // Crisp white impact flash — reads instantly as "got hit", regardless
       // of unit palette. Red tint blended in with enemy reds before.
-      this.flashSprite(tv.sprite, 0xffffff);
+      this.flashSprite(tv.sprite, 0xffffff, defender);
       playUnitState(this, tv.sprite, defender, "hit");
       this.spawnDamageNumber(
         tx, ty,
