@@ -47,6 +47,7 @@ import {
   sfxCrit,
   sfxDeath,
   sfxDefeat,
+  sfxHover,
   sfxStance,
   sfxStep,
   sfxVictory,
@@ -66,7 +67,21 @@ import {
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
-import type { TilePos, Unit } from "../combat/types";
+import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type TilePos, type Unit } from "../combat/types";
+
+// Display heal amount per consumable kind. Used by the in-battle item
+// picker to show "+10 HP" / "+25 HP" without re-deriving it from the
+// useItem switch. Future consumables (antidotes, buffs) can be added
+// here with 0 if the effect isn't a heal — picker will read that as
+// "no HP gain" without crashing.
+const HEAL_AMOUNT_FOR_KIND: Record<ItemKind, number> = {
+  potion: POTION_HEAL,
+  elixir: ELIXIR_HEAL,
+  mask: 0,
+  fang: 0,
+  royal_lens: 0,
+  dactyl_food: 0
+};
 import { playUnitState } from "../assets/unitAnim";
 import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
@@ -176,6 +191,11 @@ export class BattleScene extends Phaser.Scene {
   // through a stale turn snapshot.
   private initiativeDropdown?: Phaser.GameObjects.Container;
   private initiativeDropdownOpen = false;
+  // Inline picker shown when the player clicks the "Item" action button.
+  // One row per consumable kind in the active unit's inventory; click a
+  // row to use that item. Auto-closes whenever the action buttons are
+  // rebuilt or torn down so a stale picker can't outlive its unit.
+  private itemPicker?: Phaser.GameObjects.Container;
   // Single source of truth for input/turn state. `mode`, `acting`, `ended`
   // and the move/attack target arrays all live here now — the scene reads
   // them via fsm.current() / fsm.currentTiles() / etc., and writes them by
@@ -1818,6 +1838,11 @@ export class BattleScene extends Phaser.Scene {
   private clearActionButtons(): void {
     for (const b of this.actionButtons) b.destroy();
     this.actionButtons = [];
+    // The item picker is anchored over the action button column; if the
+    // buttons are gone, the picker has nothing to refer back to. Tear it
+    // down here so a stale picker can't survive a turn end / cancel /
+    // mode switch.
+    this.closeItemPicker();
   }
 
   private buildActionButtons(u: Unit): void {
@@ -1860,12 +1885,14 @@ export class BattleScene extends Phaser.Scene {
     const hasAP = u.state.apRemaining >= 1;
     const canMove = hasAP && reachableForUnit(this.state, u).length > 0;
     const canAttack = hasAP && targetsForUnit(this.state, u).length > 0;
-    // Healing is now any consumable in the bag — potion (10) or elixir
-    // (25). The auto-pick logic in useBestHeal picks the smallest item
-    // that covers the missing HP so an Elixir isn't burned to top off
-    // 5 HP. Both contribute to the canHeal gate.
-    const hasHealItem = u.state.inventory.some((it) => it.kind === "potion" || it.kind === "elixir");
-    const canHeal = hasAP && hasHealItem && u.state.hp < u.stats.hp;
+    // Item button: enabled when the unit has at least one consumable
+    // (potion / elixir) AND has AP AND is wounded. The wounded gate
+    // stays in to prevent a fat-finger waste of an item at full HP —
+    // the picker itself only appears when there's a real reason to use
+    // something. If/when more consumable kinds land that aren't pure
+    // heals (e.g., an antidote, a buff), revisit this gate.
+    const hasConsumable = u.state.inventory.some((it) => ITEM_CATALOG[it.kind].consumable);
+    const canUseItem = hasAP && hasConsumable && u.state.hp < u.stats.hp;
     const canRoam = u.state.apRemaining === 0 && hasAbility(u, "Roam") && !u.state.roamUsedThisTurn
       && reachableForUnit(this.state, u).length > 0;
 
@@ -1882,7 +1909,7 @@ export class BattleScene extends Phaser.Scene {
       { label: "Defend  1AP", primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "defensive") }
     );
     placeRow(
-      { label: "Heal  1AP", primary: false, enabled: canHeal, onClick: () => this.useBestHeal(u) },
+      { label: "Item  1AP", primary: false, enabled: canUseItem, onClick: () => this.openItemPicker(u) },
       canRoam ? { label: "Roam (free)", primary: false, enabled: true, onClick: () => this.enterRoamMode(u) } : null
     );
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
@@ -1897,20 +1924,125 @@ export class BattleScene extends Phaser.Scene {
     else this.endCurrentTurn();
   }
 
-  // Auto-pick the smallest healing consumable that covers the missing
-  // HP, so an Elixir isn't wasted topping off 5 HP. Falls back to the
-  // bigger one if the smaller one wouldn't be enough OR if the smaller
-  // one isn't in the bag.
-  private useBestHeal(u: Unit): void {
-    const missing = u.stats.hp - u.state.hp;
-    const potion = u.state.inventory.find((it) => it.kind === "potion");
-    const elixir = u.state.inventory.find((it) => it.kind === "elixir");
-    let pick = null as typeof potion | null;
-    if (potion && missing <= 10) pick = potion;          // potion fully covers
-    else if (elixir) pick = elixir;                      // bigger heal needed
-    else if (potion) pick = potion;                      // only potion left
-    if (!pick) return;
+  // Open a small picker over the action button column listing every
+  // consumable kind currently in the unit's bag. The player taps the
+  // row for the item they want to use; the picker closes and the item
+  // resolves immediately. Earlier flow auto-picked the smallest
+  // sufficient heal — that hid which item got burned and meant a
+  // player saving an Elixir for a critical moment had no way to know
+  // a potion got used instead. The explicit picker takes the choice
+  // out of the engine and puts it back in the player's hands.
+  //
+  // Picker rows show: glyph, name, "+10 HP" / "+25 HP" effect line,
+  // and "×N" count. Hover highlights the row; click uses that kind.
+  // The "Cancel" row at the bottom and right-click anywhere both
+  // dismiss without spending AP.
+  private openItemPicker(u: Unit): void {
     sfxClick();
+    this.closeItemPicker();
+    // Group bag by item kind so a unit with three potions sees one row,
+    // not three. Order: heals first (potion before elixir), then any
+    // future consumables in their catalog order.
+    const counts: Partial<Record<ItemKind, number>> = {};
+    for (const it of u.state.inventory) {
+      if (!ITEM_CATALOG[it.kind].consumable) continue;
+      counts[it.kind] = (counts[it.kind] ?? 0) + 1;
+    }
+    const kinds: ItemKind[] = (Object.keys(counts) as ItemKind[])
+      .sort((a, b) => HEAL_AMOUNT_FOR_KIND[a] - HEAL_AMOUNT_FOR_KIND[b]);
+    if (kinds.length === 0) return;
+
+    // Anchor over the action button column. Same x/width as the buttons
+    // so it visually replaces the button block during the choice.
+    const px = GAME_WIDTH - PANEL_W;
+    const w = 256;
+    const rowH = 32;
+    const headerH = 22;
+    const cancelH = 26;
+    const padY = 8;
+    const h = headerH + kinds.length * rowH + cancelH + padY * 2;
+    // Bottom-anchor so the picker hugs the same y as the End Turn button.
+    const y = 438 + 4 * (30 + 4) - h; // 4 rows of action buttons including End Turn
+    this.itemPicker = this.pin(this.add.container(px, y).setDepth(40));
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x05060a, 0.97);
+    bg.fillRect(0, 0, w, h);
+    bg.lineStyle(1, COLORS.gold, 0.85);
+    bg.strokeRect(0.5, 0.5, w - 1, h - 1);
+    this.itemPicker.add(bg);
+
+    const header = this.add.text(w / 2, padY + headerH / 2, "Choose an item", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "13px",
+      color: "#f4d999"
+    }).setOrigin(0.5);
+    this.itemPicker.add(header);
+
+    kinds.forEach((kind, i) => {
+      const ry = padY + headerH + i * rowH;
+      const rowBg = this.add.rectangle(0, ry, w, rowH, 0x131724, 0).setOrigin(0, 0);
+      rowBg.setInteractive({ useHandCursor: true });
+      const meta = ITEM_CATALOG[kind];
+      const heal = HEAL_AMOUNT_FOR_KIND[kind];
+      const glyph = this.add.text(12, ry + rowH / 2, meta.glyph, {
+        fontFamily: FAMILY_BODY,
+        fontSize: "18px",
+        color: "#ffffff"
+      }).setOrigin(0, 0.5);
+      const name = this.add.text(40, ry + rowH / 2 - 7, meta.name, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "13px",
+        color: "#dde6ef"
+      }).setOrigin(0, 0.5);
+      const detail = this.add.text(40, ry + rowH / 2 + 7, `+${heal} HP`, {
+        fontFamily: FAMILY_BODY,
+        fontSize: "11px",
+        color: "#9aa3b0"
+      }).setOrigin(0, 0.5);
+      const count = this.add.text(w - 12, ry + rowH / 2, `×${counts[kind]}`, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "13px",
+        color: "#c9b07a"
+      }).setOrigin(1, 0.5);
+      this.itemPicker!.add([rowBg, glyph, name, detail, count]);
+
+      rowBg.on("pointerover", () => { rowBg.setFillStyle(0x1c2032, 1); sfxHover(); });
+      rowBg.on("pointerout", () => { rowBg.setFillStyle(0x131724, 0); });
+      rowBg.on("pointerdown", () => {
+        this.closeItemPicker();
+        this.useHealItem(u, kind);
+      });
+    });
+
+    // Cancel row.
+    const cy = padY + headerH + kinds.length * rowH + 2;
+    const cancelBg = this.add.rectangle(0, cy, w, cancelH, 0x0a0c14, 0).setOrigin(0, 0);
+    cancelBg.setInteractive({ useHandCursor: true });
+    const cancelTxt = this.add.text(w / 2, cy + cancelH / 2, "Cancel", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "12px",
+      color: "#9aa3b0"
+    }).setOrigin(0.5);
+    this.itemPicker.add([cancelBg, cancelTxt]);
+    cancelBg.on("pointerover", () => { cancelBg.setFillStyle(0x1c2032, 1); cancelTxt.setColor("#dde6ef"); sfxHover(); });
+    cancelBg.on("pointerout", () => { cancelBg.setFillStyle(0x0a0c14, 0); cancelTxt.setColor("#9aa3b0"); });
+    cancelBg.on("pointerdown", () => this.closeItemPicker());
+  }
+
+  private closeItemPicker(): void {
+    if (this.itemPicker) {
+      this.itemPicker.destroy();
+      this.itemPicker = undefined;
+    }
+  }
+
+  // Find the first item of the chosen kind in the unit's bag, use it,
+  // and run the standard post-action housekeeping (HP refresh, AP -1,
+  // log line, floater, continueOrEnd).
+  private useHealItem(u: Unit, kind: ItemKind): void {
+    const pick = u.state.inventory.find((it) => it.kind === kind);
+    if (!pick) return;
     const result = useItem(u, pick.id);
     if (!result.ok) return;
     u.state.apRemaining -= 1;
