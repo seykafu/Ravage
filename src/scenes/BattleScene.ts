@@ -1145,22 +1145,46 @@ export class BattleScene extends Phaser.Scene {
   // ---- Camera scrolling ----
   // Pin a UI GameObject to the screen so it doesn't move when the player
   // pans the camera. Used for everything in the top bar, side panel,
-  // action button block, hover/info tooltips, and phase banners. Tile
-  // sprites, unit sprites, overlays, and damage floaters are left at the
-  // default scrollFactor of 1 so they move with the world.
-  // Pin a game object so it stays on the screen when the world camera scrolls
-  // (B5 mountain, B7 monastery, B11 cliffs, etc. all scroll on entry to centre
-  // the squad). For plain objects this is just setScrollFactor(0). For our
-  // custom Container subclasses (Button, etc.) the override on the class itself
-  // is responsible for propagating the pin to internal display objects + hit
-  // zones — see the long comment in src/ui/Button.ts for the Phaser quirk that
-  // forces us to do this by hand instead of relying on Container's
-  // setScrollFactor(x, y, true) recursion.
+  // action button block, hover/info tooltips, phase banners, and any ad-hoc
+  // overlay (item picker, dialogue boxes, etc.). Tile sprites, unit sprites,
+  // overlays, and damage floaters are left at the default scrollFactor of 1
+  // so they move with the world.
+  //
+  // Recursion gotcha — required, not optional. Phaser 3.80's built-in
+  // Container.setScrollFactor(x, y, true) recursion uses ArrayUtils.SetAll,
+  // which guards each child assignment with `hasOwnProperty('scrollFactorX')`.
+  // scrollFactorX/Y are defined on the Components.ScrollFactor mixin's
+  // prototype and only become OWN properties after .setScrollFactor() has
+  // been called once on that specific instance. So freshly-created child
+  // objects (Buttons, Rectangles, Texts, Zones inside a Container) silently
+  // fail the guard and keep scrollFactor=1 — visual is pinned via the
+  // parent transform, but interactive hit-testing happens in world
+  // coordinates, so cursor + visible-element drift apart by camera.scrollY
+  // px once the player pans on a tall map (B5 / B7 / B11 / B13 etc.).
+  //
+  // Symptoms historically: cursor must hover ABOVE the visible button to
+  // click it (commit caec5b5 fixed the action-button case via a
+  // per-Button override, but the same trap caught the new ItemPicker rows).
+  // The durable fix is to walk the tree ourselves and call
+  // .setScrollFactor() explicitly on each descendant — the prototype
+  // method assigns scrollFactor as an own property, so the next read
+  // through any code path sees the correct value.
+  //
+  // Per-widget overrides (e.g., Button.setScrollFactor) remain as belt-
+  // and-suspenders for callers that don't go through pin().
   private pin<T extends Phaser.GameObjects.GameObject>(obj: T): T {
-    if ("setScrollFactor" in obj) {
-      (obj as unknown as { setScrollFactor: (x: number, y?: number) => void }).setScrollFactor(0);
-    }
+    this.pinDeep(obj as unknown as Phaser.GameObjects.GameObject);
     return obj;
+  }
+
+  private pinDeep(obj: Phaser.GameObjects.GameObject): void {
+    const withSF = obj as unknown as { setScrollFactor?: (x: number, y?: number) => unknown };
+    if (typeof withSF.setScrollFactor === "function") {
+      withSF.setScrollFactor(0, 0);
+    }
+    if (obj instanceof Phaser.GameObjects.Container) {
+      for (const child of obj.list) this.pinDeep(child);
+    }
   }
 
   // Right-click drag to pan. The drag origin is captured on pointerdown;
