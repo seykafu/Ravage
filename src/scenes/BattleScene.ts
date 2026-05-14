@@ -68,6 +68,7 @@ import {
 } from "../util/save";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
+import { announceRavaged, clearRavageAura, refreshRavageAura, type RavageViewState } from "./battle/RavageVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type TilePos, type Unit } from "../combat/types";
@@ -777,104 +778,20 @@ export class BattleScene extends Phaser.Scene {
     this.refreshRavageAura(v, u);
   }
 
-  // ---- Ravage State VFX -----------------------------------------------------
-  // Lazily build (and tween) a soft red glow under the sprite while a unit
-  // is in their Ravaged turn. Pulses to draw the eye — the player should
-  // immediately notice "this character is Ravaged right now and hits 1.5×."
-  // Texture is built once per scene as a radial-gradient canvas.
-  private ensureRavageAuraTexture(): string {
-    const key = "ravage_aura";
-    if (this.textures.exists(key)) return key;
-    const size = 96;
-    const tex = this.textures.createCanvas(key, size, size);
-    if (!tex) return key;
-    const ctx = tex.getContext();
-    const cx = size / 2;
-    const grad = ctx.createRadialGradient(cx, cx, 4, cx, cx, cx);
-    grad.addColorStop(0, "rgba(255,90,80,0.85)");
-    grad.addColorStop(0.45, "rgba(220,40,30,0.35)");
-    grad.addColorStop(1, "rgba(120,0,0,0)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-    tex.refresh();
-    return key;
-  }
-
+  // Ravage State VFX moved out to src/scenes/battle/RavageVfx.ts as the
+  // proof-of-concept BattleScene split (see audit). Thin wrappers below
+  // keep the original method signatures so the rest of BattleScene
+  // doesn't have to know the implementation moved.
   private refreshRavageAura(v: UnitView, u: Unit): void {
-    if (!u.state.ravagedActive || !isAlive(u)) {
-      this.clearRavageAura(v);
-      return;
-    }
-    const px = tileToPixel(u.state.position, this.originX, this.originY);
-    if (!v.ravageAura) {
-      const key = this.ensureRavageAuraTexture();
-      const aura = this.add.image(px.x, px.y + 4, key)
-        .setOrigin(0.5)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(v.sprite.depth - 1);
-      v.ravageAura = aura;
-      v.ravageAuraTween = this.tweens.add({
-        targets: aura,
-        alpha: { from: 0.55, to: 0.95 },
-        scale: { from: 0.95, to: 1.1 },
-        yoyo: true,
-        repeat: -1,
-        duration: 600,
-        ease: "Sine.easeInOut"
-      });
-    } else {
-      v.ravageAura.setPosition(px.x, px.y + 4);
-    }
+    refreshRavageAura(this, v, u, this.originX, this.originY);
   }
-
   private clearRavageAura(v: UnitView): void {
-    if (v.ravageAuraTween) {
-      v.ravageAuraTween.stop();
-      v.ravageAuraTween = undefined;
-    }
-    if (v.ravageAura) {
-      v.ravageAura.destroy();
-      v.ravageAura = undefined;
-    }
+    clearRavageAura(v);
   }
-
-  // Called from beginCurrentTurn when a unit enters their turn with
-  // ravagedActive freshly promoted. Plays a one-shot "RAVAGED!" floater +
-  // brief camera shake + sound to mark the moment so the player feels the
-  // mechanical shift, then leaves the persistent aura up for the turn.
   private announceRavaged(unit: Unit): void {
     const view = this.unitViews.get(unit.id);
     if (!view) return;
-    sfxCrit(); // reuse the heavy hit sting — same emotional register
-    this.cameras.main.shake(220, 0.014);
-    const floater = this.add.text(
-      view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 12, "RAVAGED!",
-      {
-        fontFamily: FAMILY_HEADING,
-        fontSize: "20px",
-        color: "#ff7a5a",
-        stroke: "#1a0404",
-        strokeThickness: 5,
-        shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true }
-      }
-    ).setOrigin(0.5, 1).setDepth(45).setScale(0.4);
-    this.tweens.add({
-      targets: floater,
-      scale: { from: 0.4, to: 1.2 },
-      duration: 220,
-      ease: "Back.easeOut",
-      onComplete: () => {
-        this.tweens.add({
-          targets: floater,
-          y: floater.y - 18,
-          alpha: 0,
-          duration: 1200,
-          ease: "Sine.easeOut",
-          onComplete: () => floater.destroy()
-        });
-      }
-    });
-    this.pushLog(`${unit.name} is RAVAGED — +50% damage, half armor, +1 MOV this turn.`);
+    announceRavaged(this, view.sprite, unit, (msg) => this.pushLog(msg));
   }
 
   private refreshAllUnits(): void {
