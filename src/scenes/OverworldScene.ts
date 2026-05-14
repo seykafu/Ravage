@@ -160,6 +160,17 @@ export class OverworldScene extends Phaser.Scene {
           this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
           return;
         }
+        // Completed battles are read-only — the campaign moves forward
+        // only. Same defensive check as the click handlers below.
+        if (save.completedBattles.includes(b.id)) {
+          const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Already complete — the campaign only moves forward.", {
+            fontFamily: FAMILY_BODY,
+            fontSize: "16px",
+            color: "#a4d36a"
+          }).setOrigin(0.5);
+          this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
+          return;
+        }
         if (b.playable) {
           this.scene.start("BattlePrepScene", { battleId: b.id });
         } else {
@@ -209,7 +220,7 @@ export class OverworldScene extends Phaser.Scene {
       const x = startX + col * (cardW + gapX);
       const y = startY + row * (cardH + gapY);
 
-      // Three-state cascade per battle:
+      // Four-state cascade per battle:
       //   - LOCKED: not in save.unlockedBattles. Player hasn't reached this
       //     point in the story. Card visible (builds anticipation) but
       //     darker; hover hides intro to avoid spoilers; click is no-op
@@ -218,25 +229,52 @@ export class OverworldScene extends Phaser.Scene {
       //     the data but no map/units authored yet. Hover shows intro +
       //     "Story Scaffold ▸" affordance; click shows the existing
       //     "scaffolded for the full story" floater.
-      //   - PLAYABLE: unlocked AND b.playable. Click enters the battle.
+      //   - PLAYABLE: unlocked AND b.playable AND not yet in
+      //     completedBattles. Click enters the battle.
+      //   - CLEARED: unlocked AND b.playable AND in completedBattles.
+      //     The campaign is one-way — players can re-read the intro on
+      //     hover but can't re-enter the fight. Visual: muted blue-grey
+      //     with a green-tinted border + the existing ✓ checkmark, so
+      //     it reads as "done well", not "blocked". Click → floater.
       const unlocked = save.unlockedBattles.includes(b.id);
-      const playable = b.playable && unlocked;
+      const completed = save.completedBattles.includes(b.id) && unlocked;
+      const playable = b.playable && unlocked && !completed;
+      const cleared = b.playable && unlocked && completed;
       const scaffolded = !b.playable && unlocked;
       const locked = !unlocked;
-      const completed = save.completedBattles.includes(b.id) && unlocked;
 
       const cardG = this.add.graphics();
-      // Color tier: playable = blue/gold, scaffolded = grey, locked = darker grey.
-      const fillTop = playable ? 0x141a2a : (scaffolded ? 0x0d0f17 : 0x07090f);
-      const fillBot = playable ? 0x070912 : (scaffolded ? 0x05060a : 0x030408);
+      // Color tier:
+      //   playable  → deep blue
+      //   cleared   → muted blue-green (done; still readable)
+      //   scaffolded → mid grey
+      //   locked    → near-black
+      const fillTop =
+        playable ? 0x141a2a :
+        cleared  ? 0x101a18 :
+        scaffolded ? 0x0d0f17 :
+                   0x07090f;
+      const fillBot =
+        playable ? 0x070912 :
+        cleared  ? 0x070d0c :
+        scaffolded ? 0x05060a :
+                   0x030408;
       cardG.fillGradientStyle(fillTop, fillTop, fillBot, fillBot, 1);
       cardG.fillRect(x, y, cardW, cardH);
-      const border = playable ? 0xc9b07a : (scaffolded ? 0x4a4a52 : 0x2a2a32);
+      const border =
+        playable ? 0xc9b07a :
+        cleared  ? 0x4a7a5a :
+        scaffolded ? 0x4a4a52 :
+                   0x2a2a32;
       cardG.lineStyle(1, border, 1);
       cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
 
       // index badge
-      const badgeColor = playable ? "#f4d999" : (scaffolded ? "#6a6a72" : "#3a3a42");
+      const badgeColor =
+        playable ? "#f4d999" :
+        cleared  ? "#7a9a82" :
+        scaffolded ? "#6a6a72" :
+                   "#3a3a42";
       const badge = this.add.text(x + 6, y + 4, `#${b.index}`, {
         fontFamily: FAMILY_HEADING,
         fontSize: "11px",
@@ -245,14 +283,22 @@ export class OverworldScene extends Phaser.Scene {
       // title — compact "Battle N" instead of "First/Second/..." so the
       // narrow card width doesn't wrap two-word titles into a second line
       // that would push the subtitle off the bottom of the card.
-      const titleColor = playable ? "#dccfa8" : (scaffolded ? "#76747a" : "#46454a");
+      const titleColor =
+        playable ? "#dccfa8" :
+        cleared  ? "#8aa092" :
+        scaffolded ? "#76747a" :
+                   "#46454a";
       const t1 = this.add.text(x + cardW / 2, y + 18, `Battle ${b.index}`, {
         fontFamily: FAMILY_HEADING,
         fontSize: "12px",
         color: titleColor
       }).setOrigin(0.5, 0);
       // subtitle: hidden on locked battles to avoid spoilers in the grid view
-      const subColor = playable ? "#f8f0d8" : (scaffolded ? "#9a9aa0" : "#46454a");
+      const subColor =
+        playable ? "#f8f0d8" :
+        cleared  ? "#9ab0a2" :
+        scaffolded ? "#9a9aa0" :
+                   "#46454a";
       const subText = locked ? "— locked —" : b.subtitle;
       const t2 = this.add.text(x + cardW / 2, y + 35, subText, {
         fontFamily: FAMILY_BODY,
@@ -262,7 +308,11 @@ export class OverworldScene extends Phaser.Scene {
         align: "center",
         fontStyle: locked ? "italic" : "normal"
       }).setOrigin(0.5, 0);
-      const diffColor = playable ? "#c9b07a" : (scaffolded ? "#5a5a62" : "#3a3a42");
+      const diffColor =
+        playable ? "#c9b07a" :
+        cleared  ? "#6a8a72" :
+        scaffolded ? "#5a5a62" :
+                   "#3a3a42";
       const t3 = this.add.text(x + cardW / 2, y + cardH - 16, b.difficultyLabel, {
         fontFamily: FAMILY_BODY,
         fontSize: "10px",
@@ -297,11 +347,15 @@ export class OverworldScene extends Phaser.Scene {
         || b.id.includes("path_climax")
         || b.id.includes("path_final");
 
-      // Hit area — locked cards are interactive (hover + click) but the
-      // hover suppresses the intro and the click shows a "locked" floater
-      // instead of routing into BattlePrepScene.
+      // Hit area — locked / cleared cards are still interactive (hover
+      // shows the right context, click surfaces an explanatory floater)
+      // but only PLAYABLE cards route into BattlePrepScene.
       const zone = this.add.zone(x, y, cardW, cardH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-      const hoverBorder = playable ? 0xffd97a : (scaffolded ? 0x8a8a92 : 0x4a4a52);
+      const hoverBorder =
+        playable ? 0xffd97a :
+        cleared  ? 0x6aa07a :
+        scaffolded ? 0x8a8a92 :
+                   0x4a4a52;
       zone.on("pointerover", () => {
         cardG.lineStyle(2, hoverBorder, 1);
         cardG.strokeRect(x + 0.5, y + 0.5, cardW - 1, cardH - 1);
@@ -321,6 +375,15 @@ export class OverworldScene extends Phaser.Scene {
           bodyHandle.setText("This chapter's contents are determined by the path you choose at Battle 18 (Seven Names, One Choice). Visit the camp signpost when you reach the divergence point to pick your path; the chapter's specific shape will resolve from that decision.");
           playBtn.setEnabled(false);
           playBtn.setLabel("Pick path at B18");
+        } else if (cleared) {
+          // Already-completed battle — full intro stays visible so
+          // the player can re-read what happened, but the play button
+          // is disabled. The campaign moves forward only.
+          detailTitle.setText(`${b.title} — ${b.subtitle}`);
+          detailSub.setText(`Cleared · ${b.difficultyLabel}`);
+          bodyHandle.setText(b.intro);
+          playBtn.setEnabled(false);
+          playBtn.setLabel("Cleared ✓");
         } else {
           detailTitle.setText(`${b.title} — ${b.subtitle}`);
           detailSub.setText(`${b.difficultyLabel} · music: ${b.music.replace("music_", "").replace(/_/g, " ")}`);
@@ -350,6 +413,18 @@ export class OverworldScene extends Phaser.Scene {
             align: "center"
           }).setOrigin(0.5);
           this.tweens.add({ targets: t, alpha: 0, duration: 2400, onComplete: () => t.destroy() });
+          return;
+        }
+        if (cleared) {
+          // Already-completed — surface a positive-tone floater (green)
+          // rather than an error tone (red), so the player understands
+          // this is "you already did this" not "you can't do this".
+          const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Already complete — the campaign only moves forward.", {
+            fontFamily: FAMILY_BODY,
+            fontSize: "16px",
+            color: "#a4d36a"
+          }).setOrigin(0.5);
+          this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
           return;
         }
         if (playable) {
