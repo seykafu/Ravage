@@ -6,7 +6,7 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
 import { PLAYERS } from "../data/units";
-import { loadSave } from "../util/save";
+import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ensureUnitTexture } from "../art/UnitArt";
@@ -75,6 +75,23 @@ export class CampScene extends Phaser.Scene {
       fontFamily: FAMILY_BODY,
       fontSize: "12px",
       color: "#7a7165"
+    }).setOrigin(0.5);
+
+    // Lives readout — campaign-wide losses against the death budget.
+    // Greyed out when no losses; warning yellow once any have landed;
+    // crimson on the last life. Sits just under the squad-count line so
+    // the player sees their margin every time they return to camp.
+    const deaths = save.squadDeaths ?? 0;
+    const livesLeft = Math.max(0, MAX_PERMITTED_DEATHS - deaths);
+    const livesColor =
+      deaths === 0 ? "#5a5448" :
+      livesLeft === 0 ? "#a83c3c" :
+      livesLeft === 1 ? "#d8884a" :
+      "#c9b07a";
+    this.add.text(GAME_WIDTH / 2, 140, `Lives remaining: ${livesLeft} / ${MAX_PERMITTED_DEATHS}`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "12px",
+      color: livesColor
     }).setOrigin(0.5);
 
     // ---- Camp tableau (props + characters) --------------------------------

@@ -6,7 +6,7 @@ import { battleById, BATTLES } from "../data/battles";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropForKey } from "../art/BackdropArt";
-import { loadSave } from "../util/save";
+import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ITEM_CATALOG } from "../combat/items";
 import type { ItemKind } from "../combat/types";
@@ -154,14 +154,26 @@ export class EndScene extends Phaser.Scene {
       }).setOrigin(0, 0.5);
     }
 
-    // Stats line
+    // Stats line — battle progress + remaining campaign-wide death budget.
+    // The lives line dims its colour when the budget hasn't been touched
+    // and brightens to the warning yellow once any deaths have landed,
+    // so a no-loss player isn't visually nagged about a number that
+    // reads 0/3.
     const save = loadSave();
     const completedCount = save.completedBattles.length;
     const totalPlayable = BATTLES.filter(b => b.playable).length;
-    this.add.text(GAME_WIDTH / 2, panelY + panelH + 18, `Battles completed: ${completedCount} / ${totalPlayable} playable`, {
+    const deaths = save.squadDeaths ?? 0;
+    const livesLeft = Math.max(0, MAX_PERMITTED_DEATHS - deaths);
+    const livesColor = deaths === 0 ? "#5a5448" : deaths >= MAX_PERMITTED_DEATHS ? "#a83c3c" : "#c9b07a";
+    this.add.text(GAME_WIDTH / 2, panelY + panelH + 14, `Battles completed: ${completedCount} / ${totalPlayable} playable`, {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#7a7165"
+    }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, panelY + panelH + 32, `Squad losses: ${deaths} / ${MAX_PERMITTED_DEATHS}  (lives remaining: ${livesLeft})`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "13px",
+      color: livesColor
     }).setOrigin(0.5);
 
     // Buttons row — nudged down 10px to keep clearance from the taller panel.

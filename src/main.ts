@@ -17,6 +17,7 @@ import { RosterScene } from "./scenes/RosterScene";
 import { InterposeScene } from "./scenes/InterposeScene";
 import { InventoryScene } from "./scenes/InventoryScene";
 import { CampScene } from "./scenes/CampScene";
+import { GameOverScene } from "./scenes/GameOverScene";
 import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 
@@ -54,6 +55,7 @@ const config: Phaser.Types.Core.GameConfig = {
     BattlePrepScene,
     BattleScene,
     EndScene,
+    GameOverScene,
     CreditsScene,
     // Overlay scenes — register last so they render ON TOP of any
     // active page scene. Each is launched via scene.run() while the

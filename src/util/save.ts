@@ -51,9 +51,25 @@ export interface SaveState {
   // BattlePrep and BattleScene doesn't lose their distribution. Keyed
   // by UnitDef.id.
   assignedInventory?: Record<string, Item[]>;
+  // Cumulative count of player units that have fallen across the whole
+  // campaign. There is no per-unit permadeath — a fallen character is
+  // back at full HP for the next battle — but the squad as a whole has
+  // a hard budget of MAX_PERMITTED_DEATHS losses. The (MAX+1)th death
+  // routes to the GameOverScene instead of the normal post-battle flow.
+  // Counted only on victories (a defeat already loops the player back
+  // through BattlePrep, so deaths in failed attempts don't accumulate).
+  // Optional for back-compat with pre-lives saves; treat undefined as 0.
+  squadDeaths?: number;
   // Bookkeeping (optional — only set when loaded from a remote slot).
   updatedAt?: string;
 }
+
+// Maximum cumulative player-unit losses tolerated across the whole
+// campaign before the run ends. Exceeding this number routes the player
+// to GameOverScene at the end of the offending battle. Tuned to give
+// the player room for a couple of bad reads / unlucky crit RNG without
+// making the lives system feel cosmetic.
+export const MAX_PERMITTED_DEATHS = 3;
 
 export type SlotIndex = 1 | 2 | 3;
 
@@ -176,6 +192,35 @@ export const completeBattle = (s: SaveState, id: string): SaveState => {
 // defaults and apply the catch-up rule if applicable).
 export const getCharacterRecord = (s: SaveState, id: string): CharacterRecord | undefined =>
   s.characters?.[id];
+
+// ---- Lives system (campaign-wide death budget) ----------------------------
+
+// Defensive read — undefined means "0 deaths" (pre-lives save).
+export const getSquadDeaths = (s: SaveState): number => s.squadDeaths ?? 0;
+
+// Bump the campaign-wide death counter by `count`. Pure — caller writes
+// the result back. `count` is the number of player-faction units that
+// fell in the just-resolved battle.
+export const recordSquadDeaths = (s: SaveState, count: number): SaveState => {
+  if (count <= 0) return s;
+  return { ...s, squadDeaths: getSquadDeaths(s) + count };
+};
+
+// True when the campaign has burned through its death budget. Consumed
+// by BattleScene.checkEnd post-victory to choose between EndScene and
+// GameOverScene.
+export const hasExceededDeathLimit = (s: SaveState): boolean =>
+  getSquadDeaths(s) > MAX_PERMITTED_DEATHS;
+
+// Wipe the active save back to a fresh slot. Used by GameOverScene's
+// "Restart" affordance so a wiped run doesn't have to navigate back
+// to TitleScene + delete + recreate the slot manually. Preserves the
+// slot binding (we're restarting THIS slot, not switching).
+export const resetSaveSlot = (): SaveState => {
+  const fresh = defaultSave();
+  writeSave(fresh);
+  return fresh;
+};
 
 // ---- Inventory helpers ----------------------------------------------------
 //

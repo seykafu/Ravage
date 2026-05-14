@@ -58,13 +58,16 @@ import {
   getAssignedInventory,
   getCharacterRecord,
   getSquadInventory,
+  hasExceededDeathLimit,
   loadSave,
+  recordSquadDeaths,
   setCharacterRecord,
   setSquadInventory,
   unlockBattle,
   writeSave
 } from "../util/save";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
+import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type TilePos, type Unit } from "../combat/types";
@@ -274,8 +277,12 @@ export class BattleScene extends Phaser.Scene {
     const players = node.buildPlayers().map((def, i) =>
       createUnit(def, map.startPositions.player[i] ?? { x: 0, y: 0 })
     );
+    // Difficulty bump — every battle except the tutorial gets a small
+    // stat bump applied to its enemy roster (+2 HP / +1 power on mooks
+    // and elites; bosses unchanged). Centralized in src/combat/Difficulty.ts
+    // so a future difficulty-selector UI has one place to read from.
     const enemies = node.buildEnemies().map((def, i) =>
-      createUnit(def, map.startPositions.enemy[i] ?? { x: 0, y: 0 })
+      createUnit(applyDifficultyToEnemy(def, this.battleId), map.startPositions.enemy[i] ?? { x: 0, y: 0 })
     );
 
     // Hydrate player units from the save slot. Characters with a saved
@@ -1767,6 +1774,14 @@ export class BattleScene extends Phaser.Scene {
     if (v === "player") sfxVictory();
     else sfxDefeat();
     let save = loadSave();
+    // Count player-faction deaths from THIS battle (used by both the
+    // game-over routing below and shown in the post-battle EndScene).
+    // Counted only on victory — a defeat sends the player back through
+    // BattlePrep and the dead unit is alive again next attempt, so
+    // pre-victory deaths shouldn't accumulate against the campaign budget.
+    const playerDeathsThisBattle = v === "player"
+      ? this.state.units.filter((u) => u.faction === "player" && !isAlive(u)).length
+      : 0;
     if (v === "player") {
       save = completeBattle(save, this.battleId);
       // unlock next BATTLE in sequence
@@ -1774,6 +1789,7 @@ export class BattleScene extends Phaser.Scene {
       if (nodeIdx >= 0 && nodeIdx + 1 < BATTLES.length) {
         save = unlockBattle(save, BATTLES[nodeIdx + 1]!.id);
       }
+      save = recordSquadDeaths(save, playerDeathsThisBattle);
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "victory" } };
     } else {
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "defeat" } };
@@ -1850,10 +1866,19 @@ export class BattleScene extends Phaser.Scene {
   // Extracted from the tail of checkEnd so the EndScene transition can
   // either fire immediately (no before_victory dialogue) or be deferred
   // until after a before_victory dialogue closes.
+  //
+  // After a victory, also check whether the campaign-wide death budget
+  // has been exceeded — if so, route to GameOverScene instead of the
+  // normal post-battle flow. The save was already updated upstream in
+  // checkEnd, so loading here returns the post-battle squadDeaths total.
   private transitionToEndScene(v: "player" | "enemy"): void {
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
+      if (v === "player" && hasExceededDeathLimit(loadSave())) {
+        this.scene.start("GameOverScene", { battleId: this.battleId });
+        return;
+      }
       this.scene.start("EndScene", { battleId: this.battleId, outcome: v });
     });
   }
