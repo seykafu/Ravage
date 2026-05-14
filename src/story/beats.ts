@@ -638,7 +638,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_cliffs",
     title: "Below decks, the boat moving",
     subtitle: "The crossing to Grude begins",
-    music: "emotional",
+    // Sadness over the broader "emotional" cue — Lucian's death is the
+    // arc's gravitational center and the dedicated sadness track lands
+    // the right weight (cue is reserved in the Music palette comment
+    // for grief beats).
+    music: "sadness",
     backdrop: "cliffs",
     next: "story:before_ravage",
     beats: [
