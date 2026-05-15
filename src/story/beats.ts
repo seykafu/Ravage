@@ -789,10 +789,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "(small nod) Amar. Maya. Ning. Leo. (Pause.) I'm glad to finally put faces to names. I have read everything Maya has sent for eleven months. I have a great deal of respect for each of you. Tonight will be hard. I would like to walk you through the plaza layout one more time before we move." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "Rose. Hi. (Quiet, between them.) ...It's good to see you in person. Eleven years through letters. It's a lot." },
-      { speaker: "Rose", portraitId: "rose", expression: "neutral",
+      { speaker: "Rose", portraitId: "rose", expression: "brisk",
         body: "(half-smile, only at Maya) It is. Talk later. We move at 11:14." },
       N("Rose unfolds the map. She walks the squad through the plaza three times — captain's positions, archer angles, fountain cover, the two stone benches, the south alley approach. She is precise. She is forward-leaning. She is very obviously the person Dawn trusts more than anyone else alive. The squad does not need to be told this; they can see it in the way Dawn watches Rose work the map without interrupting once."),
-      { speaker: "Rose", portraitId: "rose",
+      { speaker: "Rose", portraitId: "rose", expression: "brisk",
         body: "Eight minutes from approach to plaza-clear. We move." },
       N("The squad collects their weapons. Madame Dawn pulls Amar aside at the door for half a sentence Maya does not hear. Rose is already on the stairs. The river bell, somewhere in the distance, begins to ring second watch.")
     ]

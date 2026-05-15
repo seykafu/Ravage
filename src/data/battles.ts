@@ -1239,11 +1239,11 @@ export const BATTLES: BattleNode[] = [
         id: "b13_rose_brief",
         trigger: { kind: "round_start", round: 1 },
         beats: [
-          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+          { speaker: "Rose", portraitId: "rose", expression: "brisk",
             body: "Plaza, three watch positions. Captain on the marble. Two archers flanking on the podium. Two guards behind the north benches. One walking the fountain perimeter clockwise — he's south of the dry basin right now, give it forty seconds and he's between us and the captain. Maya, north flank with me. Ning, take the south bench archer first — she's slow on the reload. Leo, the dactyl behind the south bench gives you a clean angle on the captain when his line thins. Amar — center, with me. We end this in eight minutes. Madame Dawn is at the alley mouth giving the same brief to two other teams — every minute we take here is a minute her cover thins." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "Confirmed. Rose, when did you sleep last." },
-          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+          { speaker: "Rose", portraitId: "rose", expression: "brisk",
             body: "(half-smile) Tomorrow morning, Amar. Plenty of time. Move." }
         ]
       },
@@ -1274,7 +1274,7 @@ export const BATTLES: BattleNode[] = [
         id: "b13_amar_drops_captain",
         trigger: { kind: "ally_killed_target", allyId: "amar", targetId: "royal_captain" },
         beats: [
-          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+          { speaker: "Rose", portraitId: "rose", expression: "brisk",
             body: "Clean. Half-step before the thrust — your father's. (Half-smile.) Madame Dawn will have noticed from the alley." }
         ]
       },
@@ -1291,7 +1291,7 @@ export const BATTLES: BattleNode[] = [
             body: "The captain's body settles into the marble. The crown archers' bolts go quiet. The squad takes one breath and the plaza is theirs." },
           { portraitId: "narrator",
             body: "Then the residence's back door — the door the intelligence said had been bricked over six months ago — swings open and four men in royal blue step through with crossbows already shouldered. Their angle is the alley mouth. Madame Dawn is in the alley mouth. She is giving instructions to two other strike teams over a small folded map and her hood is down and the streetlight is on her face." },
-          { speaker: "Rose", portraitId: "rose", expression: "neutral",
+          { speaker: "Rose", portraitId: "rose", expression: "falling",
             body: "DAWN — " },
           { portraitId: "narrator",
             body: "Rose covers the twenty paces between her position and Dawn's in three strides. She does not draw her sword. She does not call out a second time. She arrives at Dawn's left shoulder and turns her body to the back door so her back is to the four crossbows and her front is to Dawn." },

@@ -45,7 +45,12 @@ export const DEFAULT_VARIANT_FOR: ReadonlyMap<string, string> = new Map([
   // Dawn never had a base file shipped — her default routes to the canonical
   // mask-on expression so any future beat that omits her expression still
   // renders correctly.
-  ["dawn", "measured_neutral"]
+  ["dawn", "measured_neutral"],
+  // Rose ships only the named variants (neutral / brisk / falling) — no
+  // plain rose.png. Default load resolves to rose_neutral.png so any beat
+  // that omits an expression renders correctly. B13's beats already use
+  // expression: "neutral" explicitly, which now lands on the same file.
+  ["rose", "neutral"]
 ]);
 
 export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
@@ -64,6 +69,11 @@ export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   ndara:    ["commanding", "grim", "military_neutral"],
   archbold: ["offering_peace", "righteous_fury"],
   khione:   ["ancient_sadness", "revelation", "serene_neutral"],
+  // Rose: B13 single-battle appearance (Madame Dawn's lieutenant; dies
+  // in post_dawn_rebellion). neutral covers conversational beats; brisk
+  // covers the tactical brief + captain-drop approval; falling covers
+  // the death scene's before_victory dialogue.
+  rose:     ["neutral", "brisk", "falling"],
   mira:     [],
   tali:     []
 };
