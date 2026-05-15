@@ -277,12 +277,15 @@ export const BATTLES: BattleNode[] = [
       // Dawn's raiders use the same bandit factories as Battle 2 — same
       // mechanical profile, framed as a different faction in the script.
       // A future pass could give them a distinct palette/name; for now
-      // the differentiation is purely narrative.
+      // the differentiation is purely narrative. Last two are the
+      // difficulty-pass east-flank pressure on Maya's separated arrival.
       ENEMIES.banditSwordsman("dawn_sw1", 301),
       ENEMIES.banditSwordsman("dawn_sw2", 302),
       ENEMIES.banditSpearton("dawn_sp1", 303),
       ENEMIES.banditArcher("dawn_a1", 304),
-      ENEMIES.banditArcher("dawn_a2", 305)
+      ENEMIES.banditArcher("dawn_a2", 305),
+      ENEMIES.banditArcher("dawn_a3", 306),
+      ENEMIES.banditSwordsman("dawn_sw3", 307)
     ],
     difficultyLabel: "Skirmish",
     // Spoils: 2 potions + a Fang Maya finds in the lead raider's belt
@@ -420,7 +423,13 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditSwordsman("nd_b1", 503),
       ENEMIES.banditSwordsman("nd_b2", 504),
       ENEMIES.banditArcher("nd_a1", 505),
-      ENEMIES.banditArcher("nd_a2", 506)
+      ENEMIES.banditArcher("nd_a2", 506),
+      // Difficulty-pass additions: a far-west spearton extending the
+      // parapet line + a far-east archer mirroring the existing east
+      // mid-pass shooter, so the squad climbs into pressure from both
+      // flanks instead of just the center.
+      ENEMIES.banditSpearton("nd_s3", 507),
+      ENEMIES.banditArcher("nd_a3", 508)
     ],
     difficultyLabel: "Boss — First Major Threat",
     // Spoils: 2 potions, an Elixir from the village's dispensary, and
@@ -579,15 +588,20 @@ export const BATTLES: BattleNode[] = [
     buildEnemies: () => [
       // Selene as boss; defeating her ends the battle. Per the script she
       // doesn't actually die — the post arc reframes her HP-to-zero as
-      // throwing herself off the balcony to escape. Four raiders fill out
-      // the chambers around her at slightly higher level than the canyon
-      // mooks (these are her hand-picked, not random opportunists).
+      // throwing herself off the balcony to escape. The raiders are her
+      // hand-picked (slightly higher level than the canyon mooks). Last
+      // two added in the difficulty pass: a third archer in the inner
+      // sanctum gives Selene better ranged cover, and a third swordsman
+      // in the center funnel between chambers makes the corridor a
+      // grind instead of a clear lane.
       ENEMIES.selene(),
       ENEMIES.banditArcher("mst_a1", 701, 6),
       ENEMIES.banditArcher("mst_a2", 702, 6),
       ENEMIES.banditSwordsman("mst_sw1", 703, 6),
       ENEMIES.banditSwordsman("mst_sw2", 704, 6),
-      ENEMIES.banditSpearton("mst_sp1", 705, 7)
+      ENEMIES.banditSpearton("mst_sp1", 705, 7),
+      ENEMIES.banditArcher("mst_a3", 706, 6),
+      ENEMIES.banditSwordsman("mst_sw3", 707, 6)
     ],
     difficultyLabel: "Boss — The Monastery",
     // Spoils: 2 elixirs from the monastery's still-stocked dispensary
@@ -855,16 +869,21 @@ export const BATTLES: BattleNode[] = [
     ],
     buildEnemies: () => [
       // Kian holds the road out and refuses to engage until the squad
-      // thins his guard — see holdPositionUntil. Six royal soldiers
+      // thins his guard — see holdPositionUntil. Eight royal soldiers
       // make up his blockade: 2 guards flanking him, 2 archers on the
-      // barricades, 2 guards advancing from the back line.
+      // barricades, 2 guards advancing from the back line, and the
+      // difficulty-pass additions — a guard mid-street pinching the
+      // squad's escape lane + a crown archer on the south barricade
+      // ridge for extra ranged cover from terrain.
       ENEMIES.kian(10),
       ENEMIES.royalGuard("kbl_rg1", 1001, 9),
       ENEMIES.royalGuard("kbl_rg2", 1002, 9),
       ENEMIES.royalArcher("kbl_ra1", 1003, 9),
       ENEMIES.royalArcher("kbl_ra2", 1004, 9),
       ENEMIES.royalGuard("kbl_rg3", 1005, 8),
-      ENEMIES.royalGuard("kbl_rg4", 1006, 8)
+      ENEMIES.royalGuard("kbl_rg4", 1006, 8),
+      ENEMIES.royalGuard("kbl_rg5", 1007, 8),
+      ENEMIES.royalArcher("kbl_ra3", 1008, 9)
     ],
     difficultyLabel: "Escape",
     // Spoils: 2 elixirs from the Thuling chapel infirmary the squad

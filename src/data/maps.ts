@@ -150,15 +150,20 @@ export const dawnBanditsMap: MapDef = buildMap("dawn_bandits", "Outskirts of Thu
     { x: 4, y: 8 }, // Ning
     { x: 10, y: 5 } // Maya — east flank, separated
   ],
-  // Five raiders in/around the rubble at the north field. Two archers
+  // Seven raiders in/around the rubble at the north field. Two archers
   // perched on hay/rubble for first-round shots, two swordsmen pressing
-  // down the road, one spearton holding the rubble line.
+  // down the road, one spearton holding the rubble line. Last two added
+  // in the difficulty pass — bracket Maya's isolated east-flank arrival
+  // (an east-side archer can range her on round 1; an east-side
+  // swordsman puts melee pressure on her join attempt).
   enemy: [
     { x: 5, y: 0 }, // Swordsman, north-center
     { x: 7, y: 0 }, // Swordsman
     { x: 5, y: 1 }, // Spearton in rubble cover
     { x: 4, y: 0 }, // Archer
-    { x: 8, y: 0 }  // Archer
+    { x: 8, y: 0 }, // Archer
+    { x: 10, y: 1 }, // Archer — east flank, threatens Maya on round 1
+    { x: 9, y: 2 }   // Swordsman — east flank, presses Maya
   ]
 });
 
@@ -256,7 +261,10 @@ export const mountainMap: MapDef = buildMap("mountain_pass", "Ravaged Mountain V
   ],
   // Ndari + flanking speartons on the stone parapet (row 1); 2 swordsmen
   // at the parapet edge (row 3); 2 archers in the open mid-pass (row 5)
-  // ranging on the squad's south approach.
+  // ranging on the squad's south approach. Last two added in the
+  // difficulty pass — extends the parapet threat further west and gives
+  // the east mid-pass another archer mirror, so the squad's climb has
+  // pressure from both flanks instead of just the center.
   enemy: [
     { x: 10, y: 1 }, // Ndari on the parapet, dead center
     { x: 7,  y: 1 }, // bandit spearton flanking left
@@ -264,7 +272,9 @@ export const mountainMap: MapDef = buildMap("mountain_pass", "Ravaged Mountain V
     { x: 5,  y: 3 }, // bandit swordsman west edge
     { x: 15, y: 3 }, // bandit swordsman east edge
     { x: 8,  y: 5 }, // bandit archer mid-pass
-    { x: 12, y: 5 }  // bandit archer mid-pass
+    { x: 12, y: 5 }, // bandit archer mid-pass
+    { x: 4,  y: 1 }, // bandit spearton — far-west parapet flank
+    { x: 16, y: 5 }  // bandit archer — far-east mid-pass mirror
   ]
 });
 
@@ -364,14 +374,20 @@ export const monasteryMap: MapDef = buildMap("monastery", "Abandoned Monastery",
   ],
   // Selene at the bell tower (north of the altar's gap). Two archers
   // perched in the inner sanctum, two swordsmen in the middle chamber,
-  // one spearton anchoring the outer-chapel funnel.
+  // one spearton anchoring the outer-chapel funnel. Last two added in
+  // the difficulty pass — a third archer high in the inner sanctum
+  // gives Selene better ranged cover, and a third swordsman in the
+  // pillar funnel between middle chamber and outer chapel makes the
+  // central corridor a real grind instead of a clear lane.
   enemy: [
     { x: 7,  y: 1 },  // Selene — boss
     { x: 5,  y: 2 },  // Raider archer (inner sanctum, west)
     { x: 10, y: 2 },  // Raider archer (inner sanctum, east)
     { x: 3,  y: 6 },  // Raider swordsman (middle chamber, west)
     { x: 12, y: 6 },  // Raider swordsman (middle chamber, east)
-    { x: 7,  y: 10 }  // Raider spearton (outer chapel funnel)
+    { x: 7,  y: 10 }, // Raider spearton (outer chapel funnel)
+    { x: 11, y: 2 },  // Raider archer — third high in the inner sanctum
+    { x: 7,  y: 8 }   // Raider swordsman — center funnel between chambers
   ]
 });
 
@@ -537,7 +553,10 @@ export const leavingThulingMap: MapDef = buildMap("leaving_thuling", "Thuling St
   // royal guards flank him on rows 4 + 6. Two crown archers behind
   // the barricades on cols 5 + 8 firing east. One royal guard at row
   // 3, one at row 7 — the back line that chases the squad if they
-  // try to slip around Kian's center.
+  // try to slip around Kian's center. Last two added in the difficulty
+  // pass — a guard advancing through the center mid-street and a
+  // crown archer on the south barricade ridge give the squad's escape
+  // route a vertical pinch + extra ranged cover from cover terrain.
   enemy: [
     { x: 1,  y: 5 },  // Kian (center-west, blocking the road out — holdPositionUntil)
     { x: 1,  y: 4 },  // Royal Guard, north flank
@@ -545,7 +564,9 @@ export const leavingThulingMap: MapDef = buildMap("leaving_thuling", "Thuling St
     { x: 5,  y: 3 },  // Crown Archer, north barricade
     { x: 5,  y: 7 },  // Crown Archer, south barricade
     { x: 3,  y: 4 },  // Royal Guard, advancing north
-    { x: 3,  y: 6 }   // Royal Guard, advancing south
+    { x: 3,  y: 6 },  // Royal Guard, advancing south
+    { x: 7,  y: 4 },  // Royal Guard — central mid-street pincer
+    { x: 8,  y: 7 }   // Crown Archer — south barricade ridge (Ba cover tile)
   ]
 });
 
