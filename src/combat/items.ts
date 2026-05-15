@@ -18,6 +18,14 @@ export interface ItemMeta {
   // True for items that activate on demand (potion, elixir). False for
   // passive equipment (mask, fang, royal_lens, dactyl_food).
   consumable: boolean;
+  // True for items that are passive while in inventory (so they read as
+  // equipment in the UI) BUT are spent at battle end regardless of
+  // whether the carrier survives. Mask is the canonical case — it's
+  // a single-fight mobility tool, not a permanent build piece.
+  // reconcilePostBattleInventory filters these out before persisting
+  // survivor bags and before pushing fallen drops back to the pool.
+  // Items in the squad pool that were never deployed are unaffected.
+  consumedOnBattleEnd?: boolean;
   // Glyph for the inventory grid — picked to read at 16-32px without
   // needing per-item PNGs in v1. Replace with real icon assets later.
   glyph: string;
@@ -41,8 +49,9 @@ export const ITEM_CATALOG: Record<ItemKind, ItemMeta> = {
   mask: {
     kind: "mask",
     name: "Mask",
-    description: "+2 movement while carried. Stacks.",
+    description: "+2 movement during battle. Stacks. One-use — consumed at battle end.",
     consumable: false,
+    consumedOnBattleEnd: true,
     glyph: "🎭"
   },
   fang: {

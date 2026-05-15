@@ -323,16 +323,49 @@ export class InventoryScene extends Phaser.Scene {
       }
       return true;
     };
+    // Trade unlock gate — strategic-equipment trades (Fang / Royal Lens
+    // / Dactyl Food) are hidden behind reaching Grude (B12 complete).
+    // Locked rows still RENDER so the player can see what's coming;
+    // they just can't be clicked and read with a "— after Grude" suffix.
+    const isLocked = (recipe: typeof TRADE_RECIPES[number]): boolean =>
+      !!recipe.unlockedAfter && !save.completedBattles.includes(recipe.unlockedAfter);
 
     for (const recipe of TRADE_RECIPES) {
-      const ok = canAfford(recipe);
+      const locked = isLocked(recipe);
+      const ok = !locked && canAfford(recipe);
       const row = this.add.container(tradeX0, py);
-      const bg = this.add.rectangle(0, 0, tradeW, 38, ok ? 0xc9b07a : 0x000000, ok ? 0.08 : 0.0)
+      const fillCol =
+        locked ? 0x000000 :
+        ok     ? 0xc9b07a :
+                 0x000000;
+      const fillAlpha =
+        locked ? 0.0  :
+        ok     ? 0.08 :
+                 0.0;
+      const strokeCol =
+        locked ? 0x4a4a52 :
+        ok     ? 0xc9b07a :
+                 0x7a7165;
+      const strokeAlpha =
+        locked ? 0.35 :
+        ok     ? 0.5  :
+                 0.25;
+      const bg = this.add.rectangle(0, 0, tradeW, 38, fillCol, fillAlpha)
         .setOrigin(0, 0)
-        .setStrokeStyle(1, ok ? 0xc9b07a : 0x7a7165, ok ? 0.5 : 0.25);
-      const label = this.add.text(8, 19, recipe.label, {
-        fontFamily: FAMILY_BODY, fontSize: "12px",
-        color: ok ? "#f8f0d8" : "#7a7165"
+        .setStrokeStyle(1, strokeCol, strokeAlpha);
+      // Locked rows append an italic suffix so the player understands
+      // why the row is greyed out and what unblocks it. Doesn't change
+      // the canonical recipe.label so analytics + dedupe still match.
+      const labelText = locked ? `${recipe.label}   — after Grude` : recipe.label;
+      const labelColor =
+        locked ? "#5a5a62" :
+        ok     ? "#f8f0d8" :
+                 "#7a7165";
+      const label = this.add.text(8, 19, labelText, {
+        fontFamily: FAMILY_BODY,
+        fontSize: "12px",
+        color: labelColor,
+        fontStyle: locked ? "italic" : "normal"
       }).setOrigin(0, 0.5);
       if (ok) {
         bg.setInteractive();
@@ -556,6 +589,14 @@ export class InventoryScene extends Phaser.Scene {
     const recipe = TRADE_RECIPES.find((r) => r.id === recipeId);
     if (!recipe) return;
     const save = loadSave();
+    // Defensive gate — even if a stale UI state or a DevJump replay lets
+    // a locked trade reach this far, refuse to execute it. The card
+    // builder's `ok` check is the primary gate; this is belt-and-
+    // suspenders so the unlock state is impossible to bypass.
+    if (recipe.unlockedAfter && !save.completedBattles.includes(recipe.unlockedAfter)) {
+      sfxCancel();
+      return;
+    }
     const pool = getSquadInventory(save);
     // Burn down the cost first — collect indices to remove, then splice
     // in reverse to keep earlier indices valid.
@@ -638,6 +679,15 @@ export const reconcilePostBattleInventory = (
     ? { ...save.assignedInventory }
     : {};
 
+  // Items flagged consumedOnBattleEnd (e.g. Mask) are spent at the end
+  // of the fight regardless of whether the carrier survives — they're
+  // single-use battle tools dressed up as equipment. Filter them out
+  // of BOTH paths below so the bag the player sees at the next
+  // BattlePrep matches the new mental model "I bring a Mask, I get one
+  // fight of +2 MOV, then it's gone."
+  const survivesBetweenBattles = (it: Item): boolean =>
+    !ITEM_CATALOG[it.kind].consumedOnBattleEnd;
+
   for (const u of units) {
     if (u.faction !== "player") continue;
     if (u.state.alive) {
@@ -645,12 +695,15 @@ export const reconcilePostBattleInventory = (
       // Spread to defensively copy in case BattleScene mutates the
       // unit's inventory after this call (it shouldn't, but the cost
       // of the copy is negligible and the safety is real).
-      assigned[u.id] = [...u.state.inventory];
+      assigned[u.id] = u.state.inventory.filter(survivesBetweenBattles).map((it) => ({ ...it }));
     } else {
       // Fallen — squad salvages whatever's left in the bag back to
-      // the pool. Clear their assignment so they don't show up at
-      // BattlePrep with stale inventory if they rejoin via revival.
-      for (const it of u.state.inventory) pool.push(it);
+      // the pool, EXCEPT consumed-on-battle-end items (those are spent
+      // even on death — the body doesn't carry them home). Clear the
+      // assignment so a future revive doesn't surface stale bag state.
+      for (const it of u.state.inventory) {
+        if (survivesBetweenBattles(it)) pool.push(it);
+      }
       delete assigned[u.id];
     }
   }
