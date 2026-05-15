@@ -22,7 +22,7 @@ Thirteen playable battles closing out the first half of the campaign and opening
 | 10 | Leaving Thuling (Kian's blockade) | *Stronghold of Memories* |
 | 11 | The Cliffs (Kian's truth, Lucian's farewell) | *Stronghold of Memories* |
 | 12 | The Ravage (Grude harbor, the colony reveal lands) | *Grude Battle 1* |
-| 13 | Madame Dawn's Rebellion (Rose dies for the captain) | *Stronghold of Memories* |
+| 13 | Madame Dawn's Rebellion (Rose dies for the captain) | *Spine of the World — Battle 2* |
 
 Battles 14–30 exist as data stubs in the world map for narrative continuity (Amar's origin, the inner coup, the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
 
