@@ -68,6 +68,7 @@ import {
 } from "../util/save";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
+import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura, type RavageViewState } from "./battle/RavageVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
@@ -684,6 +685,13 @@ export class BattleScene extends Phaser.Scene {
 
     getMusic(this).play(node.music, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
+
+    // Cinematic post-FX — bloom + warm color grading + light vignette
+    // applied to the world camera. Side panel + action buttons are pinned
+    // (scrollFactor 0) and inherit the same camera, so they get the
+    // treatment too — that's intentional, the goal is a unified mood
+    // pass over the whole battle frame. See src/art/CinematicFX.ts.
+    applyCinematicFX(this, { vignette: 0.4 });
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
     new SettingsButton(this, GAME_WIDTH - 32, 35);
