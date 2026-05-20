@@ -133,21 +133,58 @@ export class MusicManager {
 
   play(key: MusicKey, opts: { loop?: boolean; fadeMs?: number } = {}): void {
     const { loop = true, fadeMs = 700 } = opts;
-    if (this.currentKey === key && this.current?.isPlaying) return;
-    // Retire the tracked sound first so a play() failure below can't strand it.
-    if (this.current) this.retireSound(this.current, fadeMs);
 
-    // Defensive: ensure the WebAudio context is in a "running" state before
-    // we try to play. Across a scene transition (e.g., cold_open_dawn →
-    // pre_palace), the context can briefly drop into "suspended" — Phaser's
-    // sound.play() returns silently in that state and the new track never
-    // actually starts. resume() returns a Promise; we void-await it because
-    // play() runs synchronously. The retry-on-unlock below handles the
-    // narrow window where resume() hasn't completed by the time play() runs.
+    // Ensure the WebAudio context is running BEFORE the same-key check
+    // below. A scene transition can leave the context in "suspended" for
+    // a few ms — during that window an existing sound's isPlaying flag
+    // can lie (still true while actual audio is silent). Resuming here
+    // first means the same-key short-circuit sees an honest state.
     const sm = this.scene.sound as unknown as { context?: AudioContext };
     if (sm.context && sm.context.state === "suspended") {
       void sm.context.resume();
     }
+
+    // ---- Same-track continuity ----
+    //
+    // Load-bearing for seamless cross-scene audio. When two consecutive
+    // scenes call play() with the same MusicKey, we DON'T restart the
+    // track — the player should experience uninterrupted audio across
+    // the transition. Examples this protects:
+    //   * Two chained StoryScene arcs that share arc.music (e.g., a
+    //     pre/post pair both using "danger")
+    //   * Camp → BattlePrep → Battle when consecutive scenes happen
+    //     to share a cue
+    //   * Same battle re-loaded after a Try Again that didn't change
+    //     the music underneath
+    //
+    // Three states the existing sound might be in:
+    //   isPlaying           → no-op, just snap volume to target in case
+    //                         a previous fade was interrupted
+    //   isPaused            → resume() and return (Phaser can pause
+    //                         sounds briefly on some scene transitions)
+    //   neither / destroyed → stale reference; fall through to a fresh
+    //                         play with the normal fade-in
+    if (this.currentKey === key && this.current) {
+      const s = this.current as Phaser.Sound.WebAudioSound;
+      if (s.isPlaying) {
+        // Snap volume so a half-finished prior fade doesn't leave the
+        // track stuck quiet across the seam.
+        if ("setVolume" in s) s.setVolume(this.targetVolume);
+        return;
+      }
+      if (s.isPaused) {
+        try { s.resume(); } catch { /* fall through to fresh play */ }
+        if (s.isPlaying) {
+          if ("setVolume" in s) s.setVolume(this.targetVolume);
+          return;
+        }
+      }
+      // Sound exists but isn't playing or paused — stale ref, fall
+      // through. The retire below will clean it up before fresh play.
+    }
+
+    // Retire the tracked sound first so a play() failure below can't strand it.
+    if (this.current) this.retireSound(this.current, fadeMs);
 
     const sound = this.scene.sound.add(key, { loop, volume: 0 });
     try { sound.play(); } catch { /* autoplay blocked — track anyway */ }
