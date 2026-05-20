@@ -771,12 +771,13 @@ export class BattleScene extends Phaser.Scene {
     const worldObjects = allChildren.filter((o) => !uiSet.has(o));
     if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
 
-    // Fog-of-war spotlight overlay — full-map dark layer with soft
-    // circular holes punched at each living player unit's position.
-    // Refreshed every frame in update() so the lit area follows the
-    // squad. Only rendered on the main (world) camera; UI camera
-    // ignores it so the side bar stays readable.
-    this.setupSpotlightOverlay(boundsW, boundsH);
+    // Fog-of-war spotlight overlay — opt-in per battle via
+    // node.darkBattle. For moody / interior / nocturnal battles
+    // (B7 monastery corridors, B11 cliffs at night, B13 night plaza
+    // strike). Daylight outdoor battles render normally.
+    if (node.darkBattle) {
+      this.setupSpotlightOverlay(boundsW, boundsH);
+    }
 
     this.beginCurrentTurn();
   }

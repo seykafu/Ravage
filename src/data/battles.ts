@@ -99,6 +99,13 @@ export interface BattleNode {
   // playable battle should grant 1-3 thematically appropriate items.
   // Defeat awards nothing.
   rewards?: ItemKind[];
+  // Opt into the fog-of-war spotlight overlay — a dark layer over the
+  // world with soft circular holes punched at each living player
+  // unit. Reserved for moody / nocturnal / interior scenes where the
+  // "you can only see what's near the squad" framing earns its
+  // dramatic cost. Off by default so daylight outdoor battles
+  // (farmland, mountain pass, harbor) render normally.
+  darkBattle?: boolean;
 }
 
 export const BATTLES: BattleNode[] = [
@@ -609,6 +616,10 @@ export const BATTLES: BattleNode[] = [
     // before her balcony exit. Narrative tell: she meant for the squad
     // to find it.
     rewards: ["elixir", "elixir", "fang"],
+    // Stone corridors that swallow torchlight — the intro literally
+    // calls out the darkness. Fog-of-war spotlight earns its keep on
+    // a monastery interior fight more than anywhere else in the slice.
+    darkBattle: true,
     // Defeat Selene to win — the rest can scatter. Mirrors b05's
     // defeatUnit("ndari") pattern; players who want the cleanest run
     // can dive on Selene early, players who want full XP rout the room.
@@ -1007,6 +1018,11 @@ export const BATTLES: BattleNode[] = [
     // royal lens (the captain's spotter), 1 mask (Kian's helm
     // ornament — Amar takes it).
     rewards: ["elixir", "elixir", "elixir", "fang", "royal_lens", "mask"],
+    // Cliff-face stair-fight as the squad descends to Madame Dawn's
+    // ship at the waterline. Dramatic night exit + the colony-truth
+    // reveal lands here — fog-of-war reinforces "this is the moment
+    // the world becomes bigger than you knew."
+    darkBattle: true,
     // Victory: defeat Kian. Mirrors B5 Ndari + B7 Selene defeatUnit
     // patterns. The combined-strike framing is narrative — any unit
     // (or chain of units) bringing Kian's HP to zero counts.
@@ -1243,6 +1259,12 @@ export const BATTLES: BattleNode[] = [
     // explicitly tells the squad not to strip the rest of the
     // captain's kit; the plaza is hers to mourn now.
     rewards: ["elixir", "elixir", "fang"],
+    // Night plaza strike — Rose's "we end this in eight minutes"
+    // brief is explicitly nocturnal in the intro ("the worst
+    // version of their own night out loud"). Fog-of-war turns the
+    // rebellion strike into the surgical interior fight it's
+    // meant to be.
+    darkBattle: true,
     // Victory: defeat the Royal Captain. Mirrors the b05/b07/b11
     // defeatUnit pattern. The before_victory beat then plays Rose's
     // death immediately after — the second wave the squad's
