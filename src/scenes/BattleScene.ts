@@ -1276,6 +1276,20 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
+  // Register a dynamically-spawned WORLD object (damage floater, dust
+  // particle, level-up text, anything that lives in world space and
+  // appears AFTER the end-of-create() sweep) with the UI camera's
+  // ignore list. Without this, dynamic world objects render on BOTH
+  // cameras — the main camera shows the FX'd version below, the UI
+  // camera shows the un-FX'd version on top, so the player sees the
+  // text doubled (a darker copy with the cinematic pass + a lighter
+  // copy without). Wrapping every world spawn in addWorld() keeps the
+  // single-render guarantee for the lifetime of the scene.
+  private addWorld<T extends Phaser.GameObjects.GameObject>(obj: T): T {
+    if (this.uiCamera) this.uiCamera.ignore(obj);
+    return obj;
+  }
+
   private pinDeep(obj: Phaser.GameObjects.GameObject): void {
     const withSF = obj as unknown as { setScrollFactor?: (x: number, y?: number) => unknown };
     if (typeof withSF.setScrollFactor === "function") {
@@ -2445,7 +2459,7 @@ export class BattleScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) {
       const dir = (i - 1) * 0.7; // -0.7, 0, +0.7 radians of horizontal spread
       const dist = 10 + Math.random() * 6;
-      const puff = this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55);
+      const puff = this.addWorld(this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55));
       this.tweens.add({
         targets: puff,
         x: x + Math.sin(dir) * dist,
@@ -2580,7 +2594,7 @@ export class BattleScene extends Phaser.Scene {
     // big landed.
     const fontSize = crit ? "26px" : "18px";
     const strokeThickness = crit ? 5 : 3;
-    const t = this.add.text(x, y - 12, text, {
+    const t = this.addWorld(this.add.text(x, y - 12, text, {
       fontFamily: FAMILY_HEADING,
       fontSize,
       color: `#${color.toString(16).padStart(6, "0")}`,
@@ -2589,7 +2603,7 @@ export class BattleScene extends Phaser.Scene {
       shadow: crit
         ? { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true, stroke: true }
         : { offsetX: 0, offsetY: 2, color: "#000", blur: 4, fill: true }
-    }).setOrigin(0.5);
+    }).setOrigin(0.5));
     // Pop-in: scale punches up then settles. Crit overshoots harder.
     const peak = crit ? 1.45 : 1.2;
     t.setScale(0.5);
@@ -2779,14 +2793,14 @@ export class BattleScene extends Phaser.Scene {
     sfxXpGain();
     const view = this.unitViews.get(unit.id);
     if (!view) return;
-    const floater = this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 34, `+${amount} XP`, {
+    const floater = this.addWorld(this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 34, `+${amount} XP`, {
       fontFamily: FAMILY_HEADING,
       fontSize: "12px",
       color: "#fff7c4",
       stroke: "#1a0e04",
       strokeThickness: 3,
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
-    }).setOrigin(0.5, 1).setDepth(40);
+    }).setOrigin(0.5, 1).setDepth(40));
     this.tweens.add({
       targets: floater,
       y: floater.y - 24,
@@ -2813,14 +2827,14 @@ export class BattleScene extends Phaser.Scene {
     // call announceLevelUp once per gained level, so this naturally batches).
     trackCharacterLeveledUp(unit.id, report.newLevel);
     if (view) {
-      const floater = this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 10, `LV ${report.newLevel}`, {
+      const floater = this.addWorld(this.add.text(view.sprite.x, view.sprite.y - TILE_SIZE / 2 - 10, `LV ${report.newLevel}`, {
         fontFamily: FAMILY_HEADING,
         fontSize: "14px",
         color: "#fff7c4",
         stroke: "#1a0e04",
         strokeThickness: 3,
         shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
-      }).setOrigin(0.5, 1).setDepth(40);
+      }).setOrigin(0.5, 1).setDepth(40));
       this.tweens.add({
         targets: floater,
         y: floater.y - 28,
