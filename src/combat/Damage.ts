@@ -5,10 +5,20 @@ import { equipmentBonuses } from "./items";
 import { clamp } from "../util/math";
 
 // Weapon triangle: 1.15× favored, 0.85× unfavored, 1.0× neutral.
+//
+// Core triangle: sword > spear > shield > sword. Standard FE-style
+// rock-paper-scissors that drives the squad-composition meta.
+//
+// Bow > dactyl: archers down-spear the flying mounts before they
+// can close. Mirrors real-world "anti-air" advantage. Dactyls
+// remain neutral to swords/spears/shields, so the only counter is
+// a bow on the field — gives archer slots a clear identity beyond
+// "ranged DPS that ignores the triangle."
 const FAVORED: Partial<Record<WeaponKind, WeaponKind>> = {
   sword: "spear",
   spear: "shield",
-  shield: "sword"
+  shield: "sword",
+  bow: "dactyl"
 };
 
 export const weaponModifier = (attacker: WeaponKind, defender: WeaponKind): number => {
@@ -21,6 +31,29 @@ export const weaponModifier = (attacker: WeaponKind, defender: WeaponKind): numb
 // True if `attacker` weapon-triangle-favors `defender` (the attacker has the better matchup).
 export const hasWeaponAdvantage = (attacker: WeaponKind, defender: WeaponKind): boolean =>
   FAVORED[attacker] === defender;
+
+// Class-based matchup bonus that sits ON TOP of the weapon triangle.
+//
+// Shinobi (assassin) class strikes archers harder — the assassin's
+// strength is closing distance + striking before the bow can fire.
+//
+// Sword weapon strikes shinobi class harder — assassins are fragile
+// in straight melee against a properly-trained swordsman. The bonus
+// goes to the SWORD attacker so it reads as "swords punish assassins"
+// rather than "assassins take more damage from everything."
+//
+// Both branches return 1.15 (matching the weapon triangle's favored
+// multiplier). Returned multiplicatively, so a shinobi attacking an
+// archer with a sword gets BOTH the class bonus (1.15) AND the weapon
+// matchup if any — stacks cleanly. Note shinobi units currently wield
+// swords (e.g. Rose), so attacker.weapon === "sword" naturally; the
+// class bonus is what makes their hit against archers different from
+// a regular swordsman's.
+export const attackerClassBonus = (attacker: Unit, defender: Unit): number => {
+  if (attacker.classKind === "shinobi" && defender.weapon === "bow") return 1.15;
+  if (attacker.weapon === "sword" && defender.classKind === "shinobi") return 1.15;
+  return 1.0;
+};
 
 // Stance modifiers as documented in spec.
 export const attackerStanceModifier = (attacker: Unit, isCounter: boolean): number => {
@@ -106,9 +139,10 @@ export const previewAttack = (
   const stanceMod = attackerStanceModifier(attacker, isCounter) * defenderStanceModifier(defender);
   const abilityMod = attackerAbilityModifier(attacker, defender) * defenderAbilityModifier(defender, allUnits);
   const ravageAtkMod = attackerRavageModifier(attacker);
+  const classMod = attackerClassBonus(attacker, defender);
   const armor = effectiveArmor(defender);
   const baseDamage =
-    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * ravageAtkMod -
+    attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * ravageAtkMod * classMod -
     armor;
   const damage = Math.max(1, Math.round(baseDamage));
 

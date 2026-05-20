@@ -7,7 +7,7 @@
 // satisfy the Damage.ts code paths — no Phaser, no scene, no AI.
 
 import { describe, it, expect } from "vitest";
-import { previewAttack, weaponModifier, attackerRavageModifier, effectiveArmor } from "../Damage";
+import { previewAttack, weaponModifier, attackerRavageModifier, attackerClassBonus, effectiveArmor } from "../Damage";
 import { createUnit } from "../Unit";
 import { createFang, createRoyalLens, createDactylFood } from "../items";
 import type { Tile, Unit, UnitDef, WeaponKind } from "../types";
@@ -49,11 +49,67 @@ describe("weaponModifier", () => {
     expect(weaponModifier("shield", "spear")).toBeCloseTo(0.85);
     expect(weaponModifier("sword", "shield")).toBeCloseTo(0.85);
   });
-  it("returns 1.0 for mirror matchups and bow/dactyl neutrals", () => {
+  it("returns 1.0 for mirror matchups", () => {
     expect(weaponModifier("sword", "sword")).toBe(1.0);
+    expect(weaponModifier("bow", "bow")).toBe(1.0);
+  });
+  it("bow > dactyl (anti-air): bow gets 1.15, dactyl gets 0.85 against bow", () => {
+    expect(weaponModifier("bow", "dactyl")).toBeCloseTo(1.15);
+    expect(weaponModifier("dactyl", "bow")).toBeCloseTo(0.85);
+  });
+  it("bow and dactyl are neutral against the core triangle weapons", () => {
     expect(weaponModifier("bow", "sword")).toBe(1.0);
     expect(weaponModifier("sword", "bow")).toBe(1.0);
     expect(weaponModifier("dactyl", "spear")).toBe(1.0);
+    expect(weaponModifier("spear", "dactyl")).toBe(1.0);
+  });
+});
+
+describe("attackerClassBonus (shinobi matchups)", () => {
+  const shinobiVsBow = (): { atk: Unit; def: Unit } => {
+    const atk = createUnit(mkDef({ classKind: "shinobi", weapon: "sword" }), { x: 0, y: 0 });
+    const def = createUnit(mkDef({ classKind: "archer", weapon: "bow" }), { x: 1, y: 0 });
+    return { atk, def };
+  };
+  it("shinobi attacking bow-wielder gets 1.15× class bonus", () => {
+    const { atk, def } = shinobiVsBow();
+    expect(attackerClassBonus(atk, def)).toBeCloseTo(1.15);
+  });
+  it("sword-wielder attacking shinobi gets 1.15× class bonus (assassin's weakness)", () => {
+    const atk = createUnit(mkDef({ classKind: "swordsman", weapon: "sword" }), { x: 0, y: 0 });
+    const def = createUnit(mkDef({ classKind: "shinobi", weapon: "sword" }), { x: 1, y: 0 });
+    expect(attackerClassBonus(atk, def)).toBeCloseTo(1.15);
+  });
+  it("non-shinobi vs bow: no class bonus (weapon triangle is the only modifier)", () => {
+    const atk = createUnit(mkDef({ classKind: "swordsman", weapon: "sword" }), { x: 0, y: 0 });
+    const def = createUnit(mkDef({ classKind: "archer", weapon: "bow" }), { x: 1, y: 0 });
+    expect(attackerClassBonus(atk, def)).toBe(1.0);
+  });
+  it("shinobi attacking spear-wielder: no class bonus (weapon triangle still applies separately)", () => {
+    const atk = createUnit(mkDef({ classKind: "shinobi", weapon: "sword" }), { x: 0, y: 0 });
+    const def = createUnit(mkDef({ classKind: "spearton", weapon: "spear" }), { x: 1, y: 0 });
+    expect(attackerClassBonus(atk, def)).toBe(1.0);
+  });
+  it("shinobi attacking shinobi: no class bonus in either direction", () => {
+    const atk = createUnit(mkDef({ classKind: "shinobi", weapon: "sword" }), { x: 0, y: 0 });
+    const def = createUnit(mkDef({ classKind: "shinobi", weapon: "sword" }), { x: 1, y: 0 });
+    // attacker.weapon === sword AND defender.classKind === shinobi → 1.15
+    // This branch DOES trigger, so shinobi vs shinobi = sword-vs-shinobi bonus.
+    expect(attackerClassBonus(atk, def)).toBeCloseTo(1.15);
+  });
+  it("previewAttack multiplies the class bonus into final damage", () => {
+    const { atk, def } = shinobiVsBow();
+    // Set high power, no armor, no terrain, so the multiplier is visible.
+    atk.stats.power = 20;
+    def.stats.armor = 0;
+    const baseline = previewAttack(
+      createUnit(mkDef({ classKind: "swordsman", weapon: "sword", stats: { hp: 30, power: 20, armor: 0, speed: 8, movement: 5, ap: 3 } }), { x: 0, y: 0 }),
+      def,
+      NEUTRAL_TILE
+    );
+    const shinobiHit = previewAttack(atk, def, NEUTRAL_TILE);
+    // Same attacker stats, but shinobi gets +15% class bonus.
+    expect(shinobiHit.damage).toBeGreaterThan(baseline.damage);
   });
 });
 

@@ -474,15 +474,20 @@ export class BattleScene extends Phaser.Scene {
 
     this.overlayG = this.add.graphics();
     this.threatG = this.add.graphics();
-    this.activeRing = this.add.graphics();
-    this.cursorG = this.add.graphics();
+    // Cursor + active-marker depths sit ABOVE unit sprites (default 0)
+    // and ABOVE the fog-of-war darkness (depth 25), so the tactical
+    // overlays the player needs to read at a glance are never
+    // occluded by whoever happens to be standing on the same tile.
+    // Below tooltips (40+) so info popups still composite on top.
+    this.activeRing = this.add.graphics().setDepth(29);
+    this.cursorG = this.add.graphics().setDepth(28);
     this.activeArrow = this.add.text(0, 0, "\u25BC", {
       fontFamily: "Arial, sans-serif",
       fontSize: "20px",
       color: "#ffd45a",
       stroke: "#000",
       strokeThickness: 3
-    }).setOrigin(0.5, 1).setVisible(false);
+    }).setOrigin(0.5, 1).setVisible(false).setDepth(30);
 
     // Units
     for (const u of units) {
