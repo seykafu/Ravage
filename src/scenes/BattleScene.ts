@@ -180,6 +180,19 @@ export class BattleScene extends Phaser.Scene {
   private threatG!: Phaser.GameObjects.Graphics;
   private cursorG!: Phaser.GameObjects.Graphics;
   private actionButtons: Button[] = [];
+  // Two-camera split for the cinematic shader pass: the main camera
+  // renders the world (tiles, units, overlays, floaters) with bloom +
+  // vignette + color grading; the UI camera renders pinned overlays
+  // (side panel, action buttons, init bar, settings/FF buttons, item
+  // picker) WITHOUT any post-FX so the UI stays readable behind a
+  // dark cinematic vignette. Populated in create(); pin() routes UI
+  // through both cameras' ignore lists so the world and UI never
+  // double-render or bleed into each other.
+  private uiCamera!: Phaser.Cameras.Scene2D.Camera;
+  // All pinned UI objects, tracked so the main (world) camera can
+  // ignore them in one sweep after create() and so any pin() call
+  // post-create can update the ignore lists incrementally.
+  private uiObjects: Phaser.GameObjects.GameObject[] = [];
   private activeUnitText!: Phaser.GameObjects.Text;
   private activeRibbon!: Phaser.GameObjects.Graphics;
   private activeRibbonText!: Phaser.GameObjects.Text;
@@ -686,12 +699,50 @@ export class BattleScene extends Phaser.Scene {
     getMusic(this).play(node.music, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
-    // Cinematic post-FX — bloom + warm color grading + light vignette
-    // applied to the world camera. Side panel + action buttons are pinned
-    // (scrollFactor 0) and inherit the same camera, so they get the
-    // treatment too — that's intentional, the goal is a unified mood
-    // pass over the whole battle frame. See src/art/CinematicFX.ts.
+    // ---- Two-camera split for the cinematic shader pass ----
+    //
+    // Main camera = world (tiles, units, overlays, damage floaters).
+    // Gets the cinematic post-FX: bloom + warm color grading + vignette.
+    //
+    // UI camera = pinned overlays (side panel, action buttons, init bar,
+    // settings/FF buttons, item picker, tooltips). NO post-FX so the
+    // vignette doesn't darken the side bar and the bloom doesn't blur
+    // text edges. Added on top of the main camera so UI renders above
+    // the FX'd world.
+    //
+    // Each camera ignores the other's objects so nothing double-renders.
+    // pin() handles the UI side incrementally; the sweep at the end of
+    // create() catches the initial world objects.
     applyCinematicFX(this, { vignette: 0.4 });
+    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    // Bulk-ignore all currently-pinned UI on the world camera.
+    if (this.uiObjects.length > 0) {
+      this.cameras.main.ignore(this.uiObjects);
+      // And recurse through any Container children — the same gotcha
+      // pinDeep handles for scrollFactor applies to camera.ignore.
+      for (const o of this.uiObjects) this.ignoreDeepOnWorldCamera(o);
+    }
+    // UI camera ignores everything in the scene that ISN'T UI. Snapshot
+    // the current child list, filter, ignore. Dynamic world objects
+    // spawned later (damage floaters, dust particles, level-up text)
+    // also need to be added to this ignore list — handled at each
+    // spawn site below if visible double-rendering becomes an issue.
+    // For now most short-lived world objects render briefly on both
+    // cameras; the FX'd version is on the bottom layer so the
+    // un-FX'd top-layer version is what shows. That's acceptable for
+    // 200ms damage numbers; revisit if it looks bad in playtest.
+    const allChildren = this.children.getChildren();
+    const uiSet = new Set<Phaser.GameObjects.GameObject>(this.uiObjects);
+    // Expand uiSet with descendants of pinned Containers.
+    const expandUiSet = (o: Phaser.GameObjects.GameObject): void => {
+      uiSet.add(o);
+      if (o instanceof Phaser.GameObjects.Container) {
+        for (const c of o.list) expandUiSet(c);
+      }
+    };
+    for (const o of this.uiObjects) expandUiSet(o);
+    const worldObjects = allChildren.filter((o) => !uiSet.has(o));
+    if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
     new SettingsButton(this, GAME_WIDTH - 32, 35);
@@ -1106,7 +1157,32 @@ export class BattleScene extends Phaser.Scene {
   // and-suspenders for callers that don't go through pin().
   private pin<T extends Phaser.GameObjects.GameObject>(obj: T): T {
     this.pinDeep(obj as unknown as Phaser.GameObjects.GameObject);
+    // Register the object as UI. The end-of-create() sweep applies
+    // these ignore lists in bulk; pin() calls AFTER create (action
+    // buttons during a turn, the item picker, info tooltips) hit the
+    // incremental branch below so they land on the UI camera only.
+    this.uiObjects.push(obj);
+    if (this.uiCamera) {
+      // Main camera (with cinematic FX) ignores UI so the side panel
+      // and buttons aren't darkened by the vignette / re-tinted by
+      // the color matrix.
+      this.cameras.main.ignore(obj);
+      // The descendants of a pinned Container need to be ignored too,
+      // because Phaser's Camera.ignore() on a Container does NOT
+      // recurse into its children for the render queue check.
+      this.ignoreDeepOnWorldCamera(obj);
+    }
     return obj;
+  }
+
+  // Walk a Container tree and tell the main (world) camera to ignore
+  // each child explicitly. Same gotcha as pinDeep — Phaser doesn't
+  // auto-propagate camera.ignore() through Container children.
+  private ignoreDeepOnWorldCamera(obj: Phaser.GameObjects.GameObject): void {
+    this.cameras.main.ignore(obj);
+    if (obj instanceof Phaser.GameObjects.Container) {
+      for (const child of obj.list) this.ignoreDeepOnWorldCamera(child);
+    }
   }
 
   private pinDeep(obj: Phaser.GameObjects.GameObject): void {
