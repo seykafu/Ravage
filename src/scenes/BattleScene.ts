@@ -193,6 +193,11 @@ export class BattleScene extends Phaser.Scene {
   // ignore them in one sweep after create() and so any pin() call
   // post-create can update the ignore lists incrementally.
   private uiObjects: Phaser.GameObjects.GameObject[] = [];
+  // Fog-of-war spotlight overlay — a full-map dark RenderTexture
+  // with soft circular holes punched at each living player unit's
+  // position. Refreshed in update() so the lit area follows the
+  // squad as they move. Only rendered on the main (world) camera.
+  private darknessRT?: Phaser.GameObjects.RenderTexture;
   private activeUnitText!: Phaser.GameObjects.Text;
   private activeRibbon!: Phaser.GameObjects.Graphics;
   private activeRibbonText!: Phaser.GameObjects.Text;
@@ -699,51 +704,6 @@ export class BattleScene extends Phaser.Scene {
     getMusic(this).play(node.music, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
-    // ---- Two-camera split for the cinematic shader pass ----
-    //
-    // Main camera = world (tiles, units, overlays, damage floaters).
-    // Gets the cinematic post-FX: bloom + warm color grading + vignette.
-    //
-    // UI camera = pinned overlays (side panel, action buttons, init bar,
-    // settings/FF buttons, item picker, tooltips). NO post-FX so the
-    // vignette doesn't darken the side bar and the bloom doesn't blur
-    // text edges. Added on top of the main camera so UI renders above
-    // the FX'd world.
-    //
-    // Each camera ignores the other's objects so nothing double-renders.
-    // pin() handles the UI side incrementally; the sweep at the end of
-    // create() catches the initial world objects.
-    applyCinematicFX(this, { vignette: 0.4 });
-    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    // Bulk-ignore all currently-pinned UI on the world camera.
-    if (this.uiObjects.length > 0) {
-      this.cameras.main.ignore(this.uiObjects);
-      // And recurse through any Container children — the same gotcha
-      // pinDeep handles for scrollFactor applies to camera.ignore.
-      for (const o of this.uiObjects) this.ignoreDeepOnWorldCamera(o);
-    }
-    // UI camera ignores everything in the scene that ISN'T UI. Snapshot
-    // the current child list, filter, ignore. Dynamic world objects
-    // spawned later (damage floaters, dust particles, level-up text)
-    // also need to be added to this ignore list — handled at each
-    // spawn site below if visible double-rendering becomes an issue.
-    // For now most short-lived world objects render briefly on both
-    // cameras; the FX'd version is on the bottom layer so the
-    // un-FX'd top-layer version is what shows. That's acceptable for
-    // 200ms damage numbers; revisit if it looks bad in playtest.
-    const allChildren = this.children.getChildren();
-    const uiSet = new Set<Phaser.GameObjects.GameObject>(this.uiObjects);
-    // Expand uiSet with descendants of pinned Containers.
-    const expandUiSet = (o: Phaser.GameObjects.GameObject): void => {
-      uiSet.add(o);
-      if (o instanceof Phaser.GameObjects.Container) {
-        for (const c of o.list) expandUiSet(c);
-      }
-    };
-    for (const o of this.uiObjects) expandUiSet(o);
-    const worldObjects = allChildren.filter((o) => !uiSet.has(o));
-    if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
-
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
     new SettingsButton(this, GAME_WIDTH - 32, 35);
     // 2× enemy-turn toggle — sits to the left of the gear. The button stores
@@ -772,6 +732,51 @@ export class BattleScene extends Phaser.Scene {
     // this the bulk pin above would lock it to a screen position and it
     // would slide off the enemy when the camera pans.
     this.hoverPreview.setScrollFactor(1);
+
+    // ---- Two-camera split + fog-of-war spotlight ----
+    //
+    // MUST run AFTER the bulk pin loop above, because that's what
+    // populates this.uiObjects with the full set of pinned UI elements.
+    // Running it earlier (an earlier revision did) meant uiObjects was
+    // empty at sweep time → main camera rendered + darkened the UI →
+    // then the late pins added the UI to BOTH cameras' ignore lists →
+    // most of the side panel became invisible. The fix is purely
+    // ordering: pin first, THEN configure cameras.
+    //
+    // Main camera = world (tiles, units, overlays, damage floaters).
+    //   Gets the cinematic post-FX (bloom + warm color grading).
+    //   Vignette intentionally OFF — we use a real fog-of-war
+    //   spotlight overlay below instead of a fake screen-space dim.
+    //
+    // UI camera = pinned overlays (side panel, action buttons, init
+    //   bar, settings/FF buttons, item picker, tooltips). NO post-FX
+    //   so the side bar text + portraits stay sharp + readable.
+    //   Added on top of the main camera so UI composites above the
+    //   FX'd world AND above the darkness layer.
+    applyCinematicFX(this);
+    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    // Bulk-ignore all pinned UI on the world camera (post-FX cam).
+    this.cameras.main.ignore(this.uiObjects);
+    for (const o of this.uiObjects) this.ignoreDeepOnWorldCamera(o);
+    // UI camera ignores everything in the scene that ISN'T UI.
+    const allChildren = this.children.getChildren();
+    const uiSet = new Set<Phaser.GameObjects.GameObject>(this.uiObjects);
+    const expandUiSet = (o: Phaser.GameObjects.GameObject): void => {
+      uiSet.add(o);
+      if (o instanceof Phaser.GameObjects.Container) {
+        for (const c of o.list) expandUiSet(c);
+      }
+    };
+    for (const o of this.uiObjects) expandUiSet(o);
+    const worldObjects = allChildren.filter((o) => !uiSet.has(o));
+    if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
+
+    // Fog-of-war spotlight overlay — full-map dark layer with soft
+    // circular holes punched at each living player unit's position.
+    // Refreshed every frame in update() so the lit area follows the
+    // squad. Only rendered on the main (world) camera; UI camera
+    // ignores it so the side bar stays readable.
+    this.setupSpotlightOverlay(boundsW, boundsH);
 
     this.beginCurrentTurn();
   }
@@ -851,6 +856,86 @@ export class BattleScene extends Phaser.Scene {
     const view = this.unitViews.get(unit.id);
     if (!view) return;
     announceRavaged(this, view.sprite, unit, (msg) => this.pushLog(msg));
+  }
+
+  // ---- Fog-of-war spotlight ----
+  //
+  // A semi-opaque dark RenderTexture covering the whole map. Each
+  // frame we clear + refill it dark, then `erase()` a soft circular
+  // brush at each living player unit's position to punch holes of
+  // visibility. The result reads as "only the squad and what's near
+  // them is lit." The lit area moves naturally with the squad — no
+  // tweens needed, the per-frame refresh tracks them.
+  //
+  // Depth chosen between unit sprites (default 0) and floaters /
+  // tooltips (40+) so damage numbers + the active marker still pop
+  // ABOVE the darkness, but the world below is shaded.
+  //
+  // Performance: one RT fill + N erase calls per frame, where N is
+  // alive player units (max ~5-6 in the slice). Phaser batches these
+  // GPU-side; negligible cost on any machine that can run the game.
+  private static readonly SPOTLIGHT_BRUSH_KEY = "fog_light_brush";
+  private static readonly SPOTLIGHT_BRUSH_SIZE = 256;     // px square
+  private static readonly SPOTLIGHT_BRUSH_INNER = 40;     // full-bright radius
+  private static readonly SPOTLIGHT_BRUSH_OUTER = 120;    // fully-dark radius
+  private static readonly SPOTLIGHT_DARK_ALPHA = 0.82;    // overlay opacity
+
+  private ensureLightBrushTexture(): void {
+    const key = BattleScene.SPOTLIGHT_BRUSH_KEY;
+    if (this.textures.exists(key)) return;
+    const size = BattleScene.SPOTLIGHT_BRUSH_SIZE;
+    const tex = this.textures.createCanvas(key, size, size);
+    if (!tex) return;
+    const ctx = tex.getContext();
+    const cx = size / 2;
+    const cy = size / 2;
+    const inner = BattleScene.SPOTLIGHT_BRUSH_INNER;
+    const outer = BattleScene.SPOTLIGHT_BRUSH_OUTER;
+    const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+    // White → transparent. When erased onto the dark RT, the alpha
+    // of THIS brush controls how much darkness is removed.
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    tex.refresh();
+  }
+
+  private setupSpotlightOverlay(width: number, height: number): void {
+    this.ensureLightBrushTexture();
+    const rt = this.add.renderTexture(0, 0, width, height)
+      .setOrigin(0, 0)
+      .setDepth(25); // above tiles + units, below floaters + tooltips
+    // World-space (not screen-pinned) so it scrolls with the camera.
+    rt.setScrollFactor(1);
+    this.darknessRT = rt;
+    // UI camera ignores the darkness so the side bar stays bright.
+    if (this.uiCamera) this.uiCamera.ignore(rt);
+    // Initial paint so the spotlight is visible immediately on entry,
+    // before update() runs its first frame.
+    this.refreshSpotlight();
+  }
+
+  private refreshSpotlight(): void {
+    if (!this.darknessRT) return;
+    this.darknessRT.clear();
+    this.darknessRT.fill(0x000511, BattleScene.SPOTLIGHT_DARK_ALPHA);
+    const key = BattleScene.SPOTLIGHT_BRUSH_KEY;
+    const offset = BattleScene.SPOTLIGHT_BRUSH_SIZE / 2;
+    for (const u of this.state.units) {
+      if (u.faction !== "player") continue;
+      if (!isAlive(u)) continue;
+      const px = tileToPixel(u.state.position, this.originX, this.originY);
+      this.darknessRT.erase(key, px.x - offset, px.y - offset);
+    }
+  }
+
+  // Per-frame: keep the fog-of-war overlay in sync with squad positions.
+  // Phaser drives update() every frame; the spotlight is the only
+  // continuous render-loop work this scene does.
+  update(): void {
+    if (this.darknessRT) this.refreshSpotlight();
   }
 
   private refreshAllUnits(): void {
