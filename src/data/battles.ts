@@ -353,6 +353,10 @@ export const BATTLES: BattleNode[] = [
     // earns the upgrade. No equipment because the bandits travelled
     // light on the road.
     rewards: ["elixir", "elixir"],
+    // Swamp ambush at the four corners — atmospheric marsh fight that
+    // benefits from the fog-of-war framing (squad can't see the
+    // tree-line enemies until they close).
+    darkBattle: true,
     // First battle to use the anyOf combinator. Lore framing: it's an
     // ambush on the road home — the squad doesn't have to wipe the
     // bandits, just survive long enough for the pickets at the keep to
