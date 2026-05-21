@@ -1312,30 +1312,55 @@ export class BattleScene extends Phaser.Scene {
     startPointerX: 0,
     startPointerY: 0
   };
+  // Pixels the pointer must travel from the press origin before a hold
+  // becomes a camera pan. Below this, the press is treated as a click
+  // and the camera doesn't move — so a normal tile/unit click still
+  // works exactly as before.
+  private static readonly CAMERA_DRAG_THRESHOLD = 6;
+
+  // Camera panning. Originally right-click-drag only, which was
+  // undiscoverable — players instinctively try LEFT-click drag, get
+  // nothing, and conclude the map is stuck (on a tall map like B1 that
+  // strands units below the fold). Now any mouse button can pan:
+  //   * Right / middle button — pans in ANY state. Never triggers a
+  //     game action, so it's always safe.
+  //   * Left button — pans only while the FSM is idle. During move /
+  //     attack / roam targeting a left-drag would otherwise misfire
+  //     the action, so left-pan is gated off in those states (right /
+  //     middle drag still works there).
+  // The DRAG_THRESHOLD means a stationary click never pans — click vs.
+  // drag stays cleanly separated.
   private setupCameraDragPan(): void {
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
-      // rightButtonDown is true for both press and hold; we want to
-      // initiate a drag only on the down transition.
-      if (!p.rightButtonDown()) return;
-      this.cameraDragState.active = true;
+      // Record the press origin for every button. Whether this becomes
+      // a pan is decided in pointermove once the pointer has actually
+      // moved past the threshold.
+      this.cameraDragState.active = false;
       this.cameraDragState.startScrollX = this.cameras.main.scrollX;
       this.cameraDragState.startScrollY = this.cameras.main.scrollY;
       this.cameraDragState.startPointerX = p.x;
       this.cameraDragState.startPointerY = p.y;
     });
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-      if (!this.cameraDragState.active) return;
       const dx = p.x - this.cameraDragState.startPointerX;
       const dy = p.y - this.cameraDragState.startPointerY;
+      if (!this.cameraDragState.active) {
+        const movedEnough =
+          Math.abs(dx) > BattleScene.CAMERA_DRAG_THRESHOLD ||
+          Math.abs(dy) > BattleScene.CAMERA_DRAG_THRESHOLD;
+        if (!movedEnough) return;
+        const rightOrMiddle = p.rightButtonDown() || p.middleButtonDown();
+        const leftIdle = p.leftButtonDown() && this.fsm.current().tag === "idle";
+        if (!rightOrMiddle && !leftIdle) return;
+        this.cameraDragState.active = true;
+      }
       this.cameras.main.setScroll(
         this.cameraDragState.startScrollX - dx,
         this.cameraDragState.startScrollY - dy
       );
     });
-    this.input.on("pointerup", (p: Phaser.Input.Pointer) => {
-      // pointerup fires once per release; using rightButtonReleased to
-      // avoid clearing drag on a left-click release.
-      if (p.rightButtonReleased()) this.cameraDragState.active = false;
+    this.input.on("pointerup", () => {
+      this.cameraDragState.active = false;
     });
   }
 
