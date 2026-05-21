@@ -230,7 +230,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
             body: "Right. Archer at the back fence first — Ning, that's yours, take her clean. Spearton in the road comes to me. Amar, hold the line at the wagons. Anyone breaks past us, the wagons get burned and the workers behind them die. Don't let anyone past." },
           { speaker: "Ning", portraitId: "ning", expression: "startled",
-            body: "Lucian — I haven't drawn on a person before. The fences and the haybales, fine, but a person is —" },
+            body: "Lucian — I haven't drawn on a person before. The fences and the haybales, fine, but a person — fuck — a person is —" },
           { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
             body: "Then today's the day, Ning. Same draw. Same release. The arrow doesn't know what it's hitting. You do. Make it count." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
@@ -247,7 +247,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "ally_attacks", allyId: "amar" },
         beats: [
           { portraitId: "narrator",
-            body: "Amar swings — once, clean, with a half-step before the strike that doesn't belong to a forge worker. Lucian sees it. Lucian does not look surprised. Lucian does not look anything." },
+            body: "Amar swings — once, clean, with a small step beforehand that no forge worker would know to take. Lucian sees it. He doesn't look surprised. He doesn't let his face show anything at all." },
           { speaker: "Lucian", portraitId: "lucian",
             body: "...Hm." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
@@ -464,7 +464,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "ndari" },
         beats: [
           { speaker: "Ndari", portraitId: "ndari", expression: "grim_resolve",
-            body: "You think this is YOUR line, soldier? Look up the path. Up. There — the dactyl on the rim. That's my sister. She has thirty seconds to clear the ridge before her wing's in range. You don't get past me until she's clear. I don't care how many of you there are." },
+            body: "You think this is YOUR line, soldier? Look up the path. Up. There — the dactyl on the rim. That's my sister. She has thirty seconds to clear the ridge before her wing's in bowshot. You don't get past me until she's clear. I don't give a damn how many of you bastards there are." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
             body: "...General Fergus called you marauders, Ndari. He didn't say anything about a sister." },
           { speaker: "Ndari", portraitId: "ndari", expression: "knowing_smile",
@@ -484,7 +484,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Ndara", portraitId: "ndari", expression: "grim_resolve",
             body: "(shouted, over the wing-beats) WHY ARE YOU FIGHTING ON NEBU'S SIDE, AMAR! ASK YOUR CAPTAIN WHO HE WORKS FOR! ASK HIM WHO ORDERED THE FOURTH HARVEST!" },
           { portraitId: "narrator",
-            body: "She doesn't wait for an answer. The dactyl wheels and is gone behind the ridge in three wing-beats. The squad stands in the cold. Lucian, beside Amar, doesn't say anything. Lucian sees Amar's face do the thing it does. Lucian files it away." }
+            body: "She doesn't wait for an answer. The dactyl wheels and is gone behind the ridge in three wing-beats. The squad stands in the cold. Lucian, beside Amar, says nothing. He sees Amar's face change — and makes a note of it for later." }
         ]
       }
     ]
@@ -826,13 +826,13 @@ export const BATTLES: BattleNode[] = [
           { portraitId: "narrator",
             body: "Three crossbow bolts hit the rocks behind Lucian inside the first thirty seconds. They're not from one direction. They're from three. The 'bandit column' Fergus described is on the rim, in the trees, behind the river. Royal kit, royal discipline, royal everything. The 'commoners' clothes' are draped over the chainmail." },
           { speaker: "Maya", portraitId: "maya", expression: "alarmed",
-            body: "These aren't bandits. Lucian — TOP RIM, three archers, entrenched. Crown gear under the cloaks. This is a regiment. We were sent into a regiment." },
+            body: "These aren't bandits. Lucian — TOP RIM, three archers, dug in. Crown gear under the cloaks. This is a regiment. Fergus marched us straight into a goddamn regiment." },
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
             body: "Fergus." },
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
-            body: "...He set us up. He sent us here to die." },
+            body: "...That son of a bitch set us up. He sent us here to die." },
           { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
-            body: "Then we don't. South, through the ford. Hold five rounds, then break contact." }
+            body: "Then we don't die. South, through the river crossing. Hold five rounds, then we run." }
         ]
       },
       // Round 3: Maya's preview. The full reveal lands in post_ravine,
@@ -1079,7 +1079,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The combined strike comes from three directions at once. Maya from the upper landing, Ning's arrow from the cliff edge, Amar from the front. Kian doesn't try to parry the third. He looks at Amar across the steel and his face does the thing it used to do in the practice yard when Amar finally got a form right." },
+            body: "The combined strike comes from three directions at once. Maya from the upper landing, Ning's arrow from the cliff edge, Amar from the front. Kian doesn't try to parry the third. He looks at Amar across the steel, and his face shifts into the look it used to wear in the practice yard — the one that meant Amar had finally gotten a form right." },
           { speaker: "Kian", portraitId: "kian", expression: "fatherly_smile",
             body: "(softly) Good half-step, your highness." },
           { portraitId: "narrator",
