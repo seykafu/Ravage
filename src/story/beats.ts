@@ -129,17 +129,17 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "factory",
     next: "prep:b02_farmland",
     beats: [
-      N("Amar arrives at Thuling on the back of a supply wagon at dawn. Kian rides at the wagon's head; he stops at the gate, watches Amar climb down, and circles his horse back toward Para without dismounting."),
+      N("Amar reaches Thuling at dawn, riding in the back of a supply wagon. Kian rides up front. At the town gate he stops, watches Amar climb down, and turns his horse back toward Para without getting off it."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "I'll be back at sundown to check on you. Your foreman at the forge is named Lucian. Tell him the King sent you — he hates that, which means you'll know him as soon as he scowls." },
-      N("At the forge: a broad-shouldered man in his thirties hammering a horseshoe flat with the kind of casual force that ends arguments before they start. A lean younger woman over at the rivet press, bagging quarrels and humming something under her breath."),
+      N("Inside the forge, a broad-shouldered man in his thirties is hammering a horseshoe flat. He swings with an easy, heavy force — the kind that ends an argument before it can start. A lean younger woman works the rivet press nearby, bagging crossbow bolts and humming to herself."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "You'll be Amar, then. Word came up the road last night. I'm Lucian — I run the line. The girl on the rivet press is Ning, the bowyer's apprentice. She'll mostly ignore you for the first day, then never stop talking once she decides you're not a problem." },
       { speaker: "Amar", portraitId: "amar", body: "Amar. Kian said the King thought I'd be of use here. I don't —" },
-      N("He almost says \"I don't remember much yet.\" He catches himself. Lucian watches him catch it without acknowledging that he saw."),
+      N("He almost says \"I don't remember much yet.\" He stops himself just in time. Lucian notices the catch — and says nothing about it."),
       { speaker: "Amar", portraitId: "amar", body: "I don't know much yet." },
       { speaker: "Lucian", portraitId: "lucian", body: "You don't have to. Pick up the hammer. We'll find out together what you do know." },
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin", body: "Don't drop it on your foot. Mira did that her first day. Lucian's wife. She still walks crooked." },
-      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Ning. ENOUGH about my wife's foot." },
-      N("Within a single day Amar is working both farmland and forge. His hands know things his mouth does not."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Ning. ENOUGH about my wife's damn foot." },
+      N("By the end of the first day, Amar is working both the farmland and the forge. His hands remember things he can't explain."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
       { speaker: "Lucian", portraitId: "lucian", body: "...You already knew that." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Lucky guess." },
@@ -152,7 +152,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Amar", portraitId: "amar", body: "Of children." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Of children who learn how to swing hammers, apparently." },
       N("Kian shadows you between shifts. He smiles. He always smiles."),
-      N("On the morning of the third day, bandits come for the wagons in the eastern field.")
+      N("On the morning of the third day, bandits attack the wagons in the eastern field.")
     ]
   },
   // -------- Post-Battle 2 --------
