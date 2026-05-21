@@ -257,6 +257,13 @@ export class BattleScene extends Phaser.Scene {
   // crossing instead of on every checkDialogueTriggers tick.
   private firedDialogues = new Set<string>();
   private lastSeenDialogueRound = 0;
+  // Battle-music gate. When a battle opens with a round-1 dialogue
+  // (Kian's blockade speech, the colony reveal, Rose's brief, etc.),
+  // the battle theme is held back so it doesn't swell underneath the
+  // dialogue — it starts only once the dialogue closes and the fight
+  // actually begins. startBattleMusic() is idempotent; this flag
+  // ensures the theme starts exactly once per battle.
+  private battleMusicStarted = false;
 
   constructor() { super("BattleScene"); }
 
@@ -269,6 +276,7 @@ export class BattleScene extends Phaser.Scene {
     this.debug = false;
     this.firedDialogues = new Set();
     this.lastSeenDialogueRound = 0;
+    this.battleMusicStarted = false;
   }
 
   create(): void {
@@ -447,6 +455,12 @@ export class BattleScene extends Phaser.Scene {
       // unit detail stay in sync with whatever the dialogue may have
       // changed (XP awards from before_victory beats, etc.).
       if (this.panelUnit) this.refreshSidePanel(this.panelUnit);
+      // Start the battle theme if it was deferred for an opening
+      // dialogue. Idempotent — on every resume after the first it's
+      // a no-op. The first resume in a dialogue-opening battle is the
+      // opening dialogue closing, which is exactly when the fight
+      // begins and the theme should swell in.
+      this.startBattleMusic();
     });
 
     // Tiles
@@ -706,7 +720,18 @@ export class BattleScene extends Phaser.Scene {
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.handlePointerDown(p));
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => this.handlePointerMove(p));
 
-    getMusic(this).play(node.music, { fadeMs: 800 });
+    // Battle music — deferred when the battle opens on a dialogue.
+    // If a round-1 dialogue is going to fire the moment the first turn
+    // begins (Kian's blockade, the colony reveal, Rose's brief, etc.),
+    // hold the battle theme so it doesn't start under the dialogue.
+    // The prep-scene cue carries over and plays through the dialogue;
+    // startBattleMusic() then swells the battle theme on the first
+    // RESUME (when the dialogue closes and the fight actually starts).
+    // Battles with no round-1 dialogue start the theme immediately.
+    const opensOnDialogue = (node.dialogues ?? []).some(
+      (d) => d.trigger.kind === "round_start" && d.trigger.round <= 1
+    );
+    if (!opensOnDialogue) this.startBattleMusic();
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
@@ -1298,6 +1323,18 @@ export class BattleScene extends Phaser.Scene {
     if (obj instanceof Phaser.GameObjects.Container) {
       for (const child of obj.list) this.pinDeep(child);
     }
+  }
+
+  // Start the battle theme. Idempotent — guarded by battleMusicStarted
+  // so it runs exactly once per battle no matter how many times it's
+  // called. Called either from create() (battles with no opening
+  // dialogue) or from the first RESUME (battles that opened on a
+  // round-1 dialogue — the theme swells when the dialogue closes).
+  private startBattleMusic(): void {
+    if (this.battleMusicStarted) return;
+    this.battleMusicStarted = true;
+    const node = battleById(this.battleId);
+    if (node) getMusic(this).play(node.music, { fadeMs: 800 });
   }
 
   // Right-click drag to pan. The drag origin is captured on pointerdown;
