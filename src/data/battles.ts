@@ -117,7 +117,7 @@ export const BATTLES: BattleNode[] = [
     intro:
       "Year 2640 of the Anthros Monarch. For ten months you have planned this: storm King Nebu's palace at the heart of Para and end his self-serving rule before the harvest fails again. Tonight your seven comrades are scattered through the back corridors. You and the vanguard reached the throne hall first. Steel in hand. No retreat.",
     outro:
-      "The royal guard repels you. You wake without memory in a hospital outside the palace — alive, but a prisoner of your own unfinished work.",
+      "The royal guard beats you back. You wake in a hospital outside the palace with no memory of who you are — alive, but bound to a fight you can't even remember starting.",
     music: MUSIC.enteringStronghold,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_palace_coup",
@@ -262,9 +262,9 @@ export const BATTLES: BattleNode[] = [
     title: "Third Battle",
     subtitle: "Madame Dawn's Bandits",
     intro:
-      "Two days after the wagons. A second wave comes down the eastern road — fewer than the first, better armed, all wearing the same dyed sash on the right shoulder. Word in town calls them \"Dawn's lot,\" after a queen across the sea who lost her land to King Nebu and kept her grudge. Lucian draws the squad up south of the road. Ning checks her draw. A stranger you have not seen before drops in from the orchard at the east flank, watches the line for one breath, and joins it without asking.",
+      "Two days after the wagon attack. A second wave comes down the eastern road — fewer than the first, better armed, every one of them wearing the same dyed sash on the right shoulder. The town calls them \"Dawn's lot,\" after a queen across the sea who lost her land to King Nebu and never let the grudge go. Lucian lines the squad up south of the road. Ning tests her bowstring. A stranger you've never seen drops down from the orchard on the east flank, watches the squad for one breath, and joins the line without asking.",
     outro:
-      "The stranger introduces herself as Maya — quiet, watchful, with a tactician's eye Ning admires before she has finished her sentence. Lucian says nothing, which is how he says everything. She stays.",
+      "The stranger introduces herself as Maya — quiet, watchful, with a sharp tactical mind that Ning takes to before Maya has even finished her first sentence. Lucian says nothing, which from Lucian means approval. She stays.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -324,9 +324,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fourth Battle",
     subtitle: "Ambush in the Swamp",
     intro:
-      "Three minutes into the marsh the morning sun is gone — swallowed by canopy and standing water. The squad is single file: Maya at point, Amar and Lucian centered, Kian on the right flank in armor that will not stop sounding like itself, Ning watching the rear. The package for the smallholding is in Lucian's saddlebag. The bandits are in the trees on all four sides, and Maya draws first.",
+      "Three minutes into the marsh, the morning sun is gone — blocked out by the tree canopy and the standing water. The squad moves single file: Maya at the front, Amar and Lucian in the middle, Kian on the right in armor that won't stop clanking, Ning watching the rear. The delivery for the small farm is in Lucian's saddlebag. The bandits are in the trees on all four sides — and Maya is the first to draw her blade.",
     outro:
-      "Lucian invents a story for Kian about reflexes learned on the farm. Kian nods and says nothing. That night by the fire Lucian invents a different story, this one only for you, and then asks you to tell him the true one.",
+      "Lucian makes up a story for Kian — something about reflexes learned on the farm. Kian nods and says nothing. That night by the fire, Lucian makes up a different story, this one just for you. Then he asks you to tell him the real one.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_swamp",
@@ -412,9 +412,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fifth Battle",
     subtitle: "The Mountain Bandits — Ndara & Ndari",
     intro:
-      "General Fergus has sent your squad against marauders led by a brother and sister: Ndari at the front, Ndara behind him. The village is already ruined. Snow falls on broken roofs. Leo, Fergus's son and a Dactyl Rider, asks to ride with you. Why a father would send his own son into this fight, you cannot guess. Set it aside. Climb.",
+      "General Fergus has sent your squad against marauders led by a brother and sister: Ndari at the front, Ndara behind him. The village is already ruined. Snow falls on broken roofs. Leo — Fergus's son, and a Dactyl Rider — asks to ride with you. Why a father would send his own son into a fight like this, you can't guess. Set the question aside. Climb.",
     outro:
-      "Ndari falls. Ndara escapes on a Dactyl. Her last question — Why are you fighting on Nebu's side? — hangs in the cold air. Lucian sees you flinch. He says nothing tonight, and everything tomorrow.",
+      "Ndari falls. Ndara escapes on a Dactyl. Her last question — Why are you fighting on Nebu's side? — hangs in the cold air. Lucian sees you flinch. He stays quiet tonight. Tomorrow he'll have a great deal to say.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
@@ -495,9 +495,9 @@ export const BATTLES: BattleNode[] = [
     title: "Sixth Battle",
     subtitle: "The Caravan",
     intro:
-      "Two wagons, a routine escort east through the foothill canyons. Grain and steel for a garrison town the squad has never set foot in. Then bowstrings sing from both rim-shelves at once and mounted bandits seal the road behind you, and it stops being a job and starts being a fight that someone planned. The civilian drivers go flat against the wagon wheels. Maya, without being told, takes the south flank as if she has done it a hundred times before. Lucian's eyes tighten. He has seen enough.",
+      "Two wagons, a routine escort east through the foothill canyons. Grain and steel for a garrison town the squad has never set foot in. Then arrows come down from both canyon ledges at once and mounted bandits close off the road behind you — and it stops being a job and becomes a fight that someone planned in advance. The civilian drivers drop flat against the wagon wheels. Maya takes the south flank without being told, as if she has done it a hundred times. Lucian's eyes narrow. He has seen enough to know what this is.",
     outro:
-      "The road is yours. Two wagons of grain and steel intact, four civilian drivers shaken but breathing. Under the body of the bandit captain Amar finds a leather ledger — columns of route times, payment dates, and a margin note in the King's own accounting hand, the codebook only palace officers know. Someone inside Nebu's court paid for this. The squad keeps the ledger.",
+      "The road is yours. Two wagons of grain and steel intact, four civilian drivers shaken but breathing. Under the bandit captain's body, Amar finds a leather ledger — columns of route times and payment dates, and a note in the margin written in a court accounting code that only palace officers know how to read. Someone inside Nebu's court paid for this ambush. The squad keeps the ledger.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_caravan",
@@ -581,9 +581,9 @@ export const BATTLES: BattleNode[] = [
     title: "Seventh Battle",
     subtitle: "The Ghost from Para",
     intro:
-      "Fergus said: raiders, monastery, kidnapped tax collectors, clear it. The squad climbed for two days through the high passes to reach the place. Stone corridors that swallow torchlight. A dry chapel hall. A bell tower with a balcony you can't see the top of. The squad breaches the south gate and starts pushing inward. Then in the inner sanctum, by the altar, the woman leading the raiders looks up — and Amar's whole life since the hospital in Thuling stops mattering for one breath, because her face is on a wanted poster he read a year ago, and her name is Selene, and she was one of the seven.",
+      "Fergus said: raiders, a monastery, kidnapped tax collectors — clear it out. The squad climbed for two days through the high passes to reach the place. Stone corridors so dark they swallow torchlight. A dry chapel hall. A bell tower with a balcony too high to see the top of. The squad breaks through the south gate and starts pushing inward. Then, in the inner sanctum by the altar, the woman leading the raiders looks up — and for one breath, Amar's whole life since the Thuling hospital stops mattering. Her face was on a wanted poster he read a year ago. Her name is Selene. She was one of the seven.",
     outro:
-      "Selene goes off the bell tower balcony rather than be cornered, a rope already coiled across her shoulder, and is gone into the mist before Leo can wheel his Dactyl back around. The raiders break or fall. Lucian fought the whole battle on Amar's blind side, soaking blows meant for the man who was suddenly fighting at half his real strength. He doesn't ask why. Not yet. He waits until the camp fire pops twice.",
+      "Rather than be cornered, Selene goes over the bell tower balcony — a rope already coiled across her shoulder — and is gone into the mist before Leo can turn his Dactyl back around. The raiders scatter or fall. Lucian fought the whole battle on Amar's blind side, taking the hits meant for a man who was suddenly fighting at half his real strength. He doesn't ask why. Not yet. He waits until the campfire pops twice.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_monastery",
@@ -682,9 +682,9 @@ export const BATTLES: BattleNode[] = [
     title: "Eighth Battle",
     subtitle: "The Town of Orinhal",
     intro:
-      "Three days northeast. A mining town that hasn't seen its own gold in a decade. Fergus's orders were clear — disperse the crowd, arrest the ringleaders, restore the King's peace. The squad rides through the gate at noon and finds not a riot but a starving town: a hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. Then a green-cloaked column appears at the far end of the square — Madame Dawn's partisans, sent to hold the line for the townspeople. Three forces in the square. Leo dismounts without speaking and walks his Dactyl to the partisan side. The squad follows.",
+      "Three days northeast. A mining town that hasn't seen its own gold in a decade. Fergus's orders were clear — break up the crowd, arrest the ringleaders, restore the King's peace. The squad rides through the gate at noon and finds no riot at all: just a starving town, a hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. Then a line of green cloaks appears at the far end of the square — Madame Dawn's partisans, sent to hold the line for the townspeople. Three armed forces in one square. Leo dismounts without a word and walks his Dactyl over to the partisan side. The squad follows.",
     outro:
-      "The tax collectors break before the squad does. Dawn's lieutenant — a quiet, gray-cloaked woman who introduces herself only as Ndara, not to be confused with the bandit at the mountain village — tells Amar that Madame Dawn has been watching him for a long time, and that she would like to meet him when he is ready. She leaves before Amar can answer. Lucian walks the line of bodies, gathers the squad's share of the recovered tax silver into a leather sack, and distributes it back to the townspeople on the road out.",
+      "The tax collectors break before the squad does. Dawn's lieutenant — a quiet woman in a gray cloak who gives only the name Ndara (no relation to the bandit from the mountain village) — tells Amar that Madame Dawn has been watching him for a long time, and would like to meet him when he is ready. She leaves before Amar can answer. Lucian walks the line of bodies, gathers the squad's share of the recovered tax silver into a leather sack, and hands it back out to the townspeople on the road out of town.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_orinhal",
@@ -767,9 +767,9 @@ export const BATTLES: BattleNode[] = [
     title: "Ninth Battle",
     subtitle: "The Price of Doubt",
     intro:
-      "Word of Orinhal reaches Thuling faster than the squad can. Fergus dispatches them again before they can even report — a bandit column moving on a border village, intercept and destroy. The coordinates are a trap. The \"bandit column\" is a King's regiment dressed in commoners' clothes, waiting in a narrow ravine with prepared archer positions on the high ground and a river bottleneck cutting off the south retreat. The squad takes fire from three directions inside thirty seconds. Maya's mouth is set in a line none of them have seen before.",
+      "Word of Orinhal reaches Thuling faster than the squad can. Fergus sends them out again before they can even report in — a bandit column moving on a border village, intercept and destroy. The coordinates are a trap. The \"bandit column\" is a King's regiment dressed in commoners' clothes, dug in along a narrow ravine: archers in prepared positions on the high ground, a river choking off any retreat to the south. The squad takes fire from three directions inside thirty seconds. Maya's mouth sets in a hard line none of them have seen before.",
     outro:
-      "Lucian takes a crossbow bolt to the shoulder pulling Ning out of an archer's lane and keeps fighting the rest of the engagement on one good arm. By the time the squad breaks contact and clears the ravine, three things are clear: Fergus knew about the original coup all along; he has been deliberately sending the squad into harder and harder missions; and Maya is no longer pretending. She speaks for the first time as herself, not as a peasant from the eastern farmland — she was planted in the squad by Madame Dawn months ago, and Dawn is ready to bring them in from the cold. Staying in Thuling another night would be suicide.",
+      "Lucian takes a crossbow bolt to the shoulder pulling Ning out of an archer's line of fire, and fights the rest of the battle on one good arm. By the time the squad pulls back and clears the ravine, three things are certain: Fergus knew about the original coup all along; he has been deliberately sending the squad into worse and worse missions; and Maya is done pretending. For the first time she speaks as herself — not as a peasant from the eastern farmland. Madame Dawn planted her in the squad months ago, and Dawn is ready to bring them all to safety. Staying in Thuling one more night would be suicide.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
@@ -867,9 +867,9 @@ export const BATTLES: BattleNode[] = [
     title: "Tenth Battle",
     subtitle: "Leaving Thuling",
     intro:
-      "The streets you walked every day, the shop fronts you knew the names of. Kian is waiting on the cobblestones outside Lucian's house with twelve guardsmen and a wax-sealed warrant from the King's hand. Lucian's wife and daughter are inside the house. Kian's voice carries the way it used to in the practice yard, when he was correcting your footwork. He says he's known about Amar since the second week. He says he hoped he was wrong. He says the warrant is for Amar alone — the squad can walk away if Amar surrenders. Lucian is already drawing his spear.",
+      "The streets you walked every day. The shop fronts whose owners you knew by name. Kian is waiting on the cobblestones outside Lucian's house with twelve guardsmen and a warrant signed and sealed by the King himself. Lucian's wife and daughter are inside the house. Kian's voice carries the way it used to in the practice yard, back when he was correcting your footwork. He says he has known about Amar since the second week. He says he hoped he was wrong. He says the warrant is for Amar alone — the squad can walk away if Amar surrenders. Lucian is already drawing his spear.",
     outro:
-      "The blockade breaks at the third barricade. Mira and Tali make the cousin's farm before the squad makes the western road. Kian doesn't pursue. His voice carries down the street one last time as the squad clears the gate: \"The cliffs, Amar. I'll meet you on the cliffs and we'll finish what your father started, you and me, before Madame Dawn turns you into a weapon she can use.\"",
+      "The blockade breaks at the third barricade. Mira and Tali reach the cousin's farm before the squad reaches the western road. Kian doesn't give chase. His voice carries down the street one last time as the squad clears the gate: \"The cliffs, Amar. I'll meet you on the cliffs and we'll finish what your father started, you and me, before Madame Dawn turns you into a weapon she can use.\"",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -984,9 +984,9 @@ export const BATTLES: BattleNode[] = [
     title: "Eleventh Battle",
     subtitle: "The Truth About Anthros",
     intro:
-      "Sundown over Para Harbor. The cliff road ends in a stone plateau that drops two hundred feet straight down to Madame Dawn's ship — a long slate-cut staircase the only way down. Kian is waiting on the lower landing with the King's elite: two royal guards on his flanks, four more positioned up the staircase to seal the descent. He looks tired in a way you've never seen him look. He waves a hand and the guards lower their weapons. He has something to say first. Lucian, on the cliff edge behind you, draws his spear anyway.",
+      "Sundown over Para Harbor. The cliff road ends at a stone plateau that drops two hundred feet straight down to Madame Dawn's ship — and a long staircase cut into the slate is the only way down. Kian waits on the lower landing with the King's elite: two royal guards at his flanks, four more set up along the staircase to block the way down. He looks tired in a way you've never seen from him. He waves a hand and the guards lower their weapons — he has something to say first. Lucian, on the cliff edge behind you, draws his spear anyway.",
     outro:
-      "Kian falls to a combined strike on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The cost was severe. The full weight of it lands in the cabin, after the boat is moving.",
+      "Kian falls to a combined strike on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The cost was severe — but the full weight of it doesn't land until later, in the cabin, after the boat is already moving.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_cliffs",
@@ -1094,7 +1094,7 @@ export const BATTLES: BattleNode[] = [
     title: "Twelfth Battle",
     subtitle: "The Ravage",
     intro:
-      "Fourteen months at sea ends at first light. Khione brings the ship in to the east port of Grude under the empire's own customs flag — Madame Dawn's papers are good enough to dock anywhere on the coast — and the squad steps off the gangway onto cobblestone they have never seen before. The buildings are taller than anything in Para. The signage is in three languages. The harbor smells of pitch and lemon and cold smoke. They have ten breaths to take it in before alarm bells ring at the customs platform: someone in a captain's cloak has recognized them. Archbold knew exactly when to send the welcome.",
+      "Fourteen months at sea end at first light. Khione brings the ship into the east port of Grude flying the empire's own customs flag — Madame Dawn's papers are good enough to dock anywhere on the coast — and the squad steps off the gangway onto cobblestones they have never seen before. The buildings are taller than anything in Para. The signs are written in three languages. The harbor smells of tar and lemon and cold smoke. They get a few seconds to take it in before alarm bells start ringing at the customs platform: someone in a captain's cloak has recognized them. Archbold knew exactly when to send his welcome.",
     outro:
       "You are not the heroes of the world. You are the survivors of a colony. Madame Dawn meets you at the inner gate and tells you both at once: yes, the bells were for you; yes, Captain Volos answers to King Archbold of Grude; yes, your father's coup eleven years ago was against an empire, not a kingdom; and yes, she has a great deal more to say. Come inside before the second wave arrives.",
     music: MUSIC.grudeBattle1,
