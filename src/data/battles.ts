@@ -1590,7 +1590,7 @@ export const BATTLES: BattleNode[] = [
     index: 21,
     title: "Twenty-First Battle",
     subtitle: "Archbold Advances",
-    intro: "The King has marshalled the inner provinces and ridden west. The country between him and Grude is open road.",
+    intro: "The King has gathered the inner provinces and ridden west. The country between him and Grude is open road.",
     outro: "He is closer than yesterday. Closer still tomorrow.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,

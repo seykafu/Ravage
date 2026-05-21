@@ -501,7 +501,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     beats: [
       N("They pull away from the fight at the river crossing and ride hard for an hour before stopping. Lucian takes his shirt off in the clearing without asking; the bolt went in shallow, but the iron head has bent. Maya cuts it out with a knife she didn't mention she had until just now. Ning is the one who can't stop watching."),
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. That whole lane. He pushed me into the rock." },
-      { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) The lane was for whoever was standing in it. You were standing in it. Stop apologizing and finish that bandage." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) The lane was for whoever was standing in it. You were standing in it. Stop apologizing and finish that damn bandage." },
       N("A prisoner taken at the river crossing answers a question of Maya's that she asked very quietly. He gives up Fergus by name, gives up the date the General learned about Amar's coup, and gives up the standing order to expend the squad on increasingly impossible contracts until they don't come back. The squad listens in silence. Lucian doesn't even react — he had already decided weeks ago."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "All right. I'll do this once and then we move." },
       // Maya's promotion fires when she steps out of the alias.
@@ -667,7 +667,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
         body: "(soft) ...You're going to be all right, Amar. You're a good man under the man you've been hiding under. I saw that the first day at the forge. Take care of them. Take care of yourself." },
       N("Lucian's breathing slows over the next quarter hour. The squad sits in the lantern-light around him without moving. Ning holds his hand. Maya keeps pressure on the wound long after pressure stops mattering. Leo sits at the door of the cabin with his back to it because nobody trusts the captain's crew yet and he doesn't want anyone walking in. Amar is the one Lucian dies looking at. The boat continues to move."),
-      N("Up on the deck, an hour later, the harbor lights are gone and the open sea is the only thing in any direction. The captain finds Amar at the stern rail. She speaks for the first time since Khione."),
+      N("Up on the deck, an hour later, the harbor lights are gone and open sea is the only thing in any direction. The captain finds Amar at the stern rail. She speaks for the first time since she gave them her name."),
       { speaker: "Khione", portraitId: "khione", expression: "neutral",
         body: "Madame Dawn extends her sympathies. The voyage is fourteen months. We will reach Grude in late summer next year. The squad has the run of the ship. The food is plain. The wine is good. We do not stop on the way." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
@@ -694,11 +694,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "prep:b12_ravage",
     beats: [
-      N("The first month is grief. The squad moves through it the way the ship moves through dead water — slowly, on someone else's clock, without comment."),
-      N("The second month is reading. Maya, mostly. She sits cross-legged on the foredeck with stacks of Grude political pamphlets she had stowed in the cargo hold before they boarded — bills of attainder, harbor regulations, council membership lists. She makes notes in three colors of ink. She doesn't share them yet."),
-      N("The fourth month is Ning teaching herself to fletch in a moving wind. Khione gives her a windrose without comment one afternoon and walks away. Ning works it out alone over the next four weeks."),
+      N("The first month is grief. The squad moves through it the way the ship moves through still water — slowly, at no pace of their own, without comment."),
+      N("The second month is reading. Maya, mostly. She sits cross-legged on the foredeck with stacks of Grude political pamphlets she had stowed in the cargo hold before they boarded — old court rulings, harbor regulations, council membership lists. She makes notes in three colors of ink. She doesn't share them yet."),
+      N("The fourth month is Ning teaching herself to fletch arrows in a shifting wind. Khione hands her a windrose — a chart of how the wind turns — one afternoon, without a word, and walks away. Ning works it out alone over the next four weeks."),
       N("The seventh month is Leo and the dactyl finally walking the full length of the ship together without incident. The dactyl — Ash, the squad has been calling him Kid — stops being afraid of the deck. Leo stops being afraid he made the wrong call."),
-      N("The ninth month is Amar opening Lucian's wood practice sword in the cabin he shares with Leo, holding it for an hour, and quietly carving a single word into the underside of the grip. He doesn't show anyone what the word is."),
+      N("The ninth month is Amar taking out Lucian's wooden practice sword in the cabin he shares with Leo, holding it for an hour, and quietly carving a single word into the underside of the grip. He doesn't show anyone what the word is."),
       N("The eleventh month, Maya breaks her own rule and sits down across from Amar in the mess one night with a stack of Grude maps and a single sheet of paper. She doesn't open the paper. She doesn't speak. Amar looks at the paper. Amar looks at Maya."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "I promised you I'd wait until you asked. You haven't asked. I want to ask you a question instead. May I tell you ONE thing about your old life — one — before we land?" },
@@ -730,7 +730,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_dawn_rebellion",
     beats: [
-      N("Dawn's safe house is the upstairs of a chandler's shop on a quiet inner-district street. The chandler downstairs nods to Khione without speaking and does not look at the squad at all. Up two flights of stairs is a long room with a bay window facing the harbor, a low table, four sleeping pallets already made up with fresh linens, and tea steeping in a clay pot. Ndara stands at the table pouring."),
+      N("Dawn's safe house is the upstairs of a candle-maker's shop on a quiet inner-district street. The candle-maker downstairs nods to Khione without speaking and does not look at the squad at all. Up two flights of stairs is a long room with a bay window facing the harbor, a low table, four sleeping mats already made up with fresh linens, and tea steeping in a clay pot. Ndara stands at the table pouring."),
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
         body: "The mountain village. Eleven months ago. You came after my brother. He held the gate for me. He went down at the gate. I ride a dactyl. I asked you the question on my way out. (Pause.) I am Madame Dawn's lieutenant. I have been since before any of you were born. The mountain village was not a job I chose. It was a job I did. I would like to apologize to the squad for what I cannot give back, and then I would like to pour you tea." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked",
@@ -813,7 +813,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     beats: [
       N("Dawn does not move from the plaza for an hour. The squad keeps a perimeter without being asked. Ndara arrives at some point with a horse-drawn cart and a cloak the same teal as Rose's coat. The four of them — Ndara, Amar, Maya, Leo — lift Rose into the cart. Dawn walks alongside the cart on foot the whole way back to the safe house. Ning takes the rear with her bow nocked. Nobody speaks."),
       N("The other eleven strikes in Dawn's plan succeeded. All twelve targets are dead. The city wakes up the next morning to flyers nailed to every public board, written in three languages, listing the names of the dead and the names of the original organizers whose families had been held in the prison and the names of the colony villages whose harvests had been taxed for the iron under their feet. By noon the upper district is in chaos. By sundown the empire has issued its first formal acknowledgment that an organized armed opposition exists. Dawn has been right about everything she said the rebellion would do."),
-      N("Rose is buried at dawn the next day in the small private courtyard behind the chandler's shop, in the shade of the lemon tree. Dawn is the one who speaks. She speaks for less than a minute. Nobody who is there will remember exactly what she said afterward, only that she did not weep and her hands did not shake and her voice was the same flat measured register the squad has heard her use in every briefing and every meeting since they arrived in Grude."),
+      N("Rose is buried at dawn the next day in the small private courtyard behind the candle-maker's shop, in the shade of the lemon tree. Dawn is the one who speaks. She speaks for less than a minute. Nobody who is there will remember exactly what she said afterward, only that she did not weep and her hands did not shake and her voice was the same flat, measured tone the squad has heard her use in every briefing and every meeting since they arrived in Grude."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Rose Eseldra. Born in the Tarvas valley fifty-one years ago. Joined the resistance at nineteen. Officer at twenty-two. Lieutenant at twenty-six. With me for thirty-two years. Loved by — (pause) — by the people who knew her. By me. By Maya, who she trained. By many others. Killed by four bolts she stepped in front of for me. The plaza will be renamed in her honor in due course. The lemon tree will stay. The squad has the rest of the morning to themselves. I have meetings." },
       N("Dawn walks back into the safe house and is in meetings for the rest of the day and the day after that. The squad doesn't see her at meals. Maya knocks on her study door at sundown on the second day and is not let in. Ndara makes tea every evening that Dawn does not drink. The fourth night, Amar finds Dawn at the courtyard wall, sitting on the bench under the lemon tree, with the empty teacup from a previous evening in her hand. He sits down next to her without asking. They do not speak for a long time."),
@@ -826,7 +826,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("Amar sits with her until the lemon tree is in shadow and the courtyard goes dark. He doesn't speak again. Dawn never quite weeps, but there is a moment near midnight where she sets the cup down and puts her face in her hands for a quarter of an hour, and Amar simply does not look at her until she lifts her head again. When she stands up to go inside, she pauses at the back door."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Amar. There is a conversation you and I have been not having for three weeks. I would like to have it tomorrow afternoon. In the study. Maya should be there. Ndara should be there. There is a great deal you do not yet know about who you are, and tonight has clarified that I do not have indefinite time to put off telling you. (Pause.) ...Sleep well." },
-      N("She goes inside. Amar stays in the courtyard another hour. The empire continues, somewhere beyond the chandler's wall, in the dark.")
+      N("She goes inside. Amar stays in the courtyard another hour. The empire continues, somewhere beyond the candle-maker's wall, in the dark.")
     ]
   }
 };
