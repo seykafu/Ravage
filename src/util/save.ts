@@ -67,9 +67,11 @@ export interface SaveState {
 // Maximum cumulative player-unit losses tolerated across the whole
 // campaign before the run ends. Exceeding this number routes the player
 // to GameOverScene at the end of the offending battle. Tuned to give
-// the player room for a couple of bad reads / unlucky crit RNG without
-// making the lives system feel cosmetic.
-export const MAX_PERMITTED_DEATHS = 3;
+// the player real room for bad reads / unlucky crit RNG across the
+// 13-battle slice — 3 proved too punishing in playtest, 7 keeps the
+// lives system meaningful without ending a run on a couple of swings
+// of the RNG.
+export const MAX_PERMITTED_DEATHS = 7;
 
 export type SlotIndex = 1 | 2 | 3;
 
