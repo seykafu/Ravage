@@ -78,7 +78,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Lieutenant", body: "First in. Last out, if any of them come out." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping", body: "He thinks the plan is his own. Let him keep that. It will be the only thing his side ever takes from us." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral", body: "Move the harbor people one tide early. If Nebu lives past morning, he will look outward — and outward is us." },
-      N("Half a continent away, a man named Amar tightens a strap on his vambrace and steps into a corridor that has been waiting for him for ten years.")
+      N("Half a continent away, a man named Amar tightens a strap on his forearm guard and steps into a corridor he has spent ten years walking toward.")
     ]
   },
   // -------- Pre-Battle 1 (Palace Coup) --------
@@ -94,7 +94,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "prep:b01_palace_coup",
     beats: [
       N(
-        "Anthros: a hundred million people pressed against the spine of the world. One king. One palace. One harvest, year after year, that does not feed them."
+        "Anthros: a hundred million people crowded along the spine of the world. One king. One palace. One harvest, year after year, that never feeds them all."
       ),
       N(
         "You have planned this for ten months. Tonight your seven comrades are scattered through the back corridors. You and the vanguard reached the throne hall first."
@@ -117,7 +117,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You're a key man, Amar. The harvest plan, the steel quotas — His Majesty has spent ten years on what you carry. We need you back on your feet." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...The harvest." },
-      N("You smile because Kian is watching. You do not say that the word means nothing.")
+      N("You smile because Kian is watching. You don't tell him that the word means nothing to you — that you can't remember it at all.")
     ]
   },
   // -------- Story interlude: arriving in Thuling --------
@@ -195,7 +195,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "What does it mean?" },
       { speaker: "Lucian", portraitId: "lucian", body: "Means somebody's paying them. Somebody who wants to be recognized." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we recognize them back. South of the road, behind the fences. Ning takes the fence line. Lucian and I bracket the wagons." },
-      N("On the way out you pass a woman at the corner table you have not seen before. She does not look up from her drink. She has already laid coins for the bill she has not been given.")
+      N("On the way out, you pass a woman at the corner table — someone you've never seen before. She doesn't look up from her drink. She has already set coins on the table for a bill no one has brought her yet.")
     ]
   },
   // -------- Post-Battle 3 (Maya stays) --------
@@ -218,7 +218,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin", body: "Stay. Please stay. You read that fight like a book you'd already finished." },
       { speaker: "Lucian", portraitId: "lucian", body: "Why us." },
       { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile", body: "Because the boy in front cuts like a man who learned in a palace, and that's the kind of company I keep." },
-      N("Amar does not blink. Lucian does — once, slowly, the way he blinks when he is filing a thing away for later."),
+      N("Amar doesn't blink. Lucian does — once, slowly, the way he does when he is making a quiet note of something to come back to later."),
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Welcome." }
     ]
   },
@@ -235,7 +235,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "thuling",
     next: "prep:b04_swamp",
     beats: [
-      N("A small errand. A package to a smallholding two days north. Lucian's idea — get Maya out of town before the man with the sashes hears she's traveling with you."),
+      N("A small errand: deliver a package to a small farm two days north. It was Lucian's idea — get Maya out of town before the man with the sashes hears she is traveling with you."),
       N("At the gate, a rider waits. Polished armor in a town that doesn't polish armor."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Amar! The General's compliments. He thought you might want company on the marsh road. Bandits, you know how it is." },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "...Who is he." },
@@ -295,9 +295,9 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_caravan",
     beats: [
-      N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had always known the math."),
+      N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning — the kind of grin that meant he had known the odds all along."),
       { speaker: "Ndari", portraitId: "ndari", expression: "scornful", body: "Tell her I held it. Tell her she owes me a drink." },
-      N("Ndara escapes on a Dactyl as the last torches gutter out. Her question stays in the cold air."),
+      N("Ndara escapes on a Dactyl as the last torches burn out. Her question hangs in the cold air."),
       { speaker: "Ndara", portraitId: "ndara", expression: "grim", body: "Why are you fighting on King Nebu's side, Amar?" },
       N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
@@ -324,7 +324,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Three days east, full road. Anyone who wanted to find us between here and Brielwatch would know exactly where we'd be on the third afternoon." },
       { speaker: "Amar", portraitId: "amar", body: "You think it's a setup." },
       { speaker: "Maya", portraitId: "maya", body: "I think Fergus has never used the word 'simple' to mean simple." },
-      N("On the third afternoon, in the canyon east of Brielwatch, the bowstrings sing.")
+      N("On the third afternoon, in the canyon east of Brielwatch, the ambush springs.")
     ]
   },
   // -------- Post-Battle 6 (the ledger) --------
@@ -339,9 +339,9 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_monastery",
     beats: [
-      N("Eight bodies on the road. The drivers count themselves twice and find themselves still alive both times. The wagons roll on after a brief argument about who pays for the broken axle on the second one."),
+      N("Eight bodies on the road. The drivers check each other over, twice, and are amazed to find everyone still alive. The wagons roll on after a short argument about who pays for the broken axle on the second one."),
       { speaker: "Amar", portraitId: "amar", body: "Maya. The captain — search him." },
-      N("She's already done it. The leather ledger is already in her hand. She passes it to Lucian, not to Amar — knowing where the eyes in the squad still settle by reflex."),
+      N("She's already done it. The leather ledger is already in her hand. She passes it to Lucian, not Amar — she knows the squad still looks to Lucian first, by reflex."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Three columns. Route, schedule, payment date. The handwriting in the margin — Amar, you'd know this. You said you wouldn't, but you would." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...That's the King's accounting hand. Officer codebook. Only palace clerks are taught it." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Then this wasn't a bandit ambush. This was a contract." },
@@ -383,7 +383,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_orinhal",
     beats: [
-      N("Selene goes off the bell tower balcony with a coil of rope already in her hand. She does not look back. By the time Leo wheels his Dactyl around to the courtyard, she is gone into the high mist, and the squad is left with five bodies and a question Amar cannot answer in front of the others."),
+      N("Selene goes over the bell tower balcony with a coil of rope already in her hand. She doesn't look back. By the time Leo turns his Dactyl around to the courtyard, she is gone into the high mist — and the squad is left with five bodies and a question Amar can't answer in front of the others."),
       N("That night the camp is colder than the road. Maya takes first watch up the slope. Ning falls asleep before her stew is done. Leo checks his Dactyl's wing-leather one more time than necessary and then, finally, lies down. Lucian stays up. Amar stays up. The fire pops twice."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "She knew you. From the gate to the balcony, she knew you, and you knew her, and you fought her at half what I've watched you do to a bandit half her size." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded", body: "Lucian." },
@@ -426,7 +426,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", body: "Orinhal hasn't paid full tax in three years. It's a starvation case, not a riot." },
       { speaker: "Fergus", portraitId: "fergus", body: "The orders aren't yours to weigh, Lucian. Disperse the crowd." },
       N("Two days on the road. Maya rides at the back of the column without speaking, the way she always rides when she's already three steps ahead of everyone else."),
-      N("At the Orinhal gate at noon: not a riot but a famine. A hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. A green-cloaked column at the far end of the square — Madame Dawn's partisans, sent ahead to hold the line."),
+      N("At the Orinhal gate at noon: not a riot but a famine. A hundred unarmed foremen and their families standing between the King's tax detail and the last sacks of winter grain. A line of green cloaks at the far end of the square — Madame Dawn's partisans, sent ahead to hold the line."),
       { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father would have had me arrest them. (a long pause) I'm not arresting anyone today." },
       N("Leo dismounts, walks his Dactyl to the partisan side, and looks back at the squad. The squad follows.")
     ]
@@ -462,7 +462,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "I'm not riding back to the keep tonight. I'll meet you on the road home. There's something I have to do without my father's name on my back.",
         promote: "leo"
       },
-      N("Leo doesn't say where he's going. He's back at the campfire by midnight, his Dactyl's mantle freshly painted over with the squad's own colors instead of Fergus's heraldry.")
+      N("Leo doesn't say where he's going. He's back at the campfire by midnight, the covering on his Dactyl freshly repainted in the squad's own colors instead of Fergus's crest.")
     ]
   },
   // -------- Pre-Battle 9 (Fergus's trap) --------
@@ -499,7 +499,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     music: "emotional",
     backdrop: "field_night_camp",
     beats: [
-      N("They break contact at the ford and ride hard for an hour before stopping. Lucian takes his shirt off in the clearing without asking; the bolt is shallow but the iron has bent. Maya cuts the head out with a knife she didn't say she had until just now. Ning is the one who can't stop watching."),
+      N("They pull away from the fight at the river crossing and ride hard for an hour before stopping. Lucian takes his shirt off in the clearing without asking; the bolt went in shallow, but the iron head has bent. Maya cuts it out with a knife she didn't mention she had until just now. Ning is the one who can't stop watching."),
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. That whole lane. He pushed me into the rock." },
       { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) The lane was for whoever was standing in it. You were standing in it. Stop apologizing and finish that bandage." },
       N("A prisoner taken at the river crossing answers a question of Maya's that she asked very quietly. He gives up Fergus by name, gives up the date the General learned about Amar's coup, and gives up the standing order to expend the squad on increasingly impossible contracts until they don't come back. The squad listens in silence. Lucian doesn't even react — he had already decided weeks ago."),
@@ -606,7 +606,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "cliffs",
     next: "prep:b11_cliffs",
     beats: [
-      N("The harbor road ends in a stone plateau two hundred feet above Para Harbor. Madame Dawn's ship is moored at the south dock — a long-hulled merchanter with three masts and a crew already aboard, lanterns lit, sails ready to be cut loose. The only path down is the slate staircase carved into the cliff face. Kian is on the lower landing. The King's elite are with him. They have been waiting for some time."),
+      N("The harbor road ends at a stone plateau two hundred feet above Para Harbor. Madame Dawn's ship is tied up at the south dock — a long-hulled merchant ship with three masts, its crew already aboard, lanterns lit, sails ready to be cut loose. The only way down is the slate staircase carved into the cliff face. Kian is on the lower landing. The King's elite are with him. They have been waiting a while."),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
         body: "Six guards visible. Kian on the lower landing. Two crown archers on the middle landing — they have line on the entire descent. Standard formation but the elite tier; these aren't Thuling watchmen. We push down the stairs and we trade." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
@@ -615,7 +615,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Lucian — you're shoulder-bolted from the ravine. You're not at full strength." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
         body: "(simple) I know, Ning. I've thought about it. I'm taking the rear." },
-      N("Amar walks to the cliff edge for one breath alone. The light over the harbor is the color the script of his old life used to use for sundown. He thinks of his father. He thinks of Selene's hand on the practice yard rail. He thinks of Lucian putting his daughter to bed in the house they will never go back to."),
+      N("Amar walks to the cliff edge for one breath alone. The light over the harbor is the exact gold he remembers from sundowns in the life he had before the hospital. He thinks of his father. He thinks of Selene's hand on the practice yard rail. He thinks of Lucian putting his daughter to bed in the house they will never go back to."),
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
         body: "(to the squad, returning) We go down the staircase together. We don't break formation for any reason. Maya leads, Ning covers from the upper landing, Leo flanks east on the Dactyl. Lucian holds the rear. I take Kian. Nobody else takes Kian. Confirm." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
@@ -646,7 +646,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "cliffs",
     next: "story:before_ravage",
     beats: [
-      N("The squad makes the ship at moonrise. Dawn's captain is a woman in her fifties who introduces herself as Khione, says nothing else, and orders the lines cut the moment Amar's boots clear the dock. The boat pulls away from the harbor faster than its weight should allow. Kian's body is still on the lower landing. The squad does not look back."),
+      N("The squad reaches the ship at moonrise. Dawn's captain is a woman in her fifties who introduces herself as Khione, says nothing else, and orders the lines cut the moment Amar's boots clear the dock. The boat pulls away from the harbor faster than a ship its size should be able to. Kian's body is still on the lower landing. The squad does not look back."),
       N("Below decks, the captain's mate brings a lantern and a bowl of water. The squad has time to stop moving for the first time in twelve hours. That's when Maya sees the dark spread across the back of Lucian's tunic."),
       { speaker: "Maya", portraitId: "maya", expression: "alarmed",
         body: "Lucian. Off your feet. NOW. Ning — the bandages from my pack, the brown cord, MOVE." },
