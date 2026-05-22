@@ -138,7 +138,11 @@ export type ArcId =
   // -------- B15: A Coup Within a Coup (Coyne the mole; Ndara
   // is left in a coma; Dawn hardens) --------
   | "before_inner_coup"
-  | "post_inner_coup";
+  | "post_inner_coup"
+  // -------- B16: Dawn's Proposal (the throne offer; Archbold
+  // switches from retrieve to kill) --------
+  | "before_proposal"
+  | "post_proposal";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1543,23 +1543,100 @@ export const BATTLES: BattleNode[] = [
       }
     ]
   },
+  // ============== Battle 16 — Dawn's Proposal ==============
+  // The proposal chapter. In before_proposal Dawn asks Amar to claim
+  // the Anthros throne as the rebellion's open heir once Archbold
+  // falls. He gives her a "not yet." That same night, on a bridge
+  // over the Grude river, the empire delivers its own answer: King
+  // Archbold has decided a living heir is more dangerous than a dead
+  // one, and sends Wren — the King's Knife — to end the problem. The
+  // shift from "retrieve" (B14) to "kill" is the chapter: Amar is
+  // deciding what kind of son he is while his father decides the
+  // same about being a father.
   {
     id: "b16_proposal",
     index: 16,
     title: "Sixteenth Battle",
     subtitle: "Dawn's Proposal",
-    intro: "Take the throne of Anthros once Archbold falls. Decide what kind of son you are.",
-    outro: "You will be asked again, and your answer will cost lives either way.",
+    intro:
+      "Dawn's proposal is still sitting unanswered in Amar's chest when she sends the squad across the river after dark — a courier to meet, a crate to carry, the ordinary errand of a rebellion. The Grude river bridge is empty at this hour, lit by its own lamps, stone underfoot worn smooth by eighty years of imperial traffic. Halfway across, the lamps at the far end go dark one by one, and two figures step out of the shadow behind the squad as well. King Archbold has stopped trying to retrieve his son. The woman walking down the bridge toward Amar is called Wren, and the King calls her his Knife.",
+    outro:
+      "Wren falls on the bridge she was sent to make Amar's grave. The empire's message is delivered all the same: there is no version of the next year where Amar is left alone. Hide, and they hunt him. Take the throne, and they fight him. Dawn was right — the only choice left is which of those costs he chooses to pay, and whose name he pays it under. She will ask him again. His answer is still not ready. But it is closer.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Choice",
-    // Spoils: a single Royal Lens, ceremonially presented. Dawn
-    // gives Amar the lens her own father wore — a gift signaling
-    // her commitment to the proposal. The squad can equip it on
-    // anyone but the narrative weight is Amar's.
-    rewards: ["royal_lens"]
+    playable: true,
+    map: bridgeMap,
+    buildPlayers: () => [
+      // Post-Rose squad of four. Map slots ordered [Maya, Amar, Ning, Leo].
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Wren + a household kill-team: the empire's main force holds
+      // the east end (2 crown archers + a royal guard) while two
+      // hired knives spring the pinch from behind the squad.
+      ENEMIES.kingsKnife(16),
+      ENEMIES.royalGuard("prp_rg1", 1601, 15),
+      ENEMIES.royalArcher("prp_ra1", 1602, 15),
+      ENEMIES.royalArcher("prp_ra2", 1603, 15),
+      ENEMIES.banditSwordsman("prp_kn1", 1604, 14),
+      ENEMIES.banditSwordsman("prp_kn2", 1605, 14)
+    ],
+    difficultyLabel: "Choice — The King's Knife",
+    // Spoils: a Royal Lens off Wren's kit + 2 elixirs. The lens was
+    // the King's-Knife issue optic; Amar carries his would-be
+    // assassin's gear out of the fight.
+    rewards: ["royal_lens", "elixir", "elixir"],
+    // Victory: defeat Wren. The kill-team is a contract, not a cause —
+    // they break the moment the Knife is down.
+    victory: defeatUnit("kings_knife", { label: "Defeat Wren" }),
+    dialogues: [
+      // Round 1: the ambush springs. Wren names the new order — kill,
+      // not retrieve — and the squad understands the empire's posture
+      // has changed.
+      {
+        id: "b16_wren_ambush",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Wren", portraitId: "royal_guard", expression: "neutral",
+            body: "Amar. Don't run — the bridge runs out, and I'm faster than you on stone. Castor's orders were to bring you home unharmed. Mine are shorter. The King has weighed a living son against a dead scandal, and he has decided he can bury the scandal. I'm sorry. You seem like you would have been a tolerable prince." },
+          { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+            body: "Two behind us, three ahead, and the fast one is the one talking. Amar — she is the whole problem. Drop Wren and the contract dissolves; the rest are paid men. Tight formation, do not let her get you alone on open deck." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "My father sent a knife to a bridge. (A breath.) Then I have my answer to half of Dawn's question already. Squad — break the east end. Wren is mine." }
+        ]
+      },
+      // adjacent_eot Amar/Wren — the assassin is not a believer; she's
+      // a professional, and professionals talk while they work. She
+      // tells Amar the one true thing the empire taught her.
+      {
+        id: "b16_amar_wren",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "kings_knife" },
+        beats: [
+          { speaker: "Wren", portraitId: "royal_guard", expression: "neutral",
+            body: "You want to know the secret your father pays me for, your highness? It isn't the killing. Anyone can kill. It's that I never once asked whether the name on the order deserved it. (She's circling.) Your mother will hand you a list someday. Everyone with a crown gets handed the list. The only question that has ever mattered is whether you read it before you sign it. Castor wouldn't. I don't. Let's see about you." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "I've buried people off other people's lists for two years, Wren. I've started reading. (Steel up.) That's the difference between us, and it's about to be a wide one." }
+        ]
+      },
+      // before_victory: Wren falls. She dies the way she lived — a
+      // professional, unsurprised, settling the account.
+      {
+        id: "b16_wren_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Wren goes down at the bridge's centre, between the two stalled carts, on the open deck she wanted Amar on. The hired knives are already backing toward the dark ends of the bridge; a contract does not outlive the contractor. Within a minute the squad has the span to themselves and the river noise underneath." },
+          { speaker: "Wren", portraitId: "royal_guard", expression: "neutral",
+            body: "(unsurprised, almost approving) Faster than Castor said. Good. (Quiet.) Your father will send someone after me, and someone after them. He has a long arm and a short memory for the people on the end of it. Take the crown or don't, your highness — but stop standing in the open on bridges. You're worth more than this now. That's not a kindness. It's just true." },
+          { portraitId: "narrator",
+            body: "The squad carries Dawn's crate the rest of the way across. Nobody says much. The errand is finished, and the courier met, and the night is technically a success — but every one of them is doing the same arithmetic now, the arithmetic Wren named, and not one of them likes the column it is running down toward." }
+        ]
+      }
+    ]
   },
   {
     id: "b17_lie",

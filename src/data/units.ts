@@ -489,6 +489,29 @@ export const ENEMIES = {
     level,
     holdPositionUntil: { allyCount: 2 }
   }),
+  // Wren, the King's Knife — King Archbold's household assassin, sent
+  // at B16 once the empire decides a living heir is worse than a dead
+  // one. An assassin's statline: the fastest unit in the game (speed
+  // 16 — acts early, can trigger speed-counters), high power, but
+  // fragile (low HP + armor). NO holdPositionUntil — unlike the
+  // garrison bosses, Wren rushes straight for Amar. classKind "boss"
+  // so Amar's BossFighter ability + boss XP apply; the assassin
+  // flavour lives in the statline + dialogue, not the class tag.
+  kingsKnife: (level = 16): UnitDef => ({
+    id: "kings_knife",
+    name: "Wren",
+    shortName: "Wr",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 46, power: 15, armor: 5, speed: 16, movement: 6, ap: 3 },
+    artSeed: 67,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level
+  }),
   kian: (level = 12): UnitDef => ({
     id: "kian_enemy",
     name: "Kian",

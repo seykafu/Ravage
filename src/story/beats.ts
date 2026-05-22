@@ -961,7 +961,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The safe house, the morning after the courtyard",
     music: "emotional",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_proposal",
     beats: [
       N("Coyne is buried outside the city walls, in unmarked ground, by people who do not speak on the way there or the way back. Dawn does not attend. The courtyard is scrubbed. The lemon tree, which has now had blood at its roots twice in a month, goes on being a lemon tree."),
       N("Ndara is moved to the bright upstairs room with the bay window. Khione sits with her through the first night and the second. On the third morning she finds Amar on the stairs and tells him the truth as she has it."),
@@ -980,6 +980,69 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "She's not wrong. That's the part that should frighten you. She has just become a great deal harder to argue with — and a great deal harder to refuse. Whatever she puts in front of you tomorrow, Amar: walk in already knowing your own answer. Don't let her hand you hers." },
       N("The squad does not sleep especially well. Upstairs, Ndara breathes slowly in the bright room and does not wake, and the rebellion waits for morning with a harder woman at the head of it than the one who crossed the sea to fetch them.")
+    ]
+  },
+  // -------- Pre-Battle 16 (Dawn's proposal) --------
+  // The conversation Dawn promised at the end of post_inner_coup. She
+  // asks Amar to claim the Anthros throne as the rebellion's open heir
+  // once Archbold falls. Amar gives her a "not yet." She accepts the
+  // deferral — and sends the squad across the river on a night errand.
+  // Routes into B16's prep.
+  before_proposal: {
+    id: "before_proposal",
+    title: "What kind of son",
+    subtitle: "Dawn's study, the morning after the courtyard",
+    music: "emotional",
+    backdrop: "study",
+    next: "prep:b16_proposal",
+    beats: [
+      N("Dawn has the map of Anthros on the table this time, not the western sea. Para is marked, and Thuling, and the eastern range — and a great many villages besides, in a small precise hand, more villages than Amar knew the colony held."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "I will put it the short way, because you asked me yesterday to stop handling you. When this rebellion brings King Archbold down — and it will; the only open question is the cost — Anthros will have no throne and no crown and a hundred million frightened people. A colony that has just killed its emperor does not become free. It becomes a wound that the next strong man walks into. I have watched it happen on three continents." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
+        body: "Anthros needs a face the moment the empire's is gone. Not a council, not a committee, not a flag — a person, with trueborn blood in them, that a frightened farmer in Thuling can picture and follow. You are the only such person alive, Amar. You are the lawful child of the line Archbold installed eighty years ago and the lawful child of the rebellion both. There is no other claimant. There was never going to be anyone but you. I have known that since before you could walk, and I have spent thirty years arranging the world so the question could be put to you in a safe room." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "You're asking me to be a king." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "I am telling you that the throne of Anthros is going to exist whether you sit on it or not, and that every person who could sit on it instead of you is worse. That is not the same as asking. But yes. In the plain word you want: I am asking my son to be a king, so that the country his father starved does not have to learn a fourth bad answer the hard way." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "Lucian told me, dying, not to fight for a throne. Not my father's, not anyone's. He told me to fight for the people next to me. You're asking me to pick up the exact thing he told me to put down." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "(a pause) Your foreman gave you good counsel for a soldier. I am offering you a harder kind, for the thing you are about to become instead. A king who fights only for the people next to him is a king who lets the people he cannot see starve. (Quieter.) But I will not have your answer dragged out of you on a bad morning. Take the time. Decide what kind of son you are — mine, his, or your own. The throne can wait a few weeks. The empire, unfortunately, cannot." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then you'll have \"not yet.\" Not no. Not yes. Not yet — and not because I'm afraid of it, but because the last three people who told me who I was turned out to each have half the picture. I'll give you a real answer when I'm holding the whole of it." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "(a long look) ...That is a better answer than most kings ever manage. \"Not yet\" I can work with. (She rolls the map closed.) Then earn the time you have asked for. There is a courier waiting across the river tonight with the names of the colony cells still loyal to your father — go, meet him, carry his crate back here. Routine. Take the squad. Be back before the lamps go cold." },
+      N("It is not routine. But Dawn does not know that yet, and neither does Amar, and the squad walks out of the study into a Grude evening with a map rolled shut behind them and a question rolled open inside the one of them it belongs to.")
+    ]
+  },
+  // -------- Post-Battle 16 (after the bridge; Khione's warning) --------
+  // The bridge ambush has landed the empire's new posture — kill, not
+  // retrieve. The arc closes by planting B17: Khione, who has sat with
+  // the comatose Ndara and carries something heavier than grief, tells
+  // Amar there is a part of the story Dawn has never told him, and
+  // that he should hear it before he answers her about the throne.
+  post_proposal: {
+    id: "post_proposal",
+    title: "The arithmetic on the bridge",
+    subtitle: "Back across the river, the courier's crate delivered",
+    music: "emotional",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("The crate reaches the safe house. It holds exactly what Dawn said it would — a sheaf of colony cell-names in a courier's careful hand — and the night is, by every measure Dawn will use in the morning, a success. The squad does not feel like it was a success. They feel like they walked onto a bridge as people and walked off it as a number in King Archbold's ledger."),
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "He sent an assassin, Maya. Not a warrant, not a retrieval — a knife on a bridge in the dark. Three weeks ago I didn't know I had a father. Tonight I know exactly how much he thinks I'm worth, and it's a number small enough to settle with one professional and two hired men." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "You know what your father wants. That's the easy parent, Amar — his wanting is a sword and it points one way. (A pause.) It's the other one I'd have you think about tonight. Dawn has wanted you on a throne since before you could walk. She told you that herself, in the study, like it was a comfort. Sit with how it isn't one." },
+      N("Amar does not sleep. Near the second watch he goes up to the bright room to sit with Ndara, because it is the one room in the house where no one will ask him anything — and finds it already occupied. Khione is in the chair by the cot, where Khione has been most nights, watching a colleague who was steady for thirty years lie still."),
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "You have the look, your highness. The one a person gets the night they finally do the sum on the woman downstairs and don't like the total. (She doesn't look up from Ndara.) I have sailed Madame Dawn's rebellion for nineteen years. I love her the way you love a tide — completely, and without ever once mistaking it for safe." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "Khione. If there's something you're circling, walk to it. I've had a generous night for circling." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "There is a part of the story, Amar. The part your mother has told no one in this house — not Maya, not Ndara, not Rose before she died. The part the man on the cliff was reaching for when he told you Dawn would use the look on your face to start a war. (A breath.) Kian was not wrong. He only had it half-sized. I have it whole, because I was on the ship the night your mother decided it. You should hear it before you answer her about any throne. Not tonight. You have had enough of being told things tonight. But soon. Come find me on the water, where her walls are thinner." },
+      N("Khione goes back to watching Ndara breathe. Amar sits a long time in the bright room with two things he cannot put down — his mother's question, and the shape of the answer Khione has just promised him. Somewhere below, Dawn sleeps the sleep of a woman whose plan is finally moving. The squad does not. Morning, and the water, and the rest of the story are all still ahead.")
     ]
   }
 };

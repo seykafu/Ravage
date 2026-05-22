@@ -881,3 +881,54 @@ export const courtyardMap: MapDef = buildMap("courtyard", "Candle-Maker's Courty
     { x: 8, y: 5 }  // turncoat (bandit spearton), east barricade
   ]
 });
+
+// ============== Battle 16 — Dawn's Proposal ============================
+// 14×9 stone bridge over the Grude river. Dawn has proposed that Amar
+// claim the Anthros throne as the rebellion's open heir; she sends the
+// squad out on a night errand to seal the next step. On the bridge,
+// King Archbold's answer arrives — no longer a retrieval detail but a
+// kill-team. The empire has decided a living heir is worse than a dead
+// one. Wren, the King's Knife, springs the ambush from both ends.
+//
+// Stone parapets (Wb) wall the bridge along its north + south edges —
+// the deck is the whole playable area, a long east-west span. Stalled
+// market carts (Bd barricades) and bridge lamps (Tr torches) give the
+// only cover. The squad enters mid-WEST; Wren's main force holds the
+// EAST end while two hired knives drop in behind from the west — a
+// two-sided pinch with nowhere to flank but along the deck.
+//
+// Map fits the viewport (14*48=672w, 9*48=432h) — no camera scroll.
+// Reuses Cb (cobblestone deck) / Wb (parapet) / Bd (cart) / Tr (lamp).
+const bridgeRows = [
+  [Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb], // ← north parapet
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb], // ← bridge lamps
+  [Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb], // ← stalled carts (cover)
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb], // ← open centre lane
+  [Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Bd, Cb, Cb, Cb, Cb, Cb], // ← matching carts
+  [Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb], // ← bridge lamps
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb, Wb]  // ← south parapet
+] as const;
+
+export const bridgeMap: MapDef = buildMap("bridge", "River Bridge, Grude", bridgeRows, {
+  // Squad mid-west, in a tight block so the round-1 ambush dialogue
+  // fires reliably and the two-sided pinch lands on a formed-up unit.
+  player: [
+    { x: 1, y: 3 }, // Maya
+    { x: 1, y: 4 }, // Amar (center)
+    { x: 1, y: 5 }, // Ning (bowline)
+    { x: 2, y: 4 }  // Leo (dactyl)
+  ],
+  // Wren rushes — no holdPositionUntil; the King's Knife comes
+  // straight for Amar. Her main force holds the east end; two hired
+  // knives drop in behind the squad from the west to spring the pinch.
+  enemy: [
+    { x: 12, y: 4 }, // Wren, the King's Knife (boss — aggressive, no hold)
+    { x: 11, y: 3 }, // Royal Guard, east
+    { x: 12, y: 2 }, // Crown Archer, east-north
+    { x: 12, y: 6 }, // Crown Archer, east-south
+    { x: 3,  y: 2 }, // hired knife (bandit swordsman) — drops in behind, NW
+    { x: 3,  y: 6 }  // hired knife (bandit swordsman) — drops in behind, SW
+  ]
+});
