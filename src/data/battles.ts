@@ -1331,6 +1331,10 @@ export const BATTLES: BattleNode[] = [
       {
         id: "b13_rose_falls",
         trigger: { kind: "before_victory" },
+        // Death cue — Rose's sacrifice. Overrides the battle theme for
+        // the duration of the death dialogue. No restoreMusic (it's a
+        // before_victory beat; EndScene takes the music next).
+        music: MUSIC.death,
         beats: [
           { portraitId: "narrator",
             body: "The captain's body settles into the marble. The crown archers' bolts go quiet. The squad takes one breath and the plaza is theirs." },

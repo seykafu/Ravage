@@ -32,6 +32,12 @@ export const MUSIC = {
   // fades back to the previous track when EndScene transitions in.
   sadness:  "music_sadness",
   sadness2: "music_sadness2",
+  // Death — scores the actual death of a sympathetic character in the
+  // latter half of the campaign: the moment a sacrifice lands or a
+  // chosen path costs someone their life. Heavier + more final than
+  // the sadness cues, which carry grief AFTER the fact. First used on
+  // Rose's death (B13). Reserved for second-half (B12+) deaths.
+  death:    "music_death",
 
   // Grude battle palette — first track in the second-half of the campaign
   // (B12+). Used for the Grude harbor district fight where the squad lands
@@ -60,7 +66,8 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.ravageDaredevil,    src: "audio/Ravage_Daredevil.mp3" },
   { key: MUSIC.sadness,            src: "audio/Sadness.mp3" },
   { key: MUSIC.sadness2,           src: "audio/Sadness2.mp3" },
-  { key: MUSIC.grudeBattle1,       src: "audio/GrudeBattle1.mp3" }
+  { key: MUSIC.grudeBattle1,       src: "audio/GrudeBattle1.mp3" },
+  { key: MUSIC.death,              src: "audio/Death.mp3" }
 ];
 
 // Singleton-ish music manager. Lives across scenes via game.registry.

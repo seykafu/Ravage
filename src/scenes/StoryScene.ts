@@ -48,7 +48,8 @@ const arcMusic: Record<StoryArc["music"], MusicKey> = {
   ravageDaredevil: MUSIC.ravageDaredevil,
   sadness: MUSIC.sadness,
   sadness2: MUSIC.sadness2,
-  grudeBattle1: MUSIC.grudeBattle1
+  grudeBattle1: MUSIC.grudeBattle1,
+  death: MUSIC.death
 };
 
 interface StoryArgs { arcId: ArcId; }

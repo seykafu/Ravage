@@ -47,7 +47,7 @@ export interface StoryArc {
   music:
     | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
     | "mainTheme" | "emotional" | "everydayLife" | "trailer" | "ravageDaredevil"
-    | "sadness" | "sadness2" | "grudeBattle1";
+    | "sadness" | "sadness2" | "grudeBattle1" | "death";
   // Optional backdrop key — must match a key in BACKDROPS (see BackdropArt).
   // If omitted, StoryScene falls back to the generic Thuling sky.
   // NOTE: this is the camelCase BACKDROPS key, NOT the bg_<label> BackdropKey
@@ -812,7 +812,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_dawn_rebellion",
     title: "After the plaza",
     subtitle: "Three days of quiet in the safe house",
-    music: "emotional",
+    // Death cue — Rose's death scene. The dedicated Death track scores
+    // the burial + Dawn's grief; heavier + more final than the broader
+    // "emotional" Spine cue this arc used before. Latter-half (B12+)
+    // sympathetic-character deaths use this track.
+    music: "death",
     backdrop: "grude",
     next: "story:before_origin",
     beats: [
