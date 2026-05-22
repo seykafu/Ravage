@@ -21,6 +21,7 @@ import type { Initiative } from "../../combat/Initiative";
 import { isAlive } from "../../combat/Unit";
 import type { Unit } from "../../combat/types";
 import type { BattleDialogue, BattleDialogueTrigger } from "../../data/battles";
+import type { DialogBeat } from "../../story/beats";
 import type { MusicKey } from "../../audio/Music";
 
 export class DialogueDirector {
@@ -111,6 +112,20 @@ export class DialogueDirector {
       resumeKey: this.scene.scene.key,
       music: dlg.music,
       restoreMusic: dlg.music && !isBeforeVictory ? this.battleMusic : undefined
+    });
+  }
+
+  // Fire an ad-hoc one-off dialogue that is NOT from the battle's
+  // authored dialogue list — same pause/overlay mechanism as fire(),
+  // but with no dedup, no trigger, and no music handling. Used for
+  // the player-defeat retreat beat (see src/data/retreatLines.ts):
+  // the beats are generated at the moment a unit falls, not authored
+  // per battle.
+  fireAdHoc(beats: DialogBeat[]): void {
+    this.scene.scene.pause();
+    this.scene.scene.run("BattleDialogueScene", {
+      beats,
+      resumeKey: this.scene.scene.key
     });
   }
 

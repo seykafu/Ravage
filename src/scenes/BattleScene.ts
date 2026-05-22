@@ -72,6 +72,7 @@ import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura, type RavageViewState } from "./battle/RavageVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
+import { buildRetreatBeat } from "../data/retreatLines";
 import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type TilePos, type Unit } from "../combat/types";
 
 // Display heal amount per consumable kind. Used by the in-battle item
@@ -2515,6 +2516,27 @@ export class BattleScene extends Phaser.Scene {
       // this (attacker, defender) pair. Pauses the battle if one matches,
       // resumes after the player advances through the dialogue.
       this.dialogue.checkKill(attacker, defender);
+      // Player/ally unit defeated — pop a one-beat retreat dialogue in
+      // the character's own voice. No permadeath: the fall is reframed
+      // as a wounded withdrawal, not a death. Gated so it does NOT fire
+      // on a squad wipe (the last unit down is a defeat — "I'll
+      // regroup" makes no sense with no squad left). The retreat beat
+      // pauses the battle the same way an authored dialogue would; the
+      // interpose modal already proves scene.pause() is safe here, mid
+      // attack-resolution, on either faction's turn.
+      if (
+        (defender.faction === "player" || defender.faction === "ally") &&
+        this.state.units.some(
+          (o) =>
+            o !== defender &&
+            (o.faction === "player" || o.faction === "ally") &&
+            isAlive(o)
+        )
+      ) {
+        this.dialogue.fireAdHoc([
+          buildRetreatBeat(defender.portraitId ?? defender.id, defender.name)
+        ]);
+      }
     }
     // Attack-based trigger fires regardless of kill outcome (hit, miss,
     // OR kill — the kill-specific case above is its own check). Placed
