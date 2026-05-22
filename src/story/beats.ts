@@ -8,6 +8,11 @@ export type PortraitId =
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
   | "rose"
+  // Generic enemy-class portrait, valid as a dialogue speaker for
+  // minor named officers who reuse the stand-in art (e.g. Lord Castor,
+  // B14) rather than carrying a bespoke portrait. Mirrors the B12/B13
+  // stand-in-portrait precedent for one-battle Grude officers.
+  | "royal_guard"
   | "narrator";
 
 export interface DialogBeat {
@@ -809,7 +814,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "Three days of quiet in the safe house",
     music: "emotional",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_origin",
     beats: [
       N("Dawn does not move from the plaza for an hour. The squad keeps a perimeter without being asked. Ndara arrives at some point with a horse-drawn cart and a cloak the same teal as Rose's coat. The four of them — Ndara, Amar, Maya, Leo — lift Rose into the cart. Dawn walks alongside the cart on foot the whole way back to the safe house. Ning takes the rear with her bow nocked. Nobody speaks."),
       N("The other eleven strikes in Dawn's plan succeeded. All twelve targets are dead. The city wakes up the next morning to flyers nailed to every public board, written in three languages, listing the names of the dead and the names of the original organizers whose families had been held in the prison and the names of the colony villages whose harvests had been taxed for the iron under their feet. By noon the upper district is in chaos. By sundown the empire has issued its first formal acknowledgment that an organized armed opposition exists. Dawn has been right about everything she said the rebellion would do."),
@@ -827,6 +832,88 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Amar. There is a conversation you and I have been not having for three weeks. I would like to have it tomorrow afternoon. In the study. Maya should be there. Ndara should be there. There is a great deal you do not yet know about who you are, and tonight has clarified that I do not have indefinite time to put off telling you. (Pause.) ...Sleep well." },
       N("She goes inside. Amar stays in the courtyard another hour. The empire continues, somewhere beyond the candle-maker's wall, in the dark.")
+    ]
+  },
+  // -------- Pre-Battle 14 (the study; the parentage reveal) --------
+  // The conversation Dawn promised at the end of post_dawn_rebellion.
+  // Dawn finally names Amar's parents: she is his mother, and King
+  // Archbold of Grude is his father. The arc also reconciles the
+  // earlier before_ravage beat where Maya told Amar his father "died
+  // before you were born" — that was a cover story Dawn fed her own
+  // officer, not the truth. The conversation is cut off by the
+  // candle-maker's warning rhythm: Archbold's household guard has
+  // found the safe house. Routes into B14's prep.
+  before_origin: {
+    id: "before_origin",
+    title: "The conversation Dawn promised",
+    subtitle: "Dawn's study, the afternoon after the plaza",
+    music: "emotional",
+    backdrop: "study",
+    next: "prep:b14_origin",
+    beats: [
+      N("Dawn's study takes up the back half of the safe house's top floor. One window, a great deal of paper, a map of the western sea pinned flat under four stones. Dawn is already seated when the squad comes up. She has set out four chairs. She does not stand."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Sit, all of you. Amar in the chair by the window — I want the light on you for this. You have earned the courtesy of being seen. Maya and Ndara already know most of what I am going to say. They are here so that you are not the only person in this room carrying it when I am done." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "You've put this off for three weeks, Dawn. You put it off across a year at sea, and eleven years before that. Whatever it is — say it plainly. I am tired of being the last person told the truth about my own life." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "Plainly, then. I will not soften it. Softening it would only be one more way of handling you, and you have been handled enough.\n\nI am your mother, Amar. You were born to me thirty-one years ago, on the Grude coast, in the spring. I carried you, I named you, and for the first eleven months of your life I held you every night myself." },
+      N("Amar does not say anything. The light from the one window is on his face, exactly as Dawn arranged it. Nobody in the room looks away from him, because Dawn told them not to."),
+      { speaker: "Amar", portraitId: "amar", expression: "shocked",
+        body: "(quietly) ...You said \"my son\" from the window at the harbor. I told myself it was a way of speaking." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "It was not a way of speaking. (A breath.) There is a second half, and it is heavier than the first. Your father is alive. His name is Archbold. He is the King of Grude — the emperor whose household guard you have spent two years cutting to pieces. You are the trueborn child of the woman leading this rebellion and the man it exists to bring down. There is no kinder arrangement of those facts. I have looked for one for thirty-one years and there is none." },
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "Maya told me on the ship that my father died before I was born. She sat across a table from me and she said it to my face." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "I told you what I had been told, Amar. (She looks at Dawn, and it is not a warm look.) I have served Madame Dawn for eleven years and I would have sworn on my life that your father was a dead man. Apparently I was a cover story's length away from the truth, the same as you. So. We learn this part together." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "Maya is owed that anger and I will take it. I gave my own officer the false version on purpose. The truth of your father is the single most dangerous sentence in my organization, and a sentence that is never spoken aloud cannot be tortured out of anyone who does not know it. I kept Maya safe by keeping Maya ignorant. I am not proud of it. I would do it again." },
+      { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
+        body: "(evenly, to Amar) I have known since before the mountain village. It does not get lighter for being held a long time. But it can be set down now. Let her finish." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Thirty-two years ago I was not the woman who runs this rebellion. I was a daughter of the Grude high council, married into Archbold's court, close enough to the throne to read the empire's ledgers myself. I read them. I learned what the colony of Anthros was for — the iron, the harvests, the eighty years of managed starvation. And I learned that I was carrying the heir to all of it." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
+        body: "I could not raise a child inside the thing I had decided to destroy. Archbold would have made you into the next link of the chain — or, once I turned, into a hostage against me. So eleven months after you were born I did the hardest sum of my life. I sent you across the sea, to Anthros, to my older brother. He raised you as an ordinary man of a colony that did not know it was a colony. He let you believe he was your father. He was a good man and he kept the promise until the day he died. You became, entirely on your own, a man who tried to free Anthros from an empire — without ever knowing the empire was half your own blood." },
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "You arranged all of it. The forge. Lucian. Maya in the squad. Kian, somehow. You have been moving me across a board since before I could walk, and every person I have ever loved was a piece you placed." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "I placed the squad. I did not place what the squad became to you, or you to them — that you built yourselves, and it is the one thing in your life that is wholly your own. I will not apologize for reaching for my son across thirty years and an ocean. I will apologize, once, for how much it cost the people standing between us. Rose is the most recent name on that list. She is not the last. I want you to understand what you are joining before — " },
+      N("Dawn stops. Below them, faint through the floorboards, the candle-maker downstairs is tapping a fast, uneven rhythm on a ceiling beam with the handle of a broom. Three taps, two, three. Ndara is already on her feet."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
+        body: "That is the far-watch signal. Soldiers on the street, moving with purpose, more than a patrol. They have found the house." },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Then the rest of the conversation waits. Amar — down the stairs, into the street, before they can stack the door. Whatever you are, you are also still the person they are here for. Move." }
+    ]
+  },
+  // -------- Post-Battle 14 (the unfinished conversation) --------
+  // Aftermath of the safe-house street fight. Dawn closes what the
+  // alarm cut off — not the whole of it, but enough to land the
+  // chapter's thesis: Amar is exactly half rebellion and half empire,
+  // and both halves now know he exists. Seeds B15 (a traitor inside
+  // Dawn's own camp).
+  post_origin: {
+    id: "post_origin",
+    title: "Exactly half",
+    subtitle: "The safe house, after Castor's detail withdraws",
+    music: "emotional",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("The squad does not go back upstairs right away. They stand in the emptied street while Ndara walks the cobbles, counting the enemy gear left behind and finding, in the end, that the household guard carried even their own fallen away. A retrieval detail leaves nothing. It is not the same kind of enemy the squad fought in Anthros."),
+      N("When they do go up, Dawn has moved the four chairs back against the wall. She is at the window with her hands folded, watching the street where Castor's men were."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "I will not make you sit through the rest of the speech tonight. You have heard the load-bearing parts of it. The rest is detail, and detail can wait for a morning when no one has just tried to walk you out of the city. But I will give you the one sentence I was reaching for when the broom started." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
+        body: "Everything you have done — the coup in Para, the squad, the year at sea, the plaza three nights ago — you did believing you were a man of Anthros striking up at an empire. You were only ever doing half of it. The other half was an empire's heir striking at his own father's house. Both of those things are true at once. They will be true for the rest of your life. The work in front of us is deciding what a person who is exactly half of each does with the whole of himself." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(after a long moment) ...Lucian told me, dying, to fight for the people standing next to me. Not the colony, not the empire, not a flag. The people. (Quiet.) That's the only instruction I've been given in two years that didn't come with a board attached to it." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "(a small pause) Then your foreman was a better strategist than I am, and I have known that since Maya's third report. Hold onto his instruction, Amar. You will need something that is yours when the rest of this gets worse." },
+      N("Maya catches Amar on the stairs afterward. She is not calculating anything; for once she just looks tired."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "She fed me a false version of your father for eleven years and I never once caught the seam. That frightens me more than Castor did. If Dawn can run a cover story past me for a decade — someone else in this house could be running one past her right now. I am going to start watching the people who watch us. Sleep. I will not be." },
+      N("The squad sleeps under the candle-maker's roof again, in a city that now contains a king who knows his son is here. Somewhere below the floorboards Maya does not sleep, and begins, very quietly, to count the people Dawn trusts.")
     ]
   }
 };

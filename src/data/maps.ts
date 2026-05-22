@@ -768,3 +768,60 @@ export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Arc
     { x: 7,  y: 7 }   // Royal Guard, advancing through fountain
   ]
 });
+
+// ============== Battle 14 — The Origin =================================
+// 13×11 Grude inner-district street outside Madame Dawn's safe house
+// (the upstairs of a candle-maker's shop). The night the squad learns
+// Amar's parentage, King Archbold's household guard arrives to retrieve
+// him — the empire wants its hidden heir alive. The squad fights up the
+// street to break the retrieval before Lord Castor's detail can pin them
+// against the safe-house door.
+//
+// Buildings (Wb walls) frame both sides of the street. Cover comes from
+// two ranks of overturned-market barricades (Bd, rows 3 + 7), a pair of
+// stone well-heads / pillars (Pl, col 6 rows 4 + 6) breaking the central
+// sight line, and street torches (Tr). A full-width junction at row 5
+// lets either side swing a flank.
+//
+// Map fits the viewport (13*48=624w, 11*48=528h) — no camera scroll.
+// Reuses tile aliases declared earlier: Cb (cobblestone), Wb (wall),
+// Bd (cobblestone+barricade), Tr (cobblestone+torch), Mr (marble),
+// Pl (stone+pillar — the street well-heads).
+const originRows = [
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb], // ← north street mouth (Castor's detail enters)
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← street torches
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← north market barricades (cover)
+  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← street well-head
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb], // ← full-width cross-street junction
+  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← matching well-head
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← south barricades near the safe house
+  [Wb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← south torches
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← squad spawn line
+  [Wb, Wb, Cb, Cb, Cb, Mr, Mr, Mr, Cb, Cb, Cb, Wb, Wb]  // ← safe-house front (marble doorstep)
+] as const;
+
+export const originMap: MapDef = buildMap("origin", "Safe-House Street, Grude", originRows, {
+  // Squad spawns south, on the cobbles just outside the safe-house
+  // door (the marble doorstep at row 10). Tight line on row 9 so the
+  // round-1 dialogue fires reliably and the squad can pick a flank up
+  // the street.
+  player: [
+    { x: 5, y: 9 }, // Maya
+    { x: 6, y: 9 }, // Amar (center)
+    { x: 7, y: 9 }, // Ning (bowline)
+    { x: 8, y: 9 }  // Leo (dactyl, east)
+  ],
+  // Lord Castor at the north street mouth — holdPositionUntil keeps
+  // him back until his line is thinned. Two crown archers on row 1
+  // with sight straight down the street; two royal guards at the
+  // north barricades (row 2); one guard advancing through the center.
+  enemy: [
+    { x: 6, y: 0 },  // Lord Castor (boss — holdPositionUntil)
+    { x: 3, y: 1 },  // Crown Archer, west
+    { x: 9, y: 1 },  // Crown Archer, east
+    { x: 5, y: 2 },  // Royal Guard, north-center west
+    { x: 7, y: 2 },  // Royal Guard, north-center east
+    { x: 6, y: 3 }   // Royal Guard, advancing down the street
+  ]
+});

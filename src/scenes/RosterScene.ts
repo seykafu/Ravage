@@ -84,7 +84,10 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   // unit on the field, then dies in the closing scene shielding
   // Madame Dawn from a back-door volley — she does NOT carry forward
   // into the post-B13 roster.
-  b13_dawn_rebellion:  ["amar", "ning", "maya", "leo", "rose"]
+  b13_dawn_rebellion:  ["amar", "ning", "maya", "leo", "rose"],
+  // B14: post-Rose squad of four defends the safe-house street from
+  // Archbold's household retrieval detail.
+  b14_origin:          ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's

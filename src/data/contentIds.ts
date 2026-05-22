@@ -130,7 +130,11 @@ export type ArcId =
   | "post_ravage"
   // -------- B13: Madame Dawn's Rebellion (Rose's death) --------
   | "before_dawn_rebellion"
-  | "post_dawn_rebellion";
+  | "post_dawn_rebellion"
+  // -------- B14: The Origin (Amar's parentage; the empire's first
+  // retrieval attempt) --------
+  | "before_origin"
+  | "post_origin";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, cliffsMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { caravanMap, cliffsMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1350,23 +1350,104 @@ export const BATTLES: BattleNode[] = [
       }
     ]
   },
+  // ============== Battle 14 — The Origin ==============
+  // The reveal chapter. In the before_origin arc Dawn finally tells
+  // Amar his parentage — he is her son, and King Archbold's. The
+  // conversation is barely an hour old when Archbold's household guard
+  // arrives to retrieve the heir. The empire wants Amar alive: a dead
+  // heir is a scandal to bury, a living one is a key to turn. The
+  // squad fights the retrieval detail off the safe-house street.
   {
     id: "b14_origin",
     index: 14,
     title: "Fourteenth Battle",
-    subtitle: "Amar's Origin",
-    intro: "You are the biological child of Madame Dawn and King Archbold.",
-    outro: "Everything you have done is exactly half of what you are.",
+    subtitle: "The Origin",
+    intro:
+      "The conversation in Dawn's study is barely an hour old when the candle-maker downstairs taps the warning rhythm on the ceiling beam. King Archbold's household guard has found the safe house. They have come for one person. The empire does not want Amar dead — a dead heir is a scandal it can bury, and a living one is a key it can turn. Lord Castor's orders are to take the emperor's son off this street breathing. The squad has other plans. Maya is already at the door.",
+    outro:
+      "Castor's detail breaks and pulls back up the street, carrying their commander between them. The retrieval failed — but it was never only an attack. It was a message: the empire knows what Amar is now, and it will keep reaching for him. Back in the study, Dawn finishes the sentence the alarm interrupted. Half of Amar's blood is the rebellion's. The other half is the throne the rebellion exists to break.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Reveal",
-    // Spoils: a single Royal Lens — Khione gives Amar his birth
-    // father's old optic as proof the parentage claim is real.
-    // Mechanically a strong piece of equipment; narratively the
-    // weight of it lands on Amar before any combat use.
-    rewards: ["royal_lens"]
+    playable: true,
+    map: originMap,
+    buildPlayers: () => [
+      // Post-Rose squad of four. Map player slots are ordered
+      // [Maya, Amar, Ning, Leo] — buildPlayers must match.
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Lord Castor's household retrieval detail — 5 elite + the
+      // Knight-Captain. Levels bumped over B13: this is Archbold's
+      // own household guard, not provincial garrison.
+      ENEMIES.imperialKnight(15),
+      ENEMIES.royalArcher("org_ra1", 1401, 14),
+      ENEMIES.royalArcher("org_ra2", 1402, 14),
+      ENEMIES.royalGuard("org_rg1", 1403, 14),
+      ENEMIES.royalGuard("org_rg2", 1404, 14),
+      ENEMIES.royalGuard("org_rg3", 1405, 14)
+    ],
+    difficultyLabel: "Reveal — The Heir",
+    // Spoils: 2 elixirs from the safe-house stores + the Royal Lens
+    // off Castor's belt. Narratively the lens is Archbold-issue
+    // household-guard kit — the first piece of his birth father's
+    // empire Amar carries on his own person.
+    rewards: ["elixir", "elixir", "royal_lens"],
+    // Victory: defeat Lord Castor. Mirrors the b05/b07/b11/b13
+    // defeatUnit pattern — breaking the retrieval means dropping the
+    // officer who carries the order.
+    victory: defeatUnit("imperial_knight", { label: "Defeat Lord Castor" }),
+    dialogues: [
+      // Round 1: Castor's arrival. He states the retrieval order out
+      // loud, which recontextualizes the fight for the player — the
+      // enemy wants Amar ALIVE. The squad answers.
+      {
+        id: "b14_castor_arrival",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "Squad of the Anthros coup. You are harbouring a man named Amar. By the authority of King Archbold of Grude, I am here to take him into the King's custody — unharmed, and tonight. Stand aside and not one of you needs to bleed for it. The King's quarrel is not with hired swords." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "\"Unharmed.\" Listen to that, Amar. Every other officer who has come at us in two years wanted you dead. This one has orders to keep you breathing. That tells you exactly how much the study just changed." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "It changes nothing about the next ten minutes. Castor — you can carry that order back up the street or you can carry your men. Squad: break their line. Nobody takes me anywhere tonight." }
+        ]
+      },
+      // adjacent_eot Amar/Castor — the personal exchange. Castor is
+      // not cruel; he's a professional who genuinely thinks Amar
+      // belongs in Grude. The first voice to frame Amar's heritage
+      // as a homecoming rather than a threat.
+      {
+        id: "b14_amar_castor",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "imperial_knight" },
+        beats: [
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "You fight like your mother's side and you hold a line like your father's. I served in your father's household guard for twenty years, Amar. I have wanted to meet you since before you had a name. You do not belong on a rebel's safe-house floor. You belong in the capital." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "I had a name. I had a forge, and a foreman who taught me to hold a hammer, and a country I bled for. Don't tell me where I belong. You don't get to be the third person this month to tell me who I am." },
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "(quietly) No. I suppose I don't. But the King will, Amar — sooner than you would like. Mind the archers behind me. My orders said unharmed. They did not say comfortable." }
+        ]
+      },
+      // before_victory: Castor falls, the retrieval breaks. He goes
+      // down still treating it as the opening move of a longer game —
+      // because for the empire, it is.
+      {
+        id: "b14_castor_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Lord Castor takes a knee on the cobblestones with a hand pressed to his side. He does not call for a rally. His remaining men close around him and begin a slow, disciplined withdrawal up the street — they are household guard, and household guard do not rout." },
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "(to Amar, as his men lift him) Tonight goes in a report, not a grave. The King has waited eleven years to put his hand on you. He can wait until spring. (A breath.) Welcome to the family, your highness. It is larger and worse than you think." },
+          { portraitId: "narrator",
+            body: "The detail clears the north end of the street and is gone. The candle-maker's warning rhythm goes quiet. The squad stands in the empty street with the sound of their own breathing — and the unfinished sentence waiting back upstairs in Dawn's study." }
+        ]
+      }
+    ]
   },
   {
     id: "b15_inner_coup",

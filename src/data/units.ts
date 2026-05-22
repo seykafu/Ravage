@@ -445,6 +445,28 @@ export const ENEMIES = {
     level,
     holdPositionUntil: { allyCount: 2 }
   }),
+  // Lord Castor — Knight-Captain of King Archbold's household guard,
+  // sent personally to retrieve Amar once the empire learns the
+  // Anthros coup-leader is the emperor's own hidden child (B14, The
+  // Origin). Highest-statline officer the squad has faced — he's
+  // household elite, not provincial garrison. Holds position until
+  // his line is thinned so the round-1 dialogue lands first.
+  imperialKnight: (level = 15): UnitDef => ({
+    id: "imperial_knight",
+    name: "Lord Castor",
+    shortName: "Cs",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 64, power: 16, armor: 9, speed: 11, movement: 4, ap: 3 },
+    artSeed: 41,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
   kian: (level = 12): UnitDef => ({
     id: "kian_enemy",
     name: "Kian",
