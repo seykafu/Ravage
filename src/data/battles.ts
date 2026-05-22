@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1638,23 +1638,111 @@ export const BATTLES: BattleNode[] = [
       }
     ]
   },
+  // ============== Battle 17 — Dawn's Lie ==============
+  // The chapter the whole Grude arc has been building toward. In
+  // before_lie, Khione tells Amar the part Dawn has told no one: the
+  // rebellion's strategy spends Anthros. The heir is bait — a trueborn
+  // claimant openly taking the colony's throne is a provocation
+  // Archbold MUST answer with a war that burns Anthros, and a colony
+  // visibly burning is what finally turns Grude against its own
+  // throne. Kian was right on the cliff; he only had it half-sized.
+  // The squad breaks with Dawn and runs for Khione's ship — and
+  // Marshal Othren's loyalists, true believers in the plan, form a
+  // line to stop the rebellion's lynchpin from walking.
   {
     id: "b17_lie",
     index: 17,
     title: "Seventeenth Battle",
     subtitle: "Dawn's Lie",
-    intro: "Khione tells the rest of the story. Kian's last words on the cliff come back to you.",
-    outro: "She loves you. She lied. Both can be true.",
+    intro:
+      "Khione told Amar the whole of it on the water, the way she said she would. Madame Dawn's rebellion was never a plan to free Anthros. It is a plan to spend Anthros — to put a trueborn heir openly on the colony's throne, force King Archbold to burn the colony to the ground to unseat him, and let the sight of a hundred million subjects in the fire do what thirty years of careful work could not: turn Grude against its own crown. Amar is the spark. He was always the spark. Kian said as much on the cliff, and Kian was right, and he only got the number wrong by being kind. The squad does not stay for breakfast. They run for Khione's ship at the quay — and Marshal Othren's loyalists are already across the dock, because the rebellion does not let its lynchpin simply walk away.",
+    outro:
+      "The squad breaks through to the gangway and Khione casts off before the lines are fully clear. Grude falls away behind them, and somewhere in it is a woman who is, all at once and without contradiction, the mother who crossed an ocean to find Amar and the strategist who priced his homeland in advance. She loves him. She lied to him. Both are true, and Amar carries both off the dock, and the open water ahead of him is the first space in his life that no one — not Nebu, not Fergus, not Kian, not Archbold, not Dawn — has already decided the shape of.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Reveal",
-    // Spoils: 2 potions + 1 fang from a confrontation with Dawn's
-    // intelligence officers — the squad takes what they can carry
-    // out of the proverbial side door. Modest because the squad is
-    // exiting Dawn's hospitality whether they like it or not.
-    rewards: ["potion", "potion", "fang"]
+    playable: true,
+    map: quayMap,
+    buildPlayers: () => [
+      // Post-Rose squad of four. Khione readies the ship — she is
+      // narratively present but not a combatant. Map slots ordered
+      // [Maya, Amar, Ning, Leo].
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Marshal Othren + Dawn's loyalist rank-and-file. Her rebellion's
+      // fighters are bandit-tier (they have been "Madame Dawn's
+      // bandits" mechanically since B3) — so the line the squad has to
+      // break is built from the bandit factories, not the royal ones.
+      // These are not the empire. These are people who believe.
+      ENEMIES.dawnLoyalist(15),
+      ENEMIES.banditSwordsman("lie_lo1", 1701, 14),
+      ENEMIES.banditSpearton("lie_lo2", 1702, 14),
+      ENEMIES.banditArcher("lie_lo3", 1703, 14),
+      ENEMIES.banditArcher("lie_lo4", 1704, 14),
+      ENEMIES.banditSwordsman("lie_lo5", 1705, 14)
+    ],
+    difficultyLabel: "Reveal — The Break with Dawn",
+    // Spoils: 2 potions + 1 fang — what the squad can grab off the
+    // quay on the way to the gangway. Modest: they are leaving Dawn's
+    // hospitality at a dead run, not looting at leisure.
+    rewards: ["potion", "potion", "fang"],
+    // Victory: escape to the ship's gangway OR rout Othren's line.
+    // Mirrors B10 (Leaving Thuling) — the cinematic intent is to board
+    // and go, but a player who wants the full clear can take it.
+    victory: anyOf(
+      escapeToTile({ x: 6, y: 9 }, { label: "Reach Khione's ship" }),
+      routEnemies
+    ),
+    dialogues: [
+      // Round 1: Othren forms the line. He is not the empire and not
+      // a traitor — he is a believer, and the believer's case is the
+      // hardest one the squad has had to cut through.
+      {
+        id: "b17_othren_line",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Marshal Othren",
+            body: "Far enough. I have nothing against any of you — you fought for the cause and you fought well, and on any other night I would buy the round. But the man in the middle of your formation is the cause now. Madame Dawn did not spend thirty years to watch her heir stroll onto a boat the week before he was going to matter. Turn around, Amar. Go back up the hill. This does not have to be the night your squad and your mother's army learn what the other one is made of." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "I know what the plan is, Othren. I know what \"the heir mattering\" means — I know it ends with Thuling on fire and Orinhal on fire and every village Maya has a name for on fire. I am not walking back up that hill to be the torch." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "He won't move and he won't be talked round — look at how he's set his line, he's wanted this argument settled for weeks. Othren's the anchor. Break him or break past him; the gangway is the win either way. Squad — south. We are getting on that ship." }
+        ]
+      },
+      // adjacent_eot Amar/Othren — the believer says the quiet part
+      // plainly. This is the lie confirmed from the inside: yes, the
+      // colony burns; yes, he has done the arithmetic; yes, he can
+      // still sleep. The most chilling voice in the arc is the sincere
+      // one.
+      {
+        id: "b17_amar_othren",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "dawn_loyalist" },
+        beats: [
+          { speaker: "Marshal Othren",
+            body: "You say \"on fire\" like it is a thing I have not pictured. I have pictured it for nine years, Amar. Thuling burns. A great many people who did nothing wrong burn with it. And then — because the whole world is watching a colony burn for the crime of wanting a king of its own — Grude's own cities put down their emperor, and the empire that has eaten this peninsula for eighty years is over. Forever. For everyone after. I have done that arithmetic ten thousand times and it comes out the same every time and I sleep, your highness. I sleep well. That is what you are actually fighting on this dock — not a traitor. A man who counted." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "Then you and Coyne would have had a great deal to say to each other. He counted too. (Steel up.) I'm done being a number in everyone's sum, Othren. Mine or hers or yours. Move." }
+        ]
+      },
+      // before_victory: the squad reaches the gangway. Othren, down or
+      // bypassed, does not chase — he was an anchor, not a hound.
+      {
+        id: "b17_break_through",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The line breaks, or the squad breaks past it, and the gangway is suddenly open ahead of them — Khione already at the rail with the mooring line in one hand and the other held out. Behind them, Othren's loyalists do not give chase. They were posted to hold a dock, not to hunt a son through a city, and the difference is the only mercy in the whole affair." },
+          { speaker: "Marshal Othren",
+            body: "(calling after them, not angry — almost sorrowful) She'll let you go, you know. That's the part you've never understood about your mother. She has a plan for every road, Amar — including the one where her son walks off the board. You are not escaping her arithmetic. You are just becoming a different line of it. ...Fair winds, your highness. I mean that. I always did." },
+          { portraitId: "narrator",
+            body: "The squad crosses the gangway onto the deck of Khione's ship. The lines come off the bollards. Grude begins, slowly, to slide away across the widening water — and for the first time since a hospital bed in Thuling, no one waiting at the next harbor has already written down what Amar is going to do when he gets there." }
+        ]
+      }
+    ]
   },
   // ---- B18: Seven Paths divergence point -------------------------------------
   // The pivotal narrative beat — Amar chooses what kind of person he's

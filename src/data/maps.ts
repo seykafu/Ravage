@@ -932,3 +932,57 @@ export const bridgeMap: MapDef = buildMap("bridge", "River Bridge, Grude", bridg
     { x: 3,  y: 6 }  // hired knife (bandit swordsman) — drops in behind, SW
   ]
 });
+
+// ============== Battle 17 — Dawn's Lie =================================
+// 13×10 Grude harbour quay. Khione has told Amar the whole of it — Dawn's
+// rebellion spends Anthros as fuel; the heir is the spark. The squad
+// breaks with Dawn and runs for Khione's ship at the south dock. Marshal
+// Othren, Dawn's Grude garrison commander and a true believer in the
+// plan, will not let the rebellion's lynchpin walk: he forms his
+// loyalists across the quay between the squad and the gangway.
+//
+// Squad enters from the city edge (NORTH); the ship's gangway (Wo wood
+// planks) is the SOUTH escape. Warehouse walls (Wb) flank the quay;
+// stacked cargo (Bd) and dock lamps (Tr) give the only cover. Othren's
+// line holds the open middle.
+//
+// Victory is anyOf(escapeToTile gangway, routEnemies) — mirrors B10's
+// escape framing: the squad can break through and board, or clear the
+// quay outright.
+//
+// Map fits the viewport (13*48=624w, 10*48=480h) — no camera scroll.
+// Reuses Cb / Wb / Bd / Tr; Wo (ship's-deck wood) from the cliffs map.
+const quayRows = [
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb], // ← city edge (squad enters)
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← dock lamps
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb], // ← stacked cargo (cover)
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb], // ← open quay (Othren's line)
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb], // ← matching cargo
+  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← dock lamps
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← dock edge
+  [Wb, Wb, Wb, Wb, Wo, Wo, Wo, Wo, Wo, Wb, Wb, Wb, Wb]  // ← ship's gangway (Wo) — escape
+] as const;
+
+export const quayMap: MapDef = buildMap("quay", "Harbour Quay, Grude", quayRows, {
+  // Squad enters north from the city, tight block so the round-1
+  // dialogue fires reliably before they commit to a lane south.
+  player: [
+    { x: 4, y: 1 }, // Maya
+    { x: 5, y: 1 }, // Amar (center)
+    { x: 6, y: 1 }, // Ning (bowline)
+    { x: 7, y: 1 }  // Leo (dactyl)
+  ],
+  // Othren holds the open quay centre — holdPositionUntil keeps his
+  // line formed until the squad thins it. Loyalist fighters (Dawn's
+  // rebellion rank-and-file, bandit-tier) spread across rows 3-5.
+  enemy: [
+    { x: 6, y: 4 }, // Marshal Othren (boss — holdPositionUntil)
+    { x: 3, y: 4 }, // loyalist (bandit swordsman), west
+    { x: 9, y: 4 }, // loyalist (bandit spearton), east
+    { x: 3, y: 3 }, // loyalist archer (bandit archer), west cargo
+    { x: 9, y: 3 }, // loyalist archer (bandit archer), east cargo
+    { x: 6, y: 5 }  // loyalist (bandit swordsman), centre-south
+  ]
+});

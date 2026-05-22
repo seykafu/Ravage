@@ -142,7 +142,11 @@ export type ArcId =
   // -------- B16: Dawn's Proposal (the throne offer; Archbold
   // switches from retrieve to kill) --------
   | "before_proposal"
-  | "post_proposal";
+  | "post_proposal"
+  // -------- B17: Dawn's Lie (Khione's revelation; the break with
+  // Dawn; the squad leaves Grude) --------
+  | "before_lie"
+  | "post_lie";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

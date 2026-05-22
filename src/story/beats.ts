@@ -1028,7 +1028,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "Back across the river, the courier's crate delivered",
     music: "emotional",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_lie",
     beats: [
       N("The crate reaches the safe house. It holds exactly what Dawn said it would — a sheaf of colony cell-names in a courier's careful hand — and the night is, by every measure Dawn will use in the morning, a success. The squad does not feel like it was a success. They feel like they walked onto a bridge as people and walked off it as a number in King Archbold's ledger."),
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
@@ -1043,6 +1043,72 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
         body: "There is a part of the story, Amar. The part your mother has told no one in this house — not Maya, not Ndara, not Rose before she died. The part the man on the cliff was reaching for when he told you Dawn would use the look on your face to start a war. (A breath.) Kian was not wrong. He only had it half-sized. I have it whole, because I was on the ship the night your mother decided it. You should hear it before you answer her about any throne. Not tonight. You have had enough of being told things tonight. But soon. Come find me on the water, where her walls are thinner." },
       N("Khione goes back to watching Ndara breathe. Amar sits a long time in the bright room with two things he cannot put down — his mother's question, and the shape of the answer Khione has just promised him. Somewhere below, Dawn sleeps the sleep of a woman whose plan is finally moving. The squad does not. Morning, and the water, and the rest of the story are all still ahead.")
+    ]
+  },
+  // -------- Pre-Battle 17 (Khione tells the whole of it) --------
+  // Amar takes Khione up on her offer — "come find me on the water."
+  // Khione tells him the part Dawn has told no one: the rebellion's
+  // strategy is to spend Anthros, with the heir as the spark. Kian's
+  // cliff warning was right and only kindly under-sized. The squad
+  // resolves to break with Dawn and leave Grude — and Othren's
+  // loyalists are already forming on the quay. Routes into B17's prep.
+  before_lie: {
+    id: "before_lie",
+    title: "On the water, where her walls are thinner",
+    subtitle: "Khione's ship at the quay, before dawn",
+    music: "emotional",
+    backdrop: "grude",
+    next: "prep:b17_lie",
+    beats: [
+      N("Amar goes down to the quay in the grey hour before dawn, and Maya goes with him, because Maya has not let Amar walk into a room alone since the bridge. Khione is on the deck of her ship, coiling a line she has already coiled twice. She does not look surprised to see two of them instead of one."),
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "You came. And you brought the squad's eyes with you — good. This is not a thing you should carry by yourself and then have to repeat secondhand. (She sets the line down.) I will tell it plainly. I have only ever known how to tell things plainly; it is why your mother keeps me on the water and not in her study." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "Madame Dawn's rebellion is not a plan to free Anthros. I want you to hear that sentence with nothing soft around it. It is a plan to SPEND Anthros. The throne she offered you is real — she does want her son crowned. But the road to that throne runs through the colony's burning, and she has known that, and costed that, since before the squad ever set foot on my deck." },
+      { speaker: "Amar", portraitId: "amar", expression: "shocked",
+        body: "...Spend it how. Say the whole shape of it, Khione." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "A trueborn heir standing openly on the colony's throne is a thing King Archbold cannot ignore and cannot quietly retrieve. He must answer it with an army, and the army must burn Anthros down to its roots to be sure of you — Thuling, Orinhal, the eastern villages, the harvests, the people. And the WORLD will watch an empire set fire to a hundred million of its own subjects for the crime of wanting a king. That fire is the plan, Amar. Not a cost of the plan. The plan. The sight of a burning colony is the one thing in thirty years that Dawn believes will finally turn Grude's own cities against Archbold's throne — and end the empire for good, for everyone who comes after." },
+      { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+        body: "(very quietly) ...That is why she never let the strategy live in one person's head. I had a piece. Ndara had a piece. Rose had a piece. Nobody but Dawn ever held the whole sum, because the whole sum is a number with Thuling inside it. (To Amar.) Kian said it on the cliff. He said she'd use the look on your face to start a war that killed a hundred thousand peasants. He was being generous. The real figure has more zeroes." },
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "She held me every night for eleven months. She crossed an ocean for me. She sat in that study and called me her son and asked me to be a king — and the whole time the king's road in her head was paved straight through Lucian's town." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "Both of those are true, your highness. That is the cruelty of your mother — not that she is a liar with no love in her, but that the love is entirely real and the arithmetic is entirely real and she has never once let either one move the other. (Gently.) I have given you the whole of it now. What you do with it is the first thing in your life that is going to be only yours. But I would decide it somewhere that is not this city — and I would decide it soon, because a quay does not stay quiet, and two of you walked down here in the dark, and Dawn's house has always had ears." },
+      N("It does. Word of three figures talking on a ship before dawn reaches the safe house before the sky is fully light, and by the time Amar and Maya have the squad woken and moving, the simple truth of it is plain: the rebellion is not going to let the heir it has spent thirty years growing simply stroll onto a boat. There are loyalists forming up across the quay between the squad and Khione's gangway, and the man at the centre of the line is Marshal Othren, and he is not going to step aside."),
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then we don't ask him to. Squad — the gangway, and the ship, and the open water past it. We are leaving Grude, and we are leaving it now, and we will decide what comes next somewhere my mother hasn't already drawn the map." }
+    ]
+  },
+  // -------- Post-Battle 17 (the break; Dawn lets him go) --------
+  // The squad is aboard and the ship clears the quay. Dawn comes down
+  // to the emptied dock — alone, unarmed — for the last word. She does
+  // not deny the plan and she does not beg; she states the arithmetic
+  // and the love both, lets her son go, and the slice ends on Amar in
+  // open water with the first genuinely unwritten choice of his life
+  // ahead of him. (Routes to credits; B18 — the Seven Paths — is the
+  // next chapter to be authored.)
+  post_lie: {
+    id: "post_lie",
+    title: "She loves you. She lied.",
+    subtitle: "Khione's ship, pulling out of Grude harbour",
+    music: "sadness",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("Khione has the ship off the bollards before the squad has finished catching its breath. The quay begins to widen astern — and out onto the emptied stone of it, alone, without a single guard at her shoulder, walks Madame Dawn. She does not call for the ship to be stopped. She simply walks to the edge of the dock, where the water starts, and waits for the gap to be exactly wide enough that nothing said across it can be mistaken for a negotiation."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "Amar. I am not going to insult you by calling Khione a liar — she sailed me to the night I decided it; she has it exact. So I will not deny the plan. I will only tell you the two things she could not, because she was not in the room for them. The first is that I have re-run the arithmetic every year for thirty years, looking for the version that frees Anthros without burning it, and there is no such version, and I have grieved that longer than you have been alive." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "And the second is that I let you reach that ship. The quay watch is mine. Othren is mine. Khione has been mine for nineteen years. If I had wanted the heir kept in Grude this morning, the heir would be in Grude this morning. (A long breath, and the careful voice finally fails her on the last of it.) ...I have spent thirty years building a plan that spends everything. I find that I am not able to make it spend you. So go. Be a thing my arithmetic did not predict. It is the only gift I have left that is worth giving." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(across the widening water) You could have told me. Any night of the crossing. Any morning in the study. You could have set the whole of it on the table and let me choose with my eyes open." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "Yes. (Simply.) That is the lie, Amar — not a thing I said, but a year of mornings I chose silence over your open eyes. I told myself it was to protect the plan. It was to keep my son a little longer before he learned what his mother was. I was wrong, and I knew I was wrong, and I did it anyway, every single morning. Hold onto that when you decide what to do with me. Your mother loved you entirely, and lied to you entirely, and never once let the first thing soften the second. Both are true. Carry both. It is the truest inheritance I have." },
+      N("The gap of water goes on widening. Dawn does not wave and Amar does not wave; they only hold each other's eyes until the harbour mist and the distance take the dock, and then Madame Dawn is gone, and Grude with her, and the ship comes around onto open sea."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "(after a long quiet) Wherever this goes next — it isn't her board anymore, Amar. It isn't Archbold's, it isn't Fergus's, it isn't Nebu's. For the first time since a hospital cot in Thuling, the next move is genuinely yours. Ning, Leo and I have talked about it. Whatever you choose to be from here — we're the people standing next to you. Lucian's instruction. We meant it." },
+      N("The ship runs west into open water, and Grude sinks behind it, and ahead of Amar there is nothing written — no warrant, no contract, no mother's map, no father's army with his name already on its orders. Only the sea, and the squad, and a question with seven possible shapes that no one alive but Amar gets to answer. The vertical slice ends here. The choice begins the next time the story does.")
     ]
   }
 };

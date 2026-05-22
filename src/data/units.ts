@@ -512,6 +512,29 @@ export const ENEMIES = {
     tags: new Set(["boss"]),
     level
   }),
+  // Marshal Othren — Madame Dawn's Grude garrison commander, and a
+  // true believer in her plan. At B17 (Dawn's Lie) he blocks the
+  // squad's break for the harbour: a heavy, defensive officer who
+  // forms a line and holds it. Not empire — one of Dawn's own — so
+  // he carries the bandit (irregular/rebel) palette rather than the
+  // archbold one. Spear + shield-tier armour; holds position until
+  // his line is thinned.
+  dawnLoyalist: (level = 15): UnitDef => ({
+    id: "dawn_loyalist",
+    name: "Marshal Othren",
+    shortName: "Ot",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "spear",
+    stats: { hp: 58, power: 14, armor: 9, speed: 9, movement: 4, ap: 3 },
+    artSeed: 88,
+    palette: ENEMY_PALETTES.bandit,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
   kian: (level = 12): UnitDef => ({
     id: "kian_enemy",
     name: "Kian",

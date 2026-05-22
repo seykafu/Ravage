@@ -92,7 +92,9 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   // Ndara is in a coma — not on the field.
   b15_inner_coup:      ["amar", "ning", "maya", "leo"],
   // B16: the four are ambushed on the Grude river bridge.
-  b16_proposal:        ["amar", "ning", "maya", "leo"]
+  b16_proposal:        ["amar", "ning", "maya", "leo"],
+  // B17: the four break for Khione's ship through Dawn's loyalists.
+  b17_lie:             ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's
