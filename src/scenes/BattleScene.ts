@@ -12,7 +12,7 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
-import { battleById, type BattleDialogue, type BattleDialogueTrigger } from "../data/battles";
+import { battleById } from "../data/battles";
 import {
   BattleState,
   applyAttackOutcome,
@@ -91,6 +91,7 @@ import { playUnitState } from "../assets/unitAnim";
 import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
+import { DialogueDirector } from "./battle/DialogueDirector";
 
 interface BattleArgs { battleId: BattleId; }
 
@@ -229,14 +230,10 @@ export class BattleScene extends Phaser.Scene {
   // scene's tween + timer timescale is doubled so the AI loop visibly snaps
   // forward without altering combat math.
   private fastForward = false;
-  // Mid-battle dialogue dedup. Each BattleDialogue has a stable id; once
-  // it fires, this set prevents re-firing in the same battle. Reset by
-  // init() on every BattleScene entry, so retrying a battle re-shows the
-  // dialogues. lastSeenDialogueRound tracks the last round number that
-  // ran a check, so round_start triggers fire exactly once per round
-  // crossing instead of on every checkDialogueTriggers tick.
-  private firedDialogues = new Set<string>();
-  private lastSeenDialogueRound = 0;
+  // Mid-battle dialogue trigger evaluation + firing. Owns its own
+  // fired-dialogue dedup + round bookkeeping; constructed fresh per
+  // battle in create(). See src/scenes/battle/DialogueDirector.ts.
+  private dialogue!: DialogueDirector;
   // Battle-music gate. When a battle opens with a round-1 dialogue
   // (Kian's blockade speech, the colony reveal, Rose's brief, etc.),
   // the battle theme is held back so it doesn't swell underneath the
@@ -254,8 +251,6 @@ export class BattleScene extends Phaser.Scene {
     this.logLines = [];
     this.fsm = new BattleFSM();
     this.debug = false;
-    this.firedDialogues = new Set();
-    this.lastSeenDialogueRound = 0;
     this.battleMusicStarted = false;
   }
 
@@ -345,6 +340,16 @@ export class BattleScene extends Phaser.Scene {
 
     this.initiative = new Initiative();
     this.initiative.reseed(units);
+
+    // Mid-battle dialogue director — fresh per battle, so its fired /
+    // round bookkeeping starts clean on every entry / retry.
+    this.dialogue = new DialogueDirector(
+      this,
+      node.dialogues ?? [],
+      node.music,
+      this.initiative,
+      this.state
+    );
 
     // Layout. The playfield viewport is the screen area NOT occupied by
     // the side panel (right) or the top bar (top). Maps that fit inside
@@ -1019,7 +1024,7 @@ export class BattleScene extends Phaser.Scene {
       // this first means dialogues land BEFORE the AI starts moving
       // and BEFORE the player gets action buttons — feels like a beat
       // in the script rather than an interrupt.
-      this.checkDialogueTriggers();
+      this.dialogue.checkTurnTriggers();
       if (u.faction === "player" && isAlive(u)) {
         // Coming off an enemy phase: drop back to idle before unlocking input.
         if (this.fsm.current().tag === "enemyTurn") {
@@ -1222,130 +1227,6 @@ export class BattleScene extends Phaser.Scene {
       if (keys.down.isDown || keys.s.isDown) dy += STEP;
       if (dx !== 0 || dy !== 0) cam.setScroll(cam.scrollX + dx, cam.scrollY + dy);
     });
-  }
-
-  // ---- Mid-battle dialogue triggers ----
-  // Called from startTurn (every turn transition) for round_start +
-  // adjacent_eot triggers. ally_killed_target is checked inline in
-  // applyAttackEffects since it needs the (attacker, defender) pair.
-  // Only fires the FIRST matching un-fired dialogue per check tick — if
-  // two triggers happen to match in the same instant, the second waits
-  // until its next check.
-  private checkDialogueTriggers(): void {
-    const node = battleById(this.battleId);
-    if (!node?.dialogues) return;
-    const round = this.initiative.round;
-    const roundChanged = round !== this.lastSeenDialogueRound;
-    this.lastSeenDialogueRound = round;
-    for (const dlg of node.dialogues) {
-      if (this.firedDialogues.has(dlg.id)) continue;
-      if (this.matchesTrigger(dlg.trigger, round, roundChanged)) {
-        this.fireDialogue(dlg);
-        return;
-      }
-    }
-  }
-
-  private matchesTrigger(t: BattleDialogueTrigger, round: number, roundChanged: boolean): boolean {
-    switch (t.kind) {
-      case "round_start":
-        // Fires the first time the round counter reaches t.round (or any
-        // higher round if the trigger was added late). roundChanged
-        // ensures we don't re-fire on subsequent same-round checks.
-        return roundChanged && round >= t.round;
-      case "adjacent_eot": {
-        const a = this.state.units.find((u) => u.id === t.unitA);
-        const b = this.state.units.find((u) => u.id === t.unitB);
-        if (!a || !b || !isAlive(a) || !isAlive(b)) return false;
-        return this.state.grid.isMeleeAdjacent(a.state.position, b.state.position);
-      }
-      case "ally_attacks":
-      case "ally_killed_target":
-        // Both fire inline in applyAttackEffects (checkAttackDialogue +
-        // checkKillDialogue), never via this code path.
-        return false;
-      case "before_victory":
-        // Fired explicitly via findBeforeVictoryDialogue() in checkEnd,
-        // never matched via the regular tick.
-        return false;
-    }
-  }
-
-  // Look for an unfired before_victory dialogue. Called by checkEnd when
-  // the victory condition flips to "player" — if a match is found, the
-  // EndScene transition is deferred until the dialogue closes.
-  private findBeforeVictoryDialogue(): BattleDialogue | null {
-    const node = battleById(this.battleId);
-    if (!node?.dialogues) return null;
-    for (const dlg of node.dialogues) {
-      if (this.firedDialogues.has(dlg.id)) continue;
-      if (dlg.trigger.kind === "before_victory") return dlg;
-    }
-    return null;
-  }
-
-  // Mark a dialogue fired and launch BattleDialogueScene as an overlay.
-  // BattleScene pauses; the dialogue scene resumes us when its Continue
-  // button (or ENTER/SPACE) closes the panel.
-  //
-  // Music takeover: when the dialogue authored a `music` override,
-  // forward it along with the battle's main music as the restore
-  // target — UNLESS the trigger is `before_victory`, in which case
-  // EndScene is about to take the music over with its own sting and
-  // restoring the battle theme would just step on it. For
-  // before_victory beats, we skip restoreMusic so the dialogue's
-  // override holds until EndScene.
-  private fireDialogue(dlg: BattleDialogue): void {
-    this.firedDialogues.add(dlg.id);
-    this.scene.pause();
-    const node = battleById(this.battleId);
-    const isBeforeVictory = dlg.trigger.kind === "before_victory";
-    this.scene.run("BattleDialogueScene", {
-      beats: dlg.beats,
-      resumeKey: this.scene.key,
-      music: dlg.music,
-      // Only restore the battle theme if the dialogue actually took
-      // over the music AND the dialogue isn't about to hand off to
-      // EndScene. Avoids a 700ms cross-fade back to battle music
-      // immediately followed by EndScene fading it out again.
-      restoreMusic: dlg.music && !isBeforeVictory ? node?.music : undefined
-    });
-  }
-
-  // Called from applyAttackEffects right after the kill resolves and
-  // (for player kills) the XP award. Scans for an ally_killed_target
-  // dialogue that matches the (attacker, defender) pair and fires the
-  // first match. Cheap because this only runs on actual kills.
-  private checkKillDialogue(attacker: Unit, defender: Unit): void {
-    const node = battleById(this.battleId);
-    if (!node?.dialogues) return;
-    for (const dlg of node.dialogues) {
-      if (this.firedDialogues.has(dlg.id)) continue;
-      const t = dlg.trigger;
-      if (t.kind === "ally_killed_target" && t.allyId === attacker.id && t.targetId === defender.id) {
-        this.fireDialogue(dlg);
-        return;
-      }
-    }
-  }
-
-  // Called from applyAttackEffects after every resolved attack (regardless
-  // of hit/miss/kill). Scans for an ally_attacks dialogue that matches the
-  // attacker and fires the first match. Used for "Kian sees Amar swing for
-  // the first time and notes how rehearsed it looks" — fires regardless
-  // of attack outcome, so the dialogue is reliable on the unit's first
-  // swing of the battle.
-  private checkAttackDialogue(attacker: Unit): void {
-    const node = battleById(this.battleId);
-    if (!node?.dialogues) return;
-    for (const dlg of node.dialogues) {
-      if (this.firedDialogues.has(dlg.id)) continue;
-      const t = dlg.trigger;
-      if (t.kind === "ally_attacks" && t.allyId === attacker.id) {
-        this.fireDialogue(dlg);
-        return;
-      }
-    }
   }
 
   private lastActorFaction: Unit["faction"] | null = null;
@@ -1814,12 +1695,12 @@ export class BattleScene extends Phaser.Scene {
     // transition. If no before_victory dialogue is queued, transition
     // immediately as before.
     if (v === "player") {
-      const beforeVictory = this.findBeforeVictoryDialogue();
+      const beforeVictory = this.dialogue.findBeforeVictory();
       if (beforeVictory) {
         this.events.once(Phaser.Scenes.Events.RESUME, () => {
           this.transitionToEndScene(v);
         });
-        this.fireDialogue(beforeVictory);
+        this.dialogue.fire(beforeVictory);
         return true;
       }
     }
@@ -2633,14 +2514,14 @@ export class BattleScene extends Phaser.Scene {
       // Dialogue trigger: fire any ally_killed_target dialogue matching
       // this (attacker, defender) pair. Pauses the battle if one matches,
       // resumes after the player advances through the dialogue.
-      this.checkKillDialogue(attacker, defender);
+      this.dialogue.checkKill(attacker, defender);
     }
     // Attack-based trigger fires regardless of kill outcome (hit, miss,
     // OR kill — the kill-specific case above is its own check). Placed
     // outside the defenderKilled block so it runs on every resolved
     // attack, not just lethal ones. Used for character beats keyed on
     // a unit swinging for the first time in this battle.
-    this.checkAttackDialogue(attacker);
+    this.dialogue.checkAttack(attacker);
   }
 
   // Surface an XP gain to the player: brief two-note "ding" + a small
