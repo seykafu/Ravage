@@ -467,6 +467,28 @@ export const ENEMIES = {
     level,
     holdPositionUntil: { allyCount: 2 }
   }),
+  // Quartermaster Coyne — Madame Dawn's Grude safe-house quartermaster,
+  // secretly King Archbold's mole; the leak that put Castor's detail
+  // on the safe house at B14 (A Coup Within a Coup). An intelligence
+  // officer, not a frontline knight — lower HP/armor than Castor or
+  // the royal captains, but fast (a survivor's statline). Holds the
+  // courtyard's back gate until his line is thinned.
+  turncoat: (level = 14): UnitDef => ({
+    id: "turncoat",
+    name: "Quartermaster Coyne",
+    shortName: "Co",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 48, power: 13, armor: 6, speed: 13, movement: 5, ap: 3 },
+    artSeed: 53,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
   kian: (level = 12): UnitDef => ({
     id: "kian_enemy",
     name: "Kian",

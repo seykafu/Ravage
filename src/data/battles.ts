@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { caravanMap, cliffsMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, ravageMap, ravineMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/Music";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1449,22 +1449,99 @@ export const BATTLES: BattleNode[] = [
       }
     ]
   },
+  // ============== Battle 15 — A Coup Within a Coup ==============
+  // The leak chapter. Maya's hunt (seeded in post_origin) closes on
+  // Quartermaster Coyne — Dawn's own Grude safe-house quartermaster,
+  // and Archbold's mole. The leak that put Castor's detail on the
+  // safe house at B14. Cornered, Coyne strikes Ndara down (a coma,
+  // not a grave) and makes his stand at the courtyard's back gate
+  // with the people he turned + the imperial agents he smuggled in.
   {
     id: "b15_inner_coup",
     index: 15,
     title: "Fifteenth Battle",
     subtitle: "A Coup Within a Coup",
-    intro: "A traitor in Dawn's camp leaves Ndara in a coma.",
-    outro: "Dawn's promises grow harder.",
+    intro:
+      "Maya found the seam. Every message in and out of the safe house for three months passed through one pair of hands — Quartermaster Coyne, who has run Dawn's Grude supply line since before the squad arrived. He is the leak. He is how Castor's detail found the door. Ndara worked it out an hour before Maya could bring it to Dawn, and went to face Coyne alone. They found her in the courtyard, breathing, and not waking. Coyne is still in the courtyard now — at the back gate, with the people his coin has turned and the imperial agents he let through the wall. He did not run. He intends to finish leaving on his own terms.",
+    outro:
+      "Coyne goes down at the gate he never reached. The safe house is the squad's again — but it is a safe house that was never as safe as Dawn believed, and she knows it now. Ndara breathes on a cot upstairs and does not wake. Something in the set of Dawn's jaw has changed. She has spent thirty years asking people to follow her. After tonight, the asking is going to stop.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Intrigue",
+    playable: true,
+    map: courtyardMap,
+    buildPlayers: () => [
+      // Post-Rose squad of four. Ndara is in a coma — not on the
+      // field. Map player slots are ordered [Maya, Amar, Ning, Leo].
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Coyne + the faction he assembled: two turncoat rebels (people
+      // his coin bought, modelled on the bandit factories — rebel-tier
+      // fighters) and two imperial agents (the empire muscle he
+      // smuggled through the wall, modelled on the royal factories).
+      // The mix tells the story without a line of dialogue.
+      ENEMIES.turncoat(14),
+      ENEMIES.royalGuard("icp_rg1", 1501, 14),
+      ENEMIES.royalArcher("icp_ra1", 1502, 14),
+      ENEMIES.banditSwordsman("icp_tc1", 1503, 13),
+      ENEMIES.banditArcher("icp_tc2", 1504, 13),
+      ENEMIES.banditSpearton("icp_tc3", 1505, 13)
+    ],
+    difficultyLabel: "Intrigue — The Mole",
     // Spoils: the traitor's confiscated kit. 2 elixirs + 1 mask + 1
     // fang. Dawn lets the squad keep all of it because none of her
     // remaining officers want to wear a dead traitor's gear.
-    rewards: ["elixir", "elixir", "mask", "fang"]
+    rewards: ["elixir", "elixir", "mask", "fang"],
+    // Victory: defeat Coyne. The turncoats + agents scatter once the
+    // man paying them is down — mirrors the boss-kill pattern.
+    victory: defeatUnit("turncoat", { label: "Defeat Quartermaster Coyne" }),
+    dialogues: [
+      // Round 1: Coyne, exposed, does not deny it — he justifies it.
+      // Maya gets the cold "I had you" beat; Coyne answers with the
+      // mole's logic.
+      {
+        id: "b15_coyne_exposed",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+            body: "Coyne. Three months of manifests, and every one of them routed past your desk. I had you an hour ago. Ndara had you two hours before that — and you put her on a courtyard stone for it. You don't get the gate. You don't get anything." },
+          { speaker: "Quartermaster Coyne",
+            body: "I had her sat down, Maya. Sat down, not buried — there's a difference, and the difference is the only reason I'll sleep. You think I wanted this? I ran Dawn's supply line for nine years. I watched her spend people like coin and call it arithmetic. Rose. The organizers in the prison. She'll spend you too, and you'll thank her for the math. Archbold at least pays in advance." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "You sold the door, Coyne. Castor's crossbows were in that street because of you. Whatever Dawn is — you didn't fix it. You just picked the side that signs bigger receipts. Squad: he does not reach that gate." }
+        ]
+      },
+      // adjacent_eot Amar/Coyne — Coyne is not a swordsman and he
+      // knows it; his weapon is the squad's doubt. He aims it at Amar.
+      {
+        id: "b15_amar_coyne",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "turncoat" },
+        beats: [
+          { speaker: "Quartermaster Coyne",
+            body: "You're the worst-kept secret in this house, you know. The emperor's lost boy. (He's breathing hard already.) Ask yourself one thing while you cut me down, your highness — when Dawn finally tells you what she wants you to DO with that crown of yours, and it costs another Rose, and another — whose arithmetic will you be doing then? Hers? Or your own?" },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "I'll be doing Lucian's. Fight, Coyne. You don't get to poison the well and call it a warning." }
+        ]
+      },
+      // before_victory: Coyne falls short of the gate. He dies the
+      // way a quartermaster dies — still counting.
+      {
+        id: "b15_coyne_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Coyne goes down six strides from the back gate — close enough to see the lane he wanted, not close enough to take it. His turncoats lower their blades the moment he falls; men bought with coin do not die for a corpse. The imperial agents withdraw through the gate in good order, having lost nothing they were sent to keep." },
+          { speaker: "Quartermaster Coyne",
+            body: "(on the cobbles, almost amused) Nine years of her ledgers... and the line that finishes me is six strides of bad luck. Tell Dawn — tell her the safe house was never the leak. (A breath.) The leak was always going to be whichever of us did her arithmetic out loud first." },
+          { portraitId: "narrator",
+            body: "He doesn't say anything after that. The courtyard goes quiet around the lemon tree. Upstairs, on a cot, Ndara keeps breathing and does not wake — and somewhere in the house, Madame Dawn is being told that the man who handed her door to the empire ran her supply line for nine years." }
+        ]
+      }
+    ]
   },
   {
     id: "b16_proposal",

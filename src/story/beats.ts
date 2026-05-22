@@ -898,7 +898,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The safe house, after Castor's detail withdraws",
     music: "emotional",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_inner_coup",
     beats: [
       N("The squad does not go back upstairs right away. They stand in the emptied street while Ndara walks the cobbles, counting the enemy gear left behind and finding, in the end, that the household guard carried even their own fallen away. A retrieval detail leaves nothing. It is not the same kind of enemy the squad fought in Anthros."),
       N("When they do go up, Dawn has moved the four chairs back against the wall. She is at the window with her hands folded, watching the street where Castor's men were."),
@@ -914,6 +914,72 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "She fed me a false version of your father for eleven years and I never once caught the seam. That frightens me more than Castor did. If Dawn can run a cover story past me for a decade — someone else in this house could be running one past her right now. I am going to start watching the people who watch us. Sleep. I will not be." },
       N("The squad sleeps under the candle-maker's roof again, in a city that now contains a king who knows his son is here. Somewhere below the floorboards Maya does not sleep, and begins, very quietly, to count the people Dawn trusts.")
+    ]
+  },
+  // -------- Pre-Battle 15 (Maya's hunt closes; Ndara is found) --------
+  // Maya's count of the people Dawn trusts (post_origin) lands on
+  // Quartermaster Coyne — the safe house's own supply officer, and the
+  // leak that put Castor's detail on the door at B14. Ndara works it
+  // out an hour ahead of Maya, goes to face Coyne alone, and is found
+  // in the courtyard alive but not waking. The squad moves on the
+  // courtyard before Coyne can finish leaving. Routes into B15's prep.
+  before_inner_coup: {
+    id: "before_inner_coup",
+    title: "The people who watch us",
+    subtitle: "Dawn's study, six days after Castor",
+    music: "danger",
+    backdrop: "study",
+    next: "prep:b15_inner_coup",
+    beats: [
+      N("Maya spends six days doing what she told Amar she would do. She does not sleep much. She pulls three months of the safe house's supply manifests out of a locked drawer she was not given the key to, and she lays them across the study floor in a grid, and she reads them the way she read the bandit cohort at the eastern road two years ago — looking for the one hand that touched everything."),
+      { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+        body: "Madame Dawn. Every message into this house and every message out of it, for three months, passed one desk before it reached yours. Reroute orders, courier schedules, the laundry rota — all of it. One man sees the whole shape of this safe house, and it is not you, and it is not me. It is your quartermaster. It is Coyne." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "Coyne has run my Grude supply line for nine years. He buried two of my couriers with his own hands when the empire took them. (A pause — and the pause is the tell.) ...And he is also the only answer that fits the question of how Lord Castor found a door that six people in the world knew the location of. Say the rest of it, Maya. You did not lay out a floor of paper to stop at a name." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "I didn't. I need you to send someone steady to bring Coyne in before he reads the room — quietly, no alarm, before he can —" },
+      N("The study door opens without a knock. It is one of Dawn's couriers, and the courier's face is doing the thing a face does when it has just run up two flights of stairs with the worst news it has ever carried."),
+      { speaker: "Courier", body: "Madame — it's Ndara. The courtyard. She's down, she's breathing, but she won't — she won't wake up, Madame, we can't wake her." },
+      N("Ndara, it turns out, did not need Maya's floor of paper. She reached the same name an hour earlier, the way Ndara reaches everything — alone, and directly. She went to the courtyard to put the question to Coyne herself. The squad finds the answer she got written across the cobblestones by the lemon tree, and Coyne is no longer anywhere in the house that Dawn's people are looking."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "(very quietly) Carry Ndara upstairs. A cot, not the floor. Khione will sit with her." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
+        body: "And find me Coyne. He has not left — the river gate is watched and the harbour gate is watched, and a man who has spent nine years learning my house knows that. He will be going out the one door he is certain of. The courtyard's back gate. (To the squad.) He will not be alone. A man does not betray a rebellion and forget to hire a way out." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then he doesn't reach the gate. Squad — the courtyard. Now. Whoever Coyne's bought, they're standing between us and the man who put Castor's crossbows in that street. Move." }
+    ]
+  },
+  // -------- Post-Battle 15 (Ndara does not wake; Dawn hardens) --------
+  // Coyne is dead. Ndara survives, in a coma. The betrayal from inside
+  // her own house is the thing that finally hardens Madame Dawn — she
+  // stops asking the squad to follow and starts telling them. The arc
+  // closes on the shift in her, and on the demand she is about to make
+  // of Amar (the Anthros throne — set up here, delivered at B16).
+  post_inner_coup: {
+    id: "post_inner_coup",
+    title: "The asking stops",
+    subtitle: "The safe house, the morning after the courtyard",
+    music: "emotional",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("Coyne is buried outside the city walls, in unmarked ground, by people who do not speak on the way there or the way back. Dawn does not attend. The courtyard is scrubbed. The lemon tree, which has now had blood at its roots twice in a month, goes on being a lemon tree."),
+      N("Ndara is moved to the bright upstairs room with the bay window. Khione sits with her through the first night and the second. On the third morning she finds Amar on the stairs and tells him the truth as she has it."),
+      { speaker: "Khione", portraitId: "khione", expression: "neutral",
+        body: "Her body is mending. The blow to her head is the question, and it is not a question I can answer and neither can any physician in this district. She may wake tomorrow. She may wake in a season. She may not. I have seen each of those three endings with my own eyes, on other cots, and I have never once been able to tell which was coming. I am sorry. I know she is the steady one. You will all have to be steadier without her for a while." },
+      N("Dawn gathers the squad in the study that afternoon. She does not sit, and she does not offer chairs. The four chairs from the parentage conversation are stacked against the wall. When she speaks, the squad hears the change in it before they hear the words — the careful, inviting register she has used since the harbour is simply gone."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
+        body: "For thirty years I have asked. I asked people to join. I asked them to risk. I asked Rose to walk a plaza and I asked Ndara to trust a house, and I have just buried one of those askings and I cannot wake the other. I am done asking. The empire put a knife inside my own walls and the knife had served me nine years. Politeness is a thing I could afford when the war was far away. It is not far away. It is in the courtyard." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "So I will tell you instead of asking you, and you may measure for yourselves whether you can still stand to follow a woman who has stopped pretending the difference. The rebellion does not need another martyr and it does not need another safe house. It needs a face the colony will rise behind — a true one, with real blood in it. (She looks at Amar, and does not soften it.) It needs the throne of Anthros to have an heir standing in the open. We will discuss what that requires of you, Amar, tomorrow. Tonight, rest. The discussion will not be a gentle one." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "...You buried Rose three weeks ago telling me grief shouldn't be rushed. Now you can't get to the next move fast enough." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "(a beat) Yes. That is exactly what betrayal from inside a house does to a person, Amar. It teaches them that the slow, kind version of the plan is a luxury bought with other people's lives. I would rather you learn that from watching me than the way I learned it. Tomorrow." },
+      N("Dawn leaves the study first, which she has never done. The squad stands among the stacked chairs. Maya is the one who finally speaks, and she speaks quietly, and only to the people in the room."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "She's not wrong. That's the part that should frighten you. She has just become a great deal harder to argue with — and a great deal harder to refuse. Whatever she puts in front of you tomorrow, Amar: walk in already knowing your own answer. Don't let her hand you hers." },
+      N("The squad does not sleep especially well. Upstairs, Ndara breathes slowly in the bright room and does not wake, and the rebellion waits for morning with a harder woman at the head of it than the one who crossed the sea to fetch them.")
     ]
   }
 };

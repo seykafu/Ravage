@@ -1,12 +1,12 @@
 # Ravage
 
-A tactical RPG vertical slice — fourteen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — fifteen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
 Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
 ## Vertical slice contents
 
-Fourteen playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, the empire's welcome at the Grude harbor, the rebellion strike where Madame Dawn's lieutenant Rose pays the cost, and the night Amar learns whose child he really is:
+Fifteen playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, the empire's welcome at the Grude harbor, the rebellion strike where Madame Dawn's lieutenant Rose pays the cost, the night Amar learns whose child he really is, and the mole inside Dawn's own house:
 
 | # | Title | Music |
 |---|-------|-------|
@@ -24,8 +24,9 @@ Fourteen playable battles closing out the first half of the campaign and opening
 | 12 | The Ravage (Grude harbor, the colony reveal lands) | *Grude Battle 1* |
 | 13 | Madame Dawn's Rebellion (Rose dies for the captain) | *Spine of the World — Battle 2* |
 | 14 | The Origin (Amar's parentage; the empire comes for the heir) | *Spine of the World — Battle 2* |
+| 15 | A Coup Within a Coup (Coyne the mole; Ndara falls) | *Spine of the World — Battle 2* |
 
-Battles 15–30 exist as data stubs in the world map for narrative continuity (the inner coup, the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
+Battles 16–30 exist as data stubs in the world map for narrative continuity (Dawn's proposal, the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
 
 ## Setup
 

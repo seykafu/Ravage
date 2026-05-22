@@ -134,7 +134,11 @@ export type ArcId =
   // -------- B14: The Origin (Amar's parentage; the empire's first
   // retrieval attempt) --------
   | "before_origin"
-  | "post_origin";
+  | "post_origin"
+  // -------- B15: A Coup Within a Coup (Coyne the mole; Ndara
+  // is left in a coma; Dawn hardens) --------
+  | "before_inner_coup"
+  | "post_inner_coup";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

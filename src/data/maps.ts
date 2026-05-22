@@ -825,3 +825,59 @@ export const originMap: MapDef = buildMap("origin", "Safe-House Street, Grude", 
     { x: 6, y: 3 }   // Royal Guard, advancing down the street
   ]
 });
+
+// ============== Battle 15 — A Coup Within a Coup =======================
+// 12×10 enclosed courtyard behind the candle-maker's shop — the same
+// courtyard where Rose is buried under the lemon tree. The night Maya's
+// hunt for the leak closes: Quartermaster Coyne, Dawn's own safe-house
+// quartermaster, is exposed as Archbold's mole. Cornered, he makes his
+// stand at the courtyard's back gate with the people he's turned + the
+// imperial agents he smuggled in. The squad fights inward from the
+// shop door (south) to stop him reaching the gate (north).
+//
+// Walls (Wb) enclose the courtyard on all four sides — only two gaps:
+// the shop door (south, squad spawn) and the back gate (north, Coyne's
+// escape). The lemon tree (Lt) over Rose's grave breaks the centre
+// line; a stone well (Pl) and two ranks of stacked-crate barricades
+// (Bd) give cover. Street torches (Tr) at the corners.
+//
+// Map fits the viewport (12*48=576w, 10*48=480h) — no camera scroll.
+// Reuses Cb / Wb / Bd / Tr / Pl. New alias Lt = cobblestone + tree
+// (the lemon tree).
+const Lt = t("cobblestone", "tree");
+
+const courtyardRows = [
+  [Wb, Wb, Wb, Wb, Cb, Cb, Cb, Cb, Wb, Wb, Wb, Wb], // ← north wall + back gate gap (Coyne's escape)
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Wb], // ← corner torches
+  [Wb, Cb, Cb, Cb, Cb, Cb, Lt, Cb, Cb, Cb, Cb, Wb], // ← lemon tree (Rose's grave)
+  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← stacked-crate barricades
+  [Wb, Cb, Cb, Cb, Cb, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← courtyard well
+  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Wb], // ← corner torches
+  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← squad spawn line
+  [Wb, Wb, Wb, Wb, Cb, Cb, Cb, Cb, Wb, Wb, Wb, Wb]  // ← south wall + shop-door gap (squad enters)
+] as const;
+
+export const courtyardMap: MapDef = buildMap("courtyard", "Candle-Maker's Courtyard, Grude", courtyardRows, {
+  // Squad pushes in from the candle-maker's back door (south gap).
+  // Tight line on row 8 so the round-1 dialogue fires reliably.
+  player: [
+    { x: 4, y: 8 }, // Maya
+    { x: 5, y: 8 }, // Amar (center)
+    { x: 6, y: 8 }, // Ning (bowline)
+    { x: 7, y: 8 }  // Leo (dactyl)
+  ],
+  // Coyne holds the back gate (north) — holdPositionUntil keeps him
+  // there until his line is thinned. Two imperial agents he smuggled
+  // in flank the north (row 2); two turncoat rebels hold the crate
+  // barricades (row 5); one turncoat archer covers the centre.
+  enemy: [
+    { x: 6, y: 0 }, // Quartermaster Coyne (boss — holdPositionUntil at the gate)
+    { x: 3, y: 2 }, // imperial agent (royal guard), NW
+    { x: 8, y: 2 }, // imperial agent (royal archer), NE
+    { x: 3, y: 5 }, // turncoat (bandit swordsman), west barricade
+    { x: 6, y: 3 }, // turncoat archer (bandit archer), north-centre
+    { x: 8, y: 5 }  // turncoat (bandit spearton), east barricade
+  ]
+});
