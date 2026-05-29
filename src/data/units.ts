@@ -484,7 +484,7 @@ export const ENEMIES = {
     artSeed: 53,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "coyne",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }

@@ -7,7 +7,7 @@ export type PortraitId =
   | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
-  | "rose"
+  | "rose" | "coyne"
   // Generic enemy-class portrait, valid as a dialogue speaker for
   // minor named officers who reuse the stand-in art (e.g. Lord Castor,
   // B14) rather than carrying a bespoke portrait. Mirrors the B12/B13

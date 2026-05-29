@@ -28,7 +28,10 @@ const PORTRAIT_TABLE: Record<string, PortraitMeta> = {
   selene:  { ...PLAYER_PALETTES.selene,  hairStyle: "long",  scar: true, seed: 7 },
   kian:    { ...ENEMY_PALETTES.kian,     hairStyle: "short", seed: 11 },
   ndari:   { ...ENEMY_PALETTES.ndari,    hairStyle: "long",  seed: 12 },
-  nebu:    { ...ENEMY_PALETTES.archbold, hairStyle: "short", beard: true, seed: 13 }
+  nebu:    { ...ENEMY_PALETTES.archbold, hairStyle: "short", beard: true, seed: 13 },
+  // Coyne — procedural fallback until public/assets/portraits/coyne.png
+  // ships; the real PNG (loaded as portrait:coyne) takes precedence.
+  coyne:   { ...ENEMY_PALETTES.archbold, hairStyle: "short", beard: true, seed: 14 }
 };
 
 // Typed against StoryArc["music"] so adding a new music slug to the union in

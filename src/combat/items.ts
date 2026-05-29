@@ -20,11 +20,15 @@ export interface ItemMeta {
   consumable: boolean;
   // True for items that are passive while in inventory (so they read as
   // equipment in the UI) BUT are spent at battle end regardless of
-  // whether the carrier survives. Mask is the canonical case — it's
-  // a single-fight mobility tool, not a permanent build piece.
+  // whether the carrier survives. EVERY non-consumable item is now a
+  // single-fight tool: if you assign a Mask / Fang / Royal Lens / Dactyl
+  // Food to a character for a battle, it's gone when that battle ends
+  // (win OR lose). Only the on-demand consumables (Potion, Elixir) carry
+  // over — and only if you didn't spend them in the fight.
   // reconcilePostBattleInventory filters these out before persisting
   // survivor bags and before pushing fallen drops back to the pool.
-  // Items in the squad pool that were never deployed are unaffected.
+  // Items left in the squad pool (never assigned to a deployed unit) are
+  // unaffected — they're only spent once you actually bring them.
   consumedOnBattleEnd?: boolean;
   // Glyph for the inventory grid — picked to read at 16-32px without
   // needing per-item PNGs in v1. Replace with real icon assets later.
@@ -35,21 +39,21 @@ export const ITEM_CATALOG: Record<ItemKind, ItemMeta> = {
   potion: {
     kind: "potion",
     name: "Potion",
-    description: "Heals 10 HP. Use during turn for 1 AP.",
+    description: "Heals 10 HP. Use during turn for 1 AP. Carries over to the next battle if unused.",
     consumable: true,
     glyph: "🧪"
   },
   elixir: {
     kind: "elixir",
     name: "Elixir",
-    description: "Heals 25 HP. Use during turn for 1 AP.",
+    description: "Heals 25 HP. Use during turn for 1 AP. Carries over to the next battle if unused.",
     consumable: true,
     glyph: "⚗️"
   },
   mask: {
     kind: "mask",
     name: "Mask",
-    description: "+2 movement during battle. Stacks. One-use — consumed at battle end.",
+    description: "+2 movement during battle. Stacks. Single-use — consumed at battle's end.",
     consumable: false,
     consumedOnBattleEnd: true,
     glyph: "🎭"
@@ -57,22 +61,25 @@ export const ITEM_CATALOG: Record<ItemKind, ItemMeta> = {
   fang: {
     kind: "fang",
     name: "Fang",
-    description: "+10% crit chance while carried. Stacks.",
+    description: "+10% crit chance while carried. Stacks. Single-use — consumed at battle's end.",
     consumable: false,
+    consumedOnBattleEnd: true,
     glyph: "🦷"
   },
   royal_lens: {
     kind: "royal_lens",
     name: "Royal Lens",
-    description: "+15% hit chance while carried. Stacks.",
+    description: "+15% hit chance while carried. Stacks. Single-use — consumed at battle's end.",
     consumable: false,
+    consumedOnBattleEnd: true,
     glyph: "🔍"
   },
   dactyl_food: {
     kind: "dactyl_food",
     name: "Dactyl Food",
-    description: "Dactyl riders only: +1 AP, -4 armor while carried.",
+    description: "Dactyl riders only: +1 AP, -4 armor while carried. Single-use — consumed at battle's end.",
     consumable: false,
+    consumedOnBattleEnd: true,
     glyph: "🍖"
   }
 };
