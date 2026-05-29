@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
+import { fitBodyText } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { getMusic, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
@@ -38,17 +39,19 @@ interface BattleDialogueArgs {
 // Dialog panel layout constants — mirror StoryScene's so the visual
 // language matches when a dialogue fires mid-battle.
 const PANEL_X = 120;
-const PANEL_Y = GAME_HEIGHT - 260;
 const PANEL_W = GAME_WIDTH - 240;
-const PANEL_H = 200;
+// Grows upward from a fixed bottom edge (buttons stay pinned). Sized to
+// hold a long beat at base font; fitBodyText shrinks anything longer so
+// every beat lands in a single box — no pagination, no overhang.
+const PANEL_H = 290;
+const PANEL_BOTTOM = GAME_HEIGHT - 60;
+const PANEL_Y = PANEL_BOTTOM - PANEL_H;
 const SPEAKER_Y_OFFSET = 14;
 const BODY_Y_OFFSET = 44;
-const BODY_LINE_HEIGHT = 31;
 const BODY_BOTTOM_PADDING = 16;
-const LINES_PER_PAGE = Math.max(
-  1,
-  Math.floor((PANEL_H - BODY_Y_OFFSET - BODY_BOTTOM_PADDING) / BODY_LINE_HEIGHT)
-);
+const BODY_BASE_SIZE = 21;
+const BODY_MIN_SIZE = 14;
+const BODY_MAX_HEIGHT = PANEL_H - BODY_Y_OFFSET - BODY_BOTTOM_PADDING;
 
 // Portrait area to the right of the dialog text.
 const PORTRAIT_AREA_W = 300;
@@ -192,18 +195,10 @@ export class BattleDialogueScene extends Phaser.Scene {
 
     this.speakerText.setText(beat.speaker ?? (beat.portraitId === "narrator" ? "" : ""));
 
-    // Pagination — same logic as StoryScene. Long bodies (rare in mid-
-    // battle dialogues but possible) get split into pages of LINES_PER_PAGE
-    // wrapped lines each.
-    const wrapped = this.bodyText.getWrappedText(beat.body);
-    this.currentBeatPages = [];
-    if (wrapped.length === 0) {
-      this.currentBeatPages.push(beat.body);
-    } else {
-      for (let i = 0; i < wrapped.length; i += LINES_PER_PAGE) {
-        this.currentBeatPages.push(wrapped.slice(i, i + LINES_PER_PAGE).join("\n"));
-      }
-    }
+    // Single box — same logic as StoryScene. Shrink the font (if needed) so
+    // the whole beat fits at once; no page-chunking, so no orphan pages.
+    const fit = fitBodyText(this.bodyText, beat.body, BODY_MAX_HEIGHT, BODY_BASE_SIZE, BODY_MIN_SIZE);
+    this.currentBeatPages = [fit.text];
     this.currentPageIdx = 0;
     this.showCurrentPage();
   }
