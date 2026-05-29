@@ -31,16 +31,25 @@ because every texture keeps the exact dimensions it always had.
   scene, and the crisp FIT-upscale presentation on large monitors is preserved.
 
 ### Tuning
-`ART_SCALE` is the only dial:
-- `1` — original crisp-pixel behaviour, no supersampling (byte-identical to
-  pre-change output).
-- `2` — current default; the best fidelity/cost balance.
-- `3`/`4` — diminishing returns, more memory + generation cost per texture.
+`ART_SCALE` sets the global factor (`1` = no supersampling, byte-identical to
+pre-change output; `2` = current default, the best fidelity/cost balance;
+`3`/`4` = diminishing returns, more memory + generation cost per texture).
 
-The smallest sprites (32×40 units) are the most sensitive to softening. After a
-visual pass, if they read muddy, drop `ART_SCALE` to `1` — everything else can
-stay supersampled because each generator could later take a per-call override
-(`new PixelCanvas(w, h, scale)`).
+Each generator then reads its own per-kind knob so they can be dialled
+independently:
+
+| Constant | Default | Applies to |
+|---|---|---|
+| `UNIT_ART_SCALE` | `1` (crisp) | unit sprites (`UnitArt`) |
+| `PORTRAIT_ART_SCALE` | `ART_SCALE` (2×) | portraits (`PortraitArt`) |
+| `TILE_ART_SCALE` | `ART_SCALE` (2×) | terrain + obstacle tiles (`TileArt`) |
+| `BACKDROP_ART_SCALE` | `ART_SCALE` (2×) | battle/scene backdrops (`BackdropArt`) |
+
+**Unit sprites default to crisp (scale 1).** They're tiny (32×40) hand-placed
+pixel art where downsampling softens the deliberately hard edges, so they ship
+byte-identical to the pre-HD output while the larger art — which has the
+headroom to benefit — runs at 2× SSAA. Bump `UNIT_ART_SCALE` to `ART_SCALE`
+after a visual pass if you prefer the anti-aliased look on units too.
 
 ### Cost
 Generation is one-time per unique texture (cached by texture key). The transient

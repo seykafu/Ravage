@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
 import type { ClassKind, Unit, WeaponKind } from "../combat/types";
-import { TILE_SIZE } from "../util/constants";
+import { TILE_SIZE, UNIT_ART_SCALE } from "../util/constants";
 
 // Sprite is drawn at 32×40 then composited at TILE_SIZE-aligned width.
 const SW = 32;
@@ -214,7 +214,7 @@ export const ensureUnitTexture = (scene: Phaser.Scene, u: Unit): string => {
 
   const key = unitTexKey(u);
   if (scene.textures.exists(key)) return key;
-  const px = new PixelCanvas(SW, SH);
+  const px = new PixelCanvas(SW, SH, UNIT_ART_SCALE);
   const rng = new Rng(u.artSeed);
   const p = defaultPalette(u);
   drawBody(px, p, rng);

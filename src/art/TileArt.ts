@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor, mixColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
 import type { ObstacleKind, TerrainKind } from "../combat/types";
-import { TILE_SIZE } from "../util/constants";
+import { TILE_SIZE, TILE_ART_SCALE } from "../util/constants";
 
 // Render a tile as a pseudo-3D block: top face + slight side highlight + speckled detail.
 // We use TILE_SIZE for the top-face square; the bevel is drawn just inside its borders.
@@ -229,7 +229,7 @@ export const ensureTileTexture = (
   // sharing the same combo don't allocate a new texture each.
   const key = tileTextureKey(terrain, seed);
   if (scene.textures.exists(key)) return key;
-  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
+  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE, TILE_ART_SCALE);
   const rng = new Rng(seed * 16777619 ^ terrain.length * 7919);
   drawIsoTile(px, TERRAIN_BASE[terrain], rng);
   scene.textures.addCanvas(key, px.canvas);
@@ -254,7 +254,7 @@ export const ensureObstacleTexture = (
   if (scene.textures.exists(realKey)) return realKey;
   const procKey = procObstacleKey(obstacle);
   if (scene.textures.exists(procKey)) return procKey;
-  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
+  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE, TILE_ART_SCALE);
   const rng = new Rng(obstacle.length * 7919);
   drawObstacle(px, obstacle, rng);
   scene.textures.addCanvas(procKey, px.canvas);
@@ -265,7 +265,7 @@ export const ensureObstacleTexture = (
 export const ensureTintTile = (scene: Phaser.Scene, color: number, alpha: number): string => {
   const key = `tint-${color.toString(16)}-${Math.round(alpha * 100)}`;
   if (scene.textures.exists(key)) return key;
-  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE);
+  const px = new PixelCanvas(TILE_SIZE, TILE_SIZE, TILE_ART_SCALE);
   px.fillRect(0, 0, TILE_SIZE, TILE_SIZE, color, alpha);
   // bright border
   px.fillRect(0, 0, TILE_SIZE, 1, color, Math.min(1, alpha + 0.3));

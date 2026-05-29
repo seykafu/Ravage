@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
+import { PORTRAIT_ART_SCALE } from "../util/constants";
 
 // 64×72 portraits: head + shoulders, painted in pixel-style with rim light for the "3D feel".
 
@@ -173,7 +174,7 @@ export const ensurePortraitTexture = (
 
   const key = `portrait-${p.id}`;
   if (scene.textures.exists(key)) return key;
-  const px = new PixelCanvas(PW, PH);
+  const px = new PixelCanvas(PW, PH, PORTRAIT_ART_SCALE);
   drawPortrait(px, p);
   scene.textures.addCanvas(key, px.canvas);
   return key;

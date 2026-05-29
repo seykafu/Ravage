@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor, mixColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
-import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { BACKDROP_ART_SCALE, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import type { BackdropKey } from "../data/contentIds";
 
 // Painted parallax-style backdrops for non-battle scenes.
@@ -146,7 +146,7 @@ export const ensureBackdropTexture = (
   if (scene.textures.exists(key)) return key;
   const w = GAME_WIDTH;
   const h = GAME_HEIGHT;
-  const px = new PixelCanvas(w, h);
+  const px = new PixelCanvas(w, h, BACKDROP_ART_SCALE);
   const rng = new Rng(spec.seed);
   drawSky(px, spec.sky, spec.glow ?? spec.sky);
   if (spec.hasMoon) drawStars(px, rng);
