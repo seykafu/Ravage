@@ -12,9 +12,19 @@ export const TILE_SIZE = 48;
 //   1 → original crisp-pixel behaviour (no supersampling)
 //   2 → 2× SSAA (default; the "HD-2× procedural art track")
 //   3/4 → diminishing returns, more memory + generation cost.
-// Tune after a visual pass; the smallest sprites (32×40 units) are the
-// most sensitive to softening, so drop to 1 here if they read muddy.
 export const ART_SCALE = 2;
+
+// Per-generator overrides. The larger art (portraits, tiles, backdrops)
+// has the headroom to benefit from SSAA without looking muddy, so it runs
+// at the full ART_SCALE. Unit sprites are tiny (32×40) hand-placed pixel
+// art where downsampling softens the deliberate hard edges, so they stay
+// crisp (scale 1) by default — bump UNIT_ART_SCALE to ART_SCALE after a
+// visual pass if you'd rather have the anti-aliased look on them too.
+export const UNIT_ART_SCALE = 1;
+export const PORTRAIT_ART_SCALE = ART_SCALE;
+export const TILE_ART_SCALE = ART_SCALE;
+export const BACKDROP_ART_SCALE = ART_SCALE;
+
 
 
 export const COLORS = {
