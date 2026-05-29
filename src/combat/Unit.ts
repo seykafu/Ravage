@@ -66,6 +66,14 @@ export const endUnitTurn = (u: Unit): void => {
   u.state.ravagedActive = false;
 };
 
+// Effective maximum AP for this turn — the base stat plus any equipment
+// AP bonus (Dactyl Food: +1 per item, dactyl-class only). This is the
+// value beginUnitTurn refills apRemaining to, so UI that shows
+// "AP cur/max" must use this for the denominator — otherwise a dactyl
+// carrying Dactyl Food reads as "4/3" instead of "4/4".
+export const effectiveMaxAp = (u: Unit): number =>
+  u.stats.ap + equipmentBonuses(u).apBonus;
+
 export const isAlive = (u: Unit): boolean => u.state.alive && u.state.hp > 0;
 
 export const damageUnit = (u: Unit, amount: number): void => {

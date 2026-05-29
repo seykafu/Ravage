@@ -6,7 +6,7 @@ import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
-import { beginUnitTurn, createUnit, damageUnit, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
+import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
 import { Rng } from "../util/rng";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
@@ -136,7 +136,7 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
   BossFighter: { title: "Boss Fighter", body: "+100% damage when attacking a boss-class enemy.\nThe finisher you build a strategy around." },
   Aide:        { title: "Aide",         body: "Take half damage while adjacent to a friendly unit.\nReward for keeping your line tight." },
   Destruct:    { title: "Destruct",     body: "On death, the unit that landed the killing blow also dies.\nMakes finishing this unit very expensive." },
-  Roam:        { title: "Roam",         body: "Once per turn after AP is spent, pay 1 extra AP to make a single Move.\nClosing distance or repositioning out of danger." }
+  Roam:        { title: "Roam",         body: "Once per turn, after all AP is spent, take one free Move.\nClosing distance or repositioning out of danger." }
 };
 
 // ---- Initiative bar ----
@@ -235,12 +235,15 @@ export class BattleScene extends Phaser.Scene {
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
   private dialogue!: DialogueDirector;
-  // Battle-music gate. When a battle opens with a round-1 dialogue
-  // (Kian's blockade speech, the colony reveal, Rose's brief, etc.),
-  // the battle theme is held back so it doesn't swell underneath the
-  // dialogue — it starts only once the dialogue closes and the fight
-  // actually begins. startBattleMusic() is idempotent; this flag
-  // ensures the theme starts exactly once per battle.
+  // Battle-music gate. The battle theme starts the instant BattleScene
+  // loads — even for battles that open on a round-1 dialogue (Kian's
+  // blockade speech, the colony reveal, Rose's brief, etc.). The theme
+  // plays underneath the opening dialogue so the BattlePrep cue never
+  // bleeds across the seam onto the battle map (any pre-fight beat that
+  // happens once we're already on the map hears the battle theme, not
+  // the prep loop). startBattleMusic() is idempotent; this flag ensures
+  // the theme starts exactly once per battle and the RESUME handler's
+  // safety call is a no-op after the first start.
   private battleMusicStarted = false;
 
   constructor() { super("BattleScene"); }
@@ -441,11 +444,10 @@ export class BattleScene extends Phaser.Scene {
       // unit detail stay in sync with whatever the dialogue may have
       // changed (XP awards from before_victory beats, etc.).
       if (this.panelUnit) this.refreshSidePanel(this.panelUnit);
-      // Start the battle theme if it was deferred for an opening
-      // dialogue. Idempotent — on every resume after the first it's
-      // a no-op. The first resume in a dialogue-opening battle is the
-      // opening dialogue closing, which is exactly when the fight
-      // begins and the theme should swell in.
+      // Safety net: the battle theme is already started in create(), so
+      // this is normally a no-op (battleMusicStarted is set). Kept so a
+      // hypothetical future path that hasn't started music yet still
+      // recovers the theme on the first resume.
       this.startBattleMusic();
     });
 
@@ -711,18 +713,17 @@ export class BattleScene extends Phaser.Scene {
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.handlePointerDown(p));
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => this.handlePointerMove(p));
 
-    // Battle music — deferred when the battle opens on a dialogue.
-    // If a round-1 dialogue is going to fire the moment the first turn
-    // begins (Kian's blockade, the colony reveal, Rose's brief, etc.),
-    // hold the battle theme so it doesn't start under the dialogue.
-    // The prep-scene cue carries over and plays through the dialogue;
-    // startBattleMusic() then swells the battle theme on the first
-    // RESUME (when the dialogue closes and the fight actually starts).
-    // Battles with no round-1 dialogue start the theme immediately.
-    const opensOnDialogue = (node.dialogues ?? []).some(
-      (d) => d.trigger.kind === "round_start" && d.trigger.round <= 1
-    );
-    if (!opensOnDialogue) this.startBattleMusic();
+    // Battle music — start the battle theme immediately on entering the
+    // battle map. Earlier this was deferred for battles that open on a
+    // round-1 dialogue so the theme wouldn't swell under the dialogue,
+    // but that let the BattlePrep cue carry over and play through any
+    // pre-fight beat staged on the battle map (Kian's blockade, the
+    // colony reveal, Rose's brief, etc.). Starting the theme here retires
+    // the prep loop at the seam (MusicManager.play cross-fades on a key
+    // change) so no pre-battle scene on the map ever inherits prep music.
+    // The RESUME handler's startBattleMusic() call is now a pure no-op
+    // (the flag is already set) — kept only as belt-and-suspenders.
+    this.startBattleMusic();
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
@@ -980,7 +981,7 @@ export class BattleScene extends Phaser.Scene {
     const u = this.initiative.current();
     if (!u) return;
     this.debugText.setText(
-      `[debug] round=${this.initiative.round}  active=${u.id}  ap=${u.state.apRemaining}/${u.stats.ap}  pos=${u.state.position.x},${u.state.position.y}  alive=${isAlive(u)}`
+      `[debug] round=${this.initiative.round}  active=${u.id}  ap=${u.state.apRemaining}/${effectiveMaxAp(u)}  pos=${u.state.position.x},${u.state.position.y}  alive=${isAlive(u)}`
     );
   }
 
@@ -1129,9 +1130,9 @@ export class BattleScene extends Phaser.Scene {
 
   // Start the battle theme. Idempotent — guarded by battleMusicStarted
   // so it runs exactly once per battle no matter how many times it's
-  // called. Called either from create() (battles with no opening
-  // dialogue) or from the first RESUME (battles that opened on a
-  // round-1 dialogue — the theme swells when the dialogue closes).
+  // called. Called from create() on every battle (retiring the prep cue
+  // at the map seam); the RESUME handler calls it again only as a
+  // no-op safety net.
   private startBattleMusic(): void {
     if (this.battleMusicStarted) return;
     this.battleMusicStarted = true;
@@ -1427,7 +1428,7 @@ export class BattleScene extends Phaser.Scene {
       ? (u.level >= 20 ? "  ·  MAX" : `  ·  ${u.state.xp} XP`)
       : "";
     this.apText.setText(
-      `LV ${u.level}${xpSuffix}  ·  AP ${u.state.apRemaining}/${u.stats.ap}  ·  ${u.faction.toUpperCase()}`
+      `LV ${u.level}${xpSuffix}  ·  AP ${u.state.apRemaining}/${effectiveMaxAp(u)}  ·  ${u.faction.toUpperCase()}`
     );
     const mov = effectiveMovement(u);
     const movStr = mov !== u.stats.movement ? `${u.stats.movement}+${mov - u.stats.movement}` : `${u.stats.movement}`;

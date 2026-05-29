@@ -2,8 +2,8 @@
 // These guard the per-turn AP economy + Ravage threshold + item consumption.
 
 import { describe, it, expect } from "vitest";
-import { beginUnitTurn, createUnit, damageUnit, endUnitTurn, healUnit, isAlive, useItem } from "../Unit";
-import { createElixir, createFang, createPotion } from "../items";
+import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, healUnit, isAlive, useItem } from "../Unit";
+import { createDactylFood, createElixir, createFang, createPotion } from "../items";
 import { ELIXIR_HEAL, POTION_HEAL, RAVAGE_THRESHOLD_PCT, type Unit, type UnitDef } from "../types";
 
 const mkUnit = (overrides: Partial<UnitDef>, pos = { x: 0, y: 0 }): Unit => {
@@ -56,6 +56,34 @@ describe("beginUnitTurn / endUnitTurn", () => {
     expect(u.state.hasActedThisRound).toBe(true);
     expect(u.state.apRemaining).toBe(0);
     expect(u.state.ravagedActive).toBe(false);
+  });
+});
+
+describe("effectiveMaxAp — Dactyl Food AP bonus", () => {
+  it("equals the base AP stat with no equipment", () => {
+    const u = mkUnit({ stats: { hp: 30, power: 10, armor: 5, speed: 8, movement: 5, ap: 3 } });
+    expect(effectiveMaxAp(u)).toBe(3);
+  });
+
+  it("a dactyl carrying Dactyl Food has max AP 4 (so the HUD reads 4/4, not 4/3)", () => {
+    const u = mkUnit({ classKind: "dactyl_rider", stats: { hp: 30, power: 10, armor: 5, speed: 8, movement: 5, ap: 3 } });
+    u.state.inventory = [createDactylFood()];
+    expect(effectiveMaxAp(u)).toBe(4);
+    // The turn refill must agree with the displayed maximum.
+    beginUnitTurn(u);
+    expect(u.state.apRemaining).toBe(effectiveMaxAp(u));
+  });
+
+  it("the promoted dactyl_king still benefits from Dactyl Food AP", () => {
+    const u = mkUnit({ classKind: "dactyl_king", stats: { hp: 30, power: 10, armor: 5, speed: 8, movement: 5, ap: 3 } });
+    u.state.inventory = [createDactylFood()];
+    expect(effectiveMaxAp(u)).toBe(4);
+  });
+
+  it("Dactyl Food on a non-dactyl class is inert — max AP stays at the base stat", () => {
+    const u = mkUnit({ classKind: "swordsman", stats: { hp: 30, power: 10, armor: 5, speed: 8, movement: 5, ap: 3 } });
+    u.state.inventory = [createDactylFood()];
+    expect(effectiveMaxAp(u)).toBe(3);
   });
 });
 
