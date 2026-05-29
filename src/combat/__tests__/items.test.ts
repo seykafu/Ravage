@@ -2,7 +2,8 @@
 // +50% crit. The dactyl-class gate on Dactyl Food is the only conditional.
 
 import { describe, it, expect } from "vitest";
-import { equipmentBonuses, createFang, createMask, createRoyalLens, createDactylFood, createPotion } from "../items";
+import { equipmentBonuses, createFang, createMask, createRoyalLens, createDactylFood, createPotion, ITEM_CATALOG } from "../items";
+import type { ItemKind } from "../types";
 import { createUnit } from "../Unit";
 import {
   DACTYL_FOOD_AP_BONUS,
@@ -29,6 +30,37 @@ const mkUnit = (overrides: Partial<UnitDef>): Unit => {
   };
   return createUnit(def, { x: 0, y: 0 });
 };
+
+describe("battle-end consumption rule", () => {
+  // Every non-consumable (equipment) item is a single-fight tool: if it's
+  // assigned to a deployed unit it's spent when the battle ends. Only the
+  // on-demand consumables (potion, elixir) carry over. reconcilePostBattle-
+  // Inventory keys off consumedOnBattleEnd, so this guards the catalog flags.
+  const kinds = Object.keys(ITEM_CATALOG) as ItemKind[];
+
+  it("flags EVERY non-consumable item as consumedOnBattleEnd", () => {
+    for (const k of kinds) {
+      const meta = ITEM_CATALOG[k];
+      if (!meta.consumable) {
+        expect(meta.consumedOnBattleEnd, `${k} should be consumed at battle end`).toBe(true);
+      }
+    }
+  });
+
+  it("never flags a consumable (potion/elixir) as consumedOnBattleEnd — they carry over if unused", () => {
+    expect(ITEM_CATALOG.potion.consumedOnBattleEnd).toBeFalsy();
+    expect(ITEM_CATALOG.elixir.consumedOnBattleEnd).toBeFalsy();
+  });
+
+  it("tells the player in the description that equipment is consumed at battle's end", () => {
+    for (const k of kinds) {
+      const meta = ITEM_CATALOG[k];
+      if (!meta.consumable) {
+        expect(meta.description.toLowerCase(), `${k} description`).toContain("battle's end");
+      }
+    }
+  });
+});
 
 describe("equipmentBonuses", () => {
   it("returns NO_BONUSES for an empty bag", () => {

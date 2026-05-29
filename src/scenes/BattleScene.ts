@@ -273,8 +273,13 @@ export class BattleScene extends Phaser.Scene {
     // union and the spec lookup are co-located so a typo'd key fails to compile.
     const bgKey = ensureBackdropForKey(this, node.backdropKey);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    // Backdrop dim gradient — keeps the playfield reading above the
+    // backdrop without washing it out. Lightened from the old 0.45→0.78
+    // (which stacked on the backdrop's own edge vignette and made daytime
+    // battles look like dusk); now a gentle top-to-bottom 0.22→0.42 so the
+    // scene stays legible and bright while the grid still pops forward.
     const v = this.add.graphics();
-    v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0.45, 0.78, 0.78);
+    v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.22, 0.22, 0.42, 0.42);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     const map = node.map;

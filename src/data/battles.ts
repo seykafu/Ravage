@@ -1513,7 +1513,7 @@ export const BATTLES: BattleNode[] = [
         beats: [
           { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
             body: "Coyne. Three months of manifests, and every one of them routed past your desk. I had you an hour ago. Ndara had you two hours before that — and you put her on a courtyard stone for it. You don't get the gate. You don't get anything." },
-          { speaker: "Quartermaster Coyne",
+          { speaker: "Quartermaster Coyne", portraitId: "coyne",
             body: "I had her sat down, Maya. Sat down, not buried — there's a difference, and the difference is the only reason I'll sleep. You think I wanted this? I ran Dawn's supply line for nine years. I watched her spend people like coin and call it arithmetic. Rose. The organizers in the prison. She'll spend you too, and you'll thank her for the math. Archbold at least pays in advance." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
             body: "You sold the door, Coyne. Castor's crossbows were in that street because of you. Whatever Dawn is — you didn't fix it. You just picked the side that signs bigger receipts. Squad: he does not reach that gate." }
@@ -1525,7 +1525,7 @@ export const BATTLES: BattleNode[] = [
         id: "b15_amar_coyne",
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "turncoat" },
         beats: [
-          { speaker: "Quartermaster Coyne",
+          { speaker: "Quartermaster Coyne", portraitId: "coyne",
             body: "You're the worst-kept secret in this house, you know. The emperor's lost boy. (He's breathing hard already.) Ask yourself one thing while you cut me down, your highness — when Dawn finally tells you what she wants you to DO with that crown of yours, and it costs another Rose, and another — whose arithmetic will you be doing then? Hers? Or your own?" },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
             body: "I'll be doing Lucian's. Fight, Coyne. You don't get to poison the well and call it a warning." }
@@ -1539,7 +1539,7 @@ export const BATTLES: BattleNode[] = [
         beats: [
           { portraitId: "narrator",
             body: "Coyne goes down six strides from the back gate — close enough to see the lane he wanted, not close enough to take it. His turncoats lower their blades the moment he falls; men bought with coin do not die for a corpse. The imperial agents withdraw through the gate in good order, having lost nothing they were sent to keep." },
-          { speaker: "Quartermaster Coyne",
+          { speaker: "Quartermaster Coyne", portraitId: "coyne",
             body: "(on the cobbles, almost amused) Nine years of her ledgers... and the line that finishes me is six strides of bad luck. Tell Dawn — tell her the safe house was never the leak. (A breath.) The leak was always going to be whichever of us did her arithmetic out loud first." },
           { portraitId: "narrator",
             body: "He doesn't say anything after that. The courtyard goes quiet around the lemon tree. Upstairs, on a cot, Ndara keeps breathing and does not wake — and somewhere in the house, Madame Dawn is being told that the man who handed her door to the empire ran her supply line for nine years." }
