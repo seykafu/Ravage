@@ -109,7 +109,7 @@ export const ABILITY_DISPLAY: Partial<Record<Ability, { name: string; blurb: str
   BossFighter: { name: "Boss Fighter", blurb: "+100% damage vs boss-class enemies." },
   Aide:        { name: "Aide",         blurb: "Take half damage while adjacent to a friendly unit." },
   Destruct:    { name: "Destruct",     blurb: "On death, the killing-blow attacker also dies." },
-  Roam:        { name: "Roam",         blurb: "Once per turn, spend 1 extra AP for one extra Move." },
+  Roam:        { name: "Roam",         blurb: "Once per turn, after all AP is spent, take one free Move." },
   // Tier 2 signatures
   CritPlus:    { name: "Crit+",        blurb: "+15% crit rate on all attacks." },
   Phalanx:     { name: "Phalanx",      blurb: "Adjacent allies take −20% damage." },

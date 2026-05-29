@@ -15,8 +15,11 @@ export interface BattleState {
 
 // Mounted classes (knights, dactyl riders) move further than infantry.
 // Returned as a +N bonus added to the unit's base movement stat.
+// dactyl_king is the Tier 2 promotion of dactyl_rider (Leo) — it is still
+// mounted, so it must keep the bonus or a promoted dactyl would silently
+// lose 2 movement the moment it upgrades.
 export const mountBonus = (u: Unit): number => {
-  if (u.classKind === "knight" || u.classKind === "dactyl_rider") return 2;
+  if (u.classKind === "knight" || u.classKind === "dactyl_rider" || u.classKind === "dactyl_king") return 2;
   return 0;
 };
 
