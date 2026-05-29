@@ -2,6 +2,21 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 48;
 
+// HD procedural-art supersampling factor. Every procedurally generated
+// texture (units, portraits, tiles, backdrops) is drawn into a buffer
+// ART_SCALE× larger than its logical size, then downsampled back to the
+// logical dimensions with smoothing (SSAA). The texture keeps its
+// original logical size — so layout, placement, and display code are
+// unchanged — but carries anti-aliased, higher-fidelity detail
+// (smoother gradients, rounder curves, cleaner edges). One knob:
+//   1 → original crisp-pixel behaviour (no supersampling)
+//   2 → 2× SSAA (default; the "HD-2× procedural art track")
+//   3/4 → diminishing returns, more memory + generation cost.
+// Tune after a visual pass; the smallest sprites (32×40 units) are the
+// most sensitive to softening, so drop to 1 here if they read muddy.
+export const ART_SCALE = 2;
+
+
 export const COLORS = {
   bgDeep: 0x05060a,
   bgPanel: 0x0d111c,

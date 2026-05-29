@@ -1,25 +1,66 @@
 // Tiny abstraction over an offscreen 2D canvas for drawing pixel art procedurally,
 // then handing the resulting bitmap to Phaser as a texture.
+//
+// HD supersampling (SSAA): when `scale` > 1 the drawing buffer is
+// `scale×` larger than the logical size and the 2D context is pre-scaled
+// by that factor. All drawing code keeps working in LOGICAL coordinates
+// (this.width / this.height report the logical size, and every method
+// takes logical x/y/w/h) — the transform maps each logical unit onto a
+// `scale×scale` device block. Curves, ellipses, and gradients are
+// rasterised at the higher device resolution, so they gain genuine
+// detail; hand-placed 1px features stay full-strength. The `canvas`
+// getter downsamples that high-res buffer back to the logical dimensions
+// with smoothing, so the texture handed to Phaser is exactly the size it
+// always was — no layout or display-site changes anywhere.
+
+import { ART_SCALE } from "../util/constants";
 
 export class PixelCanvas {
-  readonly canvas: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
-  readonly width: number;
-  readonly height: number;
+  readonly width: number;   // logical
+  readonly height: number;  // logical
+  readonly scale: number;   // supersampling factor (>= 1)
+  // The high-resolution buffer we actually draw into (width*scale × height*scale).
+  private readonly buffer: HTMLCanvasElement;
 
-  constructor(width: number, height: number) {
+  constructor(width: number, height: number, scale: number = ART_SCALE) {
     this.width = width;
     this.height = height;
-    this.canvas = document.createElement("canvas");
-    this.canvas.width = width;
-    this.canvas.height = height;
-    const ctx = this.canvas.getContext("2d", { alpha: true });
+    this.scale = Math.max(1, Math.floor(scale));
+    this.buffer = document.createElement("canvas");
+    this.buffer.width = width * this.scale;
+    this.buffer.height = height * this.scale;
+    const ctx = this.buffer.getContext("2d", { alpha: true });
     if (!ctx) throw new Error("2D context unavailable");
+    // Keep intra-texture pixels crisp while drawing; the only smoothing
+    // happens in the single downsample step in the `canvas` getter.
     ctx.imageSmoothingEnabled = false;
+    if (this.scale !== 1) ctx.scale(this.scale, this.scale);
     this.ctx = ctx;
   }
 
+  // Logical-resolution canvas handed to Phaser via textures.addCanvas.
+  // At scale 1 this is the buffer itself (byte-identical to the old
+  // behaviour). When supersampling, the high-res buffer is downsampled
+  // once into a fresh logical-size canvas (smoothed) so the resulting
+  // texture is anti-aliased but keeps its original dimensions. Generated
+  // fresh on each access so a draw → read → draw-more → read sequence
+  // never returns a stale snapshot (callers today read exactly once).
+  get canvas(): HTMLCanvasElement {
+    if (this.scale === 1) return this.buffer;
+    const out = document.createElement("canvas");
+    out.width = this.width;
+    out.height = this.height;
+    const octx = out.getContext("2d", { alpha: true });
+    if (!octx) throw new Error("2D context unavailable");
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+    octx.drawImage(this.buffer, 0, 0, this.width, this.height);
+    return out;
+  }
+
   clear(): void {
+    // clearRect respects the active transform, so logical coords are correct.
     this.ctx.clearRect(0, 0, this.width, this.height);
   }
 
@@ -48,7 +89,12 @@ export class PixelCanvas {
 
   // Lighten or darken a pixel: simple multiplicative shading useful for "3D" volume.
   shadePixel(x: number, y: number, factor: number): void {
-    const data = this.ctx.getImageData(x, y, 1, 1).data;
+    // getImageData is NOT affected by the context transform — it always
+    // addresses device pixels. So sample the top-left device pixel of this
+    // logical cell, but fill in LOGICAL coords (the transform expands the
+    // fill back across the whole scale×scale block).
+    const s = this.scale;
+    const data = this.ctx.getImageData(x * s, y * s, 1, 1).data;
     const r = clamp255(data[0]! * factor);
     const g = clamp255(data[1]! * factor);
     const b = clamp255(data[2]! * factor);
