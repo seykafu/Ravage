@@ -412,8 +412,10 @@ export class RosterScene extends Phaser.Scene {
         drawScrollbar();
       });
       this.input.on("wheel", (p: Phaser.Input.Pointer, _objs: unknown, _dx: number, dy: number) => {
-        if (p.x < panelX || p.x > panelX + panelW) return;
-        if (p.y < listTop || p.y > listBottom) return;
+        // getWorldPoint → design coords, correct under native-res zoom. No-op at 1.
+        const wp = this.cameras.main.getWorldPoint(p.x, p.y);
+        if (wp.x < panelX || wp.x > panelX + panelW) return;
+        if (wp.y < listTop || wp.y > listBottom) return;
         scroll = Phaser.Math.Clamp(scroll + dy * 0.5, 0, maxScroll);
         rowsContainer.y = -scroll;
         drawScrollbar();

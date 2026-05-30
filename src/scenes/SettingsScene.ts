@@ -279,8 +279,11 @@ export class SettingsScene extends Phaser.Scene {
       pctText.setText(`${Math.round(frac * 100)}%`);
       onChange(frac);
     };
-    zone.on("pointerdown", (p: Phaser.Input.Pointer) => { dragging = true; updateFromX(p.x); });
-    this.input.on("pointermove", (p: Phaser.Input.Pointer) => { if (dragging) updateFromX(p.x); });
+    // getWorldPoint maps the pointer to design coords so the slider tracks
+    // correctly under native-res camera zoom (RENDER_SCALE > 1). No-op at 1.
+    const designX = (p: Phaser.Input.Pointer): number => this.cameras.main.getWorldPoint(p.x, p.y).x;
+    zone.on("pointerdown", (p: Phaser.Input.Pointer) => { dragging = true; updateFromX(designX(p)); });
+    this.input.on("pointermove", (p: Phaser.Input.Pointer) => { if (dragging) updateFromX(designX(p)); });
     this.input.on("pointerup", () => { dragging = false; });
   }
 }

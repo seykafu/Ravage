@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, TILE_SIZE } from "../util/constants";
+import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE, TILE_SIZE } from "../util/constants";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import type { BattleId } from "../data/contentIds";
 import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
@@ -815,10 +815,12 @@ export class BattleScene extends Phaser.Scene {
   // panned — without this, a player who scrolls the map and then clicks
   // would target a tile based on the un-scrolled origin.
   private screenToTile(px: number, py: number): TilePos | null {
-    const worldX = px + this.cameras.main.scrollX;
-    const worldY = py + this.cameras.main.scrollY;
-    const x = Math.floor((worldX - this.originX) / TILE_SIZE);
-    const y = Math.floor((worldY - this.originY) / TILE_SIZE);
+    // getWorldPoint inverts the full camera transform (origin + zoom +
+    // scroll), so this is correct whether or not native-res zoom is on.
+    // At RENDER_SCALE === 1 it reduces to the old `px + scrollX` math.
+    const wp = this.cameras.main.getWorldPoint(px, py);
+    const x = Math.floor((wp.x - this.originX) / TILE_SIZE);
+    const y = Math.floor((wp.y - this.originY) / TILE_SIZE);
     if (x < 0 || y < 0 || x >= this.state.grid.width || y >= this.state.grid.height) return null;
     return { x, y };
   }
@@ -1187,8 +1189,10 @@ export class BattleScene extends Phaser.Scene {
       this.cameraDragState.startPointerY = p.y;
     });
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-      const dx = p.x - this.cameraDragState.startPointerX;
-      const dy = p.y - this.cameraDragState.startPointerY;
+      // Pointer deltas are in buffer pixels; divide by RENDER_SCALE to pan
+      // by the matching world distance when native-res zoom is on (no-op at 1).
+      const dx = (p.x - this.cameraDragState.startPointerX) / RENDER_SCALE;
+      const dy = (p.y - this.cameraDragState.startPointerY) / RENDER_SCALE;
       if (!this.cameraDragState.active) {
         const movedEnough =
           Math.abs(dx) > BattleScene.CAMERA_DRAG_THRESHOLD ||

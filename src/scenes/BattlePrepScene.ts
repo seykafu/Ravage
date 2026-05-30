@@ -266,8 +266,11 @@ export class BattlePrepScene extends Phaser.Scene {
         drawTrack();
       });
       this.input.on("wheel", (p: Phaser.Input.Pointer, _objs: unknown, _dx: number, dy: number) => {
-        if (p.x < rosterX || p.x > rosterX + rosterW) return;
-        if (p.y < listTop || p.y > listBottom) return;
+        // getWorldPoint → design coords, so the region test stays correct
+        // under native-res camera zoom (RENDER_SCALE > 1). No-op at scale 1.
+        const wp = this.cameras.main.getWorldPoint(p.x, p.y);
+        if (wp.x < rosterX || wp.x > rosterX + rosterW) return;
+        if (wp.y < listTop || wp.y > listBottom) return;
         scroll = Phaser.Math.Clamp(scroll + dy * 0.5, 0, maxScroll);
         rowsContainer.y = -scroll;
         drawTrack();
