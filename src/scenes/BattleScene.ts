@@ -93,6 +93,7 @@ import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
+import { addTorchGlow } from "./battle/Lighting";
 import { atmosphereForBackdrop, createAtmosphere } from "./battle/Atmosphere";
 
 interface BattleArgs { battleId: BattleId; }
@@ -486,6 +487,9 @@ export class BattleScene extends Phaser.Scene {
         const obsKey = ensureObstacleTexture(this, tile.obstacle);
         if (obsKey) {
           this.add.image(px.x, px.y, obsKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+          // Dynamic lighting (Tier 1) — warm flickering pool at each torch.
+          // Added here (pre UI-pin) so it pools under units on the world camera.
+          if (tile.obstacle === "torch") addTorchGlow(this, px.x, px.y);
         }
       }
     }
