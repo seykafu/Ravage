@@ -76,8 +76,9 @@ const config: Phaser.Types.Core.GameConfig = {
 
 // Patch Phaser's text factory BEFORE game construction so every
 // scene.add.text(...) call across the game gets crisp 2x/3x density
-// glyphs sampled with LINEAR instead of nearest-neighbor. See
-// src/util/crispText.ts for the full rationale. No-op on 1x displays.
+// glyphs sampled with LINEAR instead of nearest-neighbor — on every
+// display, including ordinary 1x monitors where the blur was worst.
+// See src/util/crispText.ts for the full rationale.
 installCrispText();
 
 // EXPERIMENTAL native-resolution rendering — zooms every camera by

@@ -2,40 +2,52 @@ import Phaser from "phaser";
 
 /**
  * Boost Phaser Text resolution + force LINEAR texture sampling so text
- * stays crisp on high-DPI / retina displays.
+ * stays crisp on every display.
  *
  * The global `pixelArt: true` config in main.ts forces NEAREST sampling on
  * every texture, which is correct for the chunky 32x40 unit sprites but
  * turns canvas-rendered text into jaggy garbage when the game canvas is
- * Phaser.Scale.FIT-scaled up to a 2x or 3x retina window. We monkey-patch
+ * Phaser.Scale.FIT-scaled up to the window. We monkey-patch
  * GameObjectFactory.text so every `scene.add.text(...)` call gets:
  *
- *   - resolution = devicePixelRatio (capped at 3x), so the glyph canvas is
- *     rendered at higher pixel density before being uploaded as a texture.
+ *   - resolution = render density (>=2x, capped at 3x), so the glyph canvas
+ *     is rendered at higher pixel density before being uploaded as a texture.
  *   - LINEAR filter on the resulting texture, so the downsample from the
  *     high-density glyph canvas to the on-screen size is bilinear-smooth
  *     instead of nearest-neighbor jagged.
  *
- * Combined: glyphs render at 2x or 3x density, sample down smoothly. The
- * net effect roughly matches what browser-native text looks like on the
- * same display — serifs stay sharp, anti-aliased edges stay clean, no
- * pixelation when the game canvas is upscaled to fit the window.
+ * Combined: glyphs render at 2x-3x density and sample down smoothly, so
+ * serif headings (Cinzel) keep clean anti-aliased edges instead of the
+ * jaggy look they got at 1x density. Applied on ALL displays now, not just
+ * retina — the worst blur was on ordinary 1x monitors where this used to
+ * no-op out.
  *
- * Memory impact: each text texture grows ~4x (2x in each dimension) on a
- * retina display. Most text textures are small (a few KB each), so total
- * cost is on the order of 1–2MB across the whole game — acceptable.
+ * Scope note: this fixes the glyph texture itself. The remaining softness
+ * on large windows comes from FIT upscaling the fixed 1280x720 backing
+ * buffer to the display, which this patch cannot change (the canvas backing
+ * is locked to the game size in FIT mode). Lifting that ceiling is the
+ * native-resolution render step, tracked in docs/RAVAGE_HD2D_PLAN.md.
+ *
+ * Memory impact: each text texture grows ~4x (2x in each dimension). Most
+ * text textures are small (a few KB each), so total cost is on the order of
+ * 1–2MB across the whole game — acceptable.
  *
  * Must be called BEFORE `new Phaser.Game(config)` so the override is in
  * place by the time any scene's create() runs and starts spawning text.
  */
 export const installCrispText = (): void => {
-  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
-  if (dpr === 1) {
-    // 1:1 display — current default is fine; skip the override to avoid
-    // inflating texture memory for users on non-retina screens.
-    return;
-  }
-
+  // Render every glyph canvas at >=2x density, capped at 3x. Previously
+  // this was gated to retina (dpr>1) and skipped entirely at dpr===1 —
+  // but the worst text blur shows up on ordinary 1x monitors, where the
+  // 1280x720 canvas is FIT-scaled up to the window and serif headings
+  // (Cinzel) that rely on anti-aliasing turn jaggy. Rendering the glyph
+  // texture at 2x+ density and sampling it down with LINEAR gives clean,
+  // anti-aliased edges within the frame regardless of display DPI, with
+  // no early-out on 1x. (The remaining hard ceiling is the canvas->window
+  // upscale itself, which FIT locks to the 720p backing buffer; lifting
+  // that is the native-resolution step and is tracked separately.)
+  const dpr = window.devicePixelRatio || 1;
+  const density = Math.min(3, Math.max(2, Math.ceil(dpr)));
   // Capture the original factory method so we can delegate to it. The
   // patched version runs every `scene.add.text(x, y, content, style?)` call
   // through the same path it always used, then mutates the result.
@@ -55,7 +67,7 @@ export const installCrispText = (): void => {
     style?: Phaser.Types.GameObjects.Text.TextStyle
   ): Phaser.GameObjects.Text {
     const t = originalText.call(this, x, y, text, style);
-    t.setResolution(dpr);
+    t.setResolution(density);
     // The text's texture is constructed during the constructor's initial
     // updateText() call, so it exists by the time we get here. Subsequent
     // setText() calls re-render into the same texture, so the filter mode
