@@ -93,6 +93,7 @@ import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
+import { atmosphereForBackdrop, createAtmosphere } from "./battle/Atmosphere";
 
 interface BattleArgs { battleId: BattleId; }
 
@@ -245,6 +246,9 @@ export class BattleScene extends Phaser.Scene {
   // the theme starts exactly once per battle and the RESUME handler's
   // safety call is a no-op after the first start.
   private battleMusicStarted = false;
+  // Ambient biome atmosphere emitter (Tier 1). Optional — "none" biomes
+  // leave it undefined. Phaser destroys it on scene shutdown.
+  private atmosphere?: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() { super("BattleScene"); }
 
@@ -281,6 +285,13 @@ export class BattleScene extends Phaser.Scene {
     const v = this.add.graphics();
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.22, 0.22, 0.42, 0.42);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // Ambient atmosphere (Tier 1 HD-2D-lite) — biome-driven particle layer
+    // (snow / embers / dust / motes). Created here, BEFORE the UI-pin
+    // snapshot below, so it stays a world object: the two-camera split
+    // routes it to the world camera and the UI camera ignores it. Depth 23
+    // keeps it above tiles/units but below the active marker, fog, and HUD.
+    this.atmosphere = createAtmosphere(this, atmosphereForBackdrop(node.backdropKey), 23) ?? undefined;
 
     const map = node.map;
     const grid = new Grid(map);
