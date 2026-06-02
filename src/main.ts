@@ -18,15 +18,20 @@ import { InterposeScene } from "./scenes/InterposeScene";
 import { InventoryScene } from "./scenes/InventoryScene";
 import { CampScene } from "./scenes/CampScene";
 import { GameOverScene } from "./scenes/GameOverScene";
-import { GAME_WIDTH, GAME_HEIGHT } from "./util/constants";
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE } from "./util/constants";
 import { installCrispText } from "./util/crispText";
+import { installRenderScale } from "./util/renderScale";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
   parent: "app",
   backgroundColor: "#05060a",
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
+  // Backing buffer = design size x RENDER_SCALE (native-resolution render).
+  // The logical/design space stays GAME_WIDTH x GAME_HEIGHT everywhere; the
+  // camera patch in installRenderScale() maps it onto this bigger buffer.
+  // RENDER_SCALE === 1 → unchanged 1280x720.
+  width: GAME_WIDTH * RENDER_SCALE,
+  height: GAME_HEIGHT * RENDER_SCALE,
   pixelArt: true,
   roundPixels: true,
   antialias: false,
@@ -75,6 +80,13 @@ const config: Phaser.Types.Core.GameConfig = {
 // display, including ordinary 1x monitors where the blur was worst.
 // See src/util/crispText.ts for the full rationale.
 installCrispText();
+
+// EXPERIMENTAL native-resolution rendering — zooms every camera by
+// RENDER_SCALE so the 1280x720 design maps onto the enlarged backing
+// buffer. No-op when RENDER_SCALE === 1. Must run before game construction
+// (it patches CameraManager, which every scene's boot uses). See
+// src/util/renderScale.ts.
+installRenderScale();
 
 const game = new Phaser.Game(config);
 

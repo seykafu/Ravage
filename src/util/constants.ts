@@ -2,6 +2,30 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 48;
 
+// EXPERIMENTAL — native-resolution rendering (Tier 0, step 2).
+//
+// The game's logical/design coordinate space stays 1280x720 everywhere
+// (all layout, all `GAME_WIDTH`/`GAME_HEIGHT` math is unchanged). This
+// factor only enlarges the actual canvas backing buffer: the Phaser game
+// is created at GAME_* x RENDER_SCALE, and every camera is set to render
+// the 1280x720 design onto that bigger buffer (zoom = RENDER_SCALE, with
+// a top-left pivot so pinned UI and scrolling world objects both map
+// cleanly). The net effect: the game renders at ~native resolution
+// instead of upscaling a 720p frame, so text is crisp on every monitor
+// and the SSAA art shows its detail.
+//
+//   1 -> OFF. Byte-identical to today (no buffer change, no camera patch).
+//   2 -> render at 2x. Recommended value to try.
+//
+// DEFAULT IS 1 (off) on purpose: this touches the Phaser Scale Manager,
+// every scene's camera, and BattleScene's two-camera + pinned-UI + tile-
+// picking path, which can only be verified in a real browser. Flip to 2
+// locally, play a battle, and confirm: HUD/side-panel alignment, tile
+// hover + click picking, camera drag/keyboard pan, the fog overlay, and
+// dialogue overlays. See src/util/renderScale.ts.
+export const RENDER_SCALE = 1;
+
+
 // HD procedural-art supersampling factor. Every procedurally generated
 // texture (units, portraits, tiles, backdrops) is drawn into a buffer
 // ART_SCALE× larger than its logical size, then downsampled back to the
