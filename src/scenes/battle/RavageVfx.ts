@@ -20,7 +20,7 @@
 
 import Phaser from "phaser";
 import { FAMILY_HEADING, TILE_SIZE } from "../../util/constants";
-import { tileToPixel } from "../../art/UnitArt";
+import type { Projection } from "../../render/Projection";
 import { isAlive } from "../../combat/Unit";
 import { sfxCrit } from "../../audio/Sfx";
 import type { Unit } from "../../combat/types";
@@ -56,20 +56,19 @@ export const ensureRavageAuraTexture = (scene: Phaser.Scene): string => {
 
 // Lazily build or reposition the per-unit aura. Idempotent — calling it
 // repeatedly on the same Ravaged unit just keeps the aura tracking the
-// sprite as it moves. Pulls origin coords from BattleScene so we don't
-// have to duplicate the tile-to-pixel conversion here.
+// sprite as it moves. Takes the BattleScene's Projection so tile→world
+// placement goes through the one coordinate seam (no duplicated math).
 export const refreshRavageAura = (
   scene: Phaser.Scene,
   view: RavageViewState & { sprite: Phaser.GameObjects.Sprite },
   u: Unit,
-  originX: number,
-  originY: number
+  projection: Projection
 ): void => {
   if (!u.state.ravagedActive || !isAlive(u)) {
     clearRavageAura(view);
     return;
   }
-  const px = tileToPixel(u.state.position, originX, originY);
+  const px = projection.tileToWorld(u.state.position);
   if (!view.ravageAura) {
     const key = ensureRavageAuraTexture(scene);
     const aura = scene.add.image(px.x, px.y + 4, key)

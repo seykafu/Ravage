@@ -226,7 +226,14 @@ export const ensureUnitTexture = (scene: Phaser.Scene, u: Unit): string => {
 export const UNIT_SPRITE_W = SW;
 export const UNIT_SPRITE_H = SH;
 
-// Compute the on-screen pixel position for a tile (top-left origin), used everywhere.
+// Compute the on-screen pixel position for a tile (top-left origin).
+//
+// DEPRECATED as the battle render path's coordinate source: tile↔world math
+// now lives behind the Projection seam (src/render/Projection.ts), which
+// BattleScene + RavageVfx consume. OrthographicProjection.tileToWorld is the
+// pixel-identical successor to this function. Kept only so any incidental
+// caller still compiles; new code should take a Projection. See
+// docs/RAVAGE_HD2D_PLAN.md §5 Phase 1.
 export const tileToPixel = (
   tile: { x: number; y: number },
   originX: number,

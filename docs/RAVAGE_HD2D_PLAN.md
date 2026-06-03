@@ -110,7 +110,7 @@ Phased so each phase is shippable/abortable on its own.
 ### Phase 0 — Crisp render (Tier 0)
 Native-resolution rendering + `crispText` always-on. Prerequisite.
 
-### Phase 1 — Coordinate-system abstraction (no visual change)
+### Phase 1 — Coordinate-system abstraction (no visual change) — ✅ SHIPPED
 Introduce a single `Projection` interface that owns **all** tile↔world↔screen
 math, and route the existing `tileToPixel`/`screenToTile` through it. Ship the
 current orthographic projection as the first implementation. This is the
@@ -119,6 +119,26 @@ projection (camera unproject / raycast) is a local change, not a 33-site edit.
 - Deliverable: `Projection` with `tileToWorld`, `worldToScreen`,
   `screenToTile`; `BattleScene` + `RavageVfx` consume only that.
 - Verified by: pixel-identical behavior to today.
+
+**Status — done.** `src/render/Projection.ts` defines the `Projection`
+interface (`tileToWorld`, `worldToTile`, grid dims) plus the concrete
+`OrthographicProjection`. The interface is deliberately split so SCREEN→WORLD
+stays the camera's job (`getWorldPoint`) and Projection holds only WORLD↔TILE
+— which keeps it **pure (no Phaser import)** and fully unit-testable in Node.
+`BattleScene` builds one `OrthographicProjection` after the grid origin is
+fixed; all 14 `tileToPixel` call sites + `screenToTile` route through it, and
+`RavageVfx.refreshRavageAura` now takes the `Projection` instead of raw
+origins. `UnitArt.tileToPixel` is deprecated (kept only for compile-compat).
+Pixel-identity is locked by `src/render/__tests__/Projection.test.ts` (10
+cases asserting the new math equals the verbatim legacy formulas across a
+spread of real battle origins, including a tile→world→tile round trip and
+out-of-bounds rejection). Full suite 105/105 green, `tsc --noEmit` clean.
+
+> Next swap target behind this seam: a dimetric/tilted `Projection` (Approach
+> C) changes ONLY the basis vectors in `tileToWorld` + the inverse in
+> `worldToTile`. A true-3D `Projection` (Approach B) replaces `worldToTile`
+> with a ray/ground-plane intersection. Neither touches a BattleScene call
+> site — that's the whole payoff of Phase 1.
 
 ### Phase 2 — 3D layer behind a flag
 Stand up a Three.js scene rendered to a canvas composited **under** the Phaser

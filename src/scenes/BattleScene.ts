@@ -3,7 +3,8 @@ import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WID
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import type { BattleId } from "../data/contentIds";
 import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
-import { ensureUnitTexture, tileToPixel } from "../art/UnitArt";
+import { ensureUnitTexture } from "../art/UnitArt";
+import { OrthographicProjection, type Projection } from "../render/Projection";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
 import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
@@ -164,6 +165,12 @@ export class BattleScene extends Phaser.Scene {
   private initiative!: Initiative;
   private originX = 0;
   private originY = 0;
+  // Coordinate seam (HD-2D Phase 1). Owns ALL tile↔world pixel math; built
+  // once originX/originY are known (see create()). Today it's the flat
+  // OrthographicProjection — pixel-identical to the old inline tileToPixel /
+  // screenToTile. Swapping a 2.5D/3D projection in later is a one-line change
+  // here, not a 14-site edit. See src/render/Projection.ts.
+  private projection!: Projection;
   private unitViews = new Map<string, UnitView>();
   private overlayG!: Phaser.GameObjects.Graphics;
   private threatG!: Phaser.GameObjects.Graphics;
@@ -386,6 +393,16 @@ export class BattleScene extends Phaser.Scene {
     this.originX = 20 + Math.max(0, Math.floor((playW - mapPxW) / 2));
     this.originY = MAP_TOP_OFFSET + Math.max(0, Math.floor((playH - mapPxH) / 2));
 
+    // Build the coordinate projection now that the grid origin is fixed.
+    // Everything tile↔world goes through this from here on.
+    this.projection = new OrthographicProjection({
+      originX: this.originX,
+      originY: this.originY,
+      tileSize: TILE_SIZE,
+      gridWidth: map.width,
+      gridHeight: map.height
+    });
+
     // Camera scrolling. Bounds are MAX(viewport, map+margins) so:
     //   - Maps that fit inside the viewport: bounds == viewport, camera
     //     can't scroll (no slack), drag/keys are no-ops.
@@ -419,7 +436,7 @@ export class BattleScene extends Phaser.Scene {
       let sumX = 0;
       let sumY = 0;
       for (const p of players) {
-        const px = tileToPixel(p.state.position, this.originX, this.originY);
+        const px = this.projection.tileToWorld(p.state.position);
         sumX += px.x;
         sumY += px.y;
       }
@@ -473,7 +490,7 @@ export class BattleScene extends Phaser.Scene {
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const tile = grid.tileAt({ x, y });
-        const px = tileToPixel({ x, y }, this.originX, this.originY);
+        const px = this.projection.tileToWorld({ x, y });
         // Two-layer rendering: terrain sprite first, obstacle sprite on
         // top. Earlier the two were composited into a single canvas
         // texture with imageSmoothing — that path softened the obstacle's
@@ -514,7 +531,7 @@ export class BattleScene extends Phaser.Scene {
     // Units
     for (const u of units) {
       const tex = ensureUnitTexture(this, u);
-      const px = tileToPixel(u.state.position, this.originX, this.originY);
+      const px = this.projection.tileToWorld(u.state.position);
       const baseY = px.y - 4;
       // Cast-shadow first so the sprite is drawn on top of it.
       const shadow = this.add.ellipse(px.x, baseY + 24, 33, 10, 0x000000, 0.42);
@@ -830,20 +847,21 @@ export class BattleScene extends Phaser.Scene {
   // panned — without this, a player who scrolls the map and then clicks
   // would target a tile based on the un-scrolled origin.
   private screenToTile(px: number, py: number): TilePos | null {
-    // getWorldPoint inverts the full camera transform (origin + zoom +
-    // scroll), so this is correct whether or not native-res zoom is on.
-    // At RENDER_SCALE === 1 it reduces to the old `px + scrollX` math.
+    // Two stages, cleanly separated:
+    //   1. SCREEN→WORLD is the camera's job. getWorldPoint inverts the full
+    //      camera transform (origin + zoom + scroll), so this is correct
+    //      whether or not native-res zoom is on. At RENDER_SCALE === 1 it
+    //      reduces to the old `px + scrollX` math.
+    //   2. WORLD→TILE is the projection's job (bounds-checked there).
+    // Composing them here keeps Projection free of any Phaser dependency.
     const wp = this.cameras.main.getWorldPoint(px, py);
-    const x = Math.floor((wp.x - this.originX) / TILE_SIZE);
-    const y = Math.floor((wp.y - this.originY) / TILE_SIZE);
-    if (x < 0 || y < 0 || x >= this.state.grid.width || y >= this.state.grid.height) return null;
-    return { x, y };
+    return this.projection.worldToTile(wp.x, wp.y);
   }
 
   private refreshUnitView(u: Unit): void {
     const v = this.unitViews.get(u.id);
     if (!v) return;
-    const px = tileToPixel(u.state.position, this.originX, this.originY);
+    const px = this.projection.tileToWorld(u.state.position);
     v.sprite.setPosition(px.x, px.y - 4);
     v.sprite.setVisible(isAlive(u));
     v.sprite.setFlipX(u.state.facingX === -1);
@@ -892,7 +910,7 @@ export class BattleScene extends Phaser.Scene {
   // keep the original method signatures so the rest of BattleScene
   // doesn't have to know the implementation moved.
   private refreshRavageAura(v: UnitView, u: Unit): void {
-    refreshRavageAura(this, v, u, this.originX, this.originY);
+    refreshRavageAura(this, v, u, this.projection);
   }
   private clearRavageAura(v: UnitView): void {
     clearRavageAura(v);
@@ -971,7 +989,7 @@ export class BattleScene extends Phaser.Scene {
     for (const u of this.state.units) {
       if (u.faction !== "player") continue;
       if (!isAlive(u)) continue;
-      const px = tileToPixel(u.state.position, this.originX, this.originY);
+      const px = this.projection.tileToWorld(u.state.position);
       this.darknessRT.erase(key, px.x - offset, px.y - offset);
     }
   }
@@ -2029,19 +2047,19 @@ export class BattleScene extends Phaser.Scene {
       const fillA = state.tag === "roam" ? 0.32 : 0.28;
       this.overlayG.fillStyle(tint, fillA);
       for (const t of state.tiles) {
-        const px = tileToPixel(t, this.originX, this.originY);
+        const px = this.projection.tileToWorld(t);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
       }
       this.overlayG.lineStyle(1, tint, 0.85);
       for (const t of state.tiles) {
-        const px = tileToPixel(t, this.originX, this.originY);
+        const px = this.projection.tileToWorld(t);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
       }
     } else if (state.tag === "attack") {
       this.overlayG.fillStyle(COLORS.attackTile, 0.32);
       this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
       for (const t of state.targets) {
-        const px = tileToPixel(t.state.position, this.originX, this.originY);
+        const px = this.projection.tileToWorld(t.state.position);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
       }
@@ -2054,7 +2072,7 @@ export class BattleScene extends Phaser.Scene {
       if (u.state.stance !== "ready") continue;
       for (const z of counterZoneTiles(u)) {
         if (z.x < 0 || z.y < 0 || z.x >= this.state.grid.width || z.y >= this.state.grid.height) continue;
-        const px = tileToPixel(z, this.originX, this.originY);
+        const px = this.projection.tileToWorld(z);
         this.threatG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
       }
     }
@@ -2145,7 +2163,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     this.cursorG.clear();
-    const px = tileToPixel(tile, this.originX, this.originY);
+    const px = this.projection.tileToWorld(tile);
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
     this.cursorG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
 
@@ -2274,7 +2292,7 @@ export class BattleScene extends Phaser.Scene {
         u.state.facingX = dx > 0 ? 1 : -1;
         view.sprite.setFlipX(u.state.facingX === -1);
       }
-      const px = tileToPixel(step, this.originX, this.originY);
+      const px = this.projection.tileToWorld(step);
       lastY = px.y - 4;
       sfxStep();
       // Shadow tweens in parallel — same x as the sprite, but its own y so
