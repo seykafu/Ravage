@@ -1,7 +1,7 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
 import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, swampMap } from "./maps";
-import { MUSIC, type MusicKey } from "../audio/Music";
+import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
 import type { DialogBeat } from "../story/beats";

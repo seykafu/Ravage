@@ -29,8 +29,12 @@ export const fitBodyText = (
   // (21px font / 10px spacing ≈ 0.48) at every size we step down to.
   const spacingFor = (size: number): number => Math.round(size * 0.48);
 
-  let chosen = minSize;
-  for (let size = baseSize; size >= minSize; size--) {
+  // Floor the minimum at 1px: Phaser's setFontSize(0) renders nothing (and
+  // negative throws), so guard against a caller passing a non-positive
+  // minSize. Current callers pass 14, so this is pure defense-in-depth.
+  const floorSize = Math.max(1, minSize);
+  let chosen = floorSize;
+  for (let size = baseSize; size >= floorSize; size--) {
     textObj.setFontSize(size);
     textObj.setLineSpacing(spacingFor(size));
     textObj.setText(body); // re-wraps at the object's current wordWrap width
