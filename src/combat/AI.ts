@@ -5,7 +5,6 @@ import {
   performAttack,
   reachableForUnit,
   targetsForUnit,
-  tileFor,
   unitAt
 } from "./Actions";
 import { previewAttack } from "./Damage";

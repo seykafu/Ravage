@@ -148,7 +148,7 @@ export const writeSave = (s: SaveState): void => {
   } catch (err) {
     // Surface the failure rather than swallowing it — a quota error here
     // means the player's progress just vanished and they deserve to know.
-    // eslint-disable-next-line no-console
+     
     console.error("[save] failed to write active mirror:", err);
     return;
   }
@@ -160,7 +160,7 @@ export const writeSave = (s: SaveState): void => {
     try {
       localStorage.setItem(slotLocalKey(slot), JSON.stringify(stamped));
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(`[save] failed to write slot ${slot} cache:`, err);
     }
     void pushSlotRemote(slot, stamped); // fire-and-forget
@@ -170,7 +170,7 @@ export const writeSave = (s: SaveState): void => {
     // Active mirror still has the data — fetchSlotPreviews will rescue
     // it via the active-mirror fallback below — but log loudly so we
     // notice if a code path forgot to set the slot.
-    // eslint-disable-next-line no-console
+     
     console.warn("[save] writeSave: no currentSlot; only the active mirror was updated.");
   }
 };

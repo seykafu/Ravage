@@ -156,7 +156,7 @@ export class MusicManager {
       if (this.current === sound && !sound.isPlaying) {
         try { sound.play(); } catch { /* */ }
         if (import.meta.env.DEV && !sound.isPlaying) {
-          // eslint-disable-next-line no-console
+           
           console.warn(`[MusicManager] Track "${key}" failed to start. AudioContext state: ${sm.context?.state ?? "n/a"}`);
         }
       }

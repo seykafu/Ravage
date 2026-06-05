@@ -8,14 +8,19 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 4173",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.0",
     "phaser": "^3.80.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
     "typescript": "^5.5.4",
+    "typescript-eslint": "^8.60.1",
     "vite": "^5.4.2",
     "vitest": "^2.0.5"
   }

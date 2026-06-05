@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { Button } from "../ui/Button";
 import { SettingsButton } from "../ui/SettingsButton";
-import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
+import { FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";

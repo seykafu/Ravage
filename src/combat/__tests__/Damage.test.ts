@@ -10,7 +10,7 @@ import { describe, it, expect } from "vitest";
 import { previewAttack, weaponModifier, attackerRavageModifier, attackerClassBonus, effectiveArmor } from "../Damage";
 import { createUnit } from "../Unit";
 import { createFang, createRoyalLens, createDactylFood } from "../items";
-import type { Tile, Unit, UnitDef, WeaponKind } from "../types";
+import type { Tile, Unit, UnitDef } from "../types";
 
 const NEUTRAL_TILE: Tile = {
   pos: { x: 0, y: 0 },

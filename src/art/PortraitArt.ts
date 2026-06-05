@@ -26,7 +26,6 @@ const drawPortrait = (px: PixelCanvas, p: PortraitInput): void => {
   // Backdrop: vertical gradient from secondary → black, with a soft vignette.
   for (let y = 0; y < PH; y++) {
     const t = y / PH;
-    const c = lightenColor(0x000000, 0.0);
     const r = ((p.secondary >> 16) & 0xff) * (0.4 - t * 0.3);
     const g = ((p.secondary >> 8) & 0xff) * (0.4 - t * 0.3);
     const b = (p.secondary & 0xff) * (0.4 - t * 0.3);

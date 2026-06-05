@@ -70,7 +70,7 @@ import {
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
-import { announceRavaged, clearRavageAura, refreshRavageAura, type RavageViewState } from "./battle/RavageVfx";
+import { announceRavaged, clearRavageAura, refreshRavageAura } from "./battle/RavageVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
@@ -341,7 +341,7 @@ export class BattleScene extends Phaser.Scene {
         const gained = catchUpToSquad(p, squadAvg);
         if (gained > 0) {
           p.state.hp = p.stats.hp; // top up after the catch-up HP gains
-          // eslint-disable-next-line no-console
+           
           if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
         }
       }

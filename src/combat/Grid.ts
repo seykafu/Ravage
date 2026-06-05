@@ -1,4 +1,4 @@
-import type { MapDef, ObstacleKind, TerrainKind, Tile, TilePos, Unit } from "./types";
+import type { MapDef, ObstacleKind, TerrainKind, Tile, TilePos } from "./types";
 import { manhattan } from "../util/math";
 
 // Defender damage multiplier per terrain (1.0 = neutral, <1.0 = cover).
