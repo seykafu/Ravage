@@ -146,7 +146,13 @@ export type ArcId =
   // -------- B17: Dawn's Lie (Khione's revelation; the break with
   // Dawn; the squad leaves Grude) --------
   | "before_lie"
-  | "post_lie";
+  | "post_lie"
+  // -------- B18: Seven Names, One Choice (the path divergence — the squad
+  // is on open water; Amar finally chooses which philosophy he carries
+  // forward). before_path_chosen frames the fork; post_path_chosen is the
+  // beat that hands off to the ChoiceScene where the pick is committed. --------
+  | "before_path_chosen"
+  | "post_path_chosen";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping
@@ -186,4 +192,8 @@ export type RouteRef =
   | `prep:${BattleId}`
   | "credits"
   | "camp"
-  | "overworld";
+  | "overworld"
+  // The Seven Paths divergence. An arc ending in "choice" (post_path_chosen)
+  // hands off to ChoiceScene, where the player commits to one of the seven
+  // philosophies; ChoiceScene then routes to the chosen path's B19 opener.
+  | "choice";

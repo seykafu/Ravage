@@ -401,6 +401,13 @@ export class StoryScene extends Phaser.Scene {
       this.scene.start("CampScene");
       return;
     }
+    if (next === "choice") {
+      // Seven Paths divergence (post-B18). ChoiceScene presents the seven
+      // philosophies, persists the pick, and routes onward to the chosen
+      // path's opener.
+      this.scene.start("ChoiceScene");
+      return;
+    }
     if (next === "overworld") {
       // Legacy route, kept as an escape hatch for arcs that explicitly
       // want to drop the player into the world map without going

@@ -1088,17 +1088,16 @@ export const ARCS: Record<ArcId, StoryArc> = {
   // The squad is aboard and the ship clears the quay. Dawn comes down
   // to the emptied dock — alone, unarmed — for the last word. She does
   // not deny the plan and she does not beg; she states the arithmetic
-  // and the love both, lets her son go, and the slice ends on Amar in
-  // open water with the first genuinely unwritten choice of his life
-  // ahead of him. (Routes to credits; B18 — the Seven Paths — is the
-  // next chapter to be authored.)
+  // and the love both, lets her son go, and leaves Amar in open water
+  // with the first genuinely unwritten choice of his life ahead of him.
+  // Routes forward into B18 — the Seven Paths divergence.
   post_lie: {
     id: "post_lie",
     title: "She loves you. She lied.",
     subtitle: "Khione's ship, pulling out of Grude harbour",
     music: "sadness",
     backdrop: "grude",
-    next: "credits",
+    next: "story:before_path_chosen",
     beats: [
       N("Khione has the ship off the bollards before the squad has finished catching its breath. The quay begins to widen astern — and out onto the emptied stone of it, alone, without a single guard at her shoulder, walks Madame Dawn. She does not call for the ship to be stopped. She simply walks to the edge of the dock, where the water starts, and waits for the gap to be exactly wide enough that nothing said across it can be mistaken for a negotiation."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
@@ -1112,7 +1111,58 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("The gap of water goes on widening. Dawn does not wave and Amar does not wave; they only hold each other's eyes until the harbour mist and the distance take the dock, and then Madame Dawn is gone, and Grude with her, and the ship comes around onto open sea."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "(after a long quiet) Wherever this goes next — it isn't her board anymore, Amar. It isn't Archbold's, it isn't Fergus's, it isn't Nebu's. For the first time since a hospital cot in Thuling, the next move is genuinely yours. Ning, Leo and I have talked about it. Whatever you choose to be from here — we're the people standing next to you. Lucian's instruction. We meant it." },
-      N("The ship runs west into open water, and Grude sinks behind it, and ahead of Amar there is nothing written — no warrant, no contract, no mother's map, no father's army with his name already on its orders. Only the sea, and the squad, and a question with seven possible shapes that no one alive but Amar gets to answer. The vertical slice ends here. The choice begins the next time the story does.")
+      N("The ship runs west into open water, and Grude sinks behind it, and ahead of Amar there is nothing written — no warrant, no contract, no mother's map, no father's army with his name already on its orders. Only the sea, and the squad, and a question with seven possible shapes that no one alive but Amar gets to answer.")
+    ]
+  },
+
+  // ============== Battle 18 — Seven Names, One Choice ==============
+  // The path divergence. before_path_chosen frames the fork from inside the
+  // ship's hold: Amar lays out the seven names he's carrying and the squad
+  // forces the question into the open. It routes into the B18 battle (a
+  // boarding party the empire sends after Khione's ship), and B18's victory
+  // routes to post_path_chosen, which hands off to ChoiceScene.
+  before_path_chosen: {
+    id: "before_path_chosen",
+    title: "Seven Names",
+    subtitle: "The hold of Khione's ship, three days out",
+    music: "emotional",
+    backdrop: "grude",
+    next: "prep:b18_path_chosen",
+    beats: [
+      N("Three days of open water. The squad has slept, and eaten something that was not eaten over a map, and the shaking in everyone's hands has finally stopped. Khione holds the wheel above. Below, in the lamplit hold, the four of them sit around a crate that is doing the work of a table, and nobody has said the thing out loud yet, because saying it makes it real."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "We're going to make landfall in four days, Amar. And when we do, the squad goes wherever you point. That's not me being loyal — it's me being practical. You're the trueborn heir to Anthros, the empire wants you dead, the rebellion wants you spent, and the only person left who gets to decide what you're FOR is you. So I'm asking, while we still have water under us and no one shooting: what are we, when we land?" },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(turning something over in his hands — Khonu's old bow, salvaged off the cliffs) I keep counting names. Everyone who ever told me what the answer was. Selene, on the monastery floor — kill the man who did this, that's all that's clean. Lucian — rebuild it, slow, the boring way, the way that lasts. You, Maya — burn every throne, not just his. Khonu taught me a soldier serves something bigger than himself. Tev told me the bravest thing is to walk away. The surgeon, Yul, never once asked which side a wound was on. And Sera —" },
+      { speaker: "Ning", portraitId: "ning", expression: "startled",
+        body: "Sera said the kindest thing the head wound did was let you put a life down. (Quietly.) I remember. You told me on the wall at Orinhal. You didn't think I was listening." },
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "Seven names. Seven people who already decided what I'm for. (He sets the bow down.) Dawn spent thirty years deciding it. My father spent ten. Nebu, Fergus, Kian — everyone I've ever met has handed me a list with the answer already written at the bottom. I am so tired of reading other people's sums, Maya." },
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride",
+        body: "(from the shadows, picking dried salt off his dactyl's tack) Then don't read theirs. My father handed me a list and I walked the dactyl to the other side of it and I have not been sorry once. (A shrug.) Pick the name you can stand to be at the end of a long day, Captain. Pick the one you could still answer to if every person who handed it to you was dead. The rest of us already decided we're coming. That part's not yours to count." },
+      N("Above them, the lookout's cry comes down through the deck boards — a sail on the horizon, running fast, flying imperial colours. The empire has a long arm and a short memory for the people on the end of it, and it has not, after all, simply let Amar sail away. The crate-table is shoved aside. The choice will have to wait the length of one more fight — but it is asked, now, and out loud, and it will not be un-asked. Four days to landfall. One sail closing. Seven names, and only Amar to choose among them.")
+    ]
+  },
+
+  // -------- Post-Battle 18 — the choice is made --------
+  // The boarding party is beaten back. The squad stands in the wreck of the
+  // fight and Amar, finally, answers the question. This arc is the hinge:
+  // its `next: "choice"` routes to ChoiceScene, where the player commits to
+  // one of the seven paths and the campaign forks.
+  post_path_chosen: {
+    id: "post_path_chosen",
+    title: "One Choice",
+    subtitle: "The deck of Khione's ship, the boarding party broken",
+    music: "emotional",
+    backdrop: "grude",
+    next: "choice",
+    beats: [
+      N("The last of the boarders goes over the rail into the grey water, and the imperial cutter sheers off with its rigging cut and its captain dead, and the deck of Khione's ship is suddenly, ringingly quiet. The squad stands among the things a fight leaves behind. Khione never let go of the wheel. Ahead, low and dark on the horizon, is the line of a coast — four days come down to four hours, now, with the wind."),
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "(not turning from the wheel) That coast is the last one that belongs to nobody, Amar. Once we make landfall it all starts having owners again — kings, rebels, the dead and the people who loved them, every one of them with a claim on what you do next. (A pause.) You have until the keel touches sand to decide whose claim you answer. I would not waste it watching the water." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "(looking at the coming shore, and then at the three of them) I've been counting names for three days. (Quietly.) I think I've stopped on one. Maya — you said the squad goes where I point. Ning, Leo. Stand with me a minute while I point." },
+      N("He holds all seven names in his mouth at once — vengeance and restoration, revolution and duty, exile and mercy and the soft terrible mercy of forgetting — and the coast comes up out of the sea to meet whichever one he keeps. This is the choice the whole road has been bending toward. Pick the one Amar can still answer to. Then pick up the sword.")
     ]
   }
 };

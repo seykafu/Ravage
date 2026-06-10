@@ -986,3 +986,54 @@ export const quayMap: MapDef = buildMap("quay", "Harbour Quay, Grude", quayRows,
     { x: 6, y: 5 }  // loyalist (bandit swordsman), centre-south
   ]
 });
+
+// ============== Battle 18 — Seven Names, One Choice ==============
+// 13×11 ship's deck. Khione's ship under boarding attack three days out of
+// Grude. A wood deck (Dk) floats inside a border of open sea (Sea) — the
+// squad cannot retreat off the edges; they hold amidships and repel the
+// boarders who come over BOTH rails (east + west) and the bow (north). Crate
+// stacks (Cr = barricade) give cover along the centreline; two masts/capstans
+// (Mp = rock) break the long fore-aft sight line so the boarders' archers
+// can't rake the whole deck. The squad starts clustered around the wheel at
+// the stern (south) so the round-1 dialogue fires before they commit.
+const Sea = t("water");                 // open sea — impassable border
+const Dk = t("wood");                   // ship's deck
+const Cr = t("wood", "barricade");      // lashed cargo crates (cover)
+const Mp = t("wood", "rock");           // mast base / capstan (blocks LoS)
+const shipDeckRows = [
+  [Sea, Sea, Sea, Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Sea, Sea, Sea], // ← bow (boarders come over)
+  [Sea, Sea, Dk,  Dk,  Dk,  Dk,  Mp,  Dk,  Dk,  Dk,  Dk,  Sea, Sea],
+  [Sea, Dk,  Dk,  Dk,  Cr,  Dk,  Dk,  Dk,  Cr,  Dk,  Dk,  Dk,  Sea], // ← fore cargo (cover)
+  [Sea, Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Sea],
+  [Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk ], // ← west rail ←→ east rail
+  [Dk,  Dk,  Cr,  Dk,  Dk,  Dk,  Mp,  Dk,  Dk,  Dk,  Cr,  Dk,  Dk ], // ← waist (main fight line)
+  [Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk ],
+  [Sea, Dk,  Dk,  Dk,  Cr,  Dk,  Dk,  Dk,  Cr,  Dk,  Dk,  Dk,  Sea], // ← aft cargo (cover)
+  [Sea, Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Sea],
+  [Sea, Sea, Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Sea, Sea],
+  [Sea, Sea, Sea, Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Dk,  Sea, Sea, Sea]  // ← stern / wheel (squad starts)
+] as const;
+
+export const shipDeckMap: MapDef = buildMap("ship_deck", "Khione's Deck, Open Water", shipDeckRows, {
+  // Squad clustered at the stern around the wheel (row 9-10). Tight block so
+  // the round-1 boarding dialogue fires before they push forward.
+  player: [
+    { x: 4, y: 9 }, // Maya
+    { x: 5, y: 9 }, // Amar (center)
+    { x: 6, y: 9 }, // Ning (bowline)
+    { x: 7, y: 9 }  // Leo (dactyl)
+  ],
+  // Boarders swarm the bow + both rails. No boss — this is a swarm to be
+  // broken (rout victory), the empire's last grab at the heir before the
+  // choice. The imperial line-captain (banditSwordsman, strongest) leads
+  // from the bow centre.
+  enemy: [
+    { x: 6, y: 0 },  // imperial line-captain, bow centre
+    { x: 4, y: 0 },  // boarder, bow west
+    { x: 8, y: 0 },  // boarder, bow east
+    { x: 0, y: 4 },  // boarder over the west rail
+    { x: 12, y: 4 }, // boarder over the east rail
+    { x: 2, y: 2 },  // boarding archer, fore-west
+    { x: 10, y: 2 }  // boarding archer, fore-east
+  ]
+});

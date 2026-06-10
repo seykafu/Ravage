@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, swampMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1749,26 +1749,100 @@ export const BATTLES: BattleNode[] = [
     ]
   },
   // ---- B18: Seven Paths divergence point -------------------------------------
-  // The pivotal narrative beat — Amar chooses what kind of person he's
-  // going to be from this point onward. The choice writes
-  // save.flags["seven_paths.choice"] (one of SevenPath); subsequent
-  // battles filter visibility on that flag. See docs/RAVAGE_DESIGN.md §6.
+  // The pivotal chapter. Mechanically a swarm-repel fight on the deck of
+  // Khione's ship: the empire sends one last boarding party after the heir
+  // three days out of Grude, and the squad has to break it. Narratively it's
+  // the hinge — before_path_chosen asks the question out loud; this fight is
+  // the last obstacle between Amar and the answer; post_path_chosen routes to
+  // ChoiceScene, where the player commits to one of the seven philosophies.
+  // The choice writes save.flags["seven_paths.choice"] (one of SevenPath) via
+  // setSevenPath; subsequent path battles filter visibility on that flag.
   {
     id: "b18_path_chosen",
     index: 18,
     title: "Eighteenth Battle",
     subtitle: "Seven Names, One Choice",
-    intro: "Dawn's lie has come out. Selene's words from the cells return. Lucian is buried under a stone you helped lift. Maya watches you from across the firelight without saying anything. Khonu's old bow leans against the wall. You hold all seven names in your mouth at once. Pick the one you can still answer to. Then pick up your sword.",
-    outro: "The path is chosen. The world reorganizes itself around the choice. Some doors close behind you forever; others open ahead.",
+    intro:
+      "Three days of open water, and the empire has not, after all, let Amar simply sail away. A fast imperial cutter runs Khione's ship down at dusk and throws grapnels over both rails — a boarding party of household troops with one order between them: the heir does not reach the far shore. The squad meets them on the deck with the sea on every side and nowhere left to retreat to. This is the last hand the empire gets to play before the coast comes up. Break the boarders, and the next thing Amar has to decide is the only one that has ever truly been his.",
+    outro:
+      "The last boarder goes over the rail into the grey water and the cutter sheers off with its rigging cut. The deck is suddenly, ringingly quiet. Ahead, low and dark, is the line of a coast that still belongs to nobody — and on it, Amar will finally answer the question he has carried since a hospital bed in Thuling. Seven names. One choice. The path begins where the keel touches sand.",
     music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
-    difficultyLabel: "Pivotal",
+    playable: true,
+    map: shipDeckMap,
+    buildPlayers: () => [
+      // Post-Rose squad of four. Khione holds the wheel (present, not a
+      // combatant). Map slots ordered [Maya, Amar, Ning, Leo].
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // An imperial household boarding party — royal-tier, NOT bandits. This
+      // is the empire's own men, the last grab at the heir. A line-captain
+      // (strongest royal guard) leads from the bow; the rest swarm the rails.
+      ENEMIES.royalGuard("pc_cap", 1801, 16),
+      ENEMIES.royalGuard("pc_bd1", 1802, 15),
+      ENEMIES.royalGuard("pc_bd2", 1803, 15),
+      ENEMIES.royalGuard("pc_bd3", 1804, 14),
+      ENEMIES.royalGuard("pc_bd4", 1805, 14),
+      ENEMIES.royalArcher("pc_ar1", 1806, 15),
+      ENEMIES.royalArcher("pc_ar2", 1807, 15)
+    ],
+    difficultyLabel: "Pivotal — The Last Boarding",
     // Spoils: 3 elixirs + 1 royal lens. Last "neutral" reward set
     // before the path-specific openers branch the loadouts in B19.
     // The squad outfits for whatever comes next.
-    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"],
+    // Victory: rout the boarding party. No boss — it's a swarm to be broken,
+    // and breaking it is what clears the way to the choice.
+    victory: routEnemies,
+    dialogues: [
+      // Round 1: the boarders hit the deck. The line-captain states the
+      // order; Amar names what's actually at stake; Maya calls the fight.
+      {
+        id: "b18_boarders",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
+            body: "Heir of Anthros! King Archbold sends his regards and a single instruction — you do not reach the far shore. Strike your colours and it's quick. Make us come across this deck for you and it won't be. Either way the answer is the same: the sea has you, and the sea is the King's." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "My father has sent men to a hospital, a cliff, a bridge, and now a ship, and every one of them told me the answer was already decided. (Draws.) It isn't. Not anymore. The only thing decided on this deck is that you don't get to be the ones who close it. Squad — hold the waist. Don't let them flank to the wheel." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "Boarders over both rails and the bow — seven of them, and the sea does our flanking for us; nobody's going around. Tight line at the masts, let the crates eat their arrows, break them as they come. Leo, the dactyl owns the open bow. Ning, drop the archers first. We finish this and Amar finally gets a quiet minute to decide who we are." }
+        ]
+      },
+      // adjacent_eot Amar/Imperial Captain — the captain is a professional
+      // soldier, not a believer; he says the one true thing the empire's
+      // service taught him, echoing Wren on the bridge without knowing it.
+      {
+        id: "b18_amar_captain",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "pc_cap" },
+        beats: [
+          { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
+            body: "You think breaking us changes the column you're in, your highness? I've carried the King's orders twenty years. There's always another deck, another bridge, another quiet road. He doesn't stop. (Pressing in.) The only men who ever got free of Archbold's arithmetic were the ones who stopped being worth the ink. Think on that, when you've a choice to make — the cheapest way out is to become nobody worth the chase." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "Funny. (Steel up.) That's one of the seven things I'm deciding between. I'll let you know which way I land — but you won't be on this deck to hear it. Move, Captain." }
+        ]
+      },
+      // before_victory: the boarding party breaks. The captain, down or
+      // bypassed, gives the empire's verdict on the heir as the cutter pulls
+      // away — and the deck goes quiet for the choice to come.
+      {
+        id: "b18_deck_clears",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The boarding party breaks the way a wave breaks — all at once, and then gone. The survivors throw themselves back over the rails to the cutter rather than be left on a deck that is suddenly all enemies; the cutter cuts its own grapnels and sheers off into the dusk with its rigging trailing. Khione never once let go of the wheel." },
+          { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
+            body: "(last over the rail, blood in his teeth, almost respectful) Faster than the King was told. He'll send another. He always sends another. (A breath.) But not before that coast — and a man gets very few hours in his life that nobody owns. Spend yours better than I spent mine, heir. ...That's not a kindness. It's the only true thing the service ever taught me." },
+          { portraitId: "narrator",
+            body: "Then the deck is the squad's, and the sea's, and quiet. Ahead, low on the darkening water, the coast that still belongs to nobody comes up to meet the ship. Amar stands among the things the fight left behind with seven names in his mouth and, for the first time in his life, no one alive close enough to answer the question for him." }
+        ]
+      }
+    ]
   },
   // ---- B19: Path-specific openers (one per Seven Path) -----------------------
   // Only the chosen path's chapter is visible / playable. Each opener

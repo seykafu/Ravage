@@ -18,6 +18,7 @@ import { InterposeScene } from "./scenes/InterposeScene";
 import { InventoryScene } from "./scenes/InventoryScene";
 import { CampScene } from "./scenes/CampScene";
 import { GameOverScene } from "./scenes/GameOverScene";
+import { ChoiceScene } from "./scenes/ChoiceScene";
 import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 import { installRenderScale } from "./util/renderScale";
@@ -61,6 +62,7 @@ const config: Phaser.Types.Core.GameConfig = {
     BattleScene,
     EndScene,
     GameOverScene,
+    ChoiceScene,
     CreditsScene,
     // Overlay scenes — register last so they render ON TOP of any
     // active page scene. Each is launched via scene.run() while the
@@ -89,6 +91,13 @@ installCrispText();
 installRenderScale();
 
 const game = new Phaser.Game(config);
+
+// Dev-only: expose the game instance so the browser console (and automated
+// preview harnesses) can inspect scene state / warp directly. Stripped from
+// production builds by the import.meta.env.DEV guard.
+if (import.meta.env.DEV) {
+  (window as unknown as { __RAVAGE_GAME__?: Phaser.Game }).__RAVAGE_GAME__ = game;
+}
 
 const loader = document.getElementById("loader");
 if (loader) {

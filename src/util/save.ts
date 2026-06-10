@@ -2,6 +2,7 @@ import { GAME_STATE_KEY } from "./constants";
 import { getSupabase } from "../auth/supabase";
 import type { Ability, ClassKind, Item, ItemKind, UnitStats } from "../combat/types";
 import { createItem } from "../combat/items";
+import type { SevenPath } from "../data/contentIds";
 
 // Per-character progression record. Persisted across battles. The unit's
 // authored UnitDef supplies the starting baseline; once a character has
@@ -213,6 +214,34 @@ export const recordSquadDeaths = (s: SaveState, count: number): SaveState => {
 // GameOverScene.
 export const hasExceededDeathLimit = (s: SaveState): boolean =>
   getSquadDeaths(s) > MAX_PERMITTED_DEATHS;
+
+// ---- Seven Paths (B18 divergence choice) ----------------------------------
+//
+// At Battle 18 ("Seven Names, One Choice") the player picks which of the
+// seven philosophies Amar carries forward; the pick gates which B19 path
+// opener (and, later, path climax/final) becomes playable. Stored as a
+// string flag so it rides the existing save-sync path with zero schema
+// change. SEVEN_PATHS_FLAG is the single canonical key — read/write only
+// through these helpers so a typo can't split the value across two keys.
+export const SEVEN_PATHS_FLAG = "seven_paths.choice";
+
+// The chosen path, or null if the player hasn't reached / resolved B18 yet.
+// Validates against the SevenPath union so a corrupt or hand-edited save
+// can't return a bogus path the routing layer doesn't understand.
+const SEVEN_PATHS: ReadonlySet<string> = new Set<SevenPath>([
+  "vengeance", "restoration", "revolution", "duty", "exile", "mercy", "forgetting"
+]);
+
+export const getSevenPath = (s: SaveState): SevenPath | null => {
+  const raw = s.flags[SEVEN_PATHS_FLAG];
+  return typeof raw === "string" && SEVEN_PATHS.has(raw) ? (raw as SevenPath) : null;
+};
+
+// Persist the chosen path. Pure — returns a new SaveState; caller writeSave()s.
+export const setSevenPath = (s: SaveState, path: SevenPath): SaveState => ({
+  ...s,
+  flags: { ...s.flags, [SEVEN_PATHS_FLAG]: path }
+});
 
 // Wipe the active save back to a fresh slot. Used by GameOverScene's
 // "Restart" affordance so a wiped run doesn't have to navigate back

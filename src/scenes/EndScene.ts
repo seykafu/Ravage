@@ -37,7 +37,8 @@ const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b14_origin: "post_origin",
   b15_inner_coup: "post_inner_coup",
   b16_proposal: "post_proposal",
-  b17_lie: "post_lie"
+  b17_lie: "post_lie",
+  b18_path_chosen: "post_path_chosen"
 };
 
 export class EndScene extends Phaser.Scene {
@@ -187,7 +188,7 @@ export class EndScene extends Phaser.Scene {
     const gap = 24;
 
     if (isVictory) {
-      const isFinalPlayable = this.battleId === "b17_lie"; // last in the slice
+      const isFinalPlayable = this.battleId === "b18_path_chosen"; // last in the slice
       const continueLabel = isFinalPlayable ? "Continue ▸" : "Continue ▸";
       const onContinue = () => {
         sfxConfirm();

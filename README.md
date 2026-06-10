@@ -1,12 +1,12 @@
 # Ravage
 
-A tactical RPG vertical slice — seventeen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — eighteen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
 Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
 ## Vertical slice contents
 
-Seventeen playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, the empire's welcome at the Grude harbor, the rebellion strike where Rose pays the cost, the night Amar learns whose child he really is, the mole inside Dawn's own house, the King's Knife on the river bridge, and the break with Dawn when her lie comes whole:
+Eighteen playable battles closing out the first half of the campaign and opening the second — squad assembly, the bandit / monastery / Orinhal arc, the cliff exit to Madame Dawn's ship, the empire's welcome at the Grude harbor, the rebellion strike where Rose pays the cost, the night Amar learns whose child he really is, the mole inside Dawn's own house, the King's Knife on the river bridge, the break with Dawn when her lie comes whole, and the empire's last boarding party on the open sea before Amar chooses his path from the Seven Names:
 
 | # | Title | Music |
 |---|-------|-------|
@@ -27,8 +27,11 @@ Seventeen playable battles closing out the first half of the campaign and openin
 | 15 | A Coup Within a Coup (Coyne the mole; Ndara falls) | *Spine of the World — Battle 2* |
 | 16 | Dawn's Proposal (the throne offer; the King's Knife) | *Spine of the World — Battle 2* |
 | 17 | Dawn's Lie (Khione's truth; the break with Dawn) | *Spine of the World — Battle 2* |
+| 18 | Seven Names, One Choice (the empire's last boarding party; the path fork) | *GrudeBattle1* |
 
-Battles 18–30 exist as data stubs in the world map for narrative continuity (the Seven Paths divergence, the Ravage fleet) but are not playable in the slice.
+After B18's victory the **Seven Paths** choice (ChoiceScene) forks the campaign — the player commits Amar to one of seven philosophies, which is persisted to the save and gates the path-specific chapters to come.
+
+Battles 19–30 exist as data stubs in the world map for narrative continuity (the seven path openers, the Ravage fleet) but are not playable in the slice.
 
 ## Setup
 
