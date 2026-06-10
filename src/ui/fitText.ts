@@ -1,56 +1,46 @@
 import Phaser from "phaser";
 
-// Auto-fit a dialogue body into a fixed-height text box.
+// Paginate a dialogue body into fixed-font pages that each fit the box.
 //
-// The problem this solves: dialogue beats used to be chunked into pages of
-// N lines and clicked through, which left orphan pages with one or two
-// trailing words. Instead we shrink the font size (and its proportional
-// line spacing) just enough that the whole beat's wrapped text fits inside
-// the box in a single pass — no pagination, no overhang.
+// History: an earlier pass shrank the font per-beat so any length fit one
+// box (fitBodyText). That kept everything on one page but produced tiny,
+// inconsistent text on long beats and read badly. We reverted to the
+// classic VN approach: a fixed, comfortable font, and when a beat is longer
+// than the box, split it into pages the player clicks through ("More ▾").
+// Paired with a script-wide verbosity cut, most beats are now one page and
+// the few long ones page cleanly instead of shrinking.
 //
-// `textObj` must already have its wordWrap width configured; we only touch
-// the font size, line spacing, and (transiently) the text contents to
-// measure. The returned `text` is the wrapped lines joined with explicit
-// newlines so the typewriter reveal doesn't reflow as characters appear.
+// `textObj` must already have its fontSize, lineSpacing, and wordWrap.width
+// configured (we read its wrapping at the real display font). We only touch
+// its text contents transiently to measure, and restore it to empty.
 
-export interface FitResult {
-  text: string;
-  fontSize: number;
-}
-
-export const fitBodyText = (
+// Split `body` into pages, each at most `maxLines` wrapped lines. Returns the
+// page strings (wrapped lines joined with explicit newlines so the typewriter
+// reveal doesn't reflow as characters appear). Never returns an empty array —
+// an empty/blank body yields a single empty page so the page pointer stays
+// valid.
+export const paginateBody = (
   textObj: Phaser.GameObjects.Text,
   body: string,
-  maxHeight: number,
-  baseSize: number,
-  minSize: number
-): FitResult => {
-  // Proportional line spacing: keeps the airy feel of the base style
-  // (21px font / 10px spacing ≈ 0.48) at every size we step down to.
-  const spacingFor = (size: number): number => Math.round(size * 0.48);
-
-  // Floor the minimum at 1px: Phaser's setFontSize(0) renders nothing (and
-  // negative throws), so guard against a caller passing a non-positive
-  // minSize. Current callers pass 14, so this is pure defense-in-depth.
-  const floorSize = Math.max(1, minSize);
-  let chosen = floorSize;
-  for (let size = baseSize; size >= floorSize; size--) {
-    textObj.setFontSize(size);
-    textObj.setLineSpacing(spacingFor(size));
-    textObj.setText(body); // re-wraps at the object's current wordWrap width
-    if (textObj.height <= maxHeight) {
-      chosen = size;
-      break;
-    }
-    // If we reach minSize without fitting, accept it (the box clips at most
-    // a hair — only the very longest beats hit this, and minSize is picked
-    // so even those fit in practice).
-    chosen = size;
-  }
-
-  textObj.setFontSize(chosen);
-  textObj.setLineSpacing(spacingFor(chosen));
-  const wrapped = textObj.getWrappedText(body);
+  maxLines: number
+): string[] => {
+  const lines = textObj.getWrappedText(body);
   textObj.setText("");
-  return { text: wrapped.length ? wrapped.join("\n") : body, fontSize: chosen };
+  if (lines.length === 0) return [body];
+
+  const perPage = Math.max(1, maxLines);
+  const pages: string[] = [];
+  for (let i = 0; i < lines.length; i += perPage) {
+    pages.push(lines.slice(i, i + perPage).join("\n"));
+  }
+  return pages;
 };
+
+// Compute how many lines of `fontSize` (+ `lineSpacing`) fit in `maxHeight`.
+// Phaser lays out each line at roughly fontSize + lineSpacing; we floor so a
+// partially-visible last line never clips.
+export const maxLinesFor = (
+  fontSize: number,
+  lineSpacing: number,
+  maxHeight: number
+): number => Math.max(1, Math.floor(maxHeight / (fontSize + lineSpacing)));

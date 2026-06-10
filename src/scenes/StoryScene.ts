@@ -6,7 +6,7 @@ import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
-import { fitBodyText } from "../ui/fitText";
+import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
@@ -69,21 +69,24 @@ const PORTRAIT_MASK_KEY = "story_portrait_fade_mask";
 // Dialog panel layout. Hoisted to module scope so create() and showBeat()
 // don't drift apart when one is tweaked. The box grows UPWARD from a fixed
 // bottom edge (PANEL_BOTTOM) so the Continue / Skip buttons pinned near the
-// screen bottom stay put. It's sized to hold a long beat at the base font;
-// any beat that would still overflow is shrunk to fit by fitBodyText, so
-// EVERY beat renders in a single box with no pagination and no overhang.
+// screen bottom stay put. The body renders at a FIXED, comfortable font; a
+// beat too long for the box splits into click-through pages ("More ▾")
+// rather than shrinking the text. Most beats fit one page after the
+// script-wide verbosity pass; the few long ones page cleanly.
 const PANEL_X = 120;
 const PANEL_W = GAME_WIDTH - 240;
-const PANEL_H = 290;
+const PANEL_H = 230;
 const PANEL_BOTTOM = GAME_HEIGHT - 60;
 const PANEL_Y = PANEL_BOTTOM - PANEL_H;
 const SPEAKER_Y_OFFSET = 14;
 const BODY_Y_OFFSET = 44;
 const BODY_BOTTOM_PADDING = 16;
-// Body font auto-fits between these bounds so the whole beat fits the box.
-const BODY_BASE_SIZE = 21;
-const BODY_MIN_SIZE = 14;
+// Fixed body font + line spacing (must match the bodyText style in create()).
+// maxLinesFor turns the available box height into a per-page line budget.
+const BODY_FONT_SIZE = 21;
+const BODY_LINE_SPACING = 10;
 const BODY_MAX_HEIGHT = PANEL_H - BODY_Y_OFFSET - BODY_BOTTOM_PADDING;
+const BODY_MAX_LINES = maxLinesFor(BODY_FONT_SIZE, BODY_LINE_SPACING, BODY_MAX_HEIGHT);
 
 export class StoryScene extends Phaser.Scene {
   private arcId!: ArcId;
@@ -245,12 +248,10 @@ export class StoryScene extends Phaser.Scene {
 
     this.speakerText.setText(beat.speaker ?? (beat.portraitId === "narrator" ? "" : ""));
 
-    // Shrink the font (if needed) so the entire beat fits the box in one
-    // pass — no multi-page chunking, so there are never orphan pages with a
-    // word or two to click through. currentBeatPages stays a single entry
-    // to keep showCurrentPage / advance unchanged.
-    const fit = fitBodyText(this.bodyText, beat.body, BODY_MAX_HEIGHT, BODY_BASE_SIZE, BODY_MIN_SIZE);
-    this.currentBeatPages = [fit.text];
+    // Paginate the beat at the fixed display font: most beats are a single
+    // page; a long one splits into click-through pages the player advances
+    // with the "More ▾" button. No font shrinking.
+    this.currentBeatPages = paginateBody(this.bodyText, beat.body, BODY_MAX_LINES);
     this.currentPageIdx = 0;
     this.showCurrentPage();
   }

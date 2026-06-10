@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
-import { fitBodyText } from "../ui/fitText";
+import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { getMusic, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
@@ -40,18 +40,19 @@ interface BattleDialogueArgs {
 // language matches when a dialogue fires mid-battle.
 const PANEL_X = 120;
 const PANEL_W = GAME_WIDTH - 240;
-// Grows upward from a fixed bottom edge (buttons stay pinned). Sized to
-// hold a long beat at base font; fitBodyText shrinks anything longer so
-// every beat lands in a single box — no pagination, no overhang.
-const PANEL_H = 290;
+// Grows upward from a fixed bottom edge (buttons stay pinned). Body renders
+// at a FIXED font; a beat too long for the box splits into click-through
+// pages ("More ▾") rather than shrinking — mirrors StoryScene.
+const PANEL_H = 230;
 const PANEL_BOTTOM = GAME_HEIGHT - 60;
 const PANEL_Y = PANEL_BOTTOM - PANEL_H;
 const SPEAKER_Y_OFFSET = 14;
 const BODY_Y_OFFSET = 44;
 const BODY_BOTTOM_PADDING = 16;
-const BODY_BASE_SIZE = 21;
-const BODY_MIN_SIZE = 14;
+const BODY_FONT_SIZE = 21;
+const BODY_LINE_SPACING = 10;
 const BODY_MAX_HEIGHT = PANEL_H - BODY_Y_OFFSET - BODY_BOTTOM_PADDING;
+const BODY_MAX_LINES = maxLinesFor(BODY_FONT_SIZE, BODY_LINE_SPACING, BODY_MAX_HEIGHT);
 
 // Portrait area to the right of the dialog text.
 const PORTRAIT_AREA_W = 300;
@@ -198,10 +199,9 @@ export class BattleDialogueScene extends Phaser.Scene {
 
     this.speakerText.setText(beat.speaker ?? (beat.portraitId === "narrator" ? "" : ""));
 
-    // Single box — same logic as StoryScene. Shrink the font (if needed) so
-    // the whole beat fits at once; no page-chunking, so no orphan pages.
-    const fit = fitBodyText(this.bodyText, beat.body, BODY_MAX_HEIGHT, BODY_BASE_SIZE, BODY_MIN_SIZE);
-    this.currentBeatPages = [fit.text];
+    // Paginate at the fixed font — same logic as StoryScene. Most beats are
+    // one page; a long one splits into click-through "More ▾" pages.
+    this.currentBeatPages = paginateBody(this.bodyText, beat.body, BODY_MAX_LINES);
     this.currentPageIdx = 0;
     this.showCurrentPage();
   }
