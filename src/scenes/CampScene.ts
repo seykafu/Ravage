@@ -362,26 +362,93 @@ export class CampScene extends Phaser.Scene {
   // character sprites as the squad expands past 6.)
 
   // Memorial spot — only renders when fallen characters exist.
-  // One small stone marker per fallen name, with the name carved
-  // visible. Click opens a quiet narrator beat about who they were.
+  // One headstone per fallen name, with the name carved visible.
+  // Click opens a quiet narrator beat about who they were.
+  //
+  // Prefers the painted asset at assets/camp/memorial_stone.png (ONE
+  // stone, stamped per fallen with a slight alternating tilt so a row
+  // reads hand-placed). Falls back to a procedural weathered headstone:
+  // arch-top tablet, left-edge bevel shadow + top catch-light (firelight
+  // comes from the camp's fire, up and to the RIGHT of this spot), a
+  // hairline crack, moss at the foot, grass tufts. Names are engraved at
+  // runtime as text in BOTH paths — which is why the painted asset must
+  // keep its central face blank.
   private renderMemorial(cx: number, cy: number, fallen: { id: string; name: string }[]): void {
+    const SPACING = 58;
+    const startX = cx - ((fallen.length - 1) * SPACING) / 2;
+
+    // Bare-earth mound under the whole row, wide enough for any count.
     const g = this.add.graphics();
     g.fillStyle(0x2a2218, 1);
-    g.fillEllipse(cx, cy + 30, 140, 24);
+    g.fillEllipse(cx, cy + 30, Math.max(140, fallen.length * SPACING + 50), 24);
+
+    const usePainted = hasAsset("camp:memorial_stone");
+
     fallen.forEach((f, i) => {
-      const sx = cx - 30 + i * 40;
+      const sx = startX + i * SPACING;
       const sy = cy;
-      // Stone marker
-      g.fillStyle(0x6a5a4a, 1);
-      g.fillRoundedRect(sx - 14, sy - 36, 28, 40, 3);
-      g.lineStyle(1, 0x1a0e04, 1);
-      g.strokeRoundedRect(sx - 14, sy - 36, 28, 40, 3);
-      // Carved name
-      this.add.text(sx, sy - 16, f.name.slice(0, 3).toUpperCase(), {
-        fontFamily: FAMILY_HEADING,
-        fontSize: "10px",
-        color: "#1a0e04"
+      // Alternate the lean a touch per stone — old graves settle unevenly.
+      const tilt = (i % 2 === 0 ? -1 : 1) * 0.035;
+
+      // Engraved name: fits the ~46px face. Longer names drop a font step
+      // rather than truncating to initials (LUCIAN at 8px ≈ 34px wide).
+      const carved = f.name.toUpperCase();
+      const nameSize = carved.length > 5 ? 8 : 10;
+
+      if (usePainted) {
+        const img = this.add.image(0, 8, "camp:memorial_stone").setOrigin(0.5, 1);
+        const tex = this.textures.get("camp:memorial_stone").getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+        img.setScale(74 / (tex.height || 74));
+        const name = this.add.text(0, -32, carved, {
+          fontFamily: FAMILY_HEADING, fontSize: `${nameSize}px`, color: "#241a10"
+        }).setOrigin(0.5);
+        this.add.container(sx, sy, [img, name]).setRotation(tilt);
+        return;
+      }
+
+      // ---- Procedural weathered headstone (local coords, tilted container) ----
+      const sg = this.add.graphics();
+      // Plinth the tablet sits on.
+      sg.fillStyle(0x4a4036, 1);
+      sg.fillRoundedRect(-27, -4, 54, 12, 3);
+      // Tablet with arched top.
+      sg.fillStyle(0x7d7668, 1);
+      sg.fillRoundedRect(-23, -58, 46, 60, { tl: 22, tr: 22, bl: 3, br: 3 });
+      // Left-edge bevel in shadow (fire is up-right of the memorial).
+      sg.fillStyle(0x5a5448, 0.9);
+      sg.fillRect(-23, -38, 6, 40);
+      // Catch-light along the arch's right shoulder.
+      sg.fillStyle(0x99917f, 0.8);
+      sg.fillRoundedRect(0, -57, 18, 6, 3);
+      // Outline.
+      sg.lineStyle(1.5, 0x241a10, 1);
+      sg.strokeRoundedRect(-23, -58, 46, 60, { tl: 22, tr: 22, bl: 3, br: 3 });
+      // Hairline crack from the arch shoulder, alternating side per stone.
+      const cs = i % 2 === 0 ? -1 : 1;
+      sg.lineStyle(1, 0x3a342a, 0.7);
+      sg.beginPath();
+      sg.moveTo(cs * 10, -52);
+      sg.lineTo(cs * 14, -40);
+      sg.lineTo(cs * 9, -30);
+      sg.strokePath();
+      // Moss at the foot corners.
+      sg.fillStyle(0x4a5d3a, 0.55);
+      sg.fillEllipse(-15, -3, 14, 8);
+      sg.fillEllipse(17, 1, 10, 6);
+      // Grass tufts in front of the plinth.
+      sg.fillStyle(0x55683c, 0.9);
+      sg.fillTriangle(-20, 8, -18, -2, -16, 8);
+      sg.fillTriangle(12, 9, 14, 0, 16, 9);
+      sg.fillTriangle(22, 8, 24, 1, 26, 8);
+      // Carved name + a short rule under it, engraved into the face.
+      const name = this.add.text(0, -34, carved, {
+        fontFamily: FAMILY_HEADING, fontSize: `${nameSize}px`, color: "#241a10"
       }).setOrigin(0.5);
+      const rule = this.add.graphics();
+      rule.lineStyle(1, 0x241a10, 0.6);
+      rule.lineBetween(-9, -26, 9, -26);
+
+      this.add.container(sx, sy, [sg, name, rule]).setRotation(tilt);
     });
 
     // Lucian-specific: festival flag from B11's sea burial. If
@@ -405,7 +472,9 @@ export class CampScene extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0.5);
 
-    this.attachHotspot(cx - 80, cy - 50, 160, 100, () => this.showMemorialBeat(fallen));
+    // Hotspot grows with the row so a third/fourth stone stays clickable.
+    const hotW = Math.max(160, fallen.length * 58 + 50);
+    this.attachHotspot(cx - hotW / 2, cy - 70, hotW, 120, () => this.showMemorialBeat(fallen));
   }
 
   // Character sprite + click hotspot. Sprite uses the unit's
@@ -665,6 +734,13 @@ export class CampScene extends Phaser.Scene {
     if (completedBattles.includes("b11_cliffs")) {
       fallen.push({ id: "lucian", name: "Lucian" });
     }
+    // Rose dies in post_dawn_rebellion (B13's post-arc), which plays before
+    // the player next reaches camp — so gating on the battle is correct.
+    // She is buried in Grude under the courtyard lemon tree; this stone is
+    // the squad's own marker, same as Lucian's (he rests at sea).
+    if (completedBattles.includes("b13_dawn_rebellion")) {
+      fallen.push({ id: "rose", name: "Rose" });
+    }
     return fallen;
   }
 
@@ -692,6 +768,8 @@ export class CampScene extends Phaser.Scene {
     for (const f of fallen) {
       if (f.id === "lucian") {
         blocks.push("Lucian — foreman of Thuling, husband to Mira, father to Tali. Took the bolt that should have ended Ning. Died in the cabin of Madame Dawn's ship with Amar's hand in his. The festival flag from his front room hangs over the marker. Mira and Tali rode for the cousin's farm. Amar will write to them every season for the rest of his life.");
+      } else if (f.id === "rose") {
+        blocks.push("Rose — Madame Dawn's lieutenant for thirty-two years, the steady hand who trained Maya. She stepped in front of four bolts meant for Dawn and was gone before the last crossbowman fell. She rests in Grude beneath the courtyard's lemon tree; this stone is the squad's. The plaza will carry her name.");
       } else {
         blocks.push(`${f.name} — fell in the line of duty.`);
       }

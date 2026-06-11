@@ -211,7 +211,16 @@ const uiEntries: ManifestEntry[] = [
 // the exact pixel dimensions registered here.
 const campEntries: ManifestEntry[] = [
   { id: "camp:wagon", path: "assets/camp/wagon.png", kind: "image" },
-  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 384, h: 1024 } }
+  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 384, h: 1024 } },
+  // Memorial headstone — ONE painted stone, stamped once per fallen
+  // character by CampScene.renderMemorial (slight alternating tilt per
+  // stamp so a row reads hand-placed, not cloned). Spec for the asset:
+  // portrait orientation (e.g. 1024×1536), transparent background, flat
+  // base (it's bottom-anchored on the ground line), and a smooth BLANK
+  // central face — the fallen character's name is engraved at runtime as
+  // a text overlay, so any baked-in lettering would collide with it.
+  // Missing file falls back to the procedural weathered-stone painter.
+  { id: "camp:memorial_stone", path: "assets/camp/memorial_stone.png", kind: "image" }
 ];
 
 export const MANIFEST: ManifestEntry[] = [
