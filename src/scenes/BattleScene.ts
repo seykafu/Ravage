@@ -747,7 +747,11 @@ export class BattleScene extends Phaser.Scene {
       else this.clearOverlays();
     });
 
-    this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.handlePointerDown(p));
+    // Game actions resolve on pointer-UP, not down, so a left-drag that pans
+    // the camera doesn't also misfire a move/attack/selection at the press
+    // origin. handlePointerUp checks pressWasDrag (set by the camera-pan
+    // handler) and bails if the press became a pan.
+    this.input.on("pointerup", (p: Phaser.Input.Pointer) => this.handlePointerUp(p));
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => this.handlePointerMove(p));
 
     // Battle music — start the battle theme immediately on entering the
@@ -1192,6 +1196,13 @@ export class BattleScene extends Phaser.Scene {
     startPointerX: 0,
     startPointerY: 0
   };
+  // True once the current press has moved past the drag threshold and become
+  // a camera pan. Read by handlePointerUp so a release that ended a pan does
+  // NOT also commit a move/attack/selection. Reset at the start of each press.
+  // Persists through the camera's own pointerup (which only clears
+  // cameraDragState.active) so the game's pointerup — registered later — still
+  // sees it.
+  private pressWasDrag = false;
   // Pixels the pointer must travel from the press origin before a hold
   // becomes a camera pan. Below this, the press is treated as a click
   // and the camera doesn't move — so a normal tile/unit click still
@@ -1216,6 +1227,7 @@ export class BattleScene extends Phaser.Scene {
       // a pan is decided in pointermove once the pointer has actually
       // moved past the threshold.
       this.cameraDragState.active = false;
+      this.pressWasDrag = false;
       this.cameraDragState.startScrollX = this.cameras.main.scrollX;
       this.cameraDragState.startScrollY = this.cameras.main.scrollY;
       this.cameraDragState.startPointerX = p.x;
@@ -1231,10 +1243,16 @@ export class BattleScene extends Phaser.Scene {
           Math.abs(dx) > BattleScene.CAMERA_DRAG_THRESHOLD ||
           Math.abs(dy) > BattleScene.CAMERA_DRAG_THRESHOLD;
         if (!movedEnough) return;
+        // Left-drag now pans in EVERY player state, not just idle. With
+        // click-to-move, a move commits on pointer-UP (handlePointerUp), so a
+        // left-drag past the threshold can be treated as a pan without
+        // misfiring the move — pressWasDrag tells pointerup to skip the
+        // action. Right/middle still pan unconditionally.
         const rightOrMiddle = p.rightButtonDown() || p.middleButtonDown();
-        const leftIdle = p.leftButtonDown() && this.fsm.current().tag === "idle";
-        if (!rightOrMiddle && !leftIdle) return;
+        const left = p.leftButtonDown();
+        if (!rightOrMiddle && !left) return;
         this.cameraDragState.active = true;
+        this.pressWasDrag = true;
       }
       this.cameras.main.setScroll(
         this.cameraDragState.startScrollX - dx,
@@ -1851,6 +1869,28 @@ export class BattleScene extends Phaser.Scene {
       canRoam ? { label: "Roam (free)", primary: false, enabled: true, onClick: () => this.enterRoamMode(u) } : null
     );
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
+
+    // Seamless movement: as soon as a player unit has the menu, show its
+    // move tiles by default so the player can click a blue tile to walk
+    // there directly — no round-trip to the "Move" button in the side menu.
+    // (The Move button stays as an explicit affordance / for re-entering
+    // move mode after an Attack preview.) Only auto-enter from idle so we
+    // don't stomp an Attack/Roam targeting the player just opened, and only
+    // when there's somewhere to actually move.
+    if (canMove && this.fsm.current().tag === "idle") {
+      this.autoEnterMoveMode(u);
+    }
+  }
+
+  // Like enterMoveMode but silent (no click sfx) — used to show move tiles
+  // automatically when the action menu appears, so the manual button press
+  // isn't implied to have happened.
+  private autoEnterMoveMode(u: Unit): void {
+    const reach = reachableForUnit(this.state, u);
+    const tiles = reach.filter((t) => !unitAt(this.state, t));
+    if (tiles.length === 0) return;
+    this.fsm.send({ tag: "ENTER_MOVE", tiles });
+    this.drawOverlay();
   }
 
   // After a player action consumes AP, decide whether to keep showing buttons
@@ -2079,13 +2119,22 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ---- Pointer handlers ----
-  private handlePointerDown(p: Phaser.Input.Pointer): void {
+  // Resolves on pointer-UP so a left-drag camera pan never commits an action.
+  private handlePointerUp(p: Phaser.Input.Pointer): void {
+    // A release that ended a camera pan is consumed by the pan, not the game.
+    if (this.pressWasDrag) { this.pressWasDrag = false; return; }
     if (this.fsm.isInputBlocked()) return;
     const u = this.initiative.current();
     if (!u || u.faction !== "player") return;
     const tile = this.screenToTile(p.x, p.y);
     if (!tile) return;
     const fsmState = this.fsm.current();
+    // Right-click while targeting cancels back to the menu (matches ESC),
+    // instead of being read as a tile/unit selection.
+    if (p.rightButtonReleased() && (fsmState.tag === "move" || fsmState.tag === "attack" || fsmState.tag === "roam")) {
+      this.cancelTargetingMode(u);
+      return;
+    }
     if (fsmState.tag === "move" || fsmState.tag === "roam") {
       const ok = fsmState.tiles.some((t) => t.x === tile.x && t.y === tile.y);
       if (ok) {
