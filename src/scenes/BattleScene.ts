@@ -1870,16 +1870,27 @@ export class BattleScene extends Phaser.Scene {
     );
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
 
-    // Seamless movement: as soon as a player unit has the menu, show its
-    // move tiles by default so the player can click a blue tile to walk
-    // there directly — no round-trip to the "Move" button in the side menu.
-    // (The Move button stays as an explicit affordance / for re-entering
-    // move mode after an Attack preview.) Only auto-enter from idle so we
-    // don't stomp an Attack/Roam targeting the player just opened, and only
-    // when there's somewhere to actually move.
-    if (canMove && this.fsm.current().tag === "idle") {
-      this.autoEnterMoveMode(u);
+    // Seamless targeting: as soon as a player unit has the menu, show its
+    // action overlays by default so the player can click the map directly —
+    // no round-trip to the side-menu buttons.
+    //   * canMove → move mode: blue move tiles PLUS red tiles on any in-range
+    //     enemy (drawOverlay adds them). Click blue to walk, red to attack.
+    //   * can't move but canAttack (surrounded / 0 movement) → attack mode so
+    //     the red targets still show and are click-to-attack.
+    // Only from idle, so we don't stomp an Attack/Roam the player just opened.
+    if (this.fsm.current().tag === "idle") {
+      if (canMove) this.autoEnterMoveMode(u);
+      else if (canAttack) this.autoEnterAttackMode(u);
     }
+  }
+
+  // Silent attack-mode entry (no click sfx) — used to auto-show red target
+  // tiles when a unit can attack but has nowhere to move.
+  private autoEnterAttackMode(u: Unit): void {
+    const targets = targetsForUnit(this.state, u);
+    if (targets.length === 0) return;
+    this.fsm.send({ tag: "ENTER_ATTACK", targets });
+    this.drawOverlay();
   }
 
   // Like enterMoveMode but silent (no click sfx) — used to show move tiles
@@ -2095,6 +2106,23 @@ export class BattleScene extends Phaser.Scene {
         const px = this.projection.tileToWorld(t);
         this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
       }
+      // Seamless attack: while a unit is selected (move mode, NOT roam —
+      // roam is move-only), also mark any in-range enemy red so the player
+      // can click it to attack directly, without opening the Attack menu.
+      // handlePointerUp checks the live target list before committing.
+      if (state.tag === "move") {
+        const u = this.initiative.current();
+        if (u) {
+          const targets = targetsForUnit(this.state, u);
+          this.overlayG.fillStyle(COLORS.attackTile, 0.32);
+          this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
+          for (const t of targets) {
+            const px = this.projection.tileToWorld(t.state.position);
+            this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+            this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+          }
+        }
+      }
     } else if (state.tag === "attack") {
       this.overlayG.fillStyle(COLORS.attackTile, 0.32);
       this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
@@ -2136,6 +2164,22 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (fsmState.tag === "move" || fsmState.tag === "roam") {
+      // Seamless attack: in move mode (not roam), a click on an in-range
+      // enemy attacks it directly — the red overlay drawn in drawOverlay()
+      // is clickable, no Attack-button round trip. Checked before the move
+      // tiles; an occupied enemy tile is never a valid move tile anyway.
+      if (fsmState.tag === "move") {
+        const target = targetsForUnit(this.state, u).find(
+          (t) => t.state.position.x === tile.x && t.state.position.y === tile.y
+        );
+        if (target) {
+          // move → playerAnimating is a valid FSM transition; animateAttack
+          // takes the target directly, so no ENTER_ATTACK step is needed.
+          this.fsm.send({ tag: "BEGIN_PLAYER_ACTION" });
+          void this.animateAttack(u, target);
+          return;
+        }
+      }
       const ok = fsmState.tiles.some((t) => t.x === tile.x && t.y === tile.y);
       if (ok) {
         this.fsm.send({ tag: "BEGIN_PLAYER_ACTION" });
@@ -2216,42 +2260,48 @@ export class BattleScene extends Phaser.Scene {
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
     this.cursorG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
 
+    // Damage preview when hovering an attackable enemy. Shown in BOTH attack
+    // mode AND move mode (where in-range enemies are click-to-attack), so the
+    // seamless attack has the same at-a-glance forecast as the menu path.
     const fsmState = this.fsm.current();
-    if (fsmState.tag === "attack") {
-      const u = this.initiative.current();
-      const target = u && fsmState.targets.find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
-      if (u && target) {
-        const tileDef = this.state.grid.tileAt(target.state.position);
-        const pre = previewAttack(u, target, tileDef, false, this.state.units);
-        const txt = this.hoverPreview.getData("txt") as Phaser.GameObjects.Text;
-        // Equipment delta line — surfaces "why is my crit 35% not 25%?"
-        // by spelling out the active passives. Skipped when neither
-        // attacker nor defender carries equipment, so the tooltip stays
-        // compact for vanilla attacks.
-        const atkEq = equipmentBonuses(u);
-        const defEq = equipmentBonuses(target);
-        const eqParts: string[] = [];
-        if (atkEq.hitPct) eqParts.push(`+${atkEq.hitPct}% hit`);
-        if (atkEq.critPct) eqParts.push(`+${atkEq.critPct}% crit`);
-        if (defEq.armorPenalty) eqParts.push(`-${defEq.armorPenalty} armr`);
-        const lines = [
-          `${u.name} → ${target.name}`,
-          `Damage  ${pre.damage}`,
-          `Hit     ${pre.hitRate}%`,
-          `Crit    ${pre.critRate}%`,
-          `Wpn x${pre.weaponMod.toFixed(2)}`,
-          `Trn x${pre.terrainMod.toFixed(2)}  Stn x${pre.stanceMod.toFixed(2)}`
-        ];
-        if (eqParts.length > 0) lines.push(`Eq  ${eqParts.join(", ")}`);
-        if (u.state.ravagedActive) lines.push(`RAVAGED +50% dmg`);
-        if (target.state.ravagedActive) lines.push(`Target RAVAGED -50% arm`);
-        txt.setText(lines.join("\n"));
-        const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - 230);
-        const hy = Math.min(px.y - 16, GAME_HEIGHT - 130);
-        this.hoverPreview.setPosition(hx, hy).setVisible(true);
-      } else {
-        this.hoverPreview.setVisible(false);
+    const u = this.initiative.current();
+    let target: Unit | undefined;
+    if (u) {
+      if (fsmState.tag === "attack") {
+        target = fsmState.targets.find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
+      } else if (fsmState.tag === "move") {
+        target = targetsForUnit(this.state, u).find((t) => t.state.position.x === tile.x && t.state.position.y === tile.y);
       }
+    }
+    if (u && target) {
+      const tileDef = this.state.grid.tileAt(target.state.position);
+      const pre = previewAttack(u, target, tileDef, false, this.state.units);
+      const txt = this.hoverPreview.getData("txt") as Phaser.GameObjects.Text;
+      // Equipment delta line — surfaces "why is my crit 35% not 25%?"
+      // by spelling out the active passives. Skipped when neither
+      // attacker nor defender carries equipment, so the tooltip stays
+      // compact for vanilla attacks.
+      const atkEq = equipmentBonuses(u);
+      const defEq = equipmentBonuses(target);
+      const eqParts: string[] = [];
+      if (atkEq.hitPct) eqParts.push(`+${atkEq.hitPct}% hit`);
+      if (atkEq.critPct) eqParts.push(`+${atkEq.critPct}% crit`);
+      if (defEq.armorPenalty) eqParts.push(`-${defEq.armorPenalty} armr`);
+      const lines = [
+        `${u.name} → ${target.name}`,
+        `Damage  ${pre.damage}`,
+        `Hit     ${pre.hitRate}%`,
+        `Crit    ${pre.critRate}%`,
+        `Wpn x${pre.weaponMod.toFixed(2)}`,
+        `Trn x${pre.terrainMod.toFixed(2)}  Stn x${pre.stanceMod.toFixed(2)}`
+      ];
+      if (eqParts.length > 0) lines.push(`Eq  ${eqParts.join(", ")}`);
+      if (u.state.ravagedActive) lines.push(`RAVAGED +50% dmg`);
+      if (target.state.ravagedActive) lines.push(`Target RAVAGED -50% arm`);
+      txt.setText(lines.join("\n"));
+      const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - 230);
+      const hy = Math.min(px.y - 16, GAME_HEIGHT - 130);
+      this.hoverPreview.setPosition(hx, hy).setVisible(true);
     } else {
       this.hoverPreview.setVisible(false);
     }
