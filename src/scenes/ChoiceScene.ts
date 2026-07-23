@@ -242,11 +242,9 @@ export class ChoiceScene extends Phaser.Scene {
     save = unlockBattle(save, choice.openerBattle);
     writeSave(save);
 
-    // Route onward. The B19 path openers are authored but not yet flipped
-    // playable, so we land the player at CampScene (the campaign hub) with
-    // the path now recorded — the overworld signpost reads the flag and
-    // surfaces the chosen path's chapter when it ships. When the openers go
-    // playable, swap this for a direct prep:<openerBattle> route.
+    // Route onward — straight into the chosen path's opener prep. The pick
+    // has been persisted and the opener unlocked above, so the campaign
+    // fork happens the moment the fade lands.
     //
     // Idempotent transition: this is an IRREVERSIBLE choice, so getting the
     // player off this screen is non-negotiable. We fire on whichever happens
@@ -259,7 +257,7 @@ export class ChoiceScene extends Phaser.Scene {
     const go = (): void => {
       if (routed) return;
       routed = true;
-      this.scene.start("CampScene");
+      this.scene.start("BattlePrepScene", { battleId: choice.openerBattle });
     };
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", go);

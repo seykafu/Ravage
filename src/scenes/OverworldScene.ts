@@ -5,7 +5,7 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
-import { loadSave } from "../util/save";
+import { getSevenPath, loadSave } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
@@ -63,12 +63,28 @@ export class OverworldScene extends Phaser.Scene {
     // Picking the FIRST entry per index gives one canonical card
     // per chapter number; the actual path routing happens at click
     // time once Seven Paths gating ships in a future commit.
+    // Path-variant battles share an index (all seven B19 openers are #19)
+    // and collapse to ONE card. Before the Seven Paths choice, the first
+    // variant stands in as a generic gated card; after the choice, the
+    // CHOSEN path's variant takes the slot so hover copy, unlock state and
+    // routing all reflect the player's actual campaign.
+    const chosenPath = getSevenPath(save);
     const visibleBattles: typeof BATTLES = [];
     const seenIndexes = new Set<number>();
     for (const b of BATTLES) {
       if (seenIndexes.has(b.index)) continue;
       seenIndexes.add(b.index);
-      visibleBattles.push(b);
+      const isPathVariant = b.id.includes("path_opener")
+        || b.id.includes("path_climax")
+        || b.id.includes("path_final");
+      if (isPathVariant && chosenPath) {
+        const chosen = BATTLES.find(
+          (x) => x.index === b.index && x.id.endsWith(chosenPath)
+        );
+        visibleBattles.push(chosen ?? b);
+      } else {
+        visibleBattles.push(b);
+      }
     }
 
     const detailG = this.add.graphics();
@@ -343,9 +359,12 @@ export class OverworldScene extends Phaser.Scene {
       // similarly. For all of them, surface generic copy on hover
       // and a "pick a path first" message on click rather than
       // routing the player into the wrong variant's prep.
-      const isPathBattle = b.id.includes("path_opener")
+      // Gate path battles only while the Seven Paths choice is unmade —
+      // once chosen, this card IS the chosen variant (see the dedupe swap
+      // above) and flows through the normal locked/playable states.
+      const isPathBattle = (b.id.includes("path_opener")
         || b.id.includes("path_climax")
-        || b.id.includes("path_final");
+        || b.id.includes("path_final")) && !chosenPath;
 
       // Hit area — locked / cleared cards are still interactive (hover
       // shows the right context, click surfaces an explanatory floater)

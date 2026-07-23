@@ -1037,3 +1037,144 @@ export const shipDeckMap: MapDef = buildMap("ship_deck", "Khione's Deck, Open Wa
     { x: 10, y: 2 }  // boarding archer, fore-east
   ]
 });
+
+// ═══════════════ Battle 19 — the Seven Path openers ═══════════════
+// One battle per path; only the chosen path's opener is ever reached in a
+// given run. Three reuse an existing tile layout under a new identity (the
+// geometry reads correctly for the new fiction, and per-run only one B19 is
+// seen, so layout reuse across paths costs nothing); two are authored fresh
+// for the solo-Amar chapters, which want small, intimate maps.
+
+// ---- Revolution: the border granary compound ----
+// The candle-maker's-courtyard geometry re-cast as an imperial supply
+// depot: same walled yard, crate barricades = grain sledges, the well =
+// the tally post. Squad breaches the south gap; the depot garrison forms
+// at the north stores.
+export const granaryMap: MapDef = buildMap("granary", "Border Granary, Imperial Depot", courtyardRows, {
+  player: [
+    { x: 4, y: 8 }, // Maya
+    { x: 5, y: 8 }, // Amar
+    { x: 6, y: 8 }, // Ning
+    { x: 7, y: 8 }  // Leo
+  ],
+  // Depot commander (royal captain) holds the north stores; garrison
+  // spread through the yard behind the sledges.
+  enemy: [
+    { x: 6, y: 0 }, // depot commander (royal captain — holdPositionUntil)
+    { x: 3, y: 2 }, // royal guard, NW stores
+    { x: 8, y: 2 }, // royal archer, NE stores
+    { x: 3, y: 5 }, // royal guard, west sledges
+    { x: 8, y: 5 }, // royal guard, east sledges
+    { x: 6, y: 3 }  // royal archer, centre
+  ]
+});
+
+// ---- Duty: the frontier bridge ----
+// The Grude river-bridge geometry re-cast as the frontier crossing Amar's
+// column is ordered to hold. The squad forms up on the WEST end; the
+// imperial push comes across from the EAST. Victory is surviving the
+// assault, not clearing it — the column holds, whatever it costs.
+export const dutyBridgeMap: MapDef = buildMap("duty_bridge", "Frontier Bridge", bridgeRows, {
+  player: [
+    { x: 2, y: 3 }, // Maya
+    { x: 1, y: 4 }, // Amar (the captaincy — center of the line)
+    { x: 2, y: 5 }, // Ning
+    { x: 3, y: 4 }  // Leo
+  ],
+  // The imperial column stacks the east end and pushes west down the
+  // deck. No boss — pressure is the enemy.
+  enemy: [
+    { x: 12, y: 4 }, // vanguard sergeant (royal guard)
+    { x: 12, y: 2 }, // royal guard, north file
+    { x: 12, y: 6 }, // royal guard, south file
+    { x: 13, y: 3 }, // royal archer
+    { x: 13, y: 5 }, // royal archer
+    { x: 11, y: 4 }  // royal guard, point
+  ]
+});
+
+// ---- Mercy: Greywall fort ----
+// The monastery geometry re-cast as a border fort's interior — the same
+// pillared halls read as barracks walls and the altar platform as the keep
+// steps. Only the holdout captain and his few hardliners fight; the rest
+// of the garrison has stood down and watches from the walls.
+export const fortMap: MapDef = buildMap("mercy_fort", "Greywall Fort", monasteryRows, {
+  player: [
+    { x: 7, y: 13 }, // Amar
+    { x: 8, y: 13 }, // Maya
+    { x: 6, y: 14 }, // Ning
+    { x: 9, y: 14 }  // Leo
+  ],
+  // The holdout captain at the keep steps; three hardliners between him
+  // and the gate. Deliberately sparse — this is a duel of conviction,
+  // not a siege.
+  enemy: [
+    { x: 7,  y: 1 }, // holdout captain (royal captain — holdPositionUntil)
+    { x: 5,  y: 5 }, // hardliner (royal guard), west funnel
+    { x: 10, y: 5 }, // hardliner (royal guard), east funnel
+    { x: 7,  y: 9 }  // hardliner (royal archer), mid hall
+  ]
+});
+
+// ---- Exile: the cold pass north ----
+// 10×8 snow saddle between rock walls. Amar rides north alone; the
+// assassins' three sets of tracks converge on the pass ahead of him.
+// Small and open — a solo duel in the snow, nowhere to hide on either
+// side. Reuses the mountain snow aliases (SN / SR / ST).
+const exilePassRows = [
+  [SR, SR, SN, SN, SN, SN, SN, SN, SR, SR], // ← north saddle (the way out)
+  [SR, SN, SN, SN, ST, SN, SN, SN, SN, SR],
+  [SN, SN, SR, SN, SN, SN, SN, SR, SN, SN],
+  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN], // ← open middle — the killing ground
+  [SN, SN, SN, SN, SN, SN, SN, SN, SN, SN],
+  [SN, ST, SN, SN, SR, SN, SN, SN, ST, SN],
+  [SR, SN, SN, SN, SN, SN, SN, SN, SN, SR],
+  [SR, SR, SN, SN, SN, SN, SN, SN, SR, SR]  // ← south trail (Amar rides in)
+] as const;
+
+export const exilePassMap: MapDef = buildMap("exile_pass", "The Cold Pass", exilePassRows, {
+  // Amar alone, south trail.
+  player: [
+    { x: 4, y: 7 } // Amar — no one else is coming
+  ],
+  // Three assassins converge: one holds the north saddle, two close the
+  // jaws from the mid-pass flanks.
+  enemy: [
+    { x: 5, y: 0 }, // assassin, north saddle
+    { x: 1, y: 3 }, // assassin, west jaw
+    { x: 8, y: 3 }  // assassin (archer), east jaw
+  ]
+});
+
+// ---- Forgetting: the cottage cove ----
+// 11×8 southern-coast cove: water along the north edge, a sand shore, the
+// cottage's low wall in the southeast, grass and boulders inland. The
+// bounty men come up the beach; Amar meets them with a fisherman's calm
+// and a soldier's hands. Fresh aliases (Snd/GrR/GrT) — sand shore, grass
+// boulders, wind-bent shore trees.
+const Snd = t("sand");
+const GrR = t("grass", "rock");
+const GrT = t("grass", "tree");
+const cottageCoveRows = [
+  [Wa,  Wa,  Wa,  Wa,  Wa,  Wa,  Wa,  Wa,  Wa,  Wa,  Wa ], // ← open water
+  [Wa,  Wa,  Snd, Snd, Snd, Snd, Snd, Snd, Snd, Wa,  Wa ], // ← surf line
+  [Snd, Snd, Snd, Snd, Snd, Snd, Snd, Snd, Snd, Snd, Snd], // ← the beach (they come up here)
+  [G,   Snd, Snd, G,   G,   Snd, Snd, G,   Snd, Snd, G  ],
+  [G,   G,   GrR, G,   G,   G,   G,   GrR, G,   G,   G  ], // ← grass shelf + boulders
+  [G,   GrT, G,   G,   G,   G,   G,   G,   G,   GrT, G  ], // ← wind-bent trees
+  [G,   G,   G,   G,   GrR, G,   G,   G,   Wb,  Wb,  Wb ], // ← cottage wall, SE corner
+  [G,   G,   G,   G,   G,   G,   G,   G,   Wb,  G,   G  ]  // ← the door Amar stands in front of
+] as const;
+
+export const cottageCoveMap: MapDef = buildMap("cottage_cove", "A Fisherman's Cottage, South Coast", cottageCoveRows, {
+  // Amar alone, between the cottage door and the beach.
+  player: [
+    { x: 7, y: 6 } // Amar — the name that is not Amar
+  ],
+  // Bounty men come up the beach from the west surf line.
+  enemy: [
+    { x: 2, y: 2 }, // bounty leader, beach west
+    { x: 5, y: 2 }, // bounty man, beach centre
+    { x: 3, y: 4 }  // bounty archer, grass shelf
+  ]
+});

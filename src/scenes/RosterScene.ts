@@ -97,7 +97,16 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   b17_lie:             ["amar", "ning", "maya", "leo"],
   // B18: the four repel the empire's last boarding party on the open sea
   // before Amar chooses his path. Same squad — no joins or losses at B18.
-  b18_path_chosen:     ["amar", "ning", "maya", "leo"]
+  b18_path_chosen:     ["amar", "ning", "maya", "leo"],
+  // B19 path openers — squad composition is part of each path's meaning.
+  // Exile and Forgetting are Amar alone: those paths ARE the leaving.
+  b19_path_opener_vengeance:   ["amar", "ning", "maya", "leo"],
+  b19_path_opener_restoration: ["amar", "ning", "maya", "leo"],
+  b19_path_opener_revolution:  ["amar", "ning", "maya", "leo"],
+  b19_path_opener_duty:        ["amar", "ning", "maya", "leo"],
+  b19_path_opener_exile:       ["amar"],
+  b19_path_opener_mercy:       ["amar", "ning", "maya", "leo"],
+  b19_path_opener_forgetting:  ["amar"]
 };
 
 // Resolve the player's current active squad based on their save's

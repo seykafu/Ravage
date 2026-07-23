@@ -152,7 +152,17 @@ export type ArcId =
   // forward). before_path_chosen frames the fork; post_path_chosen is the
   // beat that hands off to the ChoiceScene where the pick is committed. --------
   | "before_path_chosen"
-  | "post_path_chosen";
+  | "post_path_chosen"
+  // -------- B19: the seven path-opener epilogues. Only the chosen path's
+  // arc is ever reached in a run; each closes its opener and (for now)
+  // rolls credits — the slice's seven possible endings. --------
+  | "post_path_opener_vengeance"
+  | "post_path_opener_restoration"
+  | "post_path_opener_revolution"
+  | "post_path_opener_duty"
+  | "post_path_opener_exile"
+  | "post_path_opener_mercy"
+  | "post_path_opener_forgetting";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

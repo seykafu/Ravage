@@ -1,6 +1,6 @@
 # Ravage
 
-A tactical RPG vertical slice — eighteen battles from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
+A tactical RPG vertical slice — nineteen battles per run (eighteen shared + one of seven path-opener finales) from a 30-battle story about Amar, the man who tried to take a country and now has to learn to deserve it.
 
 Built with **Phaser 3 + TypeScript + Vite**. All sprites, portraits, and backdrops are generated procedurally at runtime via offscreen Canvas. All sound effects are synthesized via WebAudio. The only external assets are the music tracks in `public/audio/` and the named-character portraits in `public/assets/portraits/`.
 
@@ -31,7 +31,7 @@ Eighteen playable battles closing out the first half of the campaign and opening
 
 After B18's victory the **Seven Paths** choice (ChoiceScene) forks the campaign — the player commits Amar to one of seven philosophies, which is persisted to the save and gates the path-specific chapters to come.
 
-Battles 19–30 exist as data stubs in the world map for narrative continuity (the seven path openers, the Ravage fleet) but are not playable in the slice.
+Battle 19 is the Seven Paths payoff: all seven path openers are playable — Vengeance (kill Lord Castor on the canyon road), Restoration (hold the road at Khonu's village), Revolution (burn the border granary), Duty (hold the frontier bridge for six rounds), Exile (Amar alone against a kill team in the snow), Mercy (subdue the holdout captain of a fort that wants to surrender), and Forgetting (a fisherman with a soldier's hands, alone on the beach). Each run plays exactly one, chosen at B18, each with its own epilogue and credits. Battles 20–30 remain data stubs for the full campaign.
 
 ## Setup
 

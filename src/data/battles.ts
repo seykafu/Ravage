@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, farmlandMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -1853,117 +1853,446 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Hunter's First Step",
-    intro: "Selene's path. You leave Grude in the dark with two riders and a list of names. Archbold's nephew is the first.",
-    outro: "His blood is the first you've spilled in your own name. Selene says nothing for two days afterward, then quietly hands you a second list.",
+    intro: "Selene's answer. The squad rides inland from the landfall coast with a list in Amar's saddlebag, written in his own hand. The first name on it is Lord Castor — the King's knight-captain, the man who took Amar off a Grude street to hand him to his father's knife. His column crosses the canyon road tonight.",
+    outro: "Castor's blood is the first you've spilled in your own name — not the rebellion's, not the empire's. Yours. The squad says nothing on the ride back. At the fire, Maya quietly hands you the list. There's a second name on it now, and the handwriting isn't yours.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_grude",
-    playable: false,
+    backdropKey: "bg_caravan",
+    playable: true,
+    map: caravanMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Lord Castor again — B14's retrieval knight, now the first name on
+      // the list. His household escort is royal-tier; this is an ambush on
+      // an imperial column, not a bandit raid.
+      ENEMIES.imperialKnight(17),
+      ENEMIES.royalGuard("vg_rg1", 1901, 15),
+      ENEMIES.royalGuard("vg_rg2", 1902, 15),
+      ENEMIES.royalArcher("vg_ra1", 1903, 15),
+      ENEMIES.royalArcher("vg_ra2", 1904, 14)
+    ],
     difficultyLabel: "Vengeance · Opener",
-    // Vengeance loadout — kill harder. Two Fangs (the nephew's
-    // ceremonial daggers, kept by Selene as trophies).
-    rewards: ["fang", "fang", "potion"]
+    // Vengeance loadout — kill harder. Two Fangs (Castor's ceremonial
+    // daggers, kept as trophies for Selene).
+    rewards: ["fang", "fang", "potion"],
+    // Victory: kill Castor. His escort is duty, not devotion — they break
+    // when he falls.
+    victory: defeatUnit("imperial_knight", { label: "Kill Lord Castor" }),
+    dialogues: [
+      {
+        id: "b19v_ambush",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "The heir. (He doesn't reach for his sword yet.) I carried you gently, boy. Whoever comes after me won't. Ride away and I'll write that I never saw you." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "You carried me gently to a knife, Castor. You're the first name on a list I wrote myself. (Draws.) No more reports. Squad — the escort breaks when he falls." }
+        ]
+      },
+      {
+        id: "b19v_amar_castor",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "imperial_knight" },
+        beats: [
+          { speaker: "Lord Castor", portraitId: "royal_guard", expression: "neutral",
+            body: "Wren told me you'd started reading the lists. (Steel up.) So read your own, your highness. Every name on it will cost you a piece of the man who wrote it. I'm the cheap one." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "I know the price, Castor. I did the arithmetic. (A breath.) I'm my mother's son after all." }
+        ]
+      },
+      {
+        id: "b19v_castor_falls",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Castor goes down on the canyon road, and his escort scatters into the dark — duty runs out where the pay does. The column's lanterns burn on the stones. Nobody speaks." },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "(quietly) First name. (She folds the list back into his saddlebag.) I'll keep the ledger, Amar. Somebody who loves you should be the one counting." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_restoration",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The First Stone Laid",
-    intro: "Lucian's path. The squad rides for the Anthros border. There is a village that remembers your father — Khonu's village. They will let you stay if you can hold the road.",
-    outro: "Three families fly an old flag from their doorposts that night. It is not the King's flag. It is not Dawn's flag. It is yours, if you can keep them safe.",
+    intro: "Lucian's answer. The squad rides from the landfall coast for the Anthros border, to a village that remembers Amar's father — Khonu's village. The war has made the roads lawless, and a raider band has been bleeding the village for a month. They will let you stay if you can hold the road.",
+    outro: "Three families fly an old flag from their doorposts that night. It is not the King's flag. It is not Dawn's flag. It is yours — if you can keep them safe. Rebuilding starts the way Lucian said everything starts: with one held road and one kept promise.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
-    playable: false,
+    playable: true,
+    map: dawnBanditsMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // War-scavengers — the lawlessness the empire's war leaves behind.
+      // Bandit-tier, but numerous and leveled for the late campaign.
+      ENEMIES.banditSwordsman("rs_b1", 1911, 15),
+      ENEMIES.banditSwordsman("rs_b2", 1912, 14),
+      ENEMIES.banditSpearton("rs_b3", 1913, 15),
+      ENEMIES.banditSpearton("rs_b4", 1914, 14),
+      ENEMIES.banditArcher("rs_b5", 1915, 14),
+      ENEMIES.banditArcher("rs_b6", 1916, 14)
+    ],
     difficultyLabel: "Restoration · Opener",
     // Restoration loadout — village gifts. The villagers contribute
     // what they have: 3 potions from the dispensary + 2 masks (the
     // courier's pair, traditionally given to a returning lord).
-    rewards: ["potion", "potion", "potion", "mask", "mask"]
+    rewards: ["potion", "potion", "potion", "mask", "mask"],
+    victory: routEnemies,
+    dialogues: [
+      {
+        id: "b19r_hold_the_road",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Lucian held a road like this once, for people he'd never met. (Draws.) These ones knew my father. Squad — nobody gets past us to the houses. Nobody." },
+          { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+            body: "Six of them, no discipline — they're used to farmers. (String creaks.) They've never met a held line. Let's teach them what Thuling learned." }
+        ]
+      },
+      {
+        id: "b19r_leo_aside",
+        trigger: { kind: "adjacent_eot", unitA: "leo", unitB: "amar" },
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+            body: "Captain. The old man on the porch — he's been watching you fight for two rounds. (A beat.) He keeps nodding. Like he's checking your form against somebody he remembers." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "Then let's not embarrass the memory. West flank, Leo. Go." }
+        ]
+      },
+      {
+        id: "b19r_road_held",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The last raider drops his blade and runs, and doesn't look back. The road is quiet. On the porches, one by one, doors that have been barred for a month come open." },
+          { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+            body: "No throne. No arithmetic. Just a held road and people who can sleep. (Quietly.) I could learn to like your version, Amar." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_revolution",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "Burn the Granary",
-    intro: "Maya's path. The royal granary outside Grude feeds half the colony. If you burn it, the city revolts inside a week. Maya has been planning this since before she met you.",
-    outro: "The granary burns. The smoke is visible from the palace balcony. Inside the week, Maya's prediction holds.",
+    intro: "Maya's answer. The imperial depot on the border road is where the colony's taxed grain sits before it ships to Archbold's field armies. Burn it, and the armies go hungry, the tax stops meaning anything, and every village on the road learns the empire can bleed. Maya has been planning this strike since before she met you.",
+    outro: "The granary burns. The smoke column is visible from the border garrison's walls, and by week's end from further than that. Nobody starves who wasn't already starving — the grain was never coming back to the villages that grew it. What spreads instead is the news: the empire can bleed. Maya's prediction holds inside the week.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: granaryMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // The depot garrison — royal-tier supply troops under a depot
+      // commander. They fight for the stores, not for glory.
+      ENEMIES.royalCaptain(16),
+      ENEMIES.royalGuard("rv_rg1", 1921, 15),
+      ENEMIES.royalGuard("rv_rg2", 1922, 15),
+      ENEMIES.royalGuard("rv_rg3", 1923, 14),
+      ENEMIES.royalArcher("rv_ra1", 1924, 15),
+      ENEMIES.royalArcher("rv_ra2", 1925, 14)
+    ],
     difficultyLabel: "Revolution · Opener",
     // Revolution loadout — burn it down. Two Fangs from the granary
     // guards + the captain's Royal Lens (Maya keeps it pointedly).
-    rewards: ["fang", "fang", "royal_lens"]
+    rewards: ["fang", "fang", "royal_lens"],
+    // Victory: break the garrison commander — with him down, the depot
+    // can't be held and the fire gets set.
+    victory: defeatUnit("royal_captain", { label: "Break the depot garrison" }),
+    dialogues: [
+      {
+        id: "b19rv_maya_brief",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "Commander at the north stores, six on the yard. The grain sledges burn if a lamp so much as sneezes — so we do this with steel, then one match, on my mark. (A beat.) Nine years I've had this yard memorized, Amar." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then it's your strike. I'm just the sword in it. (Draws.) Squad — on Maya's plan. Break the commander; the garrison folds without him." }
+        ]
+      },
+      {
+        id: "b19rv_maya_amar",
+        trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "amar" },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "(between strikes) You could've been a king, and you're torching depots with me instead. No regrets yet?" },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "Crowns are how this started, Maya. (Steel up.) Fires are how it ends. Watch the archer on your left." }
+        ]
+      },
+      {
+        id: "b19rv_the_match",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The commander falls and the garrison breaks for the gate — supply men don't die for warehouses. Maya walks the yard alone, unhurried, and sets one lamp against the tally post." },
+          { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+            body: "For the villages that grew it and never ate it. (The light catches.) Burn well." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_duty",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "Reporting for Service",
-    intro: "Khonu's path. Dawn's army needs officers. You walk into the regimental tent in your father's old colors and accept a captaincy. Your first command is a column too thin to hold the bridge they've assigned it.",
-    outro: "The bridge holds. Your column does not, entirely. You learn the names of three soldiers who will be in your dreams.",
+    intro: "Khonu's answer. The war has reached the border, and the rebellion's expeditionary column needs officers more than it needs symbols. Amar walks into the regimental tent in his father's old colors, accepts a captaincy with his eyes open, and draws his first command: a column too thin to hold the frontier bridge it's been assigned. Hold it anyway.",
+    outro: "The bridge holds. The column does not, entirely. Amar writes three letters that night in the regulation format, and learns the names of three soldiers who will be in his dreams for the rest of his life. Khonu would have told him: that is what the captaincy is. The letters are the job.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: dutyBridgeMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // An imperial assault column — more than a thin command should be
+      // asked to stop. The battle is the arithmetic of holding.
+      ENEMIES.royalGuard("dt_rg1", 1931, 15),
+      ENEMIES.royalGuard("dt_rg2", 1932, 15),
+      ENEMIES.royalGuard("dt_rg3", 1933, 15),
+      ENEMIES.royalGuard("dt_rg4", 1934, 14),
+      ENEMIES.royalArcher("dt_ra1", 1935, 15),
+      ENEMIES.royalArcher("dt_ra2", 1936, 15)
+    ],
     difficultyLabel: "Duty · Opener",
     // Duty loadout — military precision. Standard officer kit: 1
     // royal lens + 1 mask + 2 potions. The quartermaster gives Amar
     // exactly what regulations specify, no more.
-    rewards: ["royal_lens", "mask", "potion", "potion"]
+    rewards: ["royal_lens", "mask", "potion", "potion"],
+    // Victory: survive the assault. Killing the column isn't the order —
+    // holding the bridge is. Six rounds until the relief column arrives.
+    victory: surviveRounds(6),
+    dialogues: [
+      {
+        id: "b19d_the_order",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Orders are the bridge holds until the relief column arrives. Six rounds, maybe seven. (He sets his feet on the deck.) We don't have to beat them. We have to still be here. There's a difference, and it's the whole job." },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "Look at you. Regulation voice and everything. (Blades out.) Khonu would be insufferable about this. Line on the carts — make them pay for every plank." }
+        ]
+      },
+      {
+        id: "b19d_holding",
+        trigger: { kind: "round_start", round: 4 },
+        beats: [
+          { speaker: "Ning", portraitId: "ning", expression: "exhausted",
+            body: "(bowstring hand bleeding) Captain — half my quiver's gone and they're still coming." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "Then the other half is enough, because it has to be. Two more rounds, Ning. Hold. That's the whole order and the whole speech." }
+        ]
+      },
+      {
+        id: "b19d_relief",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The relief column's horns sound from the west road, and the imperial push breaks off as deliberately as it came — a commander somewhere doing his own arithmetic. The bridge belongs to a column too thin to have held it, and held it." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "(quietly, to no one) Khonu — I read the order before I signed it. I'd sign it again. (A breath.) That's the part I didn't know about you until tonight." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_exile",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Long Road North",
-    intro: "Tev's path. You leave the squad on the Grude road with the horses you came in on and ride for the cold country. Two days out, the assassins find you.",
-    outro: "You bury them where they fell. You ride on. The country gets colder. The names you carried lose syllables, one by one.",
+    intro: "Tev's answer. Amar leaves the squad at the landfall camp with the horses they came in on, and rides north alone for the cold country. He tells no one the route because he doesn't know it himself. Two days out, in a snow pass with walls too steep to flank, three sets of tracks converge on his — the assassins found him anyway. Alone means alone.",
+    outro: "You bury them where they fell, because someone should, and there is no one else. You ride on. The country gets colder. The names you carried lose syllables one by one — and the one the empire is hunting is the only one that will not wear away.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_cliffs",
-    playable: false,
-    difficultyLabel: "Exile · Opener",
+    backdropKey: "bg_mountain",
+    playable: true,
+    map: exilePassMap,
+    buildPlayers: () => [
+      // No one else is coming. That's the path.
+      PLAYERS.amar()
+    ],
+    buildEnemies: () => [
+      // A hired kill team — the empire's long arm, contracted quiet.
+      // Bandit-tier factories as hired knives (B16's precedent), leveled
+      // to make a solo fight honest but winnable.
+      ENEMIES.banditSwordsman("ex_a1", 1941, 14),
+      ENEMIES.banditSwordsman("ex_a2", 1942, 14),
+      ENEMIES.banditArcher("ex_a3", 1943, 13)
+    ],
+    difficultyLabel: "Exile · Solo",
     // Exile loadout — survival only. 3 elixirs from the assassins'
     // packs (they came prepared to take a long time killing him).
     // No equipment — Amar carries no signature gear on this path.
-    rewards: ["elixir", "elixir", "elixir"]
+    rewards: ["elixir", "elixir", "elixir"],
+    victory: routEnemies,
+    dialogues: [
+      {
+        id: "b19e_three_tracks",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { portraitId: "narrator",
+            body: "They don't call out and they don't offer terms. Professionals. The one on the saddle ahead just nods, almost politely, and the two on the flanks start closing the jaws." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "(to the empty pass) I left the crown. I left the war. I left everyone who'd have stood here with me — that was the point. (Draws, alone.) So this one's just mine." }
+        ]
+      },
+      {
+        id: "b19e_buried",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The pass goes quiet the way only snow country goes quiet. Three men lie where the jaws failed to close. Amar stands alone in the middle of it, breathing hard, and no one cheers, because no one is there." },
+          { speaker: "Amar", portraitId: "amar", expression: "wounded",
+            body: "(finding the shovel strapped to their packhorse) You came prepared to bury someone. (A long breath.) Fine. Someone gets buried." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_mercy",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Open Hand",
-    intro: "Yul's path. There is a fort that has surrendered three times already and been refused. You ride to it under your own banner and offer terms a fourth time.",
-    outro: "They lay down their weapons. Your squad spends the night reorganizing the fort's stores into a hospital. Selene watches from the gate without speaking.",
+    intro: "Yul's answer. Greywall Fort has tried to surrender three times — to the empire's own inspectors, to a rebel column, to anyone — and been refused each time, because a war this old has forgotten what surrender is for. Amar rides to its gate under his own banner and offers terms a fourth time. The garrison lays down its arms. Its captain does not.",
+    outro: "The garrison keeps its surrender. The squad spends the night turning the fort's armoury stores into a hospital, and by morning there are wounded from both armies in it, in adjacent cots, being fed from the same pot. At the gate, at the edge of the lamplight, Selene watches for a long time and does not speak, and is gone before dawn.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: fortMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      // Only the holdout captain and his few hardliners fight — the rest
+      // of the garrison has stood down and watches from the walls.
+      // Deliberately sparse: a duel of conviction, not a siege.
+      ENEMIES.royalCaptain(16),
+      ENEMIES.royalGuard("mc_rg1", 1951, 15),
+      ENEMIES.royalGuard("mc_rg2", 1952, 15),
+      ENEMIES.royalArcher("mc_ra1", 1953, 14)
+    ],
     difficultyLabel: "Mercy · Opener",
     // Mercy loadout — heal others. Heavy on consumables, light on
     // weapons. The fort's medical stores reorganized into a
     // hospital give the squad 4 elixirs + 2 potions, no equipment.
-    rewards: ["elixir", "elixir", "elixir", "elixir", "potion", "potion"]
+    rewards: ["elixir", "elixir", "elixir", "elixir", "potion", "potion"],
+    // Victory: subdue the holdout captain. The garrison's surrender
+    // stands the moment he can no longer refuse it for them.
+    victory: defeatUnit("royal_captain", { label: "Subdue the holdout captain" }),
+    dialogues: [
+      {
+        id: "b19m_terms_refused",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Holdout Captain", portraitId: "royal_guard", expression: "neutral",
+            body: "My garrison may kneel. I hold a King's commission, and it does not kneel to a colonial with a borrowed banner. (He draws, alone but for three.) Refuse MY terms, heir." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Your men chose to live, Captain. I'm not here to take that from them — or from you, if you'll let me. (Draws.) Squad: he goes down, nobody dies who doesn't insist on it." }
+        ]
+      },
+      {
+        id: "b19m_amar_captain",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "royal_captain" },
+        beats: [
+          { speaker: "Holdout Captain", portraitId: "royal_guard", expression: "neutral",
+            body: "(pressed, bleeding) Why won't you finish it? Mockery is worse than a blade, boy." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "Nobody's mocking you. A surgeon taught me you can stop a man without ending him — she never once asked which side the wound was on. (Steel up.) Yield, Captain. The war will not miss one more body." }
+        ]
+      },
+      {
+        id: "b19m_surrender_stands",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The captain goes down and stays down — alive, disarmed, furious, breathing. On the walls, the garrison that watched the whole of it quietly lowers the last of its blades. The fourth surrender is accepted." },
+          { speaker: "Ning", portraitId: "ning", expression: "startled",
+            body: "(low) Amar. The gate. (A figure at the edge of the lamplight — a scarred face they all know, watching, saying nothing.) ...That's Selene." }
+        ]
+      }
+    ]
   },
   {
     id: "b19_path_opener_forgetting",
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "A Fisherman's Cottage",
-    intro: "Sera's path. You ride for the southern coast and stop pretending to be anyone. A cottage. A boat. A name that is not Amar. The squad finds you anyway.",
-    outro: "The squad does not stay. They leave a sword by the door. You spend a long evening looking at it.",
+    intro: "Sera's answer. Amar rides for the southern coast and stops pretending to be anyone. A cottage. A boat. A name that is not Amar, given to neighbours who don't ask. It holds for a season — until three men with a sketch and a bounty writ come up the beach at low tide, and the fisherman meets them at the waterline with a boat-hook and a soldier's hands.",
+    outro: "The squad arrives at dusk, too late to help and in time to see he didn't need it. They do not stay — that's the deal, and they keep it. They leave a sword by the door and a potion beside it. You spend a long evening looking at both, and in the morning the sword is still by the door, and you go out with the boat.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
-    playable: false,
-    difficultyLabel: "Forgetting · Opener",
+    playable: true,
+    map: cottageCoveMap,
+    buildPlayers: () => [
+      // The fisherman, alone. The name that is not Amar.
+      PLAYERS.amar()
+    ],
+    buildEnemies: () => [
+      // Bounty men with a sketch — not soldiers, not professionals like
+      // the exile kill team. Leveled just under it: dangerous to a man
+      // alone, contemptible to the man this one used to be.
+      ENEMIES.banditSwordsman("fg_b1", 1961, 13),
+      ENEMIES.banditSwordsman("fg_b2", 1962, 13),
+      ENEMIES.banditArcher("fg_b3", 1963, 13)
+    ],
+    difficultyLabel: "Forgetting · Solo",
     // Forgetting loadout — minimal. The squad leaves a single
     // potion at the cottage door alongside the sword. Mechanically
     // brutal; narratively the point.
-    rewards: ["potion"]
+    rewards: ["potion"],
+    victory: routEnemies,
+    dialogues: [
+      {
+        id: "b19f_low_tide",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { portraitId: "narrator",
+            body: "The one with the sketch looks from the paper to the fisherman and back, twice, and grins. The tide is out. The beach is long. Nobody on it but the four of them." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "(setting down the net, picking up the boat-hook) You have the wrong man. (A breath.) I mean that more honestly than you will ever know. Last chance to believe me." }
+        ]
+      },
+      {
+        id: "b19f_the_sword",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "It's over fast — whatever the fisherman is trying to forget, his hands remember all of it. The bounty men lie on the sand with the tide coming back in. Up the beach, at the treeline, four riders have stopped. They saw the whole thing. They don't come down." },
+          { portraitId: "narrator",
+            body: "By dark they're gone. On the doorstep, in the morning: a sword he knows, and a potion, and no note — because a note would be a claim, and they came all this way to not make one." }
+        ]
+      }
+    ]
   },
   // ---- B20-B22: Shared mid-finale (path-flavoured cutscenes only) -----------
   // The world is at war by this point regardless of path; everyone fights

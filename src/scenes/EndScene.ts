@@ -38,8 +38,29 @@ const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b15_inner_coup: "post_inner_coup",
   b16_proposal: "post_proposal",
   b17_lie: "post_lie",
-  b18_path_chosen: "post_path_chosen"
+  b18_path_chosen: "post_path_chosen",
+  // B19 path openers — each routes to its own epilogue arc (which rolls
+  // credits). Only the chosen path's entry is ever reached in a run.
+  b19_path_opener_vengeance: "post_path_opener_vengeance",
+  b19_path_opener_restoration: "post_path_opener_restoration",
+  b19_path_opener_revolution: "post_path_opener_revolution",
+  b19_path_opener_duty: "post_path_opener_duty",
+  b19_path_opener_exile: "post_path_opener_exile",
+  b19_path_opener_mercy: "post_path_opener_mercy",
+  b19_path_opener_forgetting: "post_path_opener_forgetting"
 };
+
+// The slice's terminal battles — any B19 opener ends the playable run (its
+// epilogue arc rolls credits). A Set because seven ids share the honour.
+const FINAL_PLAYABLE = new Set<BattleId>([
+  "b19_path_opener_vengeance",
+  "b19_path_opener_restoration",
+  "b19_path_opener_revolution",
+  "b19_path_opener_duty",
+  "b19_path_opener_exile",
+  "b19_path_opener_mercy",
+  "b19_path_opener_forgetting"
+]);
 
 export class EndScene extends Phaser.Scene {
   private battleId!: BattleId;
@@ -188,7 +209,7 @@ export class EndScene extends Phaser.Scene {
     const gap = 24;
 
     if (isVictory) {
-      const isFinalPlayable = this.battleId === "b18_path_chosen"; // last in the slice
+      const isFinalPlayable = FINAL_PLAYABLE.has(this.battleId); // last in the slice (any path opener)
       const continueLabel = isFinalPlayable ? "Continue ▸" : "Continue ▸";
       const onContinue = () => {
         sfxConfirm();

@@ -1164,5 +1164,127 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "(looking at the coming shore, and then at the three of them) I've been counting names for three days. (Quietly.) I think I've stopped on one. Maya — you said the squad goes where I point. Ning, Leo. Stand with me a minute while I point." },
       N("He holds all seven names in his mouth at once — vengeance and restoration, revolution and duty, exile and mercy and the soft terrible mercy of forgetting — and the coast comes up out of the sea to meet whichever one he keeps. This is the choice the whole road has been bending toward. Pick the one Amar can still answer to. Then pick up the sword.")
     ]
+  },
+
+  // ═══════════ B19 epilogues — one per path; only one is ever reached ═══════════
+  // Each closes its opener and rolls credits: the slice's seven possible
+  // endings. Kept lean — the battle's outro carried the plot; these carry
+  // the feeling.
+
+  post_path_opener_vengeance: {
+    id: "post_path_opener_vengeance",
+    title: "The First Name",
+    subtitle: "A fire on the canyon rim, after",
+    music: "death",
+    backdrop: "caravan",
+    next: "credits",
+    beats: [
+      N("They burn Castor's writ of retrieval on the campfire, because none of them wants to carry it and none of them can quite throw it away unburned."),
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "Selene told me once: kill the man who did it — that's all that's clean. (Watching the paper curl.) She was wrong about the clean part. She was right about everything else." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "Second name's a garrison colonel. Three days' ride. (She banks the fire.) Sleep first, Amar. The list keeps. That's the terrible thing about lists — they keep." },
+      N("The road of the hunter runs on ahead of them, name by name, toward a king. Amar rides it awake, with his eyes open, keeping his own ledger. It is his answer, and he can still answer to it. For now.")
+    ]
+  },
+
+  post_path_opener_restoration: {
+    id: "post_path_opener_restoration",
+    title: "The First Stone",
+    subtitle: "Khonu's village, that night",
+    music: "everydayLife",
+    backdrop: "thuling",
+    next: "credits",
+    beats: [
+      N("Dinner is at the long table in the headman's house, and it is loud, and nobody at it is afraid. It has been a month since the village ate loudly."),
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "The old man says there's a bridge out at the east field, and a well gone sour, and a militia that's four boys and a scythe. (Grinning.) He says it like a list of chores. For US." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "It IS a list of chores. That's the whole path, Ning. No thrones — just the next broken thing, fixed, and the one after. (A breath.) Lucian would already be at the bridge." },
+      N("In the morning they start on the well. It is slow, and small, and it holds — the way Lucian said the real things hold. Around the village, one road at a time, something that is not a kingdom and not a rebellion begins, very quietly, to stand up.")
+    ]
+  },
+
+  post_path_opener_revolution: {
+    id: "post_path_opener_revolution",
+    title: "Smoke Travels",
+    subtitle: "A ridge above the border road, next morning",
+    music: "grudeBattle1",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("The smoke column stands up over the border country like a flag no one has to sew. By noon, riders they've never met are passing them the news of their own strike — grown taller in the telling."),
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Two more depots on this road. A tax office in the garrison town. The registry of who owes what. (Counting on her fingers, almost happy.) Burn the paper, Amar, and the debt was never real. That's the secret they guard hardest." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "No lists of names, Maya. We burn what owns people — never people. That's the line. The day we cross it, we're just Dawn with worse logistics." },
+      N("She looks at him for a long moment, and nods, and means it. The revolution rides for the tax office with its one line drawn — and history will remember whether they held it. That is the path: everything burns except the line.")
+    ]
+  },
+
+  post_path_opener_duty: {
+    id: "post_path_opener_duty",
+    title: "Three Letters",
+    subtitle: "The regimental camp, lamplight",
+    music: "sadness",
+    backdrop: "field_night_camp",
+    next: "credits",
+    beats: [
+      N("The relief column's surgeon takes the wounded. The quartermaster takes the casualty report. The captaincy takes the rest of the night, at a folding table, in regulation format."),
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "Ferren. Odal. Little Iska, who lied about her age to the recruiter. (He signs the third letter.) Khonu carried a bag of letters like these for twenty years. I thought it was paperwork. It's the whole rank." },
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "The column's calling you the captain who held the bridge and wrote the letters himself, same night. (Quietly.) Armies remember that longer than victories, Amar. Sleep. Reveille's at six." },
+      N("At six he is up with the column, in his father's old colors, reading the day's orders before he signs them. It is the narrowest of the seven roads and the straightest: the next order, read honestly, signed honestly, forever. He can answer to it.")
+    ]
+  },
+
+  post_path_opener_exile: {
+    id: "post_path_opener_exile",
+    title: "North of the Names",
+    subtitle: "The cold country, days on",
+    music: "sadness2",
+    backdrop: "mountain",
+    next: "credits",
+    beats: [
+      N("Past the pass the country empties out until even the road gives up pretending. He rides north through it alone, and the quiet stops feeling like held breath and starts feeling like weather."),
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "(to the horse, eventually) Tev said the bravest thing is to walk away whole. (A long while.) He didn't say you'd keep counting the people you walked from. Maya. Ning. Leo. (A breath.) Maybe the counting IS the whole." },
+      N("Somewhere behind him the war goes on calling his name, and gets no answer, and calls anyway. Somewhere ahead there is a cold coast where nobody has ever heard it. He buries the last of the assassins' trail markers at the treeline and rides for the second place."),
+      N("It is not peace. It is the honest distance from everything that isn't. Of the seven answers it is the loneliest — and it is his, all the way north, every cold mile of it.")
+    ]
+  },
+
+  post_path_opener_mercy: {
+    id: "post_path_opener_mercy",
+    title: "Adjacent Cots",
+    subtitle: "Greywall Fort, become a hospital",
+    music: "emotional",
+    backdrop: "monastery",
+    next: "credits",
+    beats: [
+      N("By morning the armoury is a ward. Imperial wounded and rebel wounded lie in adjacent cots, fed from the same pot, complaining about the same porridge — which the squad privately counts as the first treaty of the war."),
+      { speaker: "Ning", portraitId: "ning", expression: "startled",
+        body: "The holdout captain asked for you. Not to fight. (Beat.) He wants to know what you intend to DO with a war you refuse to win. He asked it like it kept him up all night." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Good. It should keep him up — it keeps me up. (Rolling his sleeves.) Tell him the answer's in the ward, third cot from the door. His own sergeant. Alive. That's the whole doctrine, Captain. Come see it work." },
+      N("Word of the fort that surrenders UP travels faster than any victory would. By the week's end two more garrisons have sent quiet riders asking about terms. Yul never asked which side a wound was on; neither, now, does the war's strangest army.")
+    ]
+  },
+
+  post_path_opener_forgetting: {
+    id: "post_path_opener_forgetting",
+    title: "The Sword by the Door",
+    subtitle: "The cottage, the morning after",
+    music: "everydayLife",
+    backdrop: "cliffs",
+    next: "credits",
+    beats: [
+      N("The tide takes the blood off the sand by midnight, the way it takes everything. In the morning the sword is still by the door, and the potion beside it, and the sea is doing the thing it does that needs no one's name."),
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "(at the door, looking down at the sword, coffee going cold) Sera said the kindest thing the wound did was let me put a life down. (A long moment.) She never said it would keep being a choice. Every morning. This one too." },
+      N("He does not pick it up. He carries the potion in and puts it on the shelf, because medicine is just medicine, and a shelf is just a shelf, and a man who fishes needs both. The sword stays where they left it — his to not-take, one morning at a time."),
+      N("The boat goes out with the tide. Down the coast the war grinds on without him, hunting a name that lives here quietly by the water, held — lightly, deliberately, daily — by a man who chose to set it down. It is the softest of the seven answers. It costs the most every single day. He pays it, and fishes.")
+    ]
   }
 };

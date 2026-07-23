@@ -59,4 +59,31 @@ describe("Seven Paths ↔ B19 opener coverage", () => {
       expect(ids.has(`b19_path_opener_${p}`), `missing opener for path ${p}`).toBe(true);
     }
   });
+
+  // The core promise of the divergence: NO choice may dead-end. Every opener
+  // must be fully playable — map, deployable squad, enemies, and a victory
+  // condition. Also guards the unit-count-vs-start-position contract for the
+  // reused map layouts (deployed units must all have real spawn tiles).
+  it("every path opener is fully playable (map, units, victory, spawns)", async () => {
+    const { BATTLES } = await import("../battles");
+    for (const p of ALL_PATHS) {
+      const b = BATTLES.find((x: { id: string }) => x.id === `b19_path_opener_${p}`);
+      // Throw (not just expect) so TS narrows b/b.map for the checks below.
+      if (!b || !b.map) throw new Error(`${p}: opener missing or has no map`);
+      expect(b.playable, `${p} not playable`).toBe(true);
+      expect(b.victory, `${p} missing victory`).toBeTruthy();
+      const players = b.buildPlayers ? b.buildPlayers() : [];
+      const enemies = b.buildEnemies ? b.buildEnemies() : [];
+      expect(players.length, `${p} has no players`).toBeGreaterThan(0);
+      expect(enemies.length, `${p} has no enemies`).toBeGreaterThan(0);
+      expect(
+        b.map.startPositions.player.length,
+        `${p}: more deployed players than spawn tiles`
+      ).toBeGreaterThanOrEqual(players.length);
+      expect(
+        b.map.startPositions.enemy.length,
+        `${p}: more enemies than spawn tiles`
+      ).toBeGreaterThanOrEqual(enemies.length);
+    }
+  });
 });
