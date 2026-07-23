@@ -43,20 +43,21 @@ export const playUnitState = (
   stopIdleFallback(sprite);
 
   switch (state) {
-    case "idle": {
-      // Gentle 2-frame breathing: subtle Y bob + scale pulse.
-      const baseY = sprite.y;
-      const tween = scene.tweens.add({
-        targets: sprite,
-        y: baseY - 1.5,
-        duration: 1100,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut"
-      });
-      idleTweens.set(sprite, { tween });
+    case "idle":
+      // Intentionally NO idle bob here for procedural sprites.
+      //
+      // BattleScene.startBreathing() owns the idle y-bob and is called
+      // alongside every playUnitState(idle) on the battle map. It anchors the
+      // bob to the unit view's authoritative `baseY`. This fallback used to
+      // ALSO start an infinite y-tween, anchored to whatever `sprite.y`
+      // happened to be at capture time — so two independent, never-cancelling
+      // yoyo tweens ran on the same sprite with different periods. Their
+      // combined offset drifted the sprite upward over repeated
+      // move/idle cycles (the "floating in outer space" bug). Leaving idle
+      // motion solely to startBreathing removes the conflict. Non-battle
+      // callers of playUnitState(idle) simply get a still sprite, which is
+      // correct — they don't want a competing bob either.
       break;
-    }
     case "walk": {
       // Tilt-wobble while moving. We CANNOT tween `y` here — animateMove owns
       // sprite.x/sprite.y and a competing y-tween causes the sprite to flicker
