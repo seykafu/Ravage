@@ -173,6 +173,16 @@ export class BattleScene extends Phaser.Scene {
   private projection!: Projection;
   private unitViews = new Map<string, UnitView>();
   private overlayG!: Phaser.GameObjects.Graphics;
+  // Region-contour pass for the movement range — drawn separately from
+  // overlayG so its "alive" alpha pulse doesn't throb the attack marks.
+  private contourG!: Phaser.GameObjects.Graphics;
+  // Dotted path preview from the active unit to the hovered move tile.
+  private pathG!: Phaser.GameObjects.Graphics;
+  // Translucent copy of the active unit shown at the hovered destination.
+  private moveGhost?: Phaser.GameObjects.Sprite;
+  // Cache key (`unitId:x,y`) so the path preview only recomputes when the
+  // hovered tile actually changes, not on every pointer pixel.
+  private lastPathKey: string | null = null;
   private threatG!: Phaser.GameObjects.Graphics;
   private cursorG!: Phaser.GameObjects.Graphics;
   private actionButtons: Button[] = [];
@@ -268,6 +278,11 @@ export class BattleScene extends Phaser.Scene {
     this.fsm = new BattleFSM();
     this.debug = false;
     this.battleMusicStarted = false;
+    // Scene instances are reused across battles — drop the previous
+    // battle's (destroyed) ghost sprite and path cache so drawPathPreview
+    // lazily recreates them in the new scene lifetime.
+    this.moveGhost = undefined;
+    this.lastPathKey = null;
   }
 
   create(): void {
@@ -512,6 +527,7 @@ export class BattleScene extends Phaser.Scene {
     }
 
     this.overlayG = this.add.graphics();
+    this.contourG = this.add.graphics();
     this.threatG = this.add.graphics();
     // Cursor + active-marker depths sit ABOVE unit sprites (default 0)
     // and ABOVE the fog-of-war darkness (depth 25), so the tactical
@@ -520,6 +536,20 @@ export class BattleScene extends Phaser.Scene {
     // Below tooltips (40+) so info popups still composite on top.
     this.activeRing = this.add.graphics().setDepth(29);
     this.cursorG = this.add.graphics().setDepth(28);
+    // Path preview sits above the fog (25) and atmosphere (23) but below
+    // the cursor so the hovered-tile frame stays the topmost read.
+    this.pathG = this.add.graphics().setDepth(27);
+    // Gentle breathing on the movement contour — makes the region read as
+    // a live selection instead of static tile paint. One tween for the
+    // scene's lifetime; pulsing an empty Graphics between turns is free.
+    this.tweens.add({
+      targets: this.contourG,
+      alpha: { from: 0.72, to: 1 },
+      duration: 1100,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
     this.activeArrow = this.add.text(0, 0, "\u25BC", {
       fontFamily: "Arial, sans-serif",
       fontSize: "20px",
@@ -2084,52 +2114,145 @@ export class BattleScene extends Phaser.Scene {
 
   private clearOverlays(): void {
     this.overlayG.clear();
+    this.contourG.clear();
     this.threatG.clear();
     this.cursorG.clear();
+    this.clearPathPreview();
     this.hoverPreview.setVisible(false);
+  }
+
+  // Clear the dotted path + destination ghost. Separate from clearOverlays
+  // because handlePointerMove calls it every time the hover leaves the
+  // reachable region, without wanting to nuke the region overlay itself.
+  private clearPathPreview(): void {
+    this.pathG.clear();
+    this.moveGhost?.setVisible(false);
+    this.lastPathKey = null;
+  }
+
+  // Dotted route from the unit to `dest` + a translucent ghost of the unit
+  // standing on the destination tile. Same pathTo call (and same blocker
+  // rule) as animateMove, so the preview never lies about the walk.
+  // Cached per hovered tile — pointer moves within one tile are free.
+  private drawPathPreview(u: Unit, dest: TilePos): void {
+    const key = `${u.id}:${dest.x},${dest.y}`;
+    if (key === this.lastPathKey) return;
+    this.lastPathKey = key;
+    this.pathG.clear();
+
+    const path = this.state.grid.pathTo(u.state.position, dest, (p) => {
+      const occ = unitAt(this.state, p);
+      return occ !== null && occ !== u && occ.faction !== u.faction;
+    });
+    if (!path || path.length === 0) {
+      this.moveGhost?.setVisible(false);
+      return;
+    }
+
+    // Dots along each leg of the route (3 per tile-length segment), a ring
+    // on the destination, and the ghost standing in it.
+    const pts = [u.state.position, ...path].map((t) => this.projection.tileToWorld(t));
+    this.pathG.fillStyle(COLORS.hover, 0.9);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i]!, b = pts[i + 1]!;
+      for (const f of [0.25, 0.5, 0.75]) {
+        this.pathG.fillCircle(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f, 2.4);
+      }
+    }
+    const end = pts[pts.length - 1]!;
+    this.pathG.lineStyle(1.5, COLORS.hover, 0.9);
+    this.pathG.strokeCircle(end.x, end.y, 10);
+
+    const view = this.unitViews.get(u.id);
+    if (!view) return;
+    if (!this.moveGhost) {
+      // Dynamic world object → addWorld() keeps it off the UI camera (the
+      // double-render rule for anything spawned after the create() sweep).
+      this.moveGhost = this.addWorld(this.add.sprite(0, 0, view.sprite.texture.key));
+      this.moveGhost.setDisplaySize(44, 55);
+      this.moveGhost.setAlpha(0.35);
+    }
+    this.moveGhost.setTexture(view.sprite.texture.key);
+    this.moveGhost.setDisplaySize(44, 55);
+    this.moveGhost.setFlipX(view.sprite.flipX);
+    this.moveGhost.setPosition(end.x, end.y - 4);
+    this.moveGhost.setVisible(true);
+  }
+
+  // Trace the outline of a tile region: for every tile, any edge whose
+  // neighbour is OUTSIDE the region is part of the boundary. Drawn in two
+  // passes (wide glow + thin core) so the range reads as one live-edged
+  // shape instead of a checkerboard of painted tiles.
+  private strokeRegionContour(g: Phaser.GameObjects.Graphics, tiles: readonly TilePos[], color: number): void {
+    const inRegion = new Set(tiles.map((t) => `${t.x},${t.y}`));
+    const edges: [number, number, number, number][] = [];
+    for (const t of tiles) {
+      const px = this.projection.tileToWorld(t);
+      const L = px.x - TILE_SIZE / 2, R = px.x + TILE_SIZE / 2;
+      const T = px.y - TILE_SIZE / 2, B = px.y + TILE_SIZE / 2;
+      if (!inRegion.has(`${t.x},${t.y - 1}`)) edges.push([L, T, R, T]);
+      if (!inRegion.has(`${t.x},${t.y + 1}`)) edges.push([L, B, R, B]);
+      if (!inRegion.has(`${t.x - 1},${t.y}`)) edges.push([L, T, L, B]);
+      if (!inRegion.has(`${t.x + 1},${t.y}`)) edges.push([R, T, R, B]);
+    }
+    g.lineStyle(4, color, 0.22);
+    for (const [x1, y1, x2, y2] of edges) g.lineBetween(x1, y1, x2, y2);
+    g.lineStyle(1.5, color, 0.92);
+    for (const [x1, y1, x2, y2] of edges) g.lineBetween(x1, y1, x2, y2);
+  }
+
+  // Target-lock corner brackets on a tile — reads as "acquire", not as a
+  // painted attack tile. Four short L-shapes, one per corner.
+  private strokeTargetBrackets(g: Phaser.GameObjects.Graphics, tile: TilePos, color: number): void {
+    const px = this.projection.tileToWorld(tile);
+    const L = px.x - TILE_SIZE / 2 + 3, R = px.x + TILE_SIZE / 2 - 3;
+    const T = px.y - TILE_SIZE / 2 + 3, B = px.y + TILE_SIZE / 2 - 3;
+    const a = 9; // arm length
+    g.lineStyle(2, color, 0.95);
+    g.lineBetween(L, T, L + a, T); g.lineBetween(L, T, L, T + a);
+    g.lineBetween(R, T, R - a, T); g.lineBetween(R, T, R, T + a);
+    g.lineBetween(L, B, L + a, B); g.lineBetween(L, B, L, B - a);
+    g.lineBetween(R, B, R - a, B); g.lineBetween(R, B, R, B - a);
   }
 
   private drawOverlay(): void {
     this.overlayG.clear();
+    this.contourG.clear();
     this.threatG.clear();
     const state = this.fsm.current();
     if (state.tag === "move" || state.tag === "roam") {
       const tint = state.tag === "roam" ? 0xffd45a : COLORS.moveTile;
-      const fillA = state.tag === "roam" ? 0.32 : 0.28;
-      this.overlayG.fillStyle(tint, fillA);
+      // Interior wash — deliberately faint and UNstroked per tile. The
+      // per-tile grid strokes were the old look's tell; the region now
+      // reads as one shape bounded by the breathing contour.
+      this.overlayG.fillStyle(tint, state.tag === "roam" ? 0.14 : 0.10);
       for (const t of state.tiles) {
         const px = this.projection.tileToWorld(t);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
       }
-      this.overlayG.lineStyle(1, tint, 0.85);
-      for (const t of state.tiles) {
-        const px = this.projection.tileToWorld(t);
-        this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
-      }
+      this.strokeRegionContour(this.contourG, state.tiles, tint);
       // Seamless attack: while a unit is selected (move mode, NOT roam —
-      // roam is move-only), also mark any in-range enemy red so the player
-      // can click it to attack directly, without opening the Attack menu.
+      // roam is move-only), also mark any in-range enemy so the player can
+      // click it to attack directly, without opening the Attack menu.
       // handlePointerUp checks the live target list before committing.
       if (state.tag === "move") {
         const u = this.initiative.current();
         if (u) {
           const targets = targetsForUnit(this.state, u);
-          this.overlayG.fillStyle(COLORS.attackTile, 0.32);
-          this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
+          this.overlayG.fillStyle(COLORS.attackTile, 0.14);
           for (const t of targets) {
             const px = this.projection.tileToWorld(t.state.position);
             this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
-            this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+            this.strokeTargetBrackets(this.overlayG, t.state.position, COLORS.attackTile);
           }
         }
       }
     } else if (state.tag === "attack") {
-      this.overlayG.fillStyle(COLORS.attackTile, 0.32);
-      this.overlayG.lineStyle(1, COLORS.attackTile, 0.9);
+      this.overlayG.fillStyle(COLORS.attackTile, 0.14);
       for (const t of state.targets) {
         const px = this.projection.tileToWorld(t.state.position);
         this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
-        this.overlayG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+        this.strokeTargetBrackets(this.overlayG, t.state.position, COLORS.attackTile);
       }
     }
     // Always show enemy ready threat zones
@@ -2252,6 +2375,7 @@ export class BattleScene extends Phaser.Scene {
     const tile = this.screenToTile(p.x, p.y);
     if (!tile) {
       this.cursorG.clear();
+      this.clearPathPreview();
       this.hoverPreview.setVisible(false);
       return;
     }
@@ -2259,6 +2383,20 @@ export class BattleScene extends Phaser.Scene {
     const px = this.projection.tileToWorld(tile);
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
     this.cursorG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+
+    // Path preview: hovering a reachable tile in move/roam mode shows the
+    // dotted walking route + a translucent ghost of the unit at the
+    // destination — the player sees exactly what a click commits to.
+    {
+      const st = this.fsm.current();
+      const cur = this.initiative.current();
+      const hoverReachable =
+        (st.tag === "move" || st.tag === "roam") &&
+        !!cur &&
+        st.tiles.some((t) => t.x === tile.x && t.y === tile.y);
+      if (hoverReachable && cur) this.drawPathPreview(cur, tile);
+      else this.clearPathPreview();
+    }
 
     // Damage preview when hovering an attackable enemy. Shown in BOTH attack
     // mode AND move mode (where in-range enemies are click-to-attack), so the
