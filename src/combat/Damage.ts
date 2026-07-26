@@ -1,6 +1,7 @@
 import type { AttackPreview, Tile, Unit, WeaponKind } from "./types";
 import { RAVAGE_ARMOR_MULT, RAVAGE_POWER_MULT } from "./types";
 import { hasAbility } from "./Unit";
+import { hasDefensiveStance, hasReadyStance } from "./Stances";
 import { equipmentBonuses } from "./items";
 import { clamp } from "../util/math";
 
@@ -55,14 +56,15 @@ export const attackerClassBonus = (attacker: Unit, defender: Unit): number => {
   return 1.0;
 };
 
-// Stance modifiers as documented in spec.
+// Stance modifiers as documented in spec. Read through the Stances
+// predicates so the combined "both" stance gets both effects.
 export const attackerStanceModifier = (attacker: Unit, isCounter: boolean): number => {
-  if (isCounter && attacker.state.stance === "ready") return 1.25;
+  if (isCounter && hasReadyStance(attacker)) return 1.25;
   return 1.0;
 };
 
 export const defenderStanceModifier = (defender: Unit): number => {
-  if (defender.state.stance === "defensive") return 0.5;
+  if (hasDefensiveStance(defender)) return 0.5;
   return 1.0;
 };
 
@@ -156,7 +158,7 @@ export const previewAttack = (
   const hitRate = clamp(Math.round(hit), 50, 99);
 
   let crit = 10 + (attacker.stats.speed - defender.stats.speed) * 0.5;
-  if (isCounter && attacker.state.stance === "ready") crit += 5;
+  if (isCounter && hasReadyStance(attacker)) crit += 5;
   crit += eq.critPct;
   const critRate = clamp(Math.round(crit), 0, 60);
 

@@ -8,7 +8,7 @@ import {
   unitAt
 } from "./Actions";
 import { previewAttack } from "./Damage";
-import { counterZoneTiles } from "./Stances";
+import { counterZoneTiles, hasReadyStance } from "./Stances";
 import { isAlive } from "./Unit";
 import type { TilePos, Unit } from "./types";
 import { manhattan } from "../util/math";
@@ -21,7 +21,7 @@ interface PlannedAction {
 }
 
 const isInReadyZoneOf = (state: BattleState, p: TilePos, defender: Unit): boolean => {
-  if (defender.state.stance !== "ready") return false;
+  if (!hasReadyStance(defender)) return false;
   for (const z of counterZoneTiles(defender)) if (z.x === p.x && z.y === p.y) return true;
   return false;
 };
@@ -47,7 +47,7 @@ const scoreAttackFromTile = (
   // penalize stepping into a Ready threat zone of any player unit
   for (const pu of state.units) {
     if (pu.faction === unit.faction || !isAlive(pu)) continue;
-    if (pu.state.stance === "ready" && isInReadyZoneOf(state, fromTile, pu)) {
+    if (hasReadyStance(pu) && isInReadyZoneOf(state, fromTile, pu)) {
       score -= 30;
     }
   }

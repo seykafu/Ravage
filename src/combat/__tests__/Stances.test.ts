@@ -7,7 +7,16 @@
 // sensitive.
 
 import { describe, it, expect } from "vitest";
-import { canTriggerReadyCounter, canTriggerSpeedCounter, counterZoneTiles, SPEED_COUNTER_THRESHOLD } from "../Stances";
+import {
+  canTriggerReadyCounter,
+  canTriggerSpeedCounter,
+  counterZoneTiles,
+  hasDefensiveStance,
+  hasReadyStance,
+  spendReady,
+  SPEED_COUNTER_THRESHOLD
+} from "../Stances";
+import { enterStance } from "../Actions";
 import { Grid } from "../Grid";
 import { createUnit } from "../Unit";
 import type { MapDef, Unit, UnitDef } from "../types";
@@ -124,5 +133,49 @@ describe("counterZoneTiles", () => {
     // Distance-2 and distance-4 tiles SHOULD be in the zone.
     expect(tiles).toContainEqual({ x: 6, y: 4 });
     expect(tiles).toContainEqual({ x: 4, y: 0 });
+  });
+});
+
+describe("stance stacking — the combined 'both' state", () => {
+  it("Ready then Defend stacks into 'both' (each purchase succeeds once)", () => {
+    const u = mkUnit({});
+    expect(enterStance(u, "ready")).toBe(true);
+    expect(enterStance(u, "defensive")).toBe(true);
+    expect(u.state.stance).toBe("both");
+    expect(hasReadyStance(u)).toBe(true);
+    expect(hasDefensiveStance(u)).toBe(true);
+  });
+
+  it("re-buying a held stance is refused (no AP should be charged)", () => {
+    const u = mkUnit({});
+    enterStance(u, "ready");
+    expect(enterStance(u, "ready")).toBe(false);
+    enterStance(u, "defensive"); // now "both"
+    expect(enterStance(u, "ready")).toBe(false);
+    expect(enterStance(u, "defensive")).toBe(false);
+    expect(u.state.stance).toBe("both");
+  });
+
+  it("a unit in 'both' still triggers the Ready counter", () => {
+    const def = mkUnit({ weapon: "sword" }, { x: 4, y: 4 });
+    def.state.stance = "both";
+    const atk = mkUnit({ id: "atk" }, { x: 5, y: 4 });
+    expect(canTriggerReadyCounter(def, atk, GRID)).toBe(true);
+  });
+
+  it("spendReady from 'both' demotes to 'defensive', never stripping Defend", () => {
+    const u = mkUnit({});
+    u.state.stance = "both";
+    spendReady(u);
+    expect(u.state.stance).toBe("defensive");
+    expect(hasDefensiveStance(u)).toBe(true);
+    expect(hasReadyStance(u)).toBe(false);
+  });
+
+  it("spendReady from plain 'ready' clears to 'none'", () => {
+    const u = mkUnit({});
+    u.state.stance = "ready";
+    spendReady(u);
+    expect(u.state.stance).toBe("none");
   });
 });

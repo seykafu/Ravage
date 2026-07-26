@@ -45,8 +45,9 @@ export const beginUnitTurn = (u: Unit): void => {
   u.state.apRemaining = u.stats.ap + equipmentBonuses(u).apBonus;
   u.state.hasUsedRepositionStep = false;
   u.state.roamUsedThisTurn = false;
-  // Stances expire at the start of this unit's next turn.
-  if (u.state.stance === "ready" || u.state.stance === "defensive") {
+  // Stances expire at the start of this unit's next turn — including the
+  // combined "both" stance.
+  if (u.state.stance !== "none") {
     u.state.stance = "none";
   }
   // Ravage: promote the "next turn" flag into the active flag for this turn.

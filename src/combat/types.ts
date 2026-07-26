@@ -28,7 +28,12 @@ export type ClassKind =
   // Special
   | "boss";
 
-export type Stance = "none" | "defensive" | "ready";
+// "both" = Ready AND Defensive active simultaneously. Stances STACK: each
+// costs 1 AP and a unit may hold both in the same turn (the braced
+// counter-stance — full turtle at the cost of the whole offense). Read
+// stance state through hasReadyStance / hasDefensiveStance in Stances.ts,
+// never by direct equality, so "both" is always honoured.
+export type Stance = "none" | "defensive" | "ready" | "both";
 
 // Special abilities. A unit may have at most MAX_ABILITIES (2).
 //

@@ -28,15 +28,31 @@ const inCounterRange = (defender: Unit, attacker: Unit): boolean => {
 
 // Ready-stance counter: defender entered Ready stance during their turn
 // (the stance flag persists until the start of their next turn, so the
-// activation order within the turn doesn't matter). Defend overwrites
-// Ready — see Unit.ts/types.ts: `stance` is a single field, so toggling
-// Defend after Ready replaces the slot and disables the Ready counter.
+// activation order within the turn doesn't matter). Stances STACK: taking
+// Defend after Ready (or vice versa) yields the combined "both" state —
+// each still costs its own AP. Historically Defend overwrote Ready, which
+// silently wasted the first stance's AP; that trap is gone.
+
+// Stance predicates — the ONLY sanctioned way to ask about stance state.
+// Direct equality checks miss the combined "both" stance.
+export const hasReadyStance = (u: Unit): boolean =>
+  u.state.stance === "ready" || u.state.stance === "both";
+export const hasDefensiveStance = (u: Unit): boolean =>
+  u.state.stance === "defensive" || u.state.stance === "both";
+
+// Consume the Ready half of a unit's stance (a Ready counter fired). From
+// "both" this demotes to "defensive" — spending the counter must never
+// silently strip a Defend the unit paid separate AP for.
+export const spendReady = (u: Unit): void => {
+  u.state.stance = u.state.stance === "both" ? "defensive" : "none";
+};
+
 export const canTriggerReadyCounter = (
   defender: Unit,
   attacker: Unit,
   _grid: Grid
 ): boolean => {
-  if (defender.state.stance !== "ready") return false;
+  if (!hasReadyStance(defender)) return false;
   return inCounterRange(defender, attacker);
 };
 

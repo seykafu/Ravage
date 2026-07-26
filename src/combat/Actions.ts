@@ -1,6 +1,6 @@
 import { Grid } from "./Grid";
 import { previewAttack } from "./Damage";
-import { canTriggerReadyCounter, canTriggerSpeedCounter } from "./Stances";
+import { canTriggerReadyCounter, canTriggerSpeedCounter, spendReady } from "./Stances";
 import { beginUnitTurn, damageUnit, hasAbility, isAlive } from "./Unit";
 import { equipmentBonuses } from "./items";
 import type { AttackResult, Stance, Tile, TilePos, Unit } from "./types";
@@ -158,7 +158,9 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
   if (result.hit && !result.defenderKilled && isAlive(defender) && isAlive(attacker)) {
     if (canTriggerReadyCounter(defender, attacker, state.grid)) {
       const counter = rollAttack(state, defender, attacker, true);
-      defender.state.stance = "none"; // Ready spent
+      // Ready spent — but from the combined stance this demotes to
+      // "defensive", never stripping a Defend paid for with separate AP.
+      spendReady(defender);
       result.counterTriggered = true;
       result.counterResult = counter;
     } else if (canTriggerSpeedCounter(defender, attacker)) {
@@ -169,7 +171,7 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
   } else if (result.defenderKilled && canTriggerReadyCounter(defender, attacker, state.grid)) {
     // Defender died but had Ready ready to fire; clear the stance so the
     // corpse doesn't appear "still primed" in any post-mortem UI snapshot.
-    defender.state.stance = "none";
+    spendReady(defender);
   }
   return result;
 };
@@ -197,8 +199,15 @@ export const interposeCandidates = (
   return out;
 };
 
-export const enterStance = (u: Unit, stance: Exclude<Stance, "none">): void => {
-  u.state.stance = stance;
+// Enter a stance, STACKING with any other stance already held this turn:
+// Ready onto Defensive (or vice versa) yields the combined "both" state.
+// Returns false — with no state change — when the unit already holds the
+// requested stance, so callers can decline to charge AP for a no-op.
+export const enterStance = (u: Unit, stance: Exclude<Stance, "none" | "both">): boolean => {
+  const cur = u.state.stance;
+  if (cur === stance || cur === "both") return false;
+  u.state.stance = cur === "none" ? stance : "both";
+  return true;
 };
 
 export const beginTurn = (u: Unit): void => beginUnitTurn(u);

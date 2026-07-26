@@ -29,7 +29,14 @@ import {
 } from "../combat/Actions";
 import { routEnemies, type VictoryCondition } from "../combat/Victory";
 import { previewAttack } from "../combat/Damage";
-import { canTriggerReadyCounter, canTriggerSpeedCounter, counterZoneTiles } from "../combat/Stances";
+import {
+  canTriggerReadyCounter,
+  canTriggerSpeedCounter,
+  counterZoneTiles,
+  hasDefensiveStance,
+  hasReadyStance,
+  spendReady
+} from "../combat/Stances";
 import type { InterposeCandidate } from "./InterposeScene";
 import { executePlan, planEnemyTurn } from "../combat/AI";
 import {
@@ -936,8 +943,13 @@ export class BattleScene extends Phaser.Scene {
     v.hpBar.fillStyle(color, 1);
     v.hpBar.fillRect(bx, by, Math.max(0, Math.floor(barW * ratio)), barH);
     v.stanceIcon.setPosition(px.x, by - 14);
-    v.stanceIcon.setText(u.state.stance === "ready" ? "▲" : u.state.stance === "defensive" ? "◆" : "");
-    v.stanceIcon.setColor(u.state.stance === "ready" ? "#ffd45a" : "#8ad6ff");
+    // Predicates, not equality — the combined "both" stance (Ready +
+    // Defend in the same turn) must show BOTH glyphs, not fall through
+    // to blank.
+    const ready = hasReadyStance(u);
+    const defensive = hasDefensiveStance(u);
+    v.stanceIcon.setText(ready && defensive ? "▲◆" : ready ? "▲" : defensive ? "◆" : "");
+    v.stanceIcon.setColor(ready ? "#ffd45a" : "#8ad6ff");
     // Ravage aura visibility tracks the live UnitState. Cheap reconciliation
     // — refreshUnitView already runs after every action so the glow appears
     // / disappears in step with turn boundaries without an explicit hook.
@@ -1915,8 +1927,10 @@ export class BattleScene extends Phaser.Scene {
       // Archers can now enter Ready too — their counter triggers at long range
       // (dist 2–4) against ranged attackers, NOT against adjacent melee. See
       // canTriggerReadyCounter / reachFor in combat/Stances.ts.
-      { label: "Ready  1AP",  primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "ready") },
-      { label: "Defend  1AP", primary: false, enabled: hasAP, onClick: () => this.applyStance(u, "defensive") }
+      // Stances stack (Ready + Defend together = "both"), but a stance the
+      // unit already holds is disabled — re-buying it would waste the AP.
+      { label: "Ready  1AP",  primary: false, enabled: hasAP && !hasReadyStance(u), onClick: () => this.applyStance(u, "ready") },
+      { label: "Defend  1AP", primary: false, enabled: hasAP && !hasDefensiveStance(u), onClick: () => this.applyStance(u, "defensive") }
     );
     placeRow(
       { label: "Item  1AP", primary: false, enabled: canUseItem, onClick: () => this.openItemPicker(u) },
@@ -2126,10 +2140,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private applyStance(u: Unit, stance: "ready" | "defensive"): void {
+    // Stances STACK (Ready + Defend may both be active, 1 AP each), but
+    // re-entering a stance the unit already holds is a no-op — enterStance
+    // returns false and we charge nothing. The buttons are disabled for
+    // held stances too; this guard is belt-and-suspenders.
+    if (!enterStance(u, stance)) return;
     sfxStance();
-    enterStance(u, stance);
     u.state.apRemaining -= 1;
-    this.pushLog(`${u.name} enters ${stance} stance.`);
+    this.pushLog(
+      u.state.stance === "both"
+        ? `${u.name} braces — ready AND defensive.`
+        : `${u.name} enters ${stance} stance.`
+    );
     this.refreshUnitView(u);
     this.refreshSidePanel(u);
     this.clearActionButtons();
@@ -2284,7 +2306,9 @@ export class BattleScene extends Phaser.Scene {
     this.threatG.lineStyle(1, COLORS.threat, 0.5);
     for (const u of this.state.units) {
       if (!isAlive(u) || u.faction === "player") continue;
-      if (u.state.stance !== "ready") continue;
+      // hasReadyStance, not === "ready" — an enemy in the combined
+      // "both" stance still counters, so its threat zone must render.
+      if (!hasReadyStance(u)) continue;
       for (const z of counterZoneTiles(u)) {
         if (z.x < 0 || z.y < 0 || z.x >= this.state.grid.width || z.y >= this.state.grid.height) continue;
         const px = this.projection.tileToWorld(z);
@@ -3031,7 +3055,10 @@ export class BattleScene extends Phaser.Scene {
         await this.lunge(actualDefender, u);
         const counterRoll = rollAttackOnly(this.state, actualDefender, u, true);
         const counterRes = applyAttackOutcome(actualDefender, u, counterRoll);
-        actualDefender.state.stance = "none";
+        // spendReady, not stance = "none" — from the combined "both"
+        // stance this demotes to "defensive", preserving the Defend the
+        // unit paid separate AP for (mirrors performAttack in Actions.ts).
+        spendReady(actualDefender);
         result.counterTriggered = true;
         result.counterResult = counterRes;
         this.applyAttackEffects(actualDefender, u, counterRes);
@@ -3055,7 +3082,7 @@ export class BattleScene extends Phaser.Scene {
     ) {
       // Mirror performAttack's "primed corpse" cleanup so any post-mortem
       // UI (autopsy, replay) doesn't show the dead unit still in Ready.
-      actualDefender.state.stance = "none";
+      spendReady(actualDefender);
     }
 
     await this.delay(280);
