@@ -92,6 +92,19 @@ installRenderScale();
 
 const game = new Phaser.Game(config);
 
+// With RENDER_SCALE > 1 the backing buffer is LARGER than the window on
+// typical displays, so the browser's final canvas scale is a downscale.
+// `pixelArt: true` puts `image-rendering: pixelated` on the canvas, which
+// makes that downscale nearest-neighbor — shimmering, aliased, and the
+// exact blur/crunch this pivot removes. Override to smooth interpolation;
+// texture sampling INSIDE the buffer keeps its pixelArt NEAREST default,
+// so sprite art stays chunky where it should. No-op at RENDER_SCALE 1.
+if (RENDER_SCALE > 1) {
+  game.events.once(Phaser.Core.Events.READY, () => {
+    game.canvas.style.imageRendering = "auto";
+  });
+}
+
 // Dev-only: expose the game instance so the browser console (and automated
 // preview harnesses) can inspect scene state / warp directly. Stripped from
 // production builds by the import.meta.env.DEV guard.

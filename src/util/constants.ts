@@ -2,7 +2,7 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 48;
 
-// EXPERIMENTAL — native-resolution rendering (Tier 0, step 2).
+// Native-resolution rendering (Tier 0, step 2).
 //
 // The game's logical/design coordinate space stays 1280x720 everywhere
 // (all layout, all `GAME_WIDTH`/`GAME_HEIGHT` math is unchanged). This
@@ -14,16 +14,29 @@ export const TILE_SIZE = 48;
 // instead of upscaling a 720p frame, so text is crisp on every monitor
 // and the SSAA art shows its detail.
 //
-//   1 -> OFF. Byte-identical to today (no buffer change, no camera patch).
-//   2 -> render at 2x. Recommended value to try.
+//   1 -> OFF (720p buffer, upscaled to the window — the old blurry path).
+//   2 -> render at 2x (2560x1440 buffer; the window scale becomes a crisp
+//        DOWNSCALE on typical displays instead of a blurry upscale).
 //
-// DEFAULT IS 1 (off) on purpose: this touches the Phaser Scale Manager,
-// every scene's camera, and BattleScene's two-camera + pinned-UI + tile-
-// picking path, which can only be verified in a real browser. Flip to 2
-// locally, play a battle, and confirm: HUD/side-panel alignment, tile
-// hover + click picking, camera drag/keyboard pan, the fog overlay, and
-// dialogue overlays. See src/util/renderScale.ts.
-export const RENDER_SCALE = 1;
+// ON since the text-clarity pivot: the 720p-buffer upscale was the root
+// cause of soft/blurry text on every monitor larger than 1280x720, and no
+// amount of glyph-density patching (crispText) could fix the final canvas
+// stretch. All pointer-picking paths route through camera.getWorldPoint /
+// RENDER_SCALE-aware math, so input stays correct under the zoom. To
+// fall back, set 1 — everything degrades gracefully to the old path.
+// Typed `number` (not the literal) so flag checks like `rs === 1` in
+// renderScale.ts stay valid comparisons whichever value is set here.
+//
+// Runtime escape hatch: `?rs=1` on the URL forces the old 720p path for a
+// session (and `?rs=2` forces native-res) without a rebuild — so a playtest
+// that hits any native-res regression can fall back instantly. The window
+// guard keeps this file importable under Node (vitest imports it through
+// the content graph).
+const rsOverride = typeof window !== "undefined"
+  ? Number(new URLSearchParams(window.location.search).get("rs"))
+  : 0;
+export const RENDER_SCALE: number =
+  rsOverride === 1 || rsOverride === 2 ? rsOverride : 2;
 
 
 // HD procedural-art supersampling factor. Every procedurally generated
@@ -80,15 +93,19 @@ export const FONT_MONO = '12px "Consolas", "Menlo", monospace';
 // Font families — bake the full fallback stack once so every scene matches.
 //
 // Display + Heading stay Cinzel for banner moments where the calligraphic
-// look earns its keep. Everything else is "Pixelify Sans" — a variable
-// pixel-art font designed to render crisply on a canvas with
-// `image-rendering: pixelated`. The previous Garamond/Inter stack rendered
-// antialiased glyphs that looked blurry once the canvas was nearest-neighbor
-// scaled to the window. Pixel fonts dodge that conflict entirely.
+// look earns its keep. Body is EB Garamond (long-form dialogue/narration);
+// UI is Inter (labels, buttons, stat lines) — both loaded by play/index.html.
+//
+// History: body/UI were "Pixelify Sans" for a while — a pixel font chosen
+// because the game used to render a 720p buffer that was nearest-neighbor
+// UPSCALED to the window, which turned antialiased glyphs to mush. With
+// RENDER_SCALE 2 the buffer renders at native-ish resolution and the final
+// window scale is a smooth downscale, so properly-hinted antialiased faces
+// are strictly more readable than a pixel face. The workaround is retired.
 export const FAMILY_DISPLAY = '"Cinzel Decorative", "Cinzel", "Trajan Pro", "Times New Roman", serif';
 export const FAMILY_HEADING = '"Cinzel", "Trajan Pro", "Times New Roman", serif';
-export const FAMILY_BODY    = '"Pixelify Sans", "EB Garamond", "Georgia", "Times New Roman", serif';
-export const FAMILY_UI      = '"Pixelify Sans", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+export const FAMILY_BODY    = '"EB Garamond", "Georgia", "Times New Roman", serif';
+export const FAMILY_UI      = '"Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 export const FAMILY_MONO    = '"Consolas", "Menlo", monospace';
 
 // Typography scale — single source of truth for Phaser TextStyle objects.

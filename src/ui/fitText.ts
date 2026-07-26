@@ -37,10 +37,15 @@ export const paginateBody = (
 };
 
 // Compute how many lines of `fontSize` (+ `lineSpacing`) fit in `maxHeight`.
-// Phaser lays out each line at roughly fontSize + lineSpacing; we floor so a
-// partially-visible last line never clips.
+//
+// Phaser's real per-line advance is the font's measured ascent+descent plus
+// lineSpacing — NOT `fontSize + lineSpacing`. For the serif body face (EB
+// Garamond) the ascent+descent runs ~1.2x the CSS px size, so budgeting with
+// the naive formula over-packs the box and the last line's descenders clip
+// the panel border. Budget with the 1.2x advance and floor, so the page
+// always fits with room for descenders.
 export const maxLinesFor = (
   fontSize: number,
   lineSpacing: number,
   maxHeight: number
-): number => Math.max(1, Math.floor(maxHeight / (fontSize + lineSpacing)));
+): number => Math.max(1, Math.floor(maxHeight / (fontSize * 1.2 + lineSpacing)));
