@@ -134,7 +134,15 @@ export class InitiativeBar {
     // padding so long names wrap to a 2nd line instead of bleeding past the
     // border. useAdvancedWrap allows mid-word breaks for hypothetical
     // single-token names that exceed the line width.
-    const name = this.scene.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 36, u.name, {
+    //
+    // Names longer than 14 chars ("Quartermaster Coyne", "Imperial
+    // Captain") wrap to THREE lines at this width, bleeding out of the
+    // 64px cell and past the top bar onto the map — show the last word
+    // (the surname/role) instead, which always fits in 1-2 lines.
+    const displayName = u.name.length > 14
+      ? (u.name.split(" ").pop() ?? u.name)
+      : u.name;
+    const name = this.scene.add.text(offsetX + INITIATIVE_BOX_W / 2, offsetY + 36, displayName, {
       fontFamily: FAMILY_HEADING,
       fontSize: "10px",
       color: isActive ? "#fff7c4" : "#dccfa8",

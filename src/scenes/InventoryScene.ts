@@ -173,7 +173,17 @@ export class InventoryScene extends Phaser.Scene {
         const meta = ITEM_CATALOG[k];
         const count = counts[k]!;
         const row = this.add.container(POOL_X + PANEL_PAD, py);
-        const bg = this.add.rectangle(0, 0, POOL_W - PANEL_PAD * 2, 44, 0x000000, 0.0)
+        // Measure the wrapped description FIRST and size the row (and its
+        // click rect) to fit it. The old fixed 50px pitch let 3-line
+        // descriptions (potion/elixir/dactyl_food, post battle's-end
+        // suffix) run into the NEXT row's hit rectangle — clicking the
+        // visible tail of item A's text assigned item B.
+        const desc = this.add.text(40, 25, meta.description, {
+          fontFamily: FAMILY_BODY, fontSize: "11px", color: "#9da7b8",
+          wordWrap: { width: POOL_W - PANEL_PAD * 2 - 60 }
+        });
+        const rowH = Math.max(44, 25 + Math.ceil(desc.height) + 6);
+        const bg = this.add.rectangle(0, 0, POOL_W - PANEL_PAD * 2, rowH, 0x000000, 0.0)
           .setOrigin(0, 0)
           .setInteractive();
         const glyph = this.add.text(8, 22, meta.glyph, {
@@ -181,10 +191,6 @@ export class InventoryScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
         const name = this.add.text(40, 8, meta.name, {
           fontFamily: FAMILY_HEADING, fontSize: "14px", color: "#f8f0d8"
-        });
-        const desc = this.add.text(40, 25, meta.description, {
-          fontFamily: FAMILY_BODY, fontSize: "11px", color: "#9da7b8",
-          wordWrap: { width: POOL_W - PANEL_PAD * 2 - 60 }
         });
         const cnt = this.add.text(POOL_W - PANEL_PAD * 2 - 8, 22, `×${count}`, {
           fontFamily: FAMILY_MONO, fontSize: "16px", color: "#c9b07a"
@@ -194,7 +200,7 @@ export class InventoryScene extends Phaser.Scene {
         bg.on("pointerdown", () => this.assignToSelected(k));
         row.add([bg, glyph, name, desc, cnt]);
         this.poolContainer.add(row);
-        py += 50;
+        py += rowH + 6;
       }
     }
 

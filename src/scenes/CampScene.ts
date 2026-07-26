@@ -750,16 +750,7 @@ export class CampScene extends Phaser.Scene {
     sfxClick();
     const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7).setInteractive();
     const panelW = 540;
-    const panelH = 280;
     const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = (GAME_HEIGHT - panelH) / 2;
-    const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
-    const title = this.add.text(panelX + panelW / 2, panelY + 22, "At the Memorial", {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "22px",
-      color: "#f4d999"
-    }).setOrigin(0.5, 0);
 
     // Per-character memorial text. Lucian is the only canonical
     // death in the playable slice; future scripted deaths add
@@ -774,13 +765,40 @@ export class CampScene extends Phaser.Scene {
         blocks.push(`${f.name} — fell in the line of duty.`);
       }
     }
-    const body = this.add.text(panelX + 24, panelY + 64, blocks.join("\n\n"), {
+    // Measure-first layout: the panel grows to fit the text instead of the
+    // text overflowing a fixed panel (with two fallen, the old fixed 280px
+    // panel ran the body under the Close button). Create the body off-panel,
+    // measure its wrapped height, then size and place everything around it.
+    // If the roster of the fallen ever outgrows the screen, step the font
+    // down a notch before clamping.
+    const TITLE_ZONE = 64;   // panel top → body top (title + gap)
+    const BUTTON_ZONE = 66;  // body bottom → panel bottom (gap + 36px button + margin)
+    const MAX_PANEL_H = GAME_HEIGHT - 80;
+    const body = this.add.text(0, 0, blocks.join("\n\n"), {
       fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#dad3bd",
       wordWrap: { width: panelW - 48 },
       lineSpacing: 5
     });
+    if (TITLE_ZONE + body.height + BUTTON_ZONE > MAX_PANEL_H) {
+      body.setFontSize(12);
+      body.setLineSpacing(4);
+    }
+    const panelH = Math.max(220, Math.min(MAX_PANEL_H, TITLE_ZONE + body.height + BUTTON_ZONE));
+    const panelY = (GAME_HEIGHT - panelH) / 2;
+
+    const pg = this.add.graphics();
+    drawPanel(pg, panelX, panelY, panelW, panelH);
+    const title = this.add.text(panelX + panelW / 2, panelY + 22, "At the Memorial", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "22px",
+      color: "#f4d999"
+    }).setOrigin(0.5, 0);
+    body.setPosition(panelX + 24, panelY + TITLE_ZONE);
+    // Draw order: the panel + title were created after the body, so pull the
+    // body above the panel graphics.
+    body.setDepth(1); title.setDepth(1);
 
     const closeBtn = new Button(this, {
       x: panelX + panelW / 2 - 70,
@@ -799,17 +817,13 @@ export class CampScene extends Phaser.Scene {
   private showMemoriesPlaceholder(): void {
     const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7).setInteractive();
     const panelW = 540;
-    const panelH = 240;
     const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = (GAME_HEIGHT - panelH) / 2;
-    const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
-    const title = this.add.text(panelX + panelW / 2, panelY + 24, "Memories Wall", {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "22px",
-      color: "#f4d999"
-    }).setOrigin(0.5, 0);
-    const body = this.add.text(panelX + 24, panelY + 64,
+    // Measure-first layout, same pattern as showMemorialBeat above: the
+    // fixed 240px panel put ~130px of wrapped copy into a ~126px zone and
+    // ran the last line under the Close button. Panel now grows to fit.
+    const TITLE_ZONE = 64;
+    const BUTTON_ZONE = 66;
+    const body = this.add.text(0, 0,
       "Bonds between characters get forged at specific story beats — saving someone's life, sharing a Ravaged turn, standing back-to-back at a moment that mattered. Each forged bond will live on this wall as a named memory ('The South Ford', 'The Practice Yard') and unlock a combined technique when both characters are adjacent in battle.\n\nNo memories forged yet. Coming in a future update.",
       {
         fontFamily: FAMILY_BODY,
@@ -819,6 +833,17 @@ export class CampScene extends Phaser.Scene {
         lineSpacing: 5
       }
     );
+    const panelH = Math.max(220, Math.min(GAME_HEIGHT - 80, TITLE_ZONE + body.height + BUTTON_ZONE));
+    const panelY = (GAME_HEIGHT - panelH) / 2;
+    const pg = this.add.graphics();
+    drawPanel(pg, panelX, panelY, panelW, panelH);
+    const title = this.add.text(panelX + panelW / 2, panelY + 24, "Memories Wall", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "22px",
+      color: "#f4d999"
+    }).setOrigin(0.5, 0);
+    body.setPosition(panelX + 24, panelY + TITLE_ZONE);
+    body.setDepth(1); title.setDepth(1);
     const closeBtn = new Button(this, {
       x: panelX + panelW / 2 - 70,
       y: panelY + panelH - 50,

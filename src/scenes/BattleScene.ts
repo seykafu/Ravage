@@ -712,6 +712,11 @@ export class BattleScene extends Phaser.Scene {
     });
     this.hoverPreview.add([hpBg2, hpTxt]);
     this.hoverPreview.setData("txt", hpTxt);
+    // Stored so handlePointerMove can resize the backing to the actual
+    // line count — the forecast runs 6-9 lines depending on equipment +
+    // Ravage states, and a fixed-height bg let the tail lines spill onto
+    // the battlefield (same overlap class as the memorial popup bug).
+    this.hoverPreview.setData("bg", hpBg2);
 
     // Side-panel info tooltip — opens to the LEFT of the panel when the player
     // hovers a weapon or ability row, explaining what the stat actually does.
@@ -1045,6 +1050,16 @@ export class BattleScene extends Phaser.Scene {
     this.logLines.push(msg);
     if (this.logLines.length > 7) this.logLines.shift();
     this.logText.setText(this.logLines.join("\n"));
+    // Cap by MEASURED height, not entry count: long entries (interpose,
+    // level-ups) wrap to 2 lines each, and 7 wrapped entries ran past the
+    // side panel's bottom edge and off the canvas. Drop oldest entries
+    // until the block fits the space between the log's y and the panel
+    // bottom (590 → 700, minus a small pad).
+    const LOG_MAX_H = 104;
+    while (this.logText.height > LOG_MAX_H && this.logLines.length > 1) {
+      this.logLines.shift();
+      this.logText.setText(this.logLines.join("\n"));
+    }
   }
 
   private refreshDebug(): void {
@@ -1536,7 +1551,12 @@ export class BattleScene extends Phaser.Scene {
     let ablIdx = -1;
     if (u.abilities && u.abilities.length > 0) {
       ablIdx = lines.length;
-      lines.push(`ABL  ${u.abilities.join(", ")}`);
+      // Comma WITHOUT a trailing space: the worst case ("BossFighter,
+      // Aide, Destruct, Roam") is 39 chars with spaces and wraps the
+      // 256px column — and a wrapped row both collides with the ACTIONS
+      // header and breaks the lineH math that positions the hover zones
+      // below. 35 chars compact stays single-line.
+      lines.push(`ABL  ${u.abilities.join(",")}`);
     }
     // Inventory + equipment summary. Renders the carried items with
     // their glyphs (so the player can scan at a glance which character
@@ -1562,14 +1582,18 @@ export class BattleScene extends Phaser.Scene {
       // Sum the equipment passives — only render the row when there's
       // something non-zero to report, so a unit carrying just two
       // potions doesn't get a misleading "EQ +0%" line.
+      // Compact two-letter tokens: the long form ("+2 MOV, +50% CRIT,
+      // +75% HIT, +1 AP, -4 ARM" = 47 chars) wraps the 256px column at a
+      // full equipment load, colliding with the ACTIONS header and
+      // desyncing the tooltip hover zones. Worst case compact = 34 chars.
       const eq = equipmentBonuses(u);
       const eqParts: string[] = [];
-      if (eq.movement) eqParts.push(`+${eq.movement} MOV`);
-      if (eq.critPct) eqParts.push(`+${eq.critPct}% CRIT`);
-      if (eq.hitPct) eqParts.push(`+${eq.hitPct}% HIT`);
-      if (eq.apBonus) eqParts.push(`+${eq.apBonus} AP`);
-      if (eq.armorPenalty) eqParts.push(`-${eq.armorPenalty} ARM`);
-      if (eqParts.length > 0) lines.push(`EQ   ${eqParts.join(", ")}`);
+      if (eq.movement) eqParts.push(`+${eq.movement}MV`);
+      if (eq.critPct) eqParts.push(`+${eq.critPct}%CR`);
+      if (eq.hitPct) eqParts.push(`+${eq.hitPct}%HT`);
+      if (eq.apBonus) eqParts.push(`+${eq.apBonus}AP`);
+      if (eq.armorPenalty) eqParts.push(`-${eq.armorPenalty}AR`);
+      if (eqParts.length > 0) lines.push(`EQ   ${eqParts.join(" ")}`);
     }
     this.statText.setText(lines.join("\n"));
     this.panelUnit = u;
@@ -2437,8 +2461,19 @@ export class BattleScene extends Phaser.Scene {
       if (u.state.ravagedActive) lines.push(`RAVAGED +50% dmg`);
       if (target.state.ravagedActive) lines.push(`Target RAVAGED -50% arm`);
       txt.setText(lines.join("\n"));
-      const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - 230);
-      const hy = Math.min(px.y - 16, GAME_HEIGHT - 130);
+      // Resize the backing to the measured text (6-9 lines depending on
+      // equipment + Ravage states; the old fixed 220x100 box let the tail
+      // lines spill unbacked onto the map). Same pattern as showInfoFor.
+      const bg = this.hoverPreview.getData("bg") as Phaser.GameObjects.Graphics;
+      const boxW = Math.max(220, Math.ceil(txt.width) + 20);
+      const boxH = Math.max(100, Math.ceil(txt.height) + 16);
+      bg.clear();
+      bg.fillStyle(0x05060a, 0.94);
+      bg.fillRect(0, 0, boxW, boxH);
+      bg.lineStyle(1, COLORS.gold, 0.7);
+      bg.strokeRect(0.5, 0.5, boxW - 1, boxH - 1);
+      const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - boxW - 10);
+      const hy = Math.min(px.y - 16, GAME_HEIGHT - boxH - 12);
       this.hoverPreview.setPosition(hx, hy).setVisible(true);
     } else {
       this.hoverPreview.setVisible(false);

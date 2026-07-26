@@ -138,18 +138,23 @@ export class EndScene extends Phaser.Scene {
     // the divider.
     const SPOILS_STRIP_H = 50;
     const outroAreaH = panelH - 22 - SPOILS_STRIP_H;
-    this.add.text(panelX + 28, panelY + 22, outroText, {
+    const outroBody = this.add.text(panelX + 28, panelY + 22, outroText, {
       fontFamily: FAMILY_BODY,
       fontSize: "18px",
       color: "#e6e0d0",
       wordWrap: { width: panelW - 56 },
-      lineSpacing: 6,
-      // Phaser respects fixedHeight only for the visible-area calculation,
-      // not for hard clipping — our panelH math above is what guarantees
-      // the prose actually fits. fixedHeight here just helps the line
-      // metrics behave consistently across battles.
-      fixedHeight: outroAreaH
+      lineSpacing: 6
     });
+    // Measured safety: the longest outros (8 wrapped lines) sit within a
+    // few px of the spoils divider under real font metrics. If the prose
+    // doesn't fit its area, step the font down until it does — same
+    // philosophy as the dialogue paginator: never let text cross into the
+    // furniture below it.
+    for (const size of [17, 16, 15]) {
+      if (outroBody.height <= outroAreaH) break;
+      outroBody.setFontSize(size);
+      outroBody.setLineSpacing(5);
+    }
 
     // Spoils — only on victory and only if the BattleNode authored a
     // rewards array. Tally by kind (so "potion ×3" reads more cleanly

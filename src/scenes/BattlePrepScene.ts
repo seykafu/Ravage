@@ -293,7 +293,7 @@ export class BattlePrepScene extends Phaser.Scene {
     new Button(this, {
       x: GAME_WIDTH - 460, y: GAME_HEIGHT - 56,
       w: 200, h: 40,
-      label: "📦 Inventory + Trade",
+      label: "Inventory + Trade",
       primary: false,
       fontSize: 14,
       onClick: () => {

@@ -220,7 +220,7 @@ export class OverworldScene extends Phaser.Scene {
     new Button(this, {
       x: 196, y: GAME_HEIGHT - 56,
       w: 140, h: 40,
-      label: "📋 Roster",
+      label: "Roster",
       primary: false,
       fontSize: 14,
       onClick: () => {
@@ -343,14 +343,9 @@ export class OverworldScene extends Phaser.Scene {
         });
         void dot;
       }
-      if (locked) {
-        const lockIcon = this.add.text(x + cardW - 16, y + 2, "🔒", {
-          fontFamily: FAMILY_BODY,
-          fontSize: "12px",
-          color: "#5a5a62"
-        });
-        void lockIcon;
-      }
+      // (No corner lock glyph — the 🔒 emoji rendered as "??" in the canvas
+      // font stack on some systems, and locked cards already read as locked
+      // via the "— locked —" subtitle + darkened tier colors.)
 
       // Path-specific battles need different hover + click handling.
       // The deduped B19 card represents one of seven path-opener
@@ -384,7 +379,7 @@ export class OverworldScene extends Phaser.Scene {
           detailSub.setText("Complete previous battles to unlock");
           bodyHandle.setText("This battle hasn't been unlocked yet. Progress through the story to reach it.");
           playBtn.setEnabled(false);
-          playBtn.setLabel("Locked 🔒");
+          playBtn.setLabel("Locked");
         } else if (isPathBattle) {
           // Path-flavored chapter — the actual content depends on
           // which path the player picked at B18. Show generic copy

@@ -110,7 +110,10 @@ export class PromotionScene extends Phaser.Scene {
 
     // Stat-delta panel: shows before/after for every stat that changed.
     const panelW = 540;
-    const panelH = 260;
+    // 300 (was 260): a three-line ability blurb at panelY+212 needs ~51px
+    // and was overhanging the old panel border by a hair. The Continue
+    // button lives at GAME_HEIGHT-100, far below — no overlap either way.
+    const panelH = 300;
     const panelX = GAME_WIDTH / 2 - panelW / 2;
     const panelY = 240;
     const panel = this.add.graphics();
@@ -126,7 +129,7 @@ export class PromotionScene extends Phaser.Scene {
     }).setLetterSpacing(2);
 
     const statDeltas = this.formatStatDeltas(before.stats, after.stats);
-    this.add.text(panelX + 24, panelY + 44, statDeltas, {
+    const statBlock = this.add.text(panelX + 24, panelY + 44, statDeltas, {
       fontFamily: FAMILY_BODY,
       fontSize: "16px",
       color: "#dde6ef",
@@ -134,21 +137,25 @@ export class PromotionScene extends Phaser.Scene {
     });
 
     // New ability section — always shown even if there's only one ability,
-    // so the player understands the second slot just got filled.
+    // so the player understands the second slot just got filled. Anchored
+    // BELOW the measured stat block rather than at a fixed offset: the
+    // standard boost prints five delta rows, which under real font metrics
+    // ran within a few px of (and could overlap) a fixed-y header.
+    const abilityTop = panelY + 44 + Math.ceil(statBlock.height) + 22;
     const abilityInfo = ABILITY_DISPLAY[newAbility];
     const abilityName = abilityInfo?.name ?? newAbility;
     const abilityBlurb = abilityInfo?.blurb ?? "";
-    this.add.text(panelX + 24, panelY + 160, "New Ability", {
+    this.add.text(panelX + 24, abilityTop, "New Ability", {
       fontFamily: FAMILY_HEADING,
       fontSize: "13px",
       color: "#c9b07a"
     }).setLetterSpacing(2);
-    this.add.text(panelX + 24, panelY + 184, abilityName, {
+    this.add.text(panelX + 24, abilityTop + 24, abilityName, {
       fontFamily: FAMILY_HEADING,
       fontSize: "20px",
       color: "#fff7c4"
     });
-    this.add.text(panelX + 24, panelY + 212, abilityBlurb, {
+    this.add.text(panelX + 24, abilityTop + 52, abilityBlurb, {
       fontFamily: FAMILY_BODY,
       fontSize: "14px",
       color: "#a9b3c4",

@@ -202,7 +202,7 @@ export class StoryScene extends Phaser.Scene {
       x: 40,
       y: GAME_HEIGHT - 56,
       w: 120, h: 40,
-      label: "Skip ⏭",
+      label: "Skip ▸▸",
       primary: false,
       fontSize: 14,
       onClick: () => {
