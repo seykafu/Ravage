@@ -24,6 +24,10 @@ export class SaveSlotScene extends Phaser.Scene {
   constructor() { super("SaveSlotScene"); }
 
   async create(): Promise<void> {
+    // Scene instances are reused across visits (Title → slots → game →
+    // Game Over → slots …). Re-arm the routing latch or the second visit
+    // would inherit routing=true and ignore every click.
+    this.routing = false;
     const bgKey = ensureBackdropTexture(this, "bg_slot", BACKDROPS.thuling);
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     bg.setAlpha(0.55);
@@ -174,27 +178,60 @@ export class SaveSlotScene extends Phaser.Scene {
     }
   }
 
+  // Latch: once a slot is being activated, further clicks on any card
+  // are no-ops — a double-click during the fade must not race two
+  // activateSlot calls / two scene.start targets.
+  private routing = false;
+
+  // Kick off the camera fade-out and resolve when it completes. The
+  // listener is registered BEFORE the fade starts, which is the entire
+  // point: continueSlot/startNew used to call fadeOut(), then AWAIT the
+  // (network-bound) activateSlot, then register the once-listener. When
+  // the Supabase round-trip took longer than the fade — always true for
+  // signed-in cloud saves — camerafadeoutcomplete fired during the await
+  // with nobody listening, the transition never ran, and the player was
+  // stranded on a fully-faded (black) but still-interactive slot screen.
+  // The delayedCall fallback mirrors ChoiceScene: a camera fade can, in
+  // rare states, fail to emit its complete event; never strand the player.
+  private fadeOutDone(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (): void => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      this.cameras.main.once("camerafadeoutcomplete", finish);
+      this.cameras.main.fadeOut(ms, 0, 0, 0);
+      this.time.delayedCall(ms + 250, finish);
+    });
+  }
+
   private async continueSlot(slot: SlotIndex): Promise<void> {
+    if (this.routing) return;
+    this.routing = true;
     sfxConfirm();
-    this.cameras.main.fadeOut(300, 0, 0, 0);
+    const fadeDone = this.fadeOutDone(300);
     await activateSlot(slot);
+    await fadeDone;
     // Route into the camp instead of straight to the world map. The
     // camp is the new home base — the world map is one click away
     // via the "Where to Next?" hotspot. See CampScene.
-    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("CampScene"));
+    this.scene.start("CampScene");
   }
 
   private async startNew(slot: SlotIndex): Promise<void> {
+    if (this.routing) return;
+    this.routing = true;
     sfxConfirm();
-    this.cameras.main.fadeOut(300, 0, 0, 0);
+    const fadeDone = this.fadeOutDone(300);
     await activateSlot(slot);
     resetActiveSave();
     // Analytics — single event per New Game intent. Bookends the funnel
     // (vs. battle_completed for the final battle).
     trackNewGameStarted();
-    this.cameras.main.once("camerafadeoutcomplete", () =>
-      this.scene.start("StoryScene", { arcId: "cold_open_dawn" })
-    );
+    await fadeDone;
+    this.scene.start("StoryScene", { arcId: "cold_open_dawn" });
   }
 
   private async confirmDelete(slot: SlotIndex): Promise<void> {
