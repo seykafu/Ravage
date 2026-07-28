@@ -22,7 +22,7 @@ import Phaser from "phaser";
 import { FAMILY_HEADING, TILE_SIZE } from "../../util/constants";
 import type { Projection } from "../../render/Projection";
 import { isAlive } from "../../combat/Unit";
-import { sfxCrit } from "../../audio/Sfx";
+import { sfxRavage } from "../../audio/Sfx";
 import type { Unit } from "../../combat/types";
 
 // Per-unit visual state owned by BattleScene's UnitView. Lifted here as a
@@ -114,7 +114,7 @@ export const announceRavaged = (
   unit: Unit,
   pushLog: (msg: string) => void
 ): void => {
-  sfxCrit(); // reuse the heavy hit sting — same emotional register
+  sfxRavage(); // dedicated berserk-trigger riser — no longer borrows the crit sting
   scene.cameras.main.shake(220, 0.014);
   const floater = scene.add.text(
     sprite.x, sprite.y - TILE_SIZE / 2 - 12, "RAVAGED!",
