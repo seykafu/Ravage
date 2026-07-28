@@ -2572,49 +2572,63 @@ export class BattleScene extends Phaser.Scene {
       this.fsm.send({ tag: "ACTION_COMPLETE" });
       return;
     }
-    let prev: TilePos = startTile;
     playUnitState(this, view.sprite, u, "walk");
     // Pause idle breathing for the duration of the walk so it doesn't fight
-    // with the per-step y tween. Restarted on the final step.
+    // with the walk tween's y control. Restarted on arrival.
     this.stopBreathing(view);
     // Push-off dust at the starting tile's foot position.
     this.spawnDust(view.sprite.x, view.baseY + 22);
-    // Walk the visual sprite along path
-    let lastY = view.baseY;
+
+    // Continuous walk: ONE tween across the whole polyline instead of a
+    // chained per-tile tween. The old per-step Sine.easeInOut meant the
+    // sprite accelerated from rest and braked to a full stop at EVERY
+    // tile edge (plus a one-frame handoff gap between tweens) — a
+    // five-tile move visibly pulsed five times. A single eased counter
+    // across all legs gives one acceleration, a constant cruise, and one
+    // deceleration; facing flips and footstep SFX fire at leg boundaries
+    // exactly as before.
+    const pts = [startTile, ...path].map((t) => this.projection.tileToWorld(t));
+    const legs = pts.length - 1;
+    const MS_PER_TILE = 95;
     const isActive = this.initiative.current() === u;
-    for (const step of path) {
-      const dx = step.x - prev.x;
-      if (dx !== 0) {
-        u.state.facingX = dx > 0 ? 1 : -1;
-        view.sprite.setFlipX(u.state.facingX === -1);
-      }
-      const px = this.projection.tileToWorld(step);
-      lastY = px.y - 4;
-      sfxStep();
-      // Shadow tweens in parallel — same x as the sprite, but its own y so
-      // it stays planted at foot height (baseY + 22) rather than the sprite's
-      // chest level.
-      this.tweens.add({
-        targets: view.shadow,
-        x: px.x,
-        y: lastY + 22,
-        duration: 110,
-        ease: "Sine.easeInOut"
+    let lastLeg = -1;
+    await new Promise<void>((res) => {
+      this.tweens.addCounter({
+        from: 0,
+        to: legs,
+        duration: legs * MS_PER_TILE + 70,
+        ease: "Sine.easeInOut",
+        onUpdate: (tw) => {
+          // Clamp fractionally below `legs` so the final frame still
+          // resolves to the last leg (floor(legs) would index past it).
+          const s = Math.min(tw.getValue() ?? 0, legs - 1e-6);
+          const i = Math.floor(s);
+          const f = s - i;
+          const a = pts[i]!;
+          const b = pts[i + 1]!;
+          if (i !== lastLeg) {
+            lastLeg = i;
+            const dx = b.x - a.x;
+            if (dx !== 0) {
+              u.state.facingX = dx > 0 ? 1 : -1;
+              view.sprite.setFlipX(u.state.facingX === -1);
+            }
+            sfxStep();
+          }
+          const x = a.x + (b.x - a.x) * f;
+          const y = a.y + (b.y - a.y) * f - 4;
+          view.sprite.setPosition(x, y);
+          // Shadow stays planted at foot height rather than chest level.
+          view.shadow.setPosition(x, y + 22);
+          if (isActive) this.followActiveMarker(u);
+        },
+        onComplete: () => res()
       });
-      await new Promise<void>((res) => {
-        this.tweens.add({
-          targets: view.sprite,
-          x: px.x,
-          y: lastY,
-          duration: 110,
-          ease: "Sine.easeInOut",
-          onUpdate: () => { if (isActive) this.followActiveMarker(u); },
-          onComplete: () => res()
-        });
-      });
-      prev = step;
-    }
-    view.baseY = lastY;
+    });
+    const end = pts[legs]!;
+    view.sprite.setPosition(end.x, end.y - 4);
+    view.shadow.setPosition(end.x, end.y - 4 + 22);
+    view.baseY = end.y - 4;
     playUnitState(this, view.sprite, u, "idle");
     this.startBreathing(view);
     u.state.apRemaining -= 1;
