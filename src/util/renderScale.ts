@@ -39,6 +39,51 @@ export const installRenderScale = (): void => {
   const rs = RENDER_SCALE;
   if (rs === 1) return; // OFF — leave Phaser entirely untouched.
 
+  // Bounds clamping must match the zoom PIVOT. Phaser's stock
+  // clampX/clampY hard-code the default center pivot: they shift the
+  // legal scroll range by (displayWidth - width) / 2, which is the
+  // correction for a camera that zooms around its middle. Our cameras
+  // zoom around the TOP-LEFT (origin 0,0), where the visible world is
+  // simply [scrollX, scrollX + displayWidth] — no shift. Left stock,
+  // every setBounds camera gets its scroll range displaced by
+  // -width*(rs-1)/(2*rs) buffer px (-640, -360 design px at rs=2):
+  // BattleScene's B1 entry clamped to scrollX=-640 permanently, pushing
+  // the map half a screen off-viewport with drag unable to recover
+  // (preRender re-clamps every frame).
+  //
+  // The replacement is origin-aware and reduces EXACTLY to Phaser's
+  // stock math at origin 0.5, so non-patched cameras (there are none,
+  // but belt-and-suspenders) behave identically.
+  const camProto = Phaser.Cameras.Scene2D.BaseCamera.prototype as unknown as {
+    clampX: (x: number) => number;
+    clampY: (y: number) => number;
+    _bounds: Phaser.Geom.Rectangle;
+    width: number;
+    height: number;
+    originX: number;
+    originY: number;
+    zoomX: number;
+    zoomY: number;
+    displayWidth: number;
+    displayHeight: number;
+  };
+  camProto.clampX = function (x: number): number {
+    const bounds = this._bounds;
+    const dw = this.displayWidth;
+    const shift = this.width * this.originX * (1 - 1 / this.zoomX);
+    const bx = bounds.x - shift;
+    const bw = Math.max(bx, bx + bounds.width - dw);
+    return x < bx ? bx : x > bw ? bw : x;
+  };
+  camProto.clampY = function (y: number): number {
+    const bounds = this._bounds;
+    const dh = this.displayHeight;
+    const shift = this.height * this.originY * (1 - 1 / this.zoomY);
+    const by = bounds.y - shift;
+    const bh = Math.max(by, by + bounds.height - dh);
+    return y < by ? by : y > bh ? bh : y;
+  };
+
   const proto = Phaser.Cameras.Scene2D.CameraManager.prototype as unknown as {
     add: (
       x?: number, y?: number, width?: number, height?: number,
