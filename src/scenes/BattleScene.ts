@@ -908,7 +908,13 @@ export class BattleScene extends Phaser.Scene {
     const v = this.unitViews.get(u.id);
     if (!v) return;
     const px = this.projection.tileToWorld(u.state.position);
-    v.sprite.setPosition(px.x, px.y - 4);
+    // Keep the breathing anchor AND the shadow in lock-step with the
+    // sprite snap. This function used to reposition only the sprite —
+    // any state-only reposition then left baseY stale (the next
+    // breathing reset floated the unit at the old tile's height) and
+    // the shadow marooned on the old tile.
+    v.baseY = px.y - 4;
+    v.sprite.setPosition(px.x, v.baseY);
     v.sprite.setVisible(isAlive(u));
     v.sprite.setFlipX(u.state.facingX === -1);
     v.hpBg.clear();
@@ -918,6 +924,7 @@ export class BattleScene extends Phaser.Scene {
       this.clearRavageAura(v);
       return;
     }
+    v.shadow.setPosition(px.x, v.baseY + 24);
     // Spent state — dim + desaturate units that have already taken their
     // turn this round (player or enemy). Without this the player can't
     // tell at a glance whose turn it is — they see a spent character
@@ -2513,9 +2520,25 @@ export class BattleScene extends Phaser.Scene {
   // the army doesn't pulse in unison. Always re-target sprite.y around
   // view.baseY (not the current y) so multiple kill/restart cycles don't
   // accumulate drift.
+  //
+  // ANTI-FLOAT INVARIANT: baseY is recomputed here from the unit's live
+  // tile, never trusted from the stored value. Breathing restarts pin
+  // sprite.y to baseY — so a baseY left stale by ANY code path that
+  // changed unit state without walking the sprite (scripted repositioning,
+  // dialogue side effects, future content) used to hover the unit at the
+  // OLD tile's height permanently, re-asserted on every idle re-entry
+  // ("Ning floating in B3"). Re-deriving the anchor at every restart makes
+  // the whole class of stale-anchor floats self-healing: the next idle
+  // re-entry (after every walk, lunge, and turn) snaps the unit back to
+  // the ground of the tile it actually occupies.
   private startBreathing(view: UnitView): void {
     view.breathTween?.stop();
-    view.sprite.y = view.baseY;
+    // Never bob a corpse — death poses (alpha + 90° tilt) must persist.
+    if (!isAlive(view.unit)) return;
+    const px = this.projection.tileToWorld(view.unit.state.position);
+    view.baseY = px.y - 4;
+    view.sprite.setPosition(px.x, view.baseY);
+    view.shadow.setPosition(px.x, view.baseY + 24);
     view.breathTween = this.tweens.add({
       targets: view.sprite,
       y: view.baseY - 1,
