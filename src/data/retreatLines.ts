@@ -21,11 +21,11 @@ import type { DialogBeat, PortraitId } from "../story/beats";
 
 const RETREAT_LINES: Record<string, string[]> = {
   amar: [
-    "That's the last of what I had. Pulling back — hold the line without me. I'll be standing again by the next bell.",
+    "That's the last of what I had. Pulling back. Hold the line without me. I'll be standing again by the next bell.",
     "Down, not done. Keep the formation tight. I'll regroup at the rear and you will not miss a step."
   ],
   lucian: [
-    "...That one had my name on it. Falling back — and don't any of you do something stupid trying to cover the hole I leave.",
+    "...That one had my name on it. Falling back, and don't any of you do something stupid trying to cover the hole I leave.",
     "Old bones. I'm out of this one. Hold the line the way I taught you and I'll see you when it's quiet."
   ],
   ning: [
@@ -33,33 +33,33 @@ const RETREAT_LINES: Record<string, string[]> = {
     "That's everything I've got. Falling back to the rear. Nobody else goes down, you hear me? Nobody."
   ],
   maya: [
-    "I misjudged the angle. Withdrawing before it costs more than me. Cover the gap — east side, quickly.",
-    "Down, and it was my own error to own. Pull the line tight without me. We still win this — go."
+    "I misjudged the angle. Withdrawing before it costs more than me. Cover the gap, east side, quickly.",
+    "Down, and it was my own error to own. Pull the line tight without me. We still win this. Go."
   ],
   leo: [
-    "The dactyl's worse off than I am — we're out, we're out. Regrouping. Finish it for both of us.",
-    "That's us grounded. Falling back. Don't you dare lose this fight without me — I'll never hear the end of it."
+    "The dactyl's worse off than I am. We're out, we're out. Regrouping. Finish it for both of us.",
+    "That's us grounded. Falling back. Don't you dare lose this fight without me. I'll never hear the end of it."
   ],
   kian: [
     "Enough. I'm down. Hold what I was holding, and finish it cleanly. No flourishes.",
-    "Falling back. Mind the line I leave — the King's men always read a gap before you do."
+    "Falling back. Mind the line I leave. The King's men always read a gap before you do."
   ],
   rose: [
-    "Down — not done, just down. Go. The work doesn't clear itself and I'll be up before it's finished.",
+    "Down. Not done, just down. Go. The work doesn't clear itself and I'll be up before it's finished.",
     "I'm out of this one. Hold for Dawn. I'll be back on my feet before anyone needs the report."
   ],
   selene: [
-    "...Cut deeper than I let it. Falling back. Hold the line — finish what we came in for.",
+    "...Cut deeper than I let it. Falling back. Hold the line. Finish what we came in for.",
     "I'm down. Don't break formation over me. Do the thing. I'll find you after."
   ],
   ranatoli: [
-    "Bleed only what you can spare — and I have spared quite enough. Falling back. Hold.",
+    "Bleed only what you can spare, and I have spared quite enough. Falling back. Hold.",
     "Down, not dead. Cover the gap I'm leaving. We feast together yet, all of us."
   ]
 };
 
 const DEFAULT_LINES = [
-  "I can't hold — I'm pulling back. Don't wait on me; finish this.",
+  "I can't hold. I'm pulling back. Don't wait on me; finish this.",
   "That's me done for this fight. Falling back. Watch the gap I'm leaving behind."
 ];
 
