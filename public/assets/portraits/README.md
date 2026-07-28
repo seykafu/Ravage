@@ -2,15 +2,18 @@
 
 Character bust shots used in dialogue and the prep roster.
 
-## Spec
+## Spec (current generation — painted)
 
 | Property | Value |
 |---|---|
-| Dimensions | **64 × 72 px** |
+| Dimensions | **1024 × 1536** (2:3 portrait) |
 | Format | PNG, transparent background |
-| Style | GBA Fire Emblem portrait — head + shoulders, ¾ angle |
-| Palette | 24–32 colors max, hard cel-shading |
-| Outline | 1px pure black (`#000000`) silhouette outline |
+| Style | Painted fantasy bust — head + shoulders, shoulders reach the bottom edge |
+| Filtering | Loaded with LINEAR sampling (BootScene) — smooth downscale in-game |
+
+The original 64×72 GBA-style pixel spec below is RETIRED — kept only as
+history. See `docs/PORTRAITS_TODO.md` for the live generation checklist,
+missing-art list, and the ChatGPT consistency workflow.
 
 ## Filenames (must match exactly)
 
