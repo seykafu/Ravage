@@ -1142,6 +1142,20 @@ export class BattleScene extends Phaser.Scene {
     this.lastActorFaction = u.faction;
     // New unit's turn — whatever undo history the previous unit had is gone.
     this.undoStack.length = 0;
+    // Normalize the FSM before dispatching. Auto-entered targeting
+    // (seamless move/attack overlays) can still be live for the PREVIOUS
+    // unit when control changes hands — via the swap-click path
+    // (initiative.setCurrent → here) or End Turn pressed with an overlay
+    // open. Left alone, drawOverlay below re-renders the OLD unit's
+    // tiles under the NEW unit's turn, buildActionButtons skips its
+    // auto-enter (guarded on idle), and a click on a stale tile walks
+    // the new unit along an unbounded pathTo route it could never
+    // legally reach. Dropping to idle here makes the dispatch start
+    // clean and the auto-enter recompute ranges for the actual actor.
+    const staleTag = this.fsm.current().tag;
+    if (staleTag === "move" || staleTag === "attack" || staleTag === "roam") {
+      this.fsm.send({ tag: "CANCEL_TARGETING" });
+    }
     beginUnitTurn(u);
     // beginUnitTurn just promoted ravagedNextTurn → ravagedActive (if it
     // was set). Surface that with a one-shot RAVAGED! floater + camera
