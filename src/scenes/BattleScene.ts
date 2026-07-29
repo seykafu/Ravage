@@ -78,6 +78,7 @@ import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura } from "./battle/RavageVfx";
+import { fireArrow, hitSpark, missWhiff, slashArc } from "./battle/CombatVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
@@ -2762,6 +2763,29 @@ export class BattleScene extends Phaser.Scene {
     playUnitState(this, av.sprite, attacker, "attack");
     // Halt breathing — lunge owns sprite.y for the duration.
     this.stopBreathing(av);
+
+    // Bow attacks don't lunge across four tiles of empty air — the archer
+    // recoils into the draw and an actual arrow flies to the target. The
+    // promise resolves on IMPACT, so damage application (which callers run
+    // right after awaiting us) lands the moment the arrow does. Counters
+    // route through here too, so a Ready archer's retaliation also looses
+    // a visible arrow.
+    if (attacker.weapon === "bow") {
+      const dirX = tx > sx ? 1 : -1;
+      this.tweens.add({
+        targets: av.sprite,
+        x: sx - dirX * 5,
+        duration: 90,
+        ease: "Cubic.easeOut",
+        yoyo: true
+      });
+      await this.delay(70); // release at the top of the draw
+      await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2);
+      playUnitState(this, av.sprite, attacker, "idle");
+      this.startBreathing(av);
+      return;
+    }
+
     // Shadow only follows the horizontal lunge — the body leans in but feet
     // stay on the same tile.
     this.tweens.add({
@@ -2825,6 +2849,7 @@ export class BattleScene extends Phaser.Scene {
         this.pushLog(`${defender.name} steps in front of ${attacker.name}'s blow meant for ${opts.interposedFrom.name}.`);
       }
     }
+    const impactAngle = Math.atan2(ty - av.sprite.y, tx - av.sprite.x);
     if (result.hit) {
       if (result.crit) {
         sfxCrit();
@@ -2835,6 +2860,13 @@ export class BattleScene extends Phaser.Scene {
       } else {
         sfxAttackHit();
       }
+      // Impact VFX: melee blows get the crescent slash sweep in the attack
+      // direction; every hit gets the radial spark. Arrows skip the slash —
+      // the projectile itself already carried the motion.
+      if (attacker.weapon !== "bow") {
+        slashArc(this, (o) => this.addWorld(o), tx, ty, impactAngle, result.crit);
+      }
+      hitSpark(this, (o) => this.addWorld(o), tx, ty, result.crit);
       // Crisp white impact flash — reads instantly as "got hit", regardless
       // of unit palette. Red tint blended in with enemy reds before.
       this.flashSprite(tv.sprite, 0xffffff, defender);
@@ -2848,6 +2880,9 @@ export class BattleScene extends Phaser.Scene {
       this.pushLog(`${attacker.name} hits ${defender.name} for ${result.damage}${result.crit ? " (crit!)" : ""}.`);
     } else {
       sfxAttackMiss();
+      // Whiff puffs drifting past the defender in the swing direction —
+      // a miss shows motion instead of nothing but the floater.
+      missWhiff(this, (o) => this.addWorld(o), tx, ty, Math.cos(impactAngle) >= 0 ? 1 : -1);
       this.spawnDamageNumber(tx, ty, "MISS", 0xc0c5cf);
       this.pushLog(`${attacker.name} misses ${defender.name}.`);
     }
