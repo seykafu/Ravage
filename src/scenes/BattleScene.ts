@@ -13,6 +13,8 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
+import { IconToggleButton } from "../ui/IconToggleButton";
+import { allEnemyDanger } from "../combat/Danger";
 import { battleById } from "../data/battles";
 import {
   BattleState,
@@ -259,6 +261,12 @@ export class BattleScene extends Phaser.Scene {
   // scene's tween + timer timescale is doubled so the AI loop visibly snaps
   // forward without altering combat math.
   private fastForward = false;
+  // Danger overlay ("show enemy ranges") — union of every living enemy's
+  // move+attack range, FE-style. Toggled by the ⚔ top-bar button or the
+  // T key; drawn into dangerG by drawOverlay.
+  private dangerVisible = false;
+  private dangerG!: Phaser.GameObjects.Graphics;
+  private dangerToggle?: IconToggleButton;
   // Mid-battle dialogue trigger evaluation + firing. Owns its own
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
@@ -552,6 +560,9 @@ export class BattleScene extends Phaser.Scene {
 
     this.overlayG = this.add.graphics();
     this.contourG = this.add.graphics();
+    // Danger overlay UNDER the threat layer so a Ready enemy's active
+    // counter zone still reads distinctly on top of the passive range wash.
+    this.dangerG = this.add.graphics();
     this.threatG = this.add.graphics();
     // Cursor + active-marker depths sit ABOVE unit sprites (default 0)
     // and ABOVE the fog-of-war darkness (depth 25), so the tactical
@@ -834,6 +845,15 @@ export class BattleScene extends Phaser.Scene {
     new FastForwardButton(this, GAME_WIDTH - 76, 35, (enabled) => {
       this.fastForward = enabled;
       this.applyTurnSpeed();
+    });
+    // Danger-range toggle — ⚔ button left of fast-forward, or press T.
+    this.dangerVisible = false;
+    this.dangerToggle = new IconToggleButton(this, GAME_WIDTH - 120, 35, "⚔", (enabled) => {
+      this.dangerVisible = enabled;
+      this.drawOverlay();
+    });
+    this.input.keyboard?.on("keydown-T", () => {
+      this.dangerToggle?.setEnabled(!this.dangerToggle.isEnabled());
     });
 
     this.pushLog(`${node.subtitle} begins.`);
@@ -2326,6 +2346,17 @@ export class BattleScene extends Phaser.Scene {
     this.overlayG.clear();
     this.contourG.clear();
     this.threatG.clear();
+    this.dangerG.clear();
+    // Danger overlay — union of every living enemy's move+attack range.
+    // Recomputed on every overlay redraw (turn dispatch + after actions)
+    // so it always reflects the live board.
+    if (this.dangerVisible) {
+      this.dangerG.fillStyle(0xd05a4a, 0.13);
+      for (const t of allEnemyDanger(this.state)) {
+        const px = this.projection.tileToWorld(t);
+        this.dangerG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+      }
+    }
     const state = this.fsm.current();
     if (state.tag === "move" || state.tag === "roam") {
       const tint = state.tag === "roam" ? 0xffd45a : COLORS.moveTile;
