@@ -51,6 +51,7 @@ import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
   sfxAttackMiss,
+  sfxCancel,
   sfxClick,
   sfxCrit,
   sfxDeath,
@@ -262,6 +263,21 @@ export class BattleScene extends Phaser.Scene {
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
   private dialogue!: DialogueDirector;
+  // Undo-move: snapshots of (position, AP, roam flag, facing) captured
+  // before each player move this turn. A stack, so multi-AP turns walk
+  // back one move at a time. Cleared at turn dispatch and by any
+  // committing action (attack, stance, item, end turn) — undo is for
+  // repositioning second thoughts, never for taking back information
+  // gained from an attack roll. Roam moves are not snapshotted: the
+  // roam-granted AP is move-only, and restoring it would let the
+  // player spend it on an attack.
+  private undoStack: Array<{
+    unitId: string;
+    pos: TilePos;
+    ap: number;
+    roamUsed: boolean;
+    facingX: 1 | -1;
+  }> = [];
   // Battle-music gate. The battle theme starts the instant BattleScene
   // loads — even for battles that open on a round-1 dialogue (Kian's
   // blockade speech, the colony reveal, Rose's brief, etc.). The theme
@@ -1104,6 +1120,8 @@ export class BattleScene extends Phaser.Scene {
     if (!u) return;
     const isNewPhase = !this.lastActorFaction || this.lastActorFaction !== u.faction;
     this.lastActorFaction = u.faction;
+    // New unit's turn — whatever undo history the previous unit had is gone.
+    this.undoStack.length = 0;
     beginUnitTurn(u);
     // beginUnitTurn just promoted ravagedNextTurn → ravagedActive (if it
     // was set). Surface that with a one-shot RAVAGED! floater + camera
@@ -1940,10 +1958,14 @@ export class BattleScene extends Phaser.Scene {
       { label: "Ready  1AP",  primary: false, enabled: hasAP && !hasReadyStance(u), onClick: () => this.applyStance(u, "ready") },
       { label: "Defend  1AP", primary: false, enabled: hasAP && !hasDefensiveStance(u), onClick: () => this.applyStance(u, "defensive") }
     );
+    const canUndo =
+      this.undoStack.length > 0 &&
+      this.undoStack[this.undoStack.length - 1]!.unitId === u.id;
     placeRow(
       { label: "Item  1AP", primary: false, enabled: canUseItem, onClick: () => this.openItemPicker(u) },
-      canRoam ? { label: "Roam (free)", primary: false, enabled: true, onClick: () => this.enterRoamMode(u) } : null
+      { label: "Undo Move", primary: false, enabled: canUndo, onClick: () => this.undoMove(u) }
     );
+    if (canRoam) placeFull("Roam (free)", false, true, () => this.enterRoamMode(u));
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
 
     // Seamless targeting: as soon as a player unit has the menu, show its
@@ -1987,6 +2009,35 @@ export class BattleScene extends Phaser.Scene {
     const hasRoamLeft = hasAbility(u, "Roam") && !u.state.roamUsedThisTurn;
     if (u.state.apRemaining > 0 || hasRoamLeft) this.buildActionButtons(u);
     else this.endCurrentTurn();
+  }
+
+  // Undo the acting unit's last move: restore position, AP, roam flag,
+  // and facing from the snapshot taken in animateMove. Repeated presses
+  // walk a multi-move turn back one step at a time. Only repositioning
+  // is undoable — any committing action clears the stack.
+  private undoMove(u: Unit): void {
+    const snap = this.undoStack[this.undoStack.length - 1];
+    if (!snap || snap.unitId !== u.id) return;
+    this.undoStack.pop();
+    // Drop out of any targeting overlay before teleporting the unit —
+    // the ranges shown were computed from the position we're leaving.
+    this.fsm.send({ tag: "CANCEL_TARGETING" });
+    sfxCancel();
+    u.state.position = { x: snap.pos.x, y: snap.pos.y };
+    u.state.apRemaining = snap.ap;
+    u.state.roamUsedThisTurn = snap.roamUsed;
+    u.state.facingX = snap.facingX;
+    this.pushLog(`${u.name} reconsiders.`);
+    this.refreshUnitView(u);
+    // Re-anchor the idle bob to the restored tile (the running breath
+    // tween still targets the pre-undo position).
+    const view = this.unitViews.get(u.id);
+    if (view) this.startBreathing(view);
+    this.drawActiveMarker(u);
+    this.refreshSidePanel(u);
+    this.clearOverlays();
+    this.clearActionButtons();
+    this.buildActionButtons(u);
   }
 
   // Open a small picker over the action button column listing every
@@ -2110,6 +2161,7 @@ export class BattleScene extends Phaser.Scene {
     if (!pick) return;
     const result = useItem(u, pick.id);
     if (!result.ok) return;
+    this.undoStack.length = 0; // committing action — no undo past an item use
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} drinks a ${result.itemName} (+${result.healed} HP).`);
     const view = this.unitViews.get(u.id);
@@ -2153,6 +2205,7 @@ export class BattleScene extends Phaser.Scene {
     // returns false and we charge nothing. The buttons are disabled for
     // held stances too; this guard is belt-and-suspenders.
     if (!enterStance(u, stance)) return;
+    this.undoStack.length = 0; // committing action — no undo past a stance buy
     sfxStance();
     u.state.apRemaining -= 1;
     this.pushLog(
@@ -2590,6 +2643,18 @@ export class BattleScene extends Phaser.Scene {
       this.fsm.send({ tag: "ACTION_COMPLETE" });
       return;
     }
+    // Snapshot for Undo Move — player units only, and never for roam
+    // moves (the roam-granted AP is move-only; restoring it would let
+    // the player convert it into an attack).
+    if (u.faction === "player" && this.fsm.current().tag !== "roam") {
+      this.undoStack.push({
+        unitId: u.id,
+        pos: { x: startTile.x, y: startTile.y },
+        ap: u.state.apRemaining,
+        roamUsed: u.state.roamUsedThisTurn,
+        facingX: u.state.facingX
+      });
+    }
     moveUnit(this.state, u, dest);
     const view = this.unitViews.get(u.id);
     if (!view) {
@@ -3019,6 +3084,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private async animateAttack(u: Unit, target: Unit): Promise<void> {
+    // Committing action — the move that got us here can no longer be undone.
+    this.undoStack.length = 0;
     await this.lunge(u, target);
 
     // Player path is interpose-aware: roll the attack outcome WITHOUT
