@@ -66,6 +66,7 @@ import {
 } from "../audio/Sfx";
 import {
   completeBattle,
+  clearSuspendedBattle,
   getAssignedInventory,
   getCharacterRecord,
   getSquadInventory,
@@ -75,8 +76,10 @@ import {
   setCharacterRecord,
   setSquadInventory,
   unlockBattle,
-  writeSave
+  writeSave,
+  writeSuspendedBattle
 } from "../util/save";
+import { deserializeUnit, serializeUnit } from "../combat/Suspend";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
@@ -108,7 +111,12 @@ import { DialogueDirector } from "./battle/DialogueDirector";
 import { addTorchGlow } from "./battle/Lighting";
 import { atmosphereForBackdrop, createAtmosphere } from "./battle/Atmosphere";
 
-interface BattleArgs { battleId: BattleId; }
+interface BattleArgs {
+  battleId: BattleId;
+  // True when entering via "Resume Battle" — create() rebuilds the board
+  // from save.suspendedBattle instead of the battle's fresh roster.
+  resume?: boolean;
+}
 
 interface UnitView {
   unit: Unit;
@@ -261,6 +269,10 @@ export class BattleScene extends Phaser.Scene {
   // scene's tween + timer timescale is doubled so the AI loop visibly snaps
   // forward without altering combat math.
   private fastForward = false;
+  // True when this entry came from "Resume Battle" (BattleArgs.resume) —
+  // create() rebuilds the board from save.suspendedBattle instead of the
+  // fresh roster. Reset every init().
+  private resumeRequested = false;
   // Danger overlay ("show enemy ranges") — union of every living enemy's
   // move+attack range, FE-style. Toggled by the ⚔ top-bar button or the
   // T key; drawn into dangerG by drawOverlay.
@@ -304,6 +316,7 @@ export class BattleScene extends Phaser.Scene {
 
   init(data: BattleArgs): void {
     this.battleId = data.battleId;
+    this.resumeRequested = data.resume === true;
     this.unitViews = new Map();
     this.actionButtons = [];
     this.logLines = [];
@@ -352,58 +365,76 @@ export class BattleScene extends Phaser.Scene {
     const grid = new Grid(map);
     const rng = new Rng(0xc0de ^ (map.id.length * 2654435761) ^ Date.now());
 
-    const players = node.buildPlayers().map((def, i) =>
-      createUnit(def, map.startPositions.player[i] ?? { x: 0, y: 0 })
-    );
-    // Difficulty bump — every battle except the tutorial gets a small
-    // stat bump applied to its enemy roster (+2 HP / +1 power on mooks
-    // and elites; bosses unchanged). Centralized in src/combat/Difficulty.ts
-    // so a future difficulty-selector UI has one place to read from.
-    const enemies = node.buildEnemies().map((def, i) =>
-      createUnit(applyDifficultyToEnemy(def, this.battleId), map.startPositions.enemy[i] ?? { x: 0, y: 0 })
-    );
-
-    // Hydrate player units from the save slot. Characters with a saved
-    // record have their level / xp / current stats / post-promotion class
-    // restored from disk; first-time appearances use the factory baseline,
-    // and the catch-up rule fast-forwards veterans (e.g., Selene rejoining
-    // at L10 when the squad average has reached L13). See Progression.ts
-    // and docs/RAVAGE_DESIGN.md §4.
     const save = loadSave();
-    const squadAvg = squadAverageLevel(players);
-    for (const p of players) {
-      const rec = getCharacterRecord(save, p.id);
-      if (rec) {
-        p.level = rec.level;
-        p.state.xp = rec.xp;
-        p.stats = { ...rec.stats };
-        p.state.hp = rec.stats.hp; // start the battle at full HP
-        if (rec.classKind) p.classKind = rec.classKind;
-        if (rec.abilities) p.abilities = rec.abilities;
-        // Post-promotion sprite override survives save/load — without
-        // this, a promoted unit's Tier 2 classKind (e.g., spearton_lord)
-        // would route to a sprite folder that doesn't exist.
-        if (rec.spriteClassOverride) p.spriteClassOverride = rec.spriteClassOverride;
-      } else if (p.level < squadAvg - 2) {
-        const gained = catchUpToSquad(p, squadAvg);
-        if (gained > 0) {
-          p.state.hp = p.stats.hp; // top up after the catch-up HP gains
-           
-          if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
-        }
-      }
-      // Inventory hydration. createUnit now returns an empty bag —
-      // BattlePrepScene's InventoryScene wrote each character's
-      // assignment to save.assignedInventory before "March to Battle"
-      // was clicked. Read it back here so the unit fights with the
-      // items the player handed them. Characters with no assignment
-      // (e.g., player skipped the inventory screen) deploy empty.
-      const assigned = getAssignedInventory(save, p.id);
-      if (assigned.length > 0) p.state.inventory = assigned;
-    }
+    // Resume path: if this entry came from "Resume Battle" and the save
+    // holds a snapshot for THIS battle, rebuild the exact board from it —
+    // fresh-roster hydration, difficulty bumps, and inventory assignment
+    // are all already baked into the captured units and must not
+    // re-apply (re-applying assignedInventory would duplicate items).
+    const resumeSnap =
+      this.resumeRequested && save.suspendedBattle?.battleId === this.battleId
+        ? save.suspendedBattle
+        : null;
 
-    enemies.forEach((e) => (e.state.facingX = -1));
-    players.forEach((p) => (p.state.facingX = 1));
+    let players: Unit[];
+    let enemies: Unit[];
+    if (resumeSnap) {
+      const restored = resumeSnap.units.map(deserializeUnit);
+      players = restored.filter((u) => u.faction !== "enemy");
+      enemies = restored.filter((u) => u.faction === "enemy");
+    } else {
+      players = node.buildPlayers().map((def, i) =>
+        createUnit(def, map.startPositions.player[i] ?? { x: 0, y: 0 })
+      );
+      // Difficulty bump — every battle except the tutorial gets a small
+      // stat bump applied to its enemy roster (+2 HP / +1 power on mooks
+      // and elites; bosses unchanged). Centralized in src/combat/Difficulty.ts
+      // so a future difficulty-selector UI has one place to read from.
+      enemies = node.buildEnemies().map((def, i) =>
+        createUnit(applyDifficultyToEnemy(def, this.battleId), map.startPositions.enemy[i] ?? { x: 0, y: 0 })
+      );
+
+      // Hydrate player units from the save slot. Characters with a saved
+      // record have their level / xp / current stats / post-promotion class
+      // restored from disk; first-time appearances use the factory baseline,
+      // and the catch-up rule fast-forwards veterans (e.g., Selene rejoining
+      // at L10 when the squad average has reached L13). See Progression.ts
+      // and docs/RAVAGE_DESIGN.md §4.
+      const squadAvg = squadAverageLevel(players);
+      for (const p of players) {
+        const rec = getCharacterRecord(save, p.id);
+        if (rec) {
+          p.level = rec.level;
+          p.state.xp = rec.xp;
+          p.stats = { ...rec.stats };
+          p.state.hp = rec.stats.hp; // start the battle at full HP
+          if (rec.classKind) p.classKind = rec.classKind;
+          if (rec.abilities) p.abilities = rec.abilities;
+          // Post-promotion sprite override survives save/load — without
+          // this, a promoted unit's Tier 2 classKind (e.g., spearton_lord)
+          // would route to a sprite folder that doesn't exist.
+          if (rec.spriteClassOverride) p.spriteClassOverride = rec.spriteClassOverride;
+        } else if (p.level < squadAvg - 2) {
+          const gained = catchUpToSquad(p, squadAvg);
+          if (gained > 0) {
+            p.state.hp = p.stats.hp; // top up after the catch-up HP gains
+
+            if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
+          }
+        }
+        // Inventory hydration. createUnit now returns an empty bag —
+        // BattlePrepScene's InventoryScene wrote each character's
+        // assignment to save.assignedInventory before "March to Battle"
+        // was clicked. Read it back here so the unit fights with the
+        // items the player handed them. Characters with no assignment
+        // (e.g., player skipped the inventory screen) deploy empty.
+        const assigned = getAssignedInventory(save, p.id);
+        if (assigned.length > 0) p.state.inventory = assigned;
+      }
+
+      enemies.forEach((e) => (e.state.facingX = -1));
+      players.forEach((p) => (p.state.facingX = 1));
+    }
     const units: Unit[] = [...players, ...enemies];
     this.state = { units, grid, rng };
 
@@ -415,6 +446,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.initiative = new Initiative();
     this.initiative.reseed(units);
+    if (resumeSnap) this.initiative.restore(units, resumeSnap.initiative);
 
     // Mid-battle dialogue director — fresh per battle, so its fired /
     // round bookkeeping starts clean on every entry / retry.
@@ -425,6 +457,9 @@ export class BattleScene extends Phaser.Scene {
       this.initiative,
       this.state
     );
+    // On resume, restore the fired-dialogue set so story beats the player
+    // already saw (including the round-1 opener) don't replay.
+    if (resumeSnap) this.dialogue.restore(resumeSnap.dialogue);
 
     // Layout. The playfield viewport is the screen area NOT occupied by
     // the side panel (right) or the top bar (top). Maps that fit inside
@@ -616,6 +651,12 @@ export class BattleScene extends Phaser.Scene {
       this.refreshUnitView(u);
       playUnitState(this, sprite, u, "idle");
       this.startBreathing(view);
+      // Units already dead at creation (resumed battle with casualties)
+      // never played a death animation — hide sprite AND shadow outright.
+      if (!isAlive(u)) {
+        sprite.setVisible(false);
+        shadow.setVisible(false);
+      }
     }
 
     // Snapshot children count before UI creation. Anything added between
@@ -1157,6 +1198,11 @@ export class BattleScene extends Phaser.Scene {
       this.fsm.send({ tag: "CANCEL_TARGETING" });
     }
     beginUnitTurn(u);
+    // Mid-battle suspend: capture the board at every turn boundary (AFTER
+    // beginUnitTurn so the snapshot holds the refilled AP — beginUnitTurn
+    // is idempotent per round, so resuming won't refill twice). If the
+    // tab closes mid-turn, resume replays this turn from its start.
+    this.writeSuspend();
     // beginUnitTurn just promoted ravagedNextTurn → ravagedActive (if it
     // was set). Surface that with a one-shot RAVAGED! floater + camera
     // shake so the player sees the moment the buff lands. Persistent
@@ -1904,7 +1950,23 @@ export class BattleScene extends Phaser.Scene {
   // has been exceeded — if so, route to GameOverScene instead of the
   // normal post-battle flow. The save was already updated upstream in
   // checkEnd, so loading here returns the post-battle squadDeaths total.
+  // Capture the live board into the save's suspend slot. Runs at every
+  // turn boundary; cleared by transitionToEndScene when the battle
+  // resolves. See src/combat/Suspend.ts for the snapshot shape.
+  private writeSuspend(): void {
+    if (this.fsm.isEnded()) return;
+    writeSuspendedBattle({
+      battleId: this.battleId,
+      savedAt: new Date().toISOString(),
+      units: this.state.units.map(serializeUnit),
+      initiative: this.initiative.serialize(),
+      dialogue: this.dialogue.serialize()
+    });
+  }
+
   private transitionToEndScene(v: "player" | "enemy"): void {
+    // Battle resolved — the suspend snapshot is now stale history.
+    clearSuspendedBattle();
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {

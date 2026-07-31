@@ -1,5 +1,6 @@
 import type { Faction, Unit } from "./types";
 import { isAlive } from "./Unit";
+import type { InitiativeSnapshot } from "./Suspend";
 
 // Phase-based initiative: all player+ally units act first (in speed order),
 // then all enemy units act (in speed order). Ties break by deployment order.
@@ -70,6 +71,30 @@ export class Initiative {
       }
     }
     return false;
+  }
+
+  // ---- Suspend support ----
+  // Capture the queue as plain data (unit ids, cursor, round) for the
+  // mid-battle suspend snapshot.
+  serialize(): InitiativeSnapshot {
+    return {
+      round: this.round,
+      cursor: this.cursor,
+      orderIds: this.order.map((u) => u.id)
+    };
+  }
+
+  // Rebuild the queue from a snapshot against the restored unit list.
+  // Ids that no longer resolve are dropped (defensive against content
+  // renames between save and load); the cursor clamps to the rebuilt
+  // length so current() stays valid.
+  restore(allUnits: Unit[], snap: InitiativeSnapshot): void {
+    const byId = new Map(allUnits.map((u) => [u.id, u]));
+    this.order = snap.orderIds
+      .map((id) => byId.get(id))
+      .filter((u): u is Unit => !!u);
+    this.cursor = Math.min(Math.max(0, snap.cursor), this.order.length);
+    this.round = snap.round;
   }
 
   // Get the upcoming N turns for the initiative bar UI. Reseeds virtually if needed.

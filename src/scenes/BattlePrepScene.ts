@@ -12,7 +12,7 @@ import { ITEM_CATALOG } from "../combat/items";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
-import { getAssignedInventory, loadSave } from "../util/save";
+import { clearSuspendedBattle, getAssignedInventory, loadSave } from "../util/save";
 import type { BattleId } from "../data/contentIds";
 
 interface PrepArgs { battleId: BattleId; }
@@ -305,14 +305,39 @@ export class BattlePrepScene extends Phaser.Scene {
         });
       }
     });
+    // Mid-battle suspend: when the save holds a snapshot for THIS battle
+    // (tab closed mid-fight, or the player stepped out to the map), offer
+    // to pick the fight back up at the turn it was left on. Marching in
+    // fresh discards the snapshot — the two buttons are an explicit
+    // resume-or-restart choice.
+    const suspended = loadSave().suspendedBattle;
+    const canResume = suspended?.battleId === node.id;
+    if (canResume && suspended) {
+      new Button(this, {
+        x: GAME_WIDTH - 240, y: GAME_HEIGHT - 104,
+        w: 200, h: 40,
+        label: `Resume — Round ${suspended.initiative.round} ▸`,
+        primary: true,
+        fontSize: 15,
+        onClick: () => {
+          sfxClick();
+          this.cameras.main.fadeOut(450, 0, 0, 0);
+          this.cameras.main.once("camerafadeoutcomplete", () =>
+            this.scene.start("BattleScene", { battleId: node.id, resume: true })
+          );
+        }
+      });
+    }
     new Button(this, {
       x: GAME_WIDTH - 240, y: GAME_HEIGHT - 56,
       w: 200, h: 40,
-      label: "March to Battle ▸",
-      primary: true,
+      label: canResume ? "Restart Battle ▸" : "March to Battle ▸",
+      primary: !canResume,
       fontSize: 16,
       onClick: () => {
         sfxClick();
+        // A fresh march discards any suspended state for this battle.
+        clearSuspendedBattle();
         this.cameras.main.fadeOut(450, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("BattleScene", { battleId: node.id }));
       }

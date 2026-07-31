@@ -1,6 +1,7 @@
 import { GAME_STATE_KEY } from "./constants";
 import { getSupabase } from "../auth/supabase";
 import type { Ability, ClassKind, Item, ItemKind, UnitStats } from "../combat/types";
+import type { SuspendedBattle } from "../combat/Suspend";
 import { createItem } from "../combat/items";
 import type { SevenPath } from "../data/contentIds";
 
@@ -61,6 +62,13 @@ export interface SaveState {
   // through BattlePrep, so deaths in failed attempts don't accumulate).
   // Optional for back-compat with pre-lives saves; treat undefined as 0.
   squadDeaths?: number;
+  // Mid-battle suspend snapshot. Written by BattleScene at every turn
+  // boundary, cleared when the battle resolves or the player marches in
+  // fresh from BattlePrep. Riding inside SaveState means it syncs to
+  // localStorage + slot cache + Supabase through the existing writeSave
+  // pipeline — a battle interrupted on one machine resumes on another.
+  // Optional for back-compat with pre-suspend saves.
+  suspendedBattle?: SuspendedBattle | null;
   // Bookkeeping (optional — only set when loaded from a remote slot).
   updatedAt?: string;
 }
@@ -527,6 +535,26 @@ const pushSlotRemote = async (slot: SlotIndex, s: SaveState): Promise<void> => {
   } catch {
     // Never throw from a background sync — gameplay code expects writeSave to be silent.
   }
+};
+
+// ---- Mid-battle suspend ------------------------------------------------------
+
+// Stash the turn-boundary battle snapshot. Rides the normal writeSave
+// pipeline (local mirror + slot cache + Supabase push).
+export const writeSuspendedBattle = (snap: SuspendedBattle): void => {
+  const s = loadSave();
+  s.suspendedBattle = snap;
+  writeSave(s);
+};
+
+// Drop the suspend — called when a battle resolves (EndScene/GameOver
+// transition) and when the player marches into a battle fresh from
+// BattlePrep. No-op (and no save churn) when nothing is suspended.
+export const clearSuspendedBattle = (): void => {
+  const s = loadSave();
+  if (!s.suspendedBattle) return;
+  s.suspendedBattle = null;
+  writeSave(s);
 };
 
 // Reset the active mirror to a fresh save (used by "New Game" on a slot).

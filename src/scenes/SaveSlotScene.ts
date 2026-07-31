@@ -7,11 +7,13 @@ import {
   activateSlot,
   deleteSlot,
   fetchSlotPreviews,
+  loadSave,
   resetActiveSave,
   type SlotIndex,
   type SlotPreview
 } from "../util/save";
 import { battleById } from "../data/battles";
+import type { BattleId } from "../data/contentIds";
 import { isAuthEnabled, currentUser, signOut } from "../auth/session";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
 import { trackNewGameStarted } from "../util/analytics";
@@ -214,6 +216,16 @@ export class SaveSlotScene extends Phaser.Scene {
     const fadeDone = this.fadeOutDone(300);
     await activateSlot(slot);
     await fadeDone;
+    // A battle suspended mid-fight (tab closed, browser crashed) routes
+    // straight back to that battle's prep screen, where the Resume
+    // button picks the fight up at the turn it was left on. The battle
+    // must still resolve to a valid node — a suspend written by a newer
+    // content version could name a battle this build doesn't have.
+    const suspended = loadSave().suspendedBattle;
+    if (suspended && battleById(suspended.battleId as BattleId)) {
+      this.scene.start("BattlePrepScene", { battleId: suspended.battleId });
+      return;
+    }
     // Route into the camp instead of straight to the world map. The
     // camp is the new home base — the world map is one click away
     // via the "Where to Next?" hotspot. See CampScene.

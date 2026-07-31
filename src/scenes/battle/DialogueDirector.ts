@@ -23,6 +23,7 @@ import type { Unit } from "../../combat/types";
 import type { BattleDialogue, BattleDialogueTrigger } from "../../data/battles";
 import type { DialogBeat } from "../../story/beats";
 import type { MusicKey } from "../../audio/Music";
+import type { DialogueSnapshot } from "../../combat/Suspend";
 
 export class DialogueDirector {
   // Dialogues that have already fired this battle — guards re-firing.
@@ -30,6 +31,18 @@ export class DialogueDirector {
   // Last round number a check ran for, so round_start fires exactly
   // once per round crossing instead of on every check tick.
   private lastSeenRound = 0;
+
+  // ---- Suspend support ----
+  // The fired set + round bookkeeping as plain data, so a resumed battle
+  // doesn't replay story beats the player already saw.
+  serialize(): DialogueSnapshot {
+    return { fired: [...this.fired], lastSeenRound: this.lastSeenRound };
+  }
+
+  restore(snap: DialogueSnapshot): void {
+    this.fired = new Set(snap.fired);
+    this.lastSeenRound = snap.lastSeenRound;
+  }
 
   constructor(
     private scene: Phaser.Scene,
