@@ -562,5 +562,66 @@ export const ENEMIES = {
     // hold-position buys the round-1 colony-truth dialogue time
     // to land before swords meet.
     holdPositionUntil: { allyCount: 2 }
+  }),
+  // General Serrick — Archbold's field general for the war's opening
+  // clash (B20, Dawn's War). A career line-officer, not a duelist:
+  // heavy armour, an anchored command position, and a guard line he
+  // won't leave until it's thinned. Killing him folds the imperial
+  // line — B20's win condition.
+  imperialGeneral: (level = 18): UnitDef => ({
+    id: "imperial_general",
+    name: "General Serrick",
+    shortName: "Sr",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 72, power: 17, armor: 10, speed: 10, movement: 4, ap: 3 },
+    artSeed: 97,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  // Captain Halden — vanguard commander of Archbold's westward advance
+  // (B21). The opposite of Serrick: no hold-position, he leads the
+  // push from the front rank. Spear reach + high movement makes him
+  // the pressure the survive-clock is measured against.
+  vanguardCaptain: (level = 17): UnitDef => ({
+    id: "vanguard_captain",
+    name: "Captain Halden",
+    shortName: "Hd",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "spear",
+    stats: { hp: 60, power: 16, armor: 8, speed: 12, movement: 5, ap: 3 },
+    artSeed: 101,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level
+  }),
+  // Captain Brask — leader of the incendiary teams burning the upper
+  // district (B22, Grude Burns). A terror-war specialist: fast, lightly
+  // armoured, directs from the fountain square until his teams are
+  // thinned. The fight is a street-by-street reclamation with him as
+  // the rot at the centre.
+  incendiaryCaptain: (level = 17): UnitDef => ({
+    id: "incendiary_captain",
+    name: "Captain Brask",
+    shortName: "Bk",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 56, power: 15, armor: 7, speed: 13, movement: 5, ap: 3 },
+    artSeed: 103,
+    palette: ENEMY_PALETTES.bandit,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 3 }
   })
 };

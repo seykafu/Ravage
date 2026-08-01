@@ -162,7 +162,10 @@ export type ArcId =
   | "post_path_opener_duty"
   | "post_path_opener_exile"
   | "post_path_opener_mercy"
-  | "post_path_opener_forgetting";
+  | "post_path_opener_forgetting"
+  // War-arc epilogue: after B22 (Grude Burns), the last authored beat
+  // before the fleet arc (B23+) lands. Routes to credits until then.
+  | "post_grude_burns";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

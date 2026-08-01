@@ -39,27 +39,30 @@ const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b16_proposal: "post_proposal",
   b17_lie: "post_lie",
   b18_path_chosen: "post_path_chosen",
-  // B19 path openers — each routes to its own epilogue arc (which rolls
-  // credits). Only the chosen path's entry is ever reached in a run.
+  // B19 path openers — each routes to its own epilogue arc. The five
+  // war-facing paths (vengeance/restoration/revolution/duty/mercy) roll
+  // onward into B20 (Dawn's War); exile and forgetting are ENDINGS and
+  // roll credits. Only the chosen path's entry is ever reached in a run.
   b19_path_opener_vengeance: "post_path_opener_vengeance",
   b19_path_opener_restoration: "post_path_opener_restoration",
   b19_path_opener_revolution: "post_path_opener_revolution",
   b19_path_opener_duty: "post_path_opener_duty",
   b19_path_opener_exile: "post_path_opener_exile",
   b19_path_opener_mercy: "post_path_opener_mercy",
-  b19_path_opener_forgetting: "post_path_opener_forgetting"
+  b19_path_opener_forgetting: "post_path_opener_forgetting",
+  // War arc — B22 closes the authored stretch until the fleet battles
+  // (B23+) ship; its epilogue rolls credits with a "to be continued".
+  b22_grude_burns: "post_grude_burns"
 };
 
-// The slice's terminal battles — any B19 opener ends the playable run (its
-// epilogue arc rolls credits). A Set because seven ids share the honour.
+// The campaign's terminal battles. Exile and forgetting end at their B19
+// epilogues (walking away from the war IS the ending); the five war
+// paths converge and currently end at B22 (Grude Burns) until the fleet
+// arc ships.
 const FINAL_PLAYABLE = new Set<BattleId>([
-  "b19_path_opener_vengeance",
-  "b19_path_opener_restoration",
-  "b19_path_opener_revolution",
-  "b19_path_opener_duty",
   "b19_path_opener_exile",
-  "b19_path_opener_mercy",
-  "b19_path_opener_forgetting"
+  "b19_path_opener_forgetting",
+  "b22_grude_burns"
 ]);
 
 export class EndScene extends Phaser.Scene {

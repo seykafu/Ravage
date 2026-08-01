@@ -1863,10 +1863,19 @@ export class BattleScene extends Phaser.Scene {
       : 0;
     if (v === "player") {
       save = completeBattle(save, this.battleId);
-      // unlock next BATTLE in sequence
-      const nodeIdx = BATTLES.findIndex((b) => b.id === this.battleId);
-      if (nodeIdx >= 0 && nodeIdx + 1 < BATTLES.length) {
-        save = unlockBattle(save, BATTLES[nodeIdx + 1]!.id);
+      // Unlock what this battle unlocks. node.unlocks: undefined → the
+      // next battle in the array (linear spine); BattleId → explicit
+      // target (path structure — the seven B19 variants are array-
+      // adjacent, so "next in array" would unlock a different path's
+      // opener); null → nothing (endings, choice-owned routing).
+      const node = battleById(this.battleId);
+      if (node?.unlocks) {
+        save = unlockBattle(save, node.unlocks);
+      } else if (node?.unlocks === undefined) {
+        const nodeIdx = BATTLES.findIndex((b) => b.id === this.battleId);
+        if (nodeIdx >= 0 && nodeIdx + 1 < BATTLES.length) {
+          save = unlockBattle(save, BATTLES[nodeIdx + 1]!.id);
+        }
       }
       save = recordSquadDeaths(save, playerDeathsThisBattle);
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "victory" } };

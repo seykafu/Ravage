@@ -1178,3 +1178,135 @@ export const cottageCoveMap: MapDef = buildMap("cottage_cove", "A Fisherman's Co
     { x: 3, y: 4 }  // bounty archer, grass shelf
   ]
 });
+
+// ============== Battle 20 — Dawn's War ==============
+// 14×10 open war-field outside Grude. Two armies met here an hour ago;
+// the squad fights in the seam. A dirt track crosses the field east-west,
+// a shell of a supply wagon burns mid-field, and a broken trench of
+// rubble runs down the centre — cover for whoever reaches it first.
+// General Serrick anchors the imperial line NE behind his guard; the
+// squad enters SW with Dawn's (unseen) rebels engaged off-map north.
+const Wf = t("grass");                  // trampled field
+const Wd = t("dirt");                   // supply track
+const Wz = t("rubble");                 // broken trench line
+const Wk = t("grass", "barricade");     // thrown-up fieldworks
+const Wx = t("dirt", "wagon");          // burning supply wagon
+const Wr = t("grass", "rock");          // field boulders
+const warFieldRows = [
+  [Wf, Wf, Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wk, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wk, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd, Wd, Wd, Wd],
+  [Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd],
+  [Wf, Wf, Wf, Wk, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wk, Wf, Wf, Wr, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf]
+];
+export const warFieldMap: MapDef = buildMap("war_field", "The Field Before Grude", warFieldRows, {
+  // Squad enters SW, clustered for the round-1 dialogue.
+  player: [
+    { x: 1, y: 8 }, // Maya
+    { x: 2, y: 8 }, // Amar
+    { x: 1, y: 7 }, // Ning
+    { x: 2, y: 7 }  // Leo
+  ],
+  // Serrick holds the NE rise behind his guard line (holdPositionUntil).
+  enemy: [
+    { x: 11, y: 2 }, // General Serrick (boss)
+    { x: 9,  y: 3 }, // royal guard, line west
+    { x: 11, y: 4 }, // royal guard, line centre
+    { x: 12, y: 3 }, // royal guard, line east
+    { x: 8,  y: 2 }, // royal archer, ridge west
+    { x: 12, y: 1 }  // royal archer, ridge east
+  ]
+});
+
+// ============== Battle 21 — Archbold Advances ==============
+// 14×9 stretch of the King's road west. The squad holds a barricade
+// line thrown across the road at mid-map; Halden's vanguard pours in
+// from the east edge. Forest crowds the north verge (cover for Ning),
+// open field south. Victory is surviving six rounds, so the map is a
+// funnel: everything east of the barricades belongs to the enemy.
+const Kg = t("grass");                  // road verge
+const Kr = t("dirt");                   // the King's road
+const Kb = t("dirt", "barricade");      // the squad's held line
+const Kf = t("grass", "fence");         // field fencing, south
+const Kw = t("forest");                 // north woods
+const Kt = t("forest", "tree");         // thick trunk (blocks)
+const kingsRoadRows = [
+  [Kw, Kw, Kt, Kw, Kw, Kw, Kt, Kw, Kw, Kw, Kw, Kt, Kw, Kw],
+  [Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw],
+  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
+  [Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kr, Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kg, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
+  [Kg, Kg, Kf, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg],
+  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg]
+];
+export const kingsRoadMap: MapDef = buildMap("kings_road", "The King's Road West", kingsRoadRows, {
+  // Squad behind the barricade line, blocking the road.
+  player: [
+    { x: 4, y: 3 }, // Amar, on the road north lane
+    { x: 4, y: 4 }, // Maya, road south lane
+    { x: 3, y: 2 }, // Ning, forest verge (bow line)
+    { x: 4, y: 5 }  // Leo, south shoulder
+  ],
+  // The vanguard pours in from the east edge, Halden at the front —
+  // no holdPosition; he leads the push himself.
+  enemy: [
+    { x: 12, y: 4 }, // Captain Halden (boss, front and centre)
+    { x: 13, y: 3 }, // royal guard
+    { x: 13, y: 5 }, // royal guard
+    { x: 12, y: 2 }, // royal guard, verge north
+    { x: 13, y: 1 }, // royal archer, woods line
+    { x: 13, y: 6 }, // royal archer, field south
+    { x: 12, y: 7 }  // royal archer, far south
+  ]
+});
+
+// ============== Battle 22 — Grude Burns ==============
+// 12×10 upper-district streets. Two building blocks (walls) form the
+// market row's alleys; Brask's burn teams have already torched the
+// south corners (torches read as fire), rubble marks what's fallen.
+// The squad enters the south gate; Brask directs from the fountain
+// square north until his teams are thinned.
+const Us = t("stone");                  // street cobbles
+const Uw = t("wall");                   // building block
+const Uf = t("stone", "torch");         // street on fire
+const Ur = t("rubble");                 // collapsed frontage
+const Ub = t("stone", "barricade");     // dragged-out furniture line
+const upperDistrictRows = [
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
+  [Us, Uw, Uw, Uw, Us, Us, Us, Uw, Uw, Uw, Us, Us],
+  [Us, Uw, Uw, Uw, Us, Uf, Us, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Ur, Us, Us],
+  [Us, Uf, Us, Ub, Us, Us, Us, Ub, Us, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Uf, Us],
+  [Us, Uw, Uw, Uw, Us, Ur, Us, Uw, Uw, Uw, Us, Us],
+  [Us, Uw, Uw, Uw, Us, Us, Us, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Us, Ur, Us, Us, Uf, Us, Us, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us]
+];
+export const upperDistrictMap: MapDef = buildMap("upper_district", "The Upper District, Grude", upperDistrictRows, {
+  // Squad enters the south gate.
+  player: [
+    { x: 4, y: 9 }, // Amar
+    { x: 5, y: 9 }, // Maya
+    { x: 6, y: 9 }, // Ning
+    { x: 7, y: 9 }  // Leo
+  ],
+  // Brask at the fountain square (north centre); burn teams working
+  // the alleys and market row.
+  enemy: [
+    { x: 5, y: 0 },  // Captain Brask (boss)
+    { x: 4, y: 2 },  // royal guard, west alley
+    { x: 6, y: 3 },  // royal guard, market row
+    { x: 10, y: 4 }, // royal guard, east lane
+    { x: 2, y: 5 },  // royal archer, west lane
+    { x: 10, y: 1 }, // royal archer, NE rooftop line
+    { x: 5, y: 5 }   // royal guard, centre push
+  ]
+});

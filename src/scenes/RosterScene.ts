@@ -106,7 +106,12 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   b19_path_opener_duty:        ["amar", "ning", "maya", "leo"],
   b19_path_opener_exile:       ["amar"],
   b19_path_opener_mercy:       ["amar", "ning", "maya", "leo"],
-  b19_path_opener_forgetting:  ["amar"]
+  b19_path_opener_forgetting:  ["amar"],
+  // War arc (B20–B22): the five war-facing paths converge with the
+  // standing squad of four. Exile/forgetting never reach these.
+  b20_dawn_war:                ["amar", "ning", "maya", "leo"],
+  b21_archbold_advances:       ["amar", "ning", "maya", "leo"],
+  b22_grude_burns:             ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's

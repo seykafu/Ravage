@@ -1177,7 +1177,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A fire on the canyon rim, after",
     music: "death",
     backdrop: "caravan",
-    next: "credits",
+    next: "prep:b20_dawn_war",
     beats: [
       N("They burn Castor's writ of retrieval on the campfire, because none of them wants to carry it and none of them can quite throw it away unburned."),
       { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
@@ -1194,7 +1194,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "Khonu's village, that night",
     music: "everydayLife",
     backdrop: "thuling",
-    next: "credits",
+    next: "prep:b20_dawn_war",
     beats: [
       N("Dinner is at the long table in the headman's house, and it is loud, and nobody at it is afraid. It has been a month since the village ate loudly."),
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
@@ -1211,7 +1211,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A ridge above the border road, next morning",
     music: "grudeBattle1",
     backdrop: "grude",
-    next: "credits",
+    next: "prep:b20_dawn_war",
     beats: [
       N("The smoke column stands up over the border country like a flag no one has to sew. By noon, riders they've never met are passing them the news of their own strike, grown taller in the telling."),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
@@ -1228,7 +1228,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The regimental camp, lamplight",
     music: "sadness",
     backdrop: "field_night_camp",
-    next: "credits",
+    next: "prep:b20_dawn_war",
     beats: [
       N("The relief column's surgeon takes the wounded. The quartermaster takes the casualty report. The captaincy takes the rest of the night, at a folding table, in regulation format."),
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
@@ -1261,7 +1261,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "Greywall Fort, become a hospital",
     music: "emotional",
     backdrop: "monastery",
-    next: "credits",
+    next: "prep:b20_dawn_war",
     beats: [
       N("By morning the armoury is a ward. Imperial wounded and rebel wounded lie in adjacent cots, fed from the same pot, complaining about the same porridge, which the squad privately counts as the first treaty of the war."),
       { speaker: "Ning", portraitId: "ning", expression: "startled",
@@ -1285,6 +1285,31 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "(looking at the sword) Sera said the wound's kindness was letting me put a life down. She never said it stays a choice. Every morning. This one too." },
       N("He does not pick it up. The potion goes on the shelf. Medicine is just medicine. The sword stays, his to not-take, one morning at a time."),
       N("The boat goes out with the tide. The war grinds on, hunting a name its owner set down. Softest of the seven answers; the costliest. He pays daily, and fishes.")
+    ]
+  },
+
+  // ═══════════ War arc epilogue — after B22, Grude Burns ═══════════
+  // The last authored beat of the war stretch. Lands the cost of the
+  // three battles and points the campaign at the sky (the Ravage fleet,
+  // B23+). Routes to credits until the fleet arc ships.
+  post_grude_burns: {
+    id: "post_grude_burns",
+    title: "The Held City",
+    subtitle: "The upper district, the morning after",
+    music: "emotional",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("Morning comes up through the smoke and finds the upper district still standing. Scorched, gap-toothed, ash to the ankles on the market row. Standing."),
+      N("The squad walks the row at first light. On every scorched door, chalk names: who lived here, what stood here, what the city refuses to forget. Nobody organized it. Nobody had to."),
+      { speaker: "Leo", portraitId: "leo", expression: "resolute",
+        body: "Three battles in nine days. Serrick, the road, now this. (He counts on his fingers, then stops.) I stopped being scared somewhere around the fence line. I can't decide if that's good." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "It isn't good or bad, Leo. It's spending. Everyone here is spending something. (She looks at Amar.) The question is always who keeps the ledger." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "Then we keep our own. Every name on those doors goes in it. Not Dawn's arithmetic. Ours: what it cost, and what it bought, and who it saved." },
+      N("East of the city, past the harbour, the horizon has been the wrong colour for three days. Sailors won't put out. Birds are flying inland. The war believes it is the biggest thing in the world."),
+      N("The sky is about to disagree. To be continued.")
     ]
   }
 };

@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -80,6 +80,17 @@ export interface BattleNode {
   buildEnemies?: () => UnitDef[];
   difficultyLabel: string;
   unlockNote?: string;
+  // What a victory here unlocks. Three states:
+  //   undefined → default: the next battle in the BATTLES array. Right
+  //               for the linear B1–B17 spine.
+  //   BattleId  → explicit target. Required for the path structure —
+  //               the seven B19 variants sit adjacent in the array, so
+  //               "next in array" after b19_vengeance would wrongly
+  //               unlock ANOTHER path's opener instead of B20.
+  //   null      → unlocks nothing. Endings (exile, forgetting) and
+  //               nodes whose routing is owned elsewhere (B18's choice
+  //               unlocks the chosen opener via ChoiceScene).
+  unlocks?: BattleId | null;
   // Win/lose rule for this battle. If omitted, defaults to routEnemies
   // ("kill all enemies, don't die"). Use surviveRounds(N) for defense
   // battles, defeatUnit(...) for boss kills, escapeToTile(...) for breakouts,
@@ -1792,6 +1803,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("pc_ar2", 1807, 15)
     ],
     difficultyLabel: "Pivotal — The Last Boarding",
+    unlocks: null, // ChoiceScene unlocks the chosen path opener
     // Spoils: 3 elixirs + 1 royal lens. Last "neutral" reward set
     // before the path-specific openers branch the loadouts in B19.
     // The squad outfits for whatever comes next.
@@ -1877,6 +1889,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("vg_ra2", 1904, 14)
     ],
     difficultyLabel: "Vengeance · Opener",
+    unlocks: "b20_dawn_war", // war path continues into B20
     // Vengeance loadout — kill harder. Two Fangs (Castor's ceremonial
     // daggers, kept as trophies for Selene).
     rewards: ["fang", "fang", "potion"],
@@ -1945,6 +1958,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("rs_b6", 1916, 14)
     ],
     difficultyLabel: "Restoration · Opener",
+    unlocks: "b20_dawn_war", // war path continues into B20
     // Restoration loadout — village gifts. The villagers contribute
     // what they have: 3 potions from the dispensary + 2 masks (the
     // courier's pair, traditionally given to a returning lord).
@@ -2012,6 +2026,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("rv_ra2", 1925, 14)
     ],
     difficultyLabel: "Revolution · Opener",
+    unlocks: "b20_dawn_war", // war path continues into B20
     // Revolution loadout — burn it down. Two Fangs from the granary
     // guards + the captain's Royal Lens (Maya keeps it pointedly).
     rewards: ["fang", "fang", "royal_lens"],
@@ -2080,6 +2095,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("dt_ra2", 1936, 15)
     ],
     difficultyLabel: "Duty · Opener",
+    unlocks: "b20_dawn_war", // war path continues into B20
     // Duty loadout — military precision. Standard officer kit: 1
     // royal lens + 1 mask + 2 potions. The quartermaster gives Amar
     // exactly what regulations specify, no more.
@@ -2145,6 +2161,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("ex_a3", 1943, 13)
     ],
     difficultyLabel: "Exile · Solo",
+    unlocks: null, // an ENDING: exile leaves the war
     // Exile loadout — survival only. 3 elixirs from the assassins'
     // packs (they came prepared to take a long time killing him).
     // No equipment — Amar carries no signature gear on this path.
@@ -2201,6 +2218,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("mc_ra1", 1953, 14)
     ],
     difficultyLabel: "Mercy · Opener",
+    unlocks: "b20_dawn_war", // war path continues into B20
     // Mercy loadout — heal others. Heavy on consumables, light on
     // weapons. The fort's medical stores reorganized into a
     // hospital give the squad 4 elixirs + 2 potions, no equipment.
@@ -2266,6 +2284,7 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.banditArcher("fg_b3", 1963, 13)
     ],
     difficultyLabel: "Forgetting · Solo",
+    unlocks: null, // an ENDING: forgetting leaves the war
     // Forgetting loadout — minimal. The squad leaves a single
     // potion at the cottage door alongside the sword. Mechanically
     // brutal; narratively the point.
@@ -2303,52 +2322,203 @@ export const BATTLES: BattleNode[] = [
     index: 20,
     title: "Twentieth Battle",
     subtitle: "Dawn's War",
-    intro: "Dawn's rebellion has become a war. The first major clash. You are on a side now whether you wanted to be or not.",
-    outro: "The line moves. The cost is real.",
+    intro: "Dawn's rebellion has become a war, and the war has found a field. Archbold's western army meets the rebellion an hour's ride from Grude — banners on both ridges, and the squad in the seam between them. General Serrick anchors the imperial line from the northeast rise. Whatever the squad came to this coast to be, today they are soldiers in Madame Dawn's war. Break Serrick, and the line breaks with him.",
+    outro: "The line moves. The cost is real. Across the field, Dawn's rebels are cheering a name, and it takes Amar a moment to understand that it is his.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: warFieldMap,
+    buildPlayers: () => [
+      PLAYERS.maya(),
+      PLAYERS.amar(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.imperialGeneral(18),
+      ENEMIES.royalGuard("dw_rg1", 2001, 16),
+      ENEMIES.royalGuard("dw_rg2", 2002, 16),
+      ENEMIES.royalGuard("dw_rg3", 2003, 16),
+      ENEMIES.royalArcher("dw_ra1", 2004, 16),
+      ENEMIES.royalArcher("dw_ra2", 2005, 15)
+    ],
     difficultyLabel: "Climactic",
+    // Victory: break the general. His line is drilled to his position —
+    // when he falls, the field folds around the gap.
+    victory: defeatUnit("imperial_general", { label: "Break General Serrick" }),
     // Spoils: 3 elixirs + 1 royal lens. First major engagement of
     // the war proper — the squad earns a real haul from a battlefield
     // they actually controlled at the end.
-    rewards: ["elixir", "elixir", "elixir", "royal_lens"]
+    rewards: ["elixir", "elixir", "elixir", "royal_lens"],
+    dialogues: [
+      {
+        id: "b20_war_begins",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "Look at the field, Amar. Banners on both ridges and us in the seam. This is Dawn's war now. Ours too, whether we signed or not." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then we fight it the way Lucian taught: not for a banner, for the people beside us. Serrick anchors their line. When he breaks, it breaks. Squad, forward." }
+        ]
+      },
+      {
+        id: "b20_amar_serrick",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "imperial_general" },
+        beats: [
+          { speaker: "General Serrick", portraitId: "royal_guard", expression: "neutral",
+            body: "The heir himself. Your father bids me ask one last time: whose side, boy? The mother who spends you, or the King who made you?" },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "You people keep offering me sides that belong to other people. I brought my own. (Draws.) Go and ask him what that costs." }
+        ]
+      },
+      {
+        id: "b20_line_breaks",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Serrick goes down on the rise he refused to leave, and the imperial line folds around the gap. Across the field the rebellion is cheering one name, over and over. It is not Dawn's." },
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "(quietly) They're cheering for you, not for her. Be careful with that, Amar. Cheers are how her arithmetic gets its hands on people." }
+        ]
+      }
+    ]
   },
   {
     id: "b21_archbold_advances",
     index: 21,
     title: "Twenty-First Battle",
     subtitle: "Archbold Advances",
-    intro: "The King has gathered the inner provinces and ridden west. The country between him and Grude is open road.",
-    outro: "He is closer than yesterday. Closer still tomorrow.",
+    intro: "The King has gathered the inner provinces and ridden west. The country between him and Grude is open road, and Captain Halden's vanguard is on it. The squad holds a barricade line thrown across the King's Road: not to win, but to slow. Every round the road stays shut buys Grude an hour it will need. Hold for six.",
+    outro: "He is closer than yesterday. Closer still tomorrow. But tonight, because of one held barricade line, he is exactly one day's march further than he planned.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: kingsRoadMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.vanguardCaptain(17),
+      ENEMIES.royalGuard("aa_rg1", 2101, 16),
+      ENEMIES.royalGuard("aa_rg2", 2102, 16),
+      ENEMIES.royalGuard("aa_rg3", 2103, 15),
+      ENEMIES.royalArcher("aa_ra1", 2104, 16),
+      ENEMIES.royalArcher("aa_ra2", 2105, 15),
+      ENEMIES.royalArcher("aa_ra3", 2106, 15)
+    ],
     difficultyLabel: "Climactic",
+    // Victory: pure delay. The vanguard outnumbers everything the squad
+    // can put on the road — the win is the clock, not the rout.
+    victory: surviveRounds(6),
     // Spoils: siege prep — 2 potions + 1 mask + 1 fang. A mixed
     // haul because the engagement was a probing skirmish, not a
     // decisive battle; the squad collects what they can carry.
-    rewards: ["potion", "potion", "mask", "fang"]
+    rewards: ["potion", "potion", "mask", "fang"],
+    dialogues: [
+      {
+        id: "b21_the_count",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Ning", portraitId: "ning", expression: "startled",
+            body: "I counted the column twice, Amar. Two hundred at the bend and more behind. We do not win this one." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "We're not here to win it. We hold this road six rounds, and every one of them buys Grude an hour. Barricades hold the front. Ning, thin them from the tree line. Nobody plays hero." }
+        ]
+      },
+      {
+        id: "b21_pressure",
+        trigger: { kind: "round_start", round: 4 },
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "fury",
+            body: "They keep COMING. The south fence is bending!" },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "So does the clock, Leo. Two more rounds. Bend. Don't break." }
+        ]
+      },
+      {
+        id: "b21_horn",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "A horn from the east, and the vanguard wheels back down the road as deliberately as it came. Halden's timetable is spent. So is the squad. The road held." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "(leaning on the barricade) Every hour counts. Lucian used to say that about harvests. (A breath.) We just bought Grude a night. Fall back before they change their minds." }
+        ]
+      }
+    ]
   },
   {
     id: "b22_grude_burns",
     index: 22,
     title: "Twenty-Second Battle",
     subtitle: "Grude Burns",
-    intro: "The granaries that fed the city are gone. The streets reorganize themselves around fire. Hold the upper district, or the upper district falls with the rest.",
-    outro: "What can be saved is saved. What cannot is named, so the city remembers it.",
+    intro: "The granaries that fed the city went up in the night, and now Captain Brask's incendiary teams are working the upper district street by street. The market row is already burning at the corners. Hold the upper district, or the upper district falls with the rest — and with it, every larder Grude has left. The squad enters at the south gate. Brask directs from the fountain square.",
+    outro: "What can be saved is saved. What cannot is named, so the city remembers it. On the market row, people are already writing the names on scorched doors.",
     music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: upperDistrictMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.incendiaryCaptain(17),
+      ENEMIES.royalGuard("gb_rg1", 2201, 16),
+      ENEMIES.royalGuard("gb_rg2", 2202, 16),
+      ENEMIES.royalGuard("gb_rg3", 2203, 15),
+      ENEMIES.royalGuard("gb_rg4", 2204, 15),
+      ENEMIES.royalArcher("gb_ra1", 2205, 16),
+      ENEMIES.royalArcher("gb_ra2", 2206, 15)
+    ],
     difficultyLabel: "Heart",
     // Spoils: 4 potions + 1 elixir, salvaged from the burning
     // upper district's apothecaries. Heavy on consumables because
     // the next engagements are coming fast and the squad needs
     // bandages more than weapons.
-    rewards: ["potion", "potion", "potion", "potion", "elixir"]
+    rewards: ["potion", "potion", "potion", "potion", "elixir"],
+    dialogues: [
+      {
+        id: "b22_smoke",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+            body: "The granaries went in the night. If the upper district goes too, Grude starves before Archbold ever breaches a wall. Brask's burn teams are on the market row." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then we take the row back. Leo, cut the western alley. Ning, hold the rooftop line. Nobody chases into the smoke. We hold corners and put out what we can. Brask answers for the rest." }
+        ]
+      },
+      {
+        id: "b22_amar_brask",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "incendiary_captain" },
+        beats: [
+          { speaker: "Captain Brask", portraitId: "royal_guard", expression: "neutral",
+            body: "The King doesn't want the city, heir. He wants nothing left of HERS. A crown over ashes is still a crown." },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "You're burning bread, captain, not banners. Say it plainer: he wants nothing left at all. (Draws.) Go put out your own fire." }
+        ]
+      },
+      {
+        id: "b22_named_doors",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The last burn team drops its torches at the fountain and runs. Smoke stands over the market row like a second city. What was saved was saved by hand, corner by corner, by four people and everyone brave enough to pass buckets behind them." },
+          { speaker: "Ning", portraitId: "ning", expression: "exhausted",
+            body: "(sitting on the fountain rim, bow across her knees) We held it. Amar... how long can a city hold its breath like this?" },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "Until the sky answers, Ning. (He looks east, where the horizon has been wrong for days.) And something tells me it's about to." }
+        ]
+      }
+    ]
   },
   // ---- B23-B24: Path-specific climax pair -----------------------------------
   // These fire as different battles per chosen path; ids stay constant
