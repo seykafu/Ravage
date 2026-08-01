@@ -1310,3 +1310,230 @@ export const upperDistrictMap: MapDef = buildMap("upper_district", "The Upper Di
     { x: 5, y: 5 }   // royal guard, centre push
   ]
 });
+
+// ============== Battle 23 — The Path Narrows ==============
+// 13x9 canyon pass. Rock walls funnel both sides into a waisted centre;
+// the imperial remnant holds the east mouth behind fieldworks. Whoever
+// controls the waist controls the fight.
+const Nc = t("stone");                  // canyon floor
+const Nw = t("wall");                   // sheer rock
+const Nr = t("rubble");                 // rockfall
+const Nb = t("stone", "barricade");     // remnant fieldworks
+const Nk = t("stone", "rock");          // fallen boulder
+const narrowsRows = [
+  [Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw],
+  [Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw],
+  [Nw, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nw],
+  [Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc],
+  [Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nb, Nc, Nc, Nc],
+  [Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc],
+  [Nw, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nw],
+  [Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw],
+  [Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw]
+];
+export const narrowsMap: MapDef = buildMap("narrows", "The Narrows", narrowsRows, {
+  player: [
+    { x: 1, y: 3 }, // Amar
+    { x: 1, y: 5 }, // Maya
+    { x: 2, y: 4 }, // Ning
+    { x: 1, y: 4 }  // Leo
+  ],
+  enemy: [
+    { x: 11, y: 4 }, // Colonel Vasse (boss)
+    { x: 9,  y: 3 }, // royal guard
+    { x: 9,  y: 5 }, // royal guard
+    { x: 10, y: 2 }, // royal archer
+    { x: 10, y: 6 }  // royal archer
+  ]
+});
+
+// ============== Battle 24 — The Bell Before the Sky ==============
+// 12x10 bell court. A colonnaded square around the west's last muster
+// bell; the warden's line forms across the north half. Torches burn at
+// the corners: the last human-lit night of the campaign.
+const Bc = t("stone");                  // court flagstones
+const Bp = t("stone", "pillar");        // colonnade
+const Bt = t("stone", "torch");         // corner braziers
+const Bw = t("wall");                   // court walls
+const Br = t("rubble");                 // collapsed arch
+const bellCourtRows = [
+  [Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw],
+  [Bw, Bt, Bc, Bc, Bp, Bc, Bc, Bp, Bc, Bc, Bt, Bw],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bw, Bt, Bc, Bc, Bp, Bc, Bc, Bp, Bc, Bc, Bt, Bw],
+  [Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw]
+];
+export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bellCourtRows, {
+  player: [
+    { x: 4, y: 8 }, // Amar
+    { x: 5, y: 8 }, // Maya
+    { x: 6, y: 8 }, // Ning
+    { x: 7, y: 8 }  // Leo
+  ],
+  enemy: [
+    { x: 5, y: 1 },  // Warden Sarto (boss), before the bell
+    { x: 3, y: 2 },  // guard, west colonnade
+    { x: 8, y: 2 },  // guard, east colonnade
+    { x: 2, y: 4 },  // guard, west aisle
+    { x: 9, y: 4 },  // guard, east aisle
+    { x: 6, y: 3 }   // archer, centre line
+  ]
+});
+
+// ============== Battles 25 + 27 — the landing field ==============
+// 14x10 scorched plain where the first Ravage craft came down. One rows
+// array, two MapDefs: B25 (first contact) enters from the west; B27
+// (the Herald's descent, fought at night) re-stages the same scarred
+// ground with the descent guard already formed at centre.
+const Lf = t("dirt");                   // burnt-off plain
+const Lg = t("grass");                  // surviving verge
+const Lr = t("rubble");                 // impact scatter
+const Lk = t("dirt", "rock");           // heat-fused slag
+const Lt2 = t("dirt", "torch");         // burning craft debris
+const landingRows = [
+  [Lg, Lg, Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lg, Lg, Lg, Lg, Lg],
+  [Lg, Lg, Lf, Lf, Lf, Lr, Lf, Lf, Lr, Lf, Lf, Lg, Lg, Lg],
+  [Lg, Lf, Lf, Lk, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lg, Lg],
+  [Lf, Lf, Lf, Lf, Lf, Lt2, Lf, Lf, Lf, Lk, Lf, Lf, Lf, Lg],
+  [Lf, Lf, Lr, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lr, Lf, Lf],
+  [Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lt2, Lf, Lf, Lf, Lf, Lf],
+  [Lg, Lf, Lf, Lf, Lk, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lg],
+  [Lg, Lf, Lf, Lr, Lf, Lf, Lt2, Lf, Lf, Lf, Lk, Lf, Lg, Lg],
+  [Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lf, Lr, Lf, Lf, Lg, Lg, Lg],
+  [Lg, Lg, Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lg, Lg, Lg, Lg, Lg]
+];
+export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Field", landingRows, {
+  player: [
+    { x: 1, y: 4 }, // Amar
+    { x: 1, y: 5 }, // Maya
+    { x: 2, y: 4 }, // Ning
+    { x: 2, y: 5 }  // Leo
+  ],
+  enemy: [
+    { x: 10, y: 3 }, // trooper
+    { x: 11, y: 5 }, // trooper
+    { x: 10, y: 7 }, // trooper
+    { x: 12, y: 4 }, // lancer
+    { x: 12, y: 6 }, // lancer
+    { x: 13, y: 3 }, // marksman
+    { x: 13, y: 7 }  // marksman
+  ]
+});
+export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Field, at Night", landingRows, {
+  player: [
+    { x: 1, y: 4 }, // Amar
+    { x: 2, y: 5 }, // Maya
+    { x: 1, y: 6 }, // Ning
+    { x: 2, y: 3 }  // Leo
+  ],
+  enemy: [
+    { x: 11, y: 5 }, // Herald of the Ravage (boss)
+    { x: 9,  y: 3 }, // trooper
+    { x: 9,  y: 7 }, // trooper
+    { x: 10, y: 5 }, // lancer
+    { x: 12, y: 2 }, // marksman
+    { x: 12, y: 8 }  // marksman
+  ]
+});
+
+// ============== Battle 26 — Hold the Coast ==============
+// 14x9 shoreline. Water claims the whole east edge: the Ravage come
+// out of it. The squad holds a barricade line on the dune ridge; if the
+// line breaks, the inland is open road.
+const Cs = t("sand");                   // shore
+const Cg = t("grass");                  // dune grass
+const Cw = t("water");                  // the sea (impassable)
+const Cd = t("sand", "barricade");      // dune-line fieldworks
+const Ck = t("sand", "rock");           // shore boulders
+const coastHoldRows = [
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Ck, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cs, Cs, Cd, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cs, Cs, Cd, Cs, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Ck, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw]
+];
+export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coastHoldRows, {
+  player: [
+    { x: 2, y: 3 }, // Amar
+    { x: 2, y: 5 }, // Maya
+    { x: 1, y: 4 }, // Ning
+    { x: 2, y: 4 }  // Leo
+  ],
+  enemy: [
+    { x: 10, y: 2 }, // trooper
+    { x: 11, y: 4 }, // trooper
+    { x: 10, y: 6 }, // trooper
+    { x: 11, y: 1 }, // lancer
+    { x: 11, y: 7 }, // lancer
+    { x: 12, y: 3 }, // marksman
+    { x: 12, y: 5 }  // marksman
+  ]
+});
+
+// ============== Battle 28 — The Path Ends ==============
+// 13x10 before the grounded flagship. A marble processional (the old
+// coronation road out of Grude) runs dead into the Ravage craft's
+// shadow: the campaign's last ground, shared by every path's finale.
+// Only the person waiting at the top of it changes.
+const Pm = t("marble");                 // processional
+const Ps = t("stone");                  // flanking ground
+const Pp = t("stone", "pillar");        // shattered colonnade
+const Pr = t("rubble");                 // wreckage
+const Pt = t("stone", "torch");         // burning wreck-light
+const pathFinalRows = [
+  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
+  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Pr, Pm, Pm, Pm, Pm, Pm, Pr, Ps, Ps, Ps],
+  [Ps, Ps, Pt, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Pt, Ps, Ps],
+  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Pr, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Pr, Ps, Ps],
+  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps]
+];
+export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", pathFinalRows, {
+  player: [
+    { x: 5, y: 9 }, // Amar
+    { x: 6, y: 9 }, // Maya
+    { x: 5, y: 8 }, // Ning
+    { x: 7, y: 9 }  // Leo
+  ],
+  enemy: [
+    { x: 6, y: 1 },  // the path's final opponent (boss)
+    { x: 4, y: 2 },  // escort west
+    { x: 8, y: 2 },  // escort east
+    { x: 3, y: 4 },  // flank west
+    { x: 9, y: 4 }   // flank east
+  ]
+});
+
+// ============== Battle 29 — The Aftermath ==============
+// The same field where Dawn's war began (B20's rows, re-staged): the
+// remaining fight is whatever survived your last decision, met on
+// ground that remembers the first one.
+export const aftermathMap: MapDef = buildMap("aftermath", "The Field, After", warFieldRows, {
+  player: [
+    { x: 2, y: 5 }, // Amar
+    { x: 1, y: 4 }, // Maya
+    { x: 2, y: 6 }, // Ning
+    { x: 1, y: 6 }  // Leo
+  ],
+  enemy: [
+    { x: 11, y: 3 }, // royal guard remnant
+    { x: 12, y: 5 }, // royal guard remnant
+    { x: 10, y: 7 }, // bandit deserter
+    { x: 12, y: 8 }, // bandit deserter
+    { x: 9,  y: 2 }, // ravage straggler
+    { x: 11, y: 6 }  // ravage straggler
+  ]
+});

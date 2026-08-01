@@ -623,5 +623,161 @@ export const ENEMIES = {
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 3 }
+  }),
+
+  // ---- The Ravage fleet (endgame arc, B25+) --------------------------------
+  // Off-world soldiery. Deliberately beefier base statlines than any
+  // human rank-and-file: the fleet is the threat the whole campaign has
+  // been underestimating, and the numbers say so on first contact. No
+  // portraits — the fleet doesn't show its faces, and the absence reads
+  // as intended, not missing.
+  ravageTrooper: (id: string, seed: number, level = 19): UnitDef => ({
+    id,
+    name: "Ravage Trooper",
+    shortName: "Rv",
+    faction: "enemy",
+    classKind: "swordsman",
+    weapon: "sword",
+    stats: { hp: 42, power: 15, armor: 8, speed: 9, movement: 4, ap: 2 },
+    artSeed: seed,
+    palette: ENEMY_PALETTES.ravage,
+    tags: new Set(["elite"]),
+    level
+  }),
+  ravageLancer: (id: string, seed: number, level = 19): UnitDef => ({
+    id,
+    name: "Ravage Lancer",
+    shortName: "Rl",
+    faction: "enemy",
+    classKind: "spearton",
+    weapon: "spear",
+    stats: { hp: 44, power: 15, armor: 9, speed: 8, movement: 4, ap: 2 },
+    artSeed: seed,
+    palette: ENEMY_PALETTES.ravage,
+    tags: new Set(["elite"]),
+    level
+  }),
+  ravageMarksman: (id: string, seed: number, level = 19): UnitDef => ({
+    id,
+    name: "Ravage Marksman",
+    shortName: "Rm",
+    faction: "enemy",
+    classKind: "archer",
+    weapon: "bow",
+    stats: { hp: 30, power: 13, armor: 4, speed: 11, movement: 4, ap: 2 },
+    artSeed: seed,
+    palette: ENEMY_PALETTES.ravage,
+    tags: new Set(["elite"]),
+    level
+  }),
+  // Herald of the Ravage — the commander's first officer, sent down in
+  // B27 to see what held the shore. Falls there; the commander itself
+  // is met in B28 (restoration/duty finales).
+  ravageHerald: (level = 19): UnitDef => ({
+    id: "ravage_herald",
+    name: "Herald of the Ravage",
+    shortName: "He",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 70, power: 17, armor: 10, speed: 12, movement: 5, ap: 3 },
+    artSeed: 107,
+    palette: ENEMY_PALETTES.ravage,
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  ravageCommander: (level = 20): UnitDef => ({
+    id: "ravage_commander",
+    name: "The Ravage Commander",
+    shortName: "Cm",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 85, power: 19, armor: 11, speed: 12, movement: 5, ap: 3 },
+    artSeed: 109,
+    palette: ENEMY_PALETTES.ravage,
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+
+  // ---- Path-climax humans (B23/B24/B28) ------------------------------------
+  // Colonel Vasse — commander of the imperial remnant in the narrows
+  // (B23). A survivor of Serrick's broken line, fighting on because
+  // stopping would mean the war was for nothing.
+  remnantColonel: (level = 18): UnitDef => ({
+    id: "remnant_colonel",
+    name: "Colonel Vasse",
+    shortName: "Va",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 62, power: 16, armor: 9, speed: 10, movement: 4, ap: 3 },
+    artSeed: 111,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  // Warden Sarto — keeper of the bell court (B24). A shield wall of one:
+  // the slowest, heaviest boss in the game, guarding the last muster
+  // bell in the west.
+  bellWarden: (level = 18): UnitDef => ({
+    id: "bell_warden",
+    name: "Warden Sarto",
+    shortName: "Sa",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "shield",
+    stats: { hp: 68, power: 15, armor: 12, speed: 8, movement: 3, ap: 3 },
+    artSeed: 113,
+    palette: ENEMY_PALETTES.royal_guard,
+    portrait: true,
+    portraitId: "royal_guard",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  // King Archbold — the emperor himself, the final opponent of the
+  // vengeance and mercy paths (B28). The campaign's whole gravity in
+  // one statline; the two paths differ in what victory MEANS, not in
+  // how hard he hits.
+  archbold: (level = 20): UnitDef => ({
+    id: "archbold",
+    name: "King Archbold",
+    shortName: "Ar",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 88, power: 19, armor: 11, speed: 11, movement: 4, ap: 3 },
+    artSeed: 115,
+    palette: ENEMY_PALETTES.archbold,
+    portrait: true,
+    portraitId: "archbold",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
+  }),
+  // Madame Dawn — the revolution path's final opponent (B28). Burning
+  // every throne includes the one your mother built out of thirty years
+  // of arithmetic. Fast, deliberate, and the hardest fight to WANT.
+  dawnBoss: (level = 20): UnitDef => ({
+    id: "dawn_boss",
+    name: "Madame Dawn",
+    shortName: "Dw",
+    faction: "enemy",
+    classKind: "boss",
+    weapon: "sword",
+    stats: { hp: 78, power: 18, armor: 9, speed: 13, movement: 5, ap: 3 },
+    artSeed: 117,
+    palette: ENEMY_PALETTES.ndari,
+    portrait: true,
+    portraitId: "dawn",
+    tags: new Set(["boss"]),
+    level,
+    holdPositionUntil: { allyCount: 2 }
   })
 };

@@ -15,7 +15,7 @@ import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
 import { IconToggleButton } from "../ui/IconToggleButton";
 import { allEnemyDanger } from "../combat/Danger";
-import { battleById } from "../data/battles";
+import { battleById, resolveBattleForPath } from "../data/battles";
 import {
   BattleState,
   applyAttackOutcome,
@@ -75,6 +75,7 @@ import {
   recordSquadDeaths,
   setCharacterRecord,
   setSquadInventory,
+  getSevenPath,
   unlockBattle,
   writeSave,
   writeSuspendedBattle
@@ -318,6 +319,12 @@ export class BattleScene extends Phaser.Scene {
   init(data: BattleArgs): void {
     this.battleId = data.battleId;
     this.resumeRequested = data.resume === true;
+    // Scene instances are reused across battles. The spotlight RT from a
+    // dark battle (B4/B7/B11/B13/B27) is destroyed by scene shutdown, but
+    // the FIELD survives — and update() touches it every frame. Left
+    // stale, the first frame of the NEXT battle after a dark one crashes
+    // inside RenderTexture.clear (null gl). Reset it with the rest.
+    this.darknessRT = undefined;
     this.unitViews = new Map();
     this.actionButtons = [];
     this.logLines = [];
@@ -332,7 +339,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
-    const node = battleById(this.battleId);
+    // Resolve the node THROUGH the chosen Seven Path — the endgame
+    // climaxes (B23/B24/B28) swap rosters, win conditions, and
+    // dialogues per path. Path-agnostic battles resolve to themselves.
+    const rawNode = battleById(this.battleId);
+    const node = rawNode ? resolveBattleForPath(rawNode, getSevenPath(loadSave())) : undefined;
     if (!node || !node.map || !node.buildPlayers || !node.buildEnemies) {
       this.scene.start("OverworldScene");
       return;

@@ -1,8 +1,8 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap, aftermathMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
-import type { BackdropKey, BattleId } from "./contentIds";
+import type { BackdropKey, BattleId, SevenPath } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
 import type { AtmosphereKind } from "../scenes/battle/Atmosphere";
 import type { DialogBeat } from "../story/beats";
@@ -86,6 +86,8 @@ export interface BattleNode {
   // battle's story wants different air than its backdrop implies —
   // e.g., B22 shares bg_grude with the harbor fights but burns.
   atmosphere?: AtmosphereKind;
+  // Per-path divergence for the endgame climaxes. See PathOverride below.
+  pathOverrides?: Partial<Record<SevenPath, PathOverride>>;
   // What a victory here unlocks. Three states:
   //   undefined → default: the next battle in the BATTLES array. Right
   //               for the linear B1–B17 spine.
@@ -2540,130 +2542,778 @@ export const BATTLES: BattleNode[] = [
     index: 23,
     title: "Twenty-Third Battle",
     subtitle: "The Path Narrows",
-    intro: "The world's choices have narrowed to yours. The first of two tests, framed by the path you walked.",
-    outro: "What you did here will be remembered the specific way of your path.",
+    intro: "The imperial remnant that survived Serrick's broken line has dug into the canyon narrows under Colonel Vasse, a survivor fighting on because stopping would mean the war was for nothing. The narrows are the last human bottleneck between the squad and whatever the eastern sky is becoming. The world's choices have narrowed to yours.",
+    outro: "The narrows are passed. What you did here will be remembered the specific way of your path.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: narrowsMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.remnantColonel(18),
+      ENEMIES.royalGuard("nr_rg1", 2301, 17),
+      ENEMIES.royalGuard("nr_rg2", 2302, 17),
+      ENEMIES.royalArcher("nr_ra1", 2303, 16),
+      ENEMIES.royalArcher("nr_ra2", 2304, 16)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: 2 elixirs + 1 fang. First climactic test of the
-    // chosen path; rewards are consistent across paths but the
-    // narrative around them flexes per path.
-    rewards: ["elixir", "elixir", "fang"]
+    rewards: ["elixir", "elixir", "fang"],
+    dialogues: [
+      {
+        id: "b23_base_open",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Colonel Vasse", portraitId: "royal_guard", expression: "neutral",
+            body: "You broke Serrick's line, boy. I built this one out of what was left of it. Come and see if grief holds ground." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "It holds it, colonel. It just holds it for the wrong man. Squad: the waist of the canyon decides this. Take it first." }
+        ]
+      },
+      {
+        id: "b23_base_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The narrows fall quiet. The remnant that surrenders is disarmed and pointed west, away from the sky everyone keeps not looking at." }
+        ]
+      }
+    ],
+    pathOverrides: {
+      vengeance: {
+        subtitle: "The Path Narrows — The List",
+        intro: "Colonel Vasse held the ridge the night your father's knife came for you. His name has been on the list since Maya started keeping it. The canyon narrows to a point, and so does the ledger.",
+        outro: "One more name crossed off. The list is shorter than the anger now, and the squad has begun to notice which of the two runs out first.",
+        victory: defeatUnit("remnant_colonel", { label: "Cross off Colonel Vasse" }),
+        dialogues: [
+          {
+            id: "b23_v_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+                body: "Vasse. Fourth name. He held the ridge for the knife that came for you. (She folds the list away.) His escort is not on it, Amar. Just him." },
+              { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+                body: "Just him, then. The rest can walk home and grow old telling this story. Squad: the colonel. Nobody else needs to die in this canyon." }
+            ]
+          },
+          {
+            id: "b23_v_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "Vasse goes down at the waist of the canyon he chose. His escort lowers their spears without being asked. Maya crosses the name out with one stroke, the way she does everything." },
+              { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+                body: "(quietly) Fourth name. The list gets lighter, Amar. You don't. Somebody in this squad should say that out loud once." }
+            ]
+          }
+        ]
+      },
+      restoration: {
+        subtitle: "The Path Narrows — The Granary Road",
+        intro: "The narrows are the only road the rebuilt villages can move their grain through, and Colonel Vasse has closed it. Every day the pass stays shut, the first harvest of the new Anthros rots in its wagons. This is not a battle for ground. It is a battle for a road.",
+        outro: "By evening the first wagons roll through the narrows. The drivers do not look at the bodies. They look at the road, which is open, which is everything.",
+        dialogues: [
+          {
+            id: "b23_r_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "Behind us are forty wagons of the first harvest anyone in these villages has kept for themselves in eighty years. The colonel is standing on their road. Open it." },
+              { speaker: "Leo", portraitId: "leo", expression: "resolute",
+                body: "Lucian used to say a held road feeds more people than a won battle. (Spear set.) Let's do both anyway." }
+            ]
+          },
+          {
+            id: "b23_r_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The remnant breaks and the narrows open. The first wagon through carries seed grain; the driver raises one hand off the reins to the squad, and that is the whole ceremony." }
+            ]
+          }
+        ]
+      },
+      revolution: {
+        subtitle: "The Path Narrows — The Offer",
+        intro: "Colonel Vasse sent a rider to Madame Dawn under truce colors: the remnant will kneel, if the new order keeps a throne to kneel to. Dawn has not answered. Maya intercepted the letter. The revolution answers in the narrows instead.",
+        outro: "The offer burns with the colonel's camp papers. No thrones. Not the King's, not the remnant's price for kneeling, and, one day soon, not the one Dawn is building either.",
+        dialogues: [
+          {
+            id: "b23_rev_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+                body: "Vasse offered Dawn a deal: his knee for a throne. Any throne. He doesn't care whose. That's what we're actually fighting in this canyon, Amar. The reflex." },
+              { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+                body: "Then we answer for her. No thrones. Not his price, not her plan, nobody's. Squad: break the line, burn the offer." }
+            ]
+          },
+          {
+            id: "b23_rev_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "In the colonel's tent Maya finds the offer's fair copy, sealed for Dawn's reply. She reads it once and feeds it to the brazier, and watches until there is nothing left to deliver." }
+            ]
+          }
+        ]
+      },
+      duty: {
+        subtitle: "The Path Narrows — Orders",
+        intro: "The order from Dawn's command is written in the flat grammar of the new army: take the narrows, no prisoners, the remnant is a proven infection. Amar read it twice, folded it, and put it in his coat. The squad takes the narrows. The other half of the order is going to meet the officer Amar has decided to be.",
+        outro: "The report says the narrows were taken and the remnant dispersed. It does not say the word prisoners, in either direction. Amar signs it. Some orders are best obeyed in the letter and repaired in the field.",
+        dialogues: [
+          {
+            id: "b23_d_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Amar", portraitId: "amar", expression: "guarded",
+                body: "Command says take the narrows. (A pause.) It says other things too. We take the narrows. The rest of the order answers to what Khonu taught me: read the list before you sign it." },
+              { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+                body: "And if command asks why the remnant walked out of this canyon alive? (String creaks.) I'll aim wide of the ones who drop their steel, captain. Just so you know what your archer is doing." }
+            ]
+          },
+          {
+            id: "b23_d_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The remnant that yields is stripped of steel and marched west under guard the order never required Amar to provide. The report will be accurate, and it will be incomplete, and both of those on purpose." }
+            ]
+          }
+        ]
+      },
+      mercy: {
+        subtitle: "The Path Narrows — The Yield",
+        intro: "The surgeon's discipline, applied to a canyon: Colonel Vasse's remnant is two hundred men who will die for a war that is already lost the moment he does. Break the colonel. Only the colonel. The rest of the canyon gets to go home.",
+        outro: "Vasse sits against the canyon wall, disarmed, alive, furious, breathing. His two hundred walk west unarmed. The war will not miss one more graveyard, and the narrows never becomes one.",
+        victory: defeatUnit("remnant_colonel", { label: "Break Colonel Vasse" }),
+        dialogues: [
+          {
+            id: "b23_m_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "Two hundred men in this canyon, and one of them is the reason the rest will die here. Vasse goes down and STAYS down. Nobody dies who doesn't insist on it. That's the whole order." },
+              { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+                body: "Yul would have liked you, I think. (Blades out.) The colonel's guard will insist, for the record. The colonel himself is yours." }
+            ]
+          },
+          {
+            id: "b23_m_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The colonel goes down and stays down. His two hundred watch it happen, and then, one line at a time, the canyon fills with the sound of dropped steel." }
+            ]
+          }
+        ]
+      }
+    }
   },
   {
     id: "b24_path_climax_b",
     index: 24,
     title: "Twenty-Fourth Battle",
     subtitle: "The Bell Before the Sky",
-    intro: "The second test. The one you can't take back.",
+    intro: "The bell court holds the west's last muster bell: ring it, and every village between here and the mountains knows to arm or to hide. Warden Sarto has orders to let no one ring it for any cause but the King's. The horizon has been the wrong colour for four days. The second test. The one you can't take back.",
     outro: "The bell rings. The sky changes within the hour.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
-    playable: false,
+    playable: true,
+    map: bellCourtMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.bellWarden(18),
+      ENEMIES.royalGuard("bc_rg1", 2401, 17),
+      ENEMIES.royalGuard("bc_rg2", 2402, 17),
+      ENEMIES.royalGuard("bc_rg3", 2403, 16),
+      ENEMIES.royalGuard("bc_rg4", 2404, 16),
+      ENEMIES.royalArcher("bc_ra1", 2405, 17)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: 2 elixirs + 1 royal lens. Symmetric to B23's haul
-    // (one Lens vs B23's Fang) — last loadout chance before the
-    // Ravage fleet arrives. The bell ringing at the end of B24 is
-    // also the last quiet moment in the campaign.
-    rewards: ["elixir", "elixir", "royal_lens"]
+    rewards: ["elixir", "elixir", "royal_lens"],
+    dialogues: [
+      {
+        id: "b24_base_open",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Warden Sarto", portraitId: "royal_guard", expression: "neutral",
+            body: "The bell rings for the King or it rings for no one. Thirty years I have kept that simple. Do not complicate my last week of it." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Look east, warden. The sky is coming for your bell and your King alike. It rings tonight, for everyone. Squad: his shield only bends from behind." }
+        ]
+      },
+      {
+        id: "b24_base_mid",
+        trigger: { kind: "round_start", round: 3 },
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "wide-eyed_horror",
+            body: "Amar. The horizon just LIT. East, over the water. That's not weather and it's not dawn." },
+          { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+            body: "Then we are out of slow options. The bell, Amar. Now. The warden is standing on the last warning the west will ever get." }
+        ]
+      },
+      {
+        id: "b24_base_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "Ning climbs the tower and puts her whole body on the rope. The bell speaks once, twice, a third time, and the sound rolls west across every roof between here and the mountains." },
+          { speaker: "Amar", portraitId: "amar", expression: "guarded",
+            body: "(watching the east) Whatever answers that bell, it heard it. (A breath.) Everyone eat something. Sleep in armor. Tomorrow we meet the sky." }
+        ]
+      }
+    ],
+    pathOverrides: {
+      vengeance: {
+        subtitle: "The Bell Before the Sky — The Muster Rolls",
+        intro: "The warden keeps more than the bell: the court archive holds the muster rolls of every officer who rode in your father's retrieval column. The last names on the list are in that tower. So is the west's last warning bell, and the sky is running out of patience for your arithmetic.",
+        outro: "The bell rings. In the archive, Maya finds the rolls and reads out the last names while the echo dies. There are only two left. One wears a crown."
+      },
+      revolution: {
+        subtitle: "The Bell Before the Sky — Dawn's Bell",
+        intro: "Dawn's army reached the bell court first. Marshal Othren holds it now, under her orders: the bell rings when Dawn decides the villages should be afraid, and not before. The revolution came to ring it for them. The second test is the first one fought against the rebellion you helped build.",
+        outro: "The bell rings, rung by no one's permission. Othren survives his second lost gate and does not look surprised. The sky changes within the hour, and Dawn's letter demanding an explanation will never find them now.",
+        buildEnemies: () => [
+          ENEMIES.dawnLoyalist(18),
+          ENEMIES.banditSwordsman("bc_dl1", 2411, 16),
+          ENEMIES.banditSwordsman("bc_dl2", 2412, 16),
+          ENEMIES.banditSpearton("bc_dl3", 2413, 16),
+          ENEMIES.banditArcher("bc_dl4", 2414, 16),
+          ENEMIES.banditArcher("bc_dl5", 2415, 15)
+        ],
+        dialogues: [
+          {
+            id: "b24_rev_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Marshal Othren", portraitId: "royal_guard", expression: "neutral",
+                body: "You again, your highness. The quay, and now this. Madame Dawn says the bell rings when fear is USEFUL. She has always been right before." },
+              { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+                body: "The bell belongs to the people it warns, Othren. Not to her timing. That's the whole revolution, in one rope. Squad: south colonnade, break the line." }
+            ]
+          },
+          {
+            id: "b24_rev_mid",
+            trigger: { kind: "round_start", round: 3 },
+            beats: [
+              { speaker: "Maya", portraitId: "maya", expression: "alarmed",
+                body: "The horizon just lit, east over the water. Dawn is holding the warning back while THAT comes. Understand what you're looking at, Amar. That's a throne doing arithmetic." }
+            ]
+          },
+          {
+            id: "b24_rev_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "Othren yields the tower the way he yielded the quay: on his feet, unashamed, loyal to the end of his orders and not one step past them. Ning rings the bell until her arms shake." },
+              { speaker: "Marshal Othren", portraitId: "royal_guard", expression: "neutral",
+                body: "(calling after them) She'll hear that bell in Grude, your highness. She'll know exactly who rang it. There is no road back from ringing it. ...I think you know that." }
+            ]
+          }
+        ]
+      },
+      mercy: {
+        subtitle: "The Bell Before the Sky — The Warning",
+        intro: "Rung early, the bell empties villages; rung late, it fills graves. Warden Sarto will die keeping it silent because dying is the only order left to him. The surgeon's rule, one more time: stop the man without ending him, and then ring the warning yourself, for everyone, both armies included.",
+        outro: "The bell rings. Sarto, disarmed and breathing, is made to sit in the court and listen to it. By the third peal he stops fighting the sound. By the sixth he is telling Ning the proper rhythm for a general alarm.",
+        victory: defeatUnit("bell_warden", { label: "Break Warden Sarto" }),
+        dialogues: [
+          {
+            id: "b24_m_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "The warden goes down whole, and then that bell warns EVERYONE. The villages, the remnant, Dawn's columns, all of them. The sky doesn't check banners. Neither does the warning." },
+              { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+                body: "Break the shield, spare the man. (String creaks.) You keep finding the narrow way to do things, Amar. Somebody has to hold the line while you walk it. Go." }
+            ]
+          },
+          {
+            id: "b24_m_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "Sarto goes down and stays down, and his guard, seeing the pattern the squad has made of the whole war, lowers steel unasked. The bell rings for every roof in the west, whoever it kneels to." }
+            ]
+          }
+        ]
+      }
+    }
   },
-  // ---- B25-B27: Shared penultimate — the Ravage fleet arrives ---------------
-  // The off-world fleet's descent is the same threat across all paths;
-  // each path's perspective on it differs (Vengeance views it as
-  // Archbold's last betrayal, Restoration as a test of the new state,
-  // Revolution as the moment of unity, etc.) but the maps are shared.
   {
     id: "b25_fleet_arrival",
     index: 25,
     title: "Twenty-Fifth Battle",
     subtitle: "The Sky Speaks",
-    intro: "The fleet drops out of orbit at sunrise. The sky speaks first — a sound no one alive has heard. Then the landing craft come.",
+    intro: "The fleet drops out of orbit at sunrise. The sky speaks first, a sound no one alive has heard, and then the landing craft come down on the plain east of the city like judgment with engines. What walks out of them calls itself the Ravage. The word did not come from any kingdom on the map.",
     outro: "The first wave is repelled. The second wave is already burning the air on its way down.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
-    playable: false,
+    playable: true,
+    atmosphere: "embers",
+    map: landingFieldMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.ravageTrooper("fa_t1", 2501, 19),
+      ENEMIES.ravageTrooper("fa_t2", 2502, 19),
+      ENEMIES.ravageTrooper("fa_t3", 2503, 18),
+      ENEMIES.ravageLancer("fa_l1", 2504, 19),
+      ENEMIES.ravageLancer("fa_l2", 2505, 18),
+      ENEMIES.ravageMarksman("fa_m1", 2506, 19),
+      ENEMIES.ravageMarksman("fa_m2", 2507, 18)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: alien-tech salvage. 2 elixirs + 1 royal lens + 1
-    // fang — the lens and fang are recovered from the Ravage
-    // landing craft and are notably better-made than anything the
-    // squad has carried. Mechanically the same; narratively the
-    // squad realizes the enemy is more advanced.
-    rewards: ["elixir", "elixir", "royal_lens", "fang"]
+    rewards: ["elixir", "elixir", "royal_lens", "fang"],
+    dialogues: [
+      {
+        id: "b25_contact",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { portraitId: "narrator",
+            body: "The craft's ramp opens without a sound. What comes down it moves like soldiery and shines like deep water. Signal-banners on the wreckage spell a word in every harbor code at once: RAVAGE." },
+          { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+            body: "That's their own name for themselves, Amar. The berserk state, the old sailors' word, your mother's daredevil song. It was never our word. We LEARNED it. Somebody met them before us." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then they already know what the word costs. Squad: they're soldiers, whatever else they are. Soldiers have lines, and lines break. Forward." }
+        ]
+      },
+      {
+        id: "b25_steel",
+        trigger: { kind: "round_start", round: 2 },
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "wide-eyed_horror",
+            body: "My spear SKIPPED off that one. Like river ice. What are they wearing?!" },
+          { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+            body: "Joints, Leo. Everything that walks has joints. (Loose.) Aim where it bends, not where it shines." }
+        ]
+      },
+      {
+        id: "b25_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The first wave breaks. It does not rout, does not cry out, does not leave its wounded: it simply stops, all at once, like a tide deciding. Overhead, new fire is already entering the air." },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "They were measuring us. That whole wave was a QUESTION, Amar. (She watches the sky burn.) The next one will be the answer." }
+        ]
+      }
+    ]
   },
   {
     id: "b26_coastal_hold",
     index: 26,
     title: "Twenty-Sixth Battle",
     subtitle: "Hold the Coast",
-    intro: "If the coast falls, the inland falls. If the inland falls, the war ends in a month. Hold the line.",
+    intro: "The second wave doesn't land on the plain. It comes out of the sea itself, walking out of the surf in line abreast. If the coast falls, the inland falls; if the inland falls, the war ends in a month and not in anyone's favor. The squad holds the dune line. Six rounds until the coast batteries the bell bought time to build come to bear.",
     outro: "The coast holds. Barely. The line is rewritten in salt and rust.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
-    playable: false,
+    playable: true,
+    map: coastHoldMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.ravageTrooper("ch_t1", 2601, 19),
+      ENEMIES.ravageTrooper("ch_t2", 2602, 19),
+      ENEMIES.ravageTrooper("ch_t3", 2603, 19),
+      ENEMIES.ravageLancer("ch_l1", 2604, 19),
+      ENEMIES.ravageLancer("ch_l2", 2605, 19),
+      ENEMIES.ravageMarksman("ch_m1", 2606, 19),
+      ENEMIES.ravageMarksman("ch_m2", 2607, 18)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: 3 elixirs + 1 mask. Defense battle, casualties on
-    // both sides — the squad takes what they need to keep moving.
-    rewards: ["elixir", "elixir", "elixir", "mask"]
+    victory: surviveRounds(6),
+    rewards: ["elixir", "elixir", "elixir", "mask"],
+    dialogues: [
+      {
+        id: "b26_surf",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Ning", portraitId: "ning", expression: "startled",
+            body: "They're coming out of the WATER. No boats. Just... walking out of the surf like it's a doorway." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then the surf is a doorway and this dune is the door. Six rounds, squad. The batteries the bell bought us are being dragged up the coast road RIGHT NOW. Make the sand expensive." }
+        ]
+      },
+      {
+        id: "b26_pressure",
+        trigger: { kind: "round_start", round: 4 },
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "fury",
+            body: "The tide keeps BRINGING them! Barricade's down to kindling on the south dune!" },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "Kindling still slows a wave, Leo. Two rounds. The war is a clock now. Be the clock." }
+        ]
+      },
+      {
+        id: "b26_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The first coast battery speaks from the headland, then its sisters. The line walking out of the sea stops, considers the new arithmetic, and folds back beneath the surf. The dune is mostly gone. The coast is not." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "(sitting down in the wrecked sand) Every hour counts. (He laughs once, exhausted.) Lucian, you have no idea how far that sentence has walked." }
+        ]
+      }
+    ]
   },
   {
     id: "b27_orbital_descent",
     index: 27,
     title: "Twenty-Seventh Battle",
     subtitle: "Orbital Descent",
-    intro: "The Ravage commander descends in person. They want to see what they're killing.",
+    intro: "At midnight the landing field lights up again: a single craft, escorted, deliberate. The Ravage command has sent its Herald down in person to see what has been repelling its waves. It wants to look at the thing before deciding what the thing is worth. The squad walks back onto the scarred plain to be looked at.",
     outro: "They have seen it. They are not deterred.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
-    playable: false,
+    playable: true,
+    darkBattle: true,
+    atmosphere: "embers",
+    map: descentFieldMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.ravageHerald(19),
+      ENEMIES.ravageTrooper("od_t1", 2701, 19),
+      ENEMIES.ravageTrooper("od_t2", 2702, 19),
+      ENEMIES.ravageLancer("od_l1", 2703, 19),
+      ENEMIES.ravageMarksman("od_m1", 2704, 19),
+      ENEMIES.ravageMarksman("od_m2", 2705, 19)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: heaviest haul yet — 4 elixirs + 1 fang + 1 royal
-    // lens. The squad strips what they can carry off the
-    // commander's elite escort. Outfits the squad for the path-
-    // specific final battle in B28.
-    rewards: ["elixir", "elixir", "elixir", "elixir", "fang", "royal_lens"]
+    victory: defeatUnit("ravage_herald", { label: "Bring down the Herald" }),
+    rewards: ["elixir", "elixir", "elixir", "elixir", "fang", "royal_lens"],
+    dialogues: [
+      {
+        id: "b27_seen",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "The Herald",
+            body: "Show me the ones who held the shore. (The voice arrives in every harbor code at once, like the banners did.) Small. Soft-shelled. Loud. And yet." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Look well, Herald. Everything on this field tonight was measured once by somebody bigger. Ask your commander what happened to them. Squad: the escort first. Make it watch." }
+        ]
+      },
+      {
+        id: "b27_why",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "ravage_herald" },
+        beats: [
+          { speaker: "The Herald",
+            body: "Your world burns its own harvests. Kings spend sons. Mothers spend cities. We have READ your ledgers, heir. Why defend a thing that eats itself?" },
+          { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+            body: "Because it's ours to mend, not yours to end. (Steel up.) And because you read the ledgers but not the margins. That's where we keep the reasons." }
+        ]
+      },
+      {
+        id: "b27_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The Herald falls the way a mast falls, slow and then all at once. Its escort stops, considers, and withdraws into the dark carrying the body with a care that looks, for one strange moment, like grief." },
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "It got what it came for, Amar. A measurement. (She looks up at the waiting lights.) Tomorrow whatever COMMANDS that fleet knows exactly how much we cost. Pray it's too much." }
+        ]
+      }
+    ]
   },
-  // ---- B28-B30: Path-specific finale + epilogue -----------------------------
   {
     id: "b28_path_final",
     index: 28,
     title: "Twenty-Eighth Battle",
     subtitle: "The Path Ends",
-    intro: "The final reckoning, framed by the path you walked. Different opponents per path; same gravity.",
+    intro: "The final reckoning, framed by the path you walked. The old coronation processional runs dead into the shadow of the grounded flagship, and at the top of the marble stands the person your whole road has been walking toward. Different opponents per path; same gravity.",
     outro: "The fight ends in the only way it could, given everything before it.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
-    playable: false,
+    playable: true,
+    atmosphere: "embers",
+    map: pathFinalMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.ravageCommander(20),
+      ENEMIES.ravageTrooper("pf_t1", 2801, 19),
+      ENEMIES.ravageTrooper("pf_t2", 2802, 19),
+      ENEMIES.ravageLancer("pf_l1", 2803, 19),
+      ENEMIES.ravageLancer("pf_l2", 2804, 19)
+    ],
     difficultyLabel: "Final Boss",
-    // Spoils: the campaign's last big haul — 5 elixirs + 1 mask +
-    // 1 royal lens. Carries the squad through B29's cleanup.
-    // The narrative around what gets carried out flexes per path
-    // (Vengeance: Archbold's signet ring; Restoration: the
-    // throne crown; Mercy: the surrendered sword).
-    rewards: ["elixir", "elixir", "elixir", "elixir", "elixir", "mask", "royal_lens"]
+    victory: defeatUnit("ravage_commander", { label: "Break the Ravage Commander" }),
+    rewards: ["elixir", "elixir", "elixir", "elixir", "elixir", "mask", "royal_lens"],
+    dialogues: [
+      {
+        id: "b28_base_open",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "The Ravage Commander",
+            body: "The Herald priced you. I came to pay. (It descends the ramp alone, then its guard follows.) One question first, mender of ledgers. When we are gone, will this world still be worth what you cost us?" },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Ask the villages behind me in a hundred years. That's the only answer either of us would believe. (Draws.) Squad: everything we have. This is the door the whole war knocks on." }
+        ]
+      },
+      {
+        id: "b28_base_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The Commander goes down at the foot of its own ramp, and the fleet's lights, all of them, every craft on the horizon, go dark for exactly one breath. A salute, or a decision. The craft begin to rise." },
+          { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+            body: "Too expensive. (She sits down right there on the marble.) We were too expensive, Amar. It's the nicest thing an empire ever said about us." }
+        ]
+      }
+    ],
+    pathOverrides: {
+      vengeance: {
+        subtitle: "The Path Ends — The Last Name",
+        intro: "Archbold did not wait for the fleet to price his kingdom: he bargained with it. Safe passage off a burning board, bought with the coordinates of every coast battery the bell built. The King stands at the top of the processional under the flagship's shadow, guarded by the empire he sold and the buyers he sold it to. The last name on the list wrote itself onto the fleet's manifest.",
+        outro: "The list ends on the marble where the kings of Grude were crowned. Maya takes the signet ring, not as a trophy: as a receipt. The fleet, its bargain dead, rises without a second glance at the world it almost bought.",
+        victory: defeatUnit("archbold", { label: "The last name" }),
+        buildEnemies: () => [
+          ENEMIES.archbold(20),
+          ENEMIES.royalGuard("pf_v1", 2811, 18),
+          ENEMIES.royalGuard("pf_v2", 2812, 18),
+          ENEMIES.ravageTrooper("pf_v3", 2813, 19),
+          ENEMIES.ravageTrooper("pf_v4", 2814, 19)
+        ],
+        dialogues: [
+          {
+            id: "b28_v_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold", expression: "offering_peace",
+                body: "My son. At the end of everything, my actual son. (He opens his empty hands.) I sent knives because a king cannot send regret. Walk up this marble and I will say the word your mother never let me say." },
+              { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+                body: "You sold the coast to the sky to save your own crossing, and you want to spend a WORD? (Draws.) Maya. Read him the list. All of it. He should hear where he comes in the order." }
+            ]
+          },
+          {
+            id: "b28_v_duel",
+            trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "archbold" },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold", expression: "righteous_fury",
+                body: "I am the only thing that ever frightened your mother. Kill me and you inherit the fright. That is the whole estate, boy. That is all any of us ever owned." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "Then I'll bury the estate with you. (A breath, level.) For Selene. For the coast you sold. For the boy in the hospital bed who didn't know his own name because of you. Last name on the list." }
+            ]
+          },
+          {
+            id: "b28_v_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The King of Grude dies on his own coronation road, under a sky he tried to sell, by the hand he tried to own. The fleet's lights consider the new arithmetic and rise. Nobody cheers. The list is finished, and it is very, very quiet." },
+              { speaker: "Maya", portraitId: "maya", expression: "tearful",
+                body: "(closing the list forever) Done. All of it, done. (She takes his hand, careless of the blood.) Come away from the marble, Amar. The rest of your life just started, and it has no names on it at all." }
+            ]
+          }
+        ]
+      },
+      revolution: {
+        subtitle: "The Path Ends — The Last Throne",
+        intro: "The fleet is rising. It was never the final enemy of this path. Madame Dawn reached the flagship's shadow first and stood on the processional to meet her son, because she has run the arithmetic to its end: the world after the fleet needs a throne to organize its fear, and she has spent thirty years becoming the only person who can sit on it. The revolution's last throne is the one that loves you.",
+        outro: "No thrones. It cost the revolution its heart to mean it, and on the marble where every crown in the west was ever set, nothing is set. The wind moves across the processional. It is enough.",
+        victory: defeatUnit("dawn_boss", { label: "No thrones" }),
+        buildEnemies: () => [
+          ENEMIES.dawnBoss(20),
+          ENEMIES.dawnLoyalist(18),
+          ENEMIES.banditSwordsman("pf_r1", 2821, 17),
+          ENEMIES.banditSpearton("pf_r2", 2822, 17),
+          ENEMIES.banditArcher("pf_r3", 2823, 17)
+        ],
+        dialogues: [
+          {
+            id: "b28_r_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+                body: "The fleet leaves a vacuum, Amar. A hundred million frightened people and a sky that proved it can open. Someone will organize that fear within the year. I have costed every candidate. It should be me, and you know it should be me." },
+              { speaker: "Amar", portraitId: "amar", expression: "guarded",
+                body: "It always sounds RIGHT, mother. That's what makes it a throne. (Draws, and his hand is not steady, and he does not pretend it is.) Maya. Squad. Hold me to it." }
+            ]
+          },
+          {
+            id: "b28_r_duel",
+            trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "dawn_boss" },
+            beats: [
+              { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+                body: "I carried you eleven months and I have carried the world thirty years and NEITHER of you has ever once weighed what that COSTS. (Her guard falters, once, for the first time in the whole war.) Yield, my son. I cannot spend you. I proved that at the quay." },
+              { speaker: "Amar", portraitId: "amar", expression: "wounded",
+                body: "And I can't spend a world to keep you warm, and that's the whole difference between us. (Quietly.) I love you entirely. Put it down, mother. Please. Put it down and LIVE." }
+            ]
+          },
+          {
+            id: "b28_r_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "Dawn goes down on the marble she meant to be crowned on, and her rebellion stands very still, thirty years of arithmetic looking for a new ledger. Amar kneels beside her, and whatever passes between them is not for the record." },
+              { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+                body: "(barely) The one sum I never ran. A son who says no and means it. (Her hand finds his.) Bury the throne with me or don't bury me at all. Make it TRUE, Amar. Make the whole cruel thing have been worth..." },
+              { portraitId: "narrator",
+                body: "She does not finish the arithmetic. For the first time in thirty years, something of hers is left unbalanced, and her son sits with it on the cold marble until morning." }
+            ]
+          }
+        ]
+      },
+      duty: {
+        subtitle: "The Path Ends — Under Orders",
+        intro: "Dawn's command staff drafted the order three times and could not make an officer sign it: engage the Ravage command in the open and hold it on the ground until the coast batteries range the flagship. It is a staying order. Whoever executes it is the anvil. Amar read it once, signed it himself, and picked the squad that has never once broken under him. The path of duty ends where every honest officer knows it ends: at the front of your own order.",
+        outro: "The order held. The batteries spoke. The fleet rose. The report says four names held the processional against the Ravage command, and for once the report and the truth are the same document.",
+        dialogues: [
+          {
+            id: "b28_d_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "The order is HOLD, squad. Not win. Hold the commander on this marble until the batteries range that ship. I signed it myself because I will not make another officer carry it. Anyone who wants to fall back, fall back now, and no report will ever know." },
+              { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+                body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. All four names present." }
+            ]
+          },
+          {
+            id: "b28_d_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The commander falls as the first battery finds its range, and the flagship's shadow slides off the processional like a tide going out. The anvil held. The anvil is still standing, all four names of it." },
+              { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+                body: "(to the squad, hoarse) Report as written. (He folds the order away.) Khonu, wherever you are: I read it before I signed it. I'd sign it again. That's the whole doctrine, sergeant. It works." }
+            ]
+          }
+        ]
+      },
+      mercy: {
+        subtitle: "The Path Ends — The Surrendered Sword",
+        intro: "Archbold's empire is a corpse that hasn't fallen over: the fleet priced it and declined it, his marshals have stopped answering, and the King has retreated up the old coronation road with the last guard that still calls him sire. Every rule of the path you walked says the same thing about a cornered man who can still hurt people. Break him. Only him. The war will not miss one more body, and it will remember forever the one it didn't take.",
+        outro: "On the marble where his ancestors were crowned, Archbold surrenders his sword to the son he tried to unmake, and lives. The fourth surrender was a captain. The last one is a king. The war ends with the sound of steel set down, not driven in.",
+        victory: defeatUnit("archbold", { label: "Break the King" }),
+        buildEnemies: () => [
+          ENEMIES.archbold(20),
+          ENEMIES.royalGuard("pf_m1", 2831, 18),
+          ENEMIES.royalGuard("pf_m2", 2832, 18),
+          ENEMIES.royalArcher("pf_m3", 2833, 17),
+          ENEMIES.royalArcher("pf_m4", 2834, 17)
+        ],
+        dialogues: [
+          {
+            id: "b28_m_open",
+            trigger: { kind: "round_start", round: 1 },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold", expression: "righteous_fury",
+                body: "Come to gloat, heir? The sky itself refused my kingdom. There is nothing left to take from me but the sword, and the sword you will have to TAKE." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "I'm not here to take anything, father. I'm here to make you put it down. (Draws.) Squad: the guard yields when he does. He goes down whole. Nobody dies on this marble who doesn't insist." }
+            ]
+          },
+          {
+            id: "b28_m_duel",
+            trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "archbold" },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold", expression: "offering_peace",
+                body: "(breathing hard) You fight like her. You spare like no one I have ever met. What ARE you, boy? Whose victory is this supposed to be?" },
+              { speaker: "Amar", portraitId: "amar", expression: "guarded",
+                body: "A surgeon taught our path: you can stop a man without ending him, and she never once asked which side the wound was on. (Steel level.) Yield, father. Live long enough to be sorry. That's the sentence." }
+            ]
+          },
+          {
+            id: "b28_m_bv",
+            trigger: { kind: "before_victory" },
+            beats: [
+              { portraitId: "narrator",
+                body: "The King goes down and stays down, and his last guard, watching the pattern the squad has made of the entire war, kneels and sets their steel on the marble. Archbold reverses his sword and offers the hilt." },
+              { speaker: "King Archbold", portraitId: "archbold", expression: "offering_peace",
+                body: "(the sword flat across his palms) The kings of Grude never once surrendered this. (A long breath.) It was a worse sword for it. Take it, son. Teach it what you taught them." }
+            ]
+          }
+        ]
+      }
+    }
   },
   {
     id: "b29_aftermath",
     index: 29,
     title: "Twenty-Ninth Battle",
     subtitle: "The Aftermath",
-    intro: "The Ravage fleet is gone. The remaining fight is whatever survived your last decision.",
+    intro: "The Ravage fleet is gone. What remains on the field where Dawn's war began is everything the great powers dropped as they fell: imperial remnants with no king to answer to, deserters with empty larders, and a handful of Ravage stragglers the fleet did not wait for. The remaining fight is whatever survived your last decision. The squad crosses the old field one final time to close the door.",
     outro: "The war is over for the people who lived through it.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
-    playable: false,
+    playable: true,
+    unlocks: null,
+    map: aftermathMap,
+    buildPlayers: () => [
+      PLAYERS.amar(),
+      PLAYERS.maya(),
+      PLAYERS.ning(),
+      PLAYERS.leo()
+    ],
+    buildEnemies: () => [
+      ENEMIES.royalGuard("am_rg1", 2901, 17),
+      ENEMIES.royalGuard("am_rg2", 2902, 17),
+      ENEMIES.banditSwordsman("am_b1", 2903, 16),
+      ENEMIES.banditSpearton("am_b2", 2904, 16),
+      ENEMIES.ravageTrooper("am_rv1", 2905, 18),
+      ENEMIES.ravageTrooper("am_rv2", 2906, 18)
+    ],
     difficultyLabel: "Climactic",
-    // Spoils: 2 elixirs + 1 royal lens. Cleanup engagement,
-    // modest haul — the squad isn't fighting for resources at
-    // this point, they're fighting to close the door.
-    rewards: ["elixir", "elixir", "royal_lens"]
+    rewards: ["elixir", "elixir", "royal_lens"],
+    dialogues: [
+      {
+        id: "b29_open",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+            body: "The same field, Amar. Serrick's trench line is still there under the grass. (She counts the figures picking over the wrecks.) Nobody out there is fighting FOR anything anymore. That's what makes them dangerous, and that's what makes this the last one." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then we end it the way we fought it. Clean, and for the people behind us. (Draws, one last time.) Squad: the door closes today. Walk it shut." }
+        ]
+      },
+      {
+        id: "b29_bv",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { portraitId: "narrator",
+            body: "The last blade on the field drops, and no horn answers, no wave follows, no sky lights. The quiet arrives the way the fleet did: all at once, and bigger than anyone expected." },
+          { speaker: "Leo", portraitId: "leo", expression: "resolute",
+            body: "(listening to the nothing) Is that it? (Nobody answers.) Ash and me were going to fly the coast when it ended. (A breath.) It ended. We're going to go fly the coast." }
+        ]
+      }
+    ]
   },
   {
     id: "b30_epilogue",
@@ -2679,6 +3329,33 @@ export const BATTLES: BattleNode[] = [
     difficultyLabel: "Epilogue"
   }
 ];
+
+// ---- Seven Paths divergence (B23/B24/B28) ----------------------------------
+//
+// The endgame climaxes share ids, maps, and save keys across all five
+// war-facing paths, but each path notices its own war: overrides swap
+// the framing text, the dialogues, the enemy roster, and the win
+// condition per path. Scenes resolve the node THROUGH the player's
+// chosen path (BattleScene create, BattlePrep intro, EndScene outro);
+// everything keyed by BattleId (saves, suspend, unlocks, completion)
+// stays path-agnostic.
+export interface PathOverride {
+  subtitle?: string;
+  intro?: string;
+  outro?: string;
+  victory?: VictoryCondition;
+  buildEnemies?: () => UnitDef[];
+  dialogues?: BattleDialogue[];
+  atmosphere?: AtmosphereKind;
+}
+
+export const resolveBattleForPath = (
+  node: BattleNode,
+  path: SevenPath | null
+): BattleNode => {
+  const o = path ? node.pathOverrides?.[path] : undefined;
+  return o ? { ...node, ...o, pathOverrides: undefined } : node;
+};
 
 // Accepts a plain string for ergonomic call sites (URL params, save files,
 // scene.start payloads), but the predicate compares against the typed

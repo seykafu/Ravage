@@ -111,7 +111,15 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   // standing squad of four. Exile/forgetting never reach these.
   b20_dawn_war:                ["amar", "ning", "maya", "leo"],
   b21_archbold_advances:       ["amar", "ning", "maya", "leo"],
-  b22_grude_burns:             ["amar", "ning", "maya", "leo"]
+  b22_grude_burns:             ["amar", "ning", "maya", "leo"],
+  // Fleet arc (B23-B29): the same four carry the campaign to its end.
+  b23_path_climax_a:           ["amar", "ning", "maya", "leo"],
+  b24_path_climax_b:           ["amar", "ning", "maya", "leo"],
+  b25_fleet_arrival:           ["amar", "ning", "maya", "leo"],
+  b26_coastal_hold:            ["amar", "ning", "maya", "leo"],
+  b27_orbital_descent:         ["amar", "ning", "maya", "leo"],
+  b28_path_final:              ["amar", "ning", "maya", "leo"],
+  b29_aftermath:               ["amar", "ning", "maya", "leo"]
 };
 
 // Resolve the player's current active squad based on their save's

@@ -35,7 +35,12 @@ export const ENEMY_PALETTES: Record<string, UnitPalette> = {
   royal_guard: { primary: 0x9c1a3c, secondary: 0x4d0c1d, accent: 0xefd07a, skin: 0xb38a6a, hair: 0x161616 },
   ndari:     { primary: 0x4f2a4a, secondary: 0x231022, accent: 0xeac35a, skin: 0xc69372, hair: 0x191412 },
   kian:      { primary: 0x1a3a6a, secondary: 0x0a1838, accent: 0xefcf6a, skin: 0xc8a07e, hair: 0x202020 },
-  archbold:  { primary: 0x101018, secondary: 0x000000, accent: 0xff3030, skin: 0x9e8a72, hair: 0xc8c8d8 }
+  archbold:  { primary: 0x101018, secondary: 0x000000, accent: 0xff3030, skin: 0x9e8a72, hair: 0xc8c8d8 },
+  // The Ravage fleet — the off-world enemy of the endgame arc. Deep
+  // sea-glass teal over black with a cold luminous accent: reads as
+  // "not from any kingdom on this map" next to the redgold imperials
+  // and earth-tone rebels.
+  ravage:    { primary: 0x14383a, secondary: 0x081a1c, accent: 0x7affd9, skin: 0x8a9a96, hair: 0x0e1414 }
 };
 
 // Map class color overlays so different units of the same class look distinct.

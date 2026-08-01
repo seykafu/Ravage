@@ -4,7 +4,7 @@ import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getMusic } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
-import { battleById } from "../data/battles";
+import { battleById, resolveBattleForPath } from "../data/battles";
 import type { ClassKind, ItemKind, UnitDef, WeaponKind } from "../combat/types";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
@@ -12,7 +12,7 @@ import { ITEM_CATALOG } from "../combat/items";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
-import { clearSuspendedBattle, getAssignedInventory, loadSave } from "../util/save";
+import { clearSuspendedBattle, getAssignedInventory, getSevenPath, loadSave } from "../util/save";
 import type { BattleId } from "../data/contentIds";
 
 interface PrepArgs { battleId: BattleId; }
@@ -56,7 +56,9 @@ export class BattlePrepScene extends Phaser.Scene {
   init(data: PrepArgs): void { this.battleId = data.battleId; }
 
   create(): void {
-    const node = battleById(this.battleId);
+    const rawNode = battleById(this.battleId);
+    // Per-path intro/subtitle for the endgame climaxes.
+    const node = rawNode ? resolveBattleForPath(rawNode, getSevenPath(loadSave())) : undefined;
     if (!node) { this.scene.start("OverworldScene"); return; }
 
     const bgKey = ensureBackdropForKey(this, node.backdropKey);

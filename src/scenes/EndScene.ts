@@ -2,11 +2,11 @@ import Phaser from "phaser";
 import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { Button } from "../ui/Button";
 import { drawPanel } from "../ui/Panel";
-import { battleById, BATTLES } from "../data/battles";
+import { battleById, BATTLES, resolveBattleForPath } from "../data/battles";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropForKey } from "../art/BackdropArt";
-import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
+import { getSevenPath, loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ITEM_CATALOG } from "../combat/items";
 import type { ItemKind } from "../combat/types";
@@ -50,19 +50,18 @@ const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b19_path_opener_exile: "post_path_opener_exile",
   b19_path_opener_mercy: "post_path_opener_mercy",
   b19_path_opener_forgetting: "post_path_opener_forgetting",
-  // War arc — B22 closes the authored stretch until the fleet battles
-  // (B23+) ship; its epilogue rolls credits with a "to be continued".
+  // War arc — B22's epilogue bridges into the fleet arc (B23+).
   b22_grude_burns: "post_grude_burns"
 };
 
 // The campaign's terminal battles. Exile and forgetting end at their B19
 // epilogues (walking away from the war IS the ending); the five war
-// paths converge and currently end at B22 (Grude Burns) until the fleet
-// arc ships.
+// paths run the full campaign to B29 (The Aftermath), whose per-path
+// ending arc rolls credits.
 const FINAL_PLAYABLE = new Set<BattleId>([
   "b19_path_opener_exile",
   "b19_path_opener_forgetting",
-  "b22_grude_burns"
+  "b29_aftermath"
 ]);
 
 export class EndScene extends Phaser.Scene {
@@ -76,8 +75,28 @@ export class EndScene extends Phaser.Scene {
     this.outcome = data.outcome;
   }
 
+  // Post-battle arc routing. Static POST_ARC covers the linear spine;
+  // B29 (the campaign's final battle) routes to the chosen path's ending
+  // arc: five different codas for five different wars.
+  private resolvePostArc(): ArcId | undefined {
+    if (this.battleId === "b29_aftermath") {
+      const path = getSevenPath(loadSave());
+      switch (path) {
+        case "vengeance":   return "post_ending_vengeance";
+        case "restoration": return "post_ending_restoration";
+        case "revolution":  return "post_ending_revolution";
+        case "duty":        return "post_ending_duty";
+        case "mercy":       return "post_ending_mercy";
+        default:            return undefined;
+      }
+    }
+    return POST_ARC[this.battleId];
+  }
+
   create(): void {
-    const node = battleById(this.battleId);
+    const rawNode = battleById(this.battleId);
+    // Per-path outro text for the endgame climaxes.
+    const node = rawNode ? resolveBattleForPath(rawNode, getSevenPath(loadSave())) : undefined;
     const isVictory = this.outcome === "player";
 
     const bdKey = node?.backdropKey ?? "bg_thuling";
@@ -223,7 +242,7 @@ export class EndScene extends Phaser.Scene {
         sfxConfirm();
         this.cameras.main.fadeOut(450, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
-          const arc = POST_ARC[this.battleId];
+          const arc = this.resolvePostArc();
           if (arc) {
             this.scene.start("StoryScene", { arcId: arc });
           } else {
@@ -314,7 +333,7 @@ export class EndScene extends Phaser.Scene {
       // Trigger the primary button by simulating its click target.
       // Simpler: re-route directly.
       if (isVictory) {
-        const arc = POST_ARC[this.battleId];
+        const arc = this.resolvePostArc();
         this.cameras.main.fadeOut(300, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () =>
           arc ? this.scene.start("StoryScene", { arcId: arc }) : this.scene.start("OverworldScene")

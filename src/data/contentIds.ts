@@ -163,9 +163,15 @@ export type ArcId =
   | "post_path_opener_exile"
   | "post_path_opener_mercy"
   | "post_path_opener_forgetting"
-  // War-arc epilogue: after B22 (Grude Burns), the last authored beat
-  // before the fleet arc (B23+) lands. Routes to credits until then.
-  | "post_grude_burns";
+  // War-arc bridge: after B22 (Grude Burns), into the fleet arc.
+  | "post_grude_burns"
+  // Campaign endings: after B29 (The Aftermath), one coda per
+  // war-facing path. Exile and forgetting ended at their B19 epilogues.
+  | "post_ending_vengeance"
+  | "post_ending_restoration"
+  | "post_ending_revolution"
+  | "post_ending_duty"
+  | "post_ending_mercy";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

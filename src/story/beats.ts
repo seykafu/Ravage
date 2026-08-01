@@ -1298,7 +1298,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The upper district, the morning after",
     music: "emotional",
     backdrop: "grude",
-    next: "credits",
+    next: "prep:b23_path_climax_a",
     beats: [
       N("Morning comes up through the smoke and finds the upper district still standing. Scorched, gap-toothed, ash to the ankles on the market row. Standing."),
       N("The squad walks the row at first light. On every scorched door, chalk names: who lived here, what stood here, what the city refuses to forget. Nobody organized it. Nobody had to."),
@@ -1309,7 +1309,101 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "Then we keep our own. Every name on those doors goes in it. Not Dawn's arithmetic. Ours: what it cost, and what it bought, and who it saved." },
       N("East of the city, past the harbour, the horizon has been the wrong colour for three days. Sailors won't put out. Birds are flying inland. The war believes it is the biggest thing in the world."),
-      N("The sky is about to disagree. To be continued.")
+      N("The sky is about to disagree. But first, the war has one more bottleneck to force: the canyon narrows, and whoever is waiting in them.")
+    ]
+  },
+
+  // ═══════════ Campaign endings — after B29, one coda per war path ═══════════
+  // The five wars end five ways. Each coda is the path's B19 epilogue
+  // grown up: the same voice, after everything it cost.
+
+  post_ending_vengeance: {
+    id: "post_ending_vengeance",
+    title: "The Emptied List",
+    subtitle: "The canyon rim, one year later",
+    music: "emotional",
+    backdrop: "cliffs",
+    next: "credits",
+    beats: [
+      N("They come back to the canyon where the first name fell, because Maya says ledgers should be closed where they were opened."),
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "Every name crossed off, and the anger outlived the list anyway. Selene warned me about that part too, in her way. She just never said what to do with what's left over." },
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "You put it down, Amar. Same as a sword. (She burns the list at last, and the wind takes it.) It was never a list of names. It was a list of mornings you got up anyway. Those, you keep." },
+      N("The kings are gone, the fleet is gone, and the man who did the arithmetic fishes with Leo on the coast most summers, and sleeps, on the whole, well enough."),
+      N("Vengeance, paid in full, turns out to buy the same thing as every other path: an ordinary life, and the right to find it enough. He does. Most mornings, he does.")
+    ]
+  },
+
+  post_ending_restoration: {
+    id: "post_ending_restoration",
+    title: "The First Harvest",
+    subtitle: "A road in Anthros, in autumn",
+    music: "everydayLife",
+    backdrop: "farmland",
+    next: "credits",
+    beats: [
+      N("The war ends and the paperwork begins, and Amar discovers that Lucian was right about this too: the slow work doesn't cheer, it just holds."),
+      { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "The Thuling road's open all the way through. First grain caravan ran it last week with NO escort. (He can't stop grinning.) No escort, Amar. That's the whole war, right there, backwards." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "One held road, one fed village at a time. (He weighs a grain sack the way Lucian used to.) No flag on it but the one people raise themselves. He'd have walked this road forever, Leo. So we will." },
+      N("There is no coronation. There is a school in the forge's old building, and a woman teaching letters in it, and a bell that rings for lessons now."),
+      N("Restoration is the longest road and the least heroic, and it is the only one where the last page is a beginning. The free state of Anthros raises its first flag in spring. Nobody important is on the platform. That was the point.")
+    ]
+  },
+
+  post_ending_revolution: {
+    id: "post_ending_revolution",
+    title: "No Thrones",
+    subtitle: "The processional, reclaimed by grass",
+    music: "death",
+    backdrop: "grude",
+    next: "credits",
+    beats: [
+      N("They bury Madame Dawn on the marble where she meant to be crowned, because her son decides the difference between a grave and a throne is exactly the difference the revolution was for."),
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "She asked me to make it true. All of it, worth the whole cruel sum. (He sets no stone. Stones become shrines; shrines become thrones.) So: no kings. Not even dead ones. Not even her." },
+      { speaker: "Maya", portraitId: "maya", expression: "tearful",
+        body: "The councils are holding, Amar. Grude, Anthros, the coast towns. Arguing constantly. Deciding slowly. Nobody kneeling anywhere. (A breath.) It's ugly and it's loud and it WORKS. She'd have hated how well it works." },
+      N("The revolution's monument is a habit, not a statue: the empty place at the top of every hall where a high seat used to be, kept empty on purpose, forever."),
+      N("Grass takes the processional within three summers. Children play on the marble. None of them can name a king. Maya, who planned it since before she met him, calls that the only victory she ever wanted whole.")
+    ]
+  },
+
+  post_ending_duty: {
+    id: "post_ending_duty",
+    title: "The Officer Who Reads",
+    subtitle: "A garrison desk, early",
+    music: "everydayLife",
+    backdrop: "study",
+    next: "credits",
+    beats: [
+      N("The new army keeps him. Not as a king, which he refuses yearly, but as the officer whose signature means the order was read, costed, and true."),
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Khonu's whole doctrine fits on one line: read the list before you sign it. (He signs one. Declines to sign another, and files the reasons.) The second part of the doctrine is the reasons. Nobody teaches the second part." },
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "Your fourth batch of lieutenants graduates tomorrow, captain. They all quote you. Badly. (She grins.) 'The report and the truth should be the same document.' They think you made it up under fire. I never correct them." },
+      N("The army he serves is imperfect, bends him a little every year, and burns no towns, because the officer who reads is always exactly where the order lands."),
+      N("Duty, walked to the end, is the quietest of the five wars: it never ends, it just gets read, one list at a time, by someone who signs his own name to it. He pays its costs honestly. It bends him less than he feared.")
+    ]
+  },
+
+  post_ending_mercy: {
+    id: "post_ending_mercy",
+    title: "The Surrendered Sword",
+    subtitle: "A ward that used to be an armoury",
+    music: "emotional",
+    backdrop: "monastery",
+    next: "credits",
+    beats: [
+      N("The King lives. That single sentence does more work in the new world than any battle did: every garrison that hears it lowers its price for yielding."),
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "My father grows vegetables at the coast fort now, under guard, badly. He writes me letters about soil. (A breath.) I answer them. Yul never said the hardest part of sparing people is AFTERWARD." },
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "The surrendered sword hangs over the ward door, hilt out, where every wounded soldier from both armies can see it on the way in. Nobody has taken it down in four years, Amar. Nobody's even touched it." },
+      N("The wards empty slowly, the way wars actually end. Imperial sergeants teach rebel farmhands to set bone. Somebody complains about the porridge in two accents at once."),
+      N("Mercy, held all the way to the end, is the only path whose monument keeps working after the story stops: a door people walk through, a sword nobody needs, a war that is genuinely, boringly, mercifully over.")
     ]
   }
 };
