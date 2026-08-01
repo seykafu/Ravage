@@ -109,7 +109,8 @@ import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
 import { addTorchGlow } from "./battle/Lighting";
-import { atmosphereForBackdrop, createAtmosphere } from "./battle/Atmosphere";
+import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
+import { ashBurst, hitStop, soulWisp } from "./battle/Impact";
 
 interface BattleArgs {
   battleId: BattleId;
@@ -359,7 +360,7 @@ export class BattleScene extends Phaser.Scene {
     // snapshot below, so it stays a world object: the two-camera split
     // routes it to the world camera and the UI camera ignores it. Depth 23
     // keeps it above tiles/units but below the active marker, fog, and HUD.
-    this.atmosphere = createAtmosphere(this, atmosphereForBackdrop(node.backdropKey), 23) ?? undefined;
+    this.atmosphere = createAtmosphere(this, node.atmosphere ?? atmosphereForBackdrop(node.backdropKey), 23) ?? undefined;
 
     const map = node.map;
     const grid = new Grid(map);
@@ -896,6 +897,13 @@ export class BattleScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-T", () => {
       this.dangerToggle?.setEnabled(!this.dangerToggle.isEnabled());
     });
+
+    // Battle title card — a one-time cinematic slate ("TWENTIETH BATTLE /
+    // Dawn's War") that fades up over the field as the camera fade-in
+    // completes, holds, and dissolves. Skipped on resume: the returning
+    // player knows where they are. Created pre-sweep so the bulk pin
+    // routes it to the UI camera automatically.
+    if (!this.resumeRequested) this.showBattleTitleCard(node.title, node.subtitle);
 
     this.pushLog(`${node.subtitle} begins.`);
     this.initiativeBar.refresh();
@@ -2871,6 +2879,77 @@ export class BattleScene extends Phaser.Scene {
   // dim before the flash — without this the flash would silently strip
   // the spent tint and the player would see a fresh-looking sprite for a
   // unit that's already acted.
+  // Cinematic title slate on battle entry: two gold rules, the battle
+  // ordinal in small caps, the subtitle large beneath. Fades up after
+  // the camera fade-in, holds, dissolves. Pure presentation — input is
+  // never blocked.
+  private showBattleTitleCard(title: string, subtitle: string): void {
+    const cx = (GAME_WIDTH - PANEL_W) / 2;
+    const cy = GAME_HEIGHT * 0.30;
+    const ruleW = 340;
+    const topRule = this.add.rectangle(cx, cy - 34, ruleW, 2, 0xd9b257, 0.9);
+    const botRule = this.add.rectangle(cx, cy + 44, ruleW, 2, 0xd9b257, 0.9);
+    const small = this.add.text(cx, cy - 16, title.toUpperCase(), {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "16px",
+      color: "#d9b257",
+      stroke: "#1a0e04",
+      strokeThickness: 3,
+      letterSpacing: 6
+    }).setOrigin(0.5);
+    const big = this.add.text(cx, cy + 14, subtitle, {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "34px",
+      color: "#f4e4b0",
+      stroke: "#1a0e04",
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 12, fill: true }
+    }).setOrigin(0.5);
+    const card = this.add.container(0, 0, [topRule, botRule, small, big]);
+    card.setDepth(1200).setAlpha(0);
+    // Rules sweep outward from nothing as the text fades up.
+    topRule.setScale(0, 1);
+    botRule.setScale(0, 1);
+    this.tweens.add({ targets: card, alpha: 1, duration: 450, delay: 350, ease: "Sine.easeOut" });
+    this.tweens.add({ targets: [topRule, botRule], scaleX: 1, duration: 600, delay: 350, ease: "Cubic.easeOut" });
+    this.tweens.add({
+      targets: card,
+      alpha: 0,
+      y: -14,
+      duration: 500,
+      delay: 2300,
+      ease: "Sine.easeIn",
+      onComplete: () => card.destroy()
+    });
+  }
+
+  // Death dissolve — the fall of a unit, upgraded from a bare alpha
+  // fade: grey-out, a squash-and-topple, dark ash kicked off the body,
+  // and one soft light rising away. Shared by every death site (normal
+  // kills, Destruct mutual kills, counter deaths).
+  private playDeathDissolve(view: UnitView, u: Unit): void {
+    playUnitState(this, view.sprite, u, "death");
+    this.stopBreathing(view);
+    view.sprite.setTint(0x6a6a72);
+    this.tweens.add({
+      targets: view.sprite,
+      alpha: 0.15,
+      angle: 90,
+      scaleY: view.sprite.scaleY * 0.8,
+      duration: 460,
+      ease: "Cubic.easeIn"
+    });
+    this.tweens.add({
+      targets: view.shadow,
+      alpha: 0,
+      scaleX: 0.5,
+      scaleY: 0.5,
+      duration: 460
+    });
+    ashBurst(this, (o) => this.addWorld(o), view.sprite.x, view.baseY + 18);
+    soulWisp(this, (o) => this.addWorld(o), view.sprite.x, view.sprite.y, ensureDotTexture(this));
+  }
+
   private flashSprite(s: Phaser.GameObjects.Sprite, color: number, u?: Unit): void {
     s.setTintFill(color);
     this.time.delayedCall(120, () => {
@@ -3032,14 +3111,37 @@ export class BattleScene extends Phaser.Scene {
     }
     const impactAngle = Math.atan2(ty - av.sprite.y, tx - av.sprite.x);
     if (result.hit) {
+      // Hit-stop: a beat of near-frozen time the instant damage lands.
+      // 60ms reads as weight, 120ms as a crit. Restores through
+      // applyTurnSpeed so the fast-forward 2x comes back correctly.
+      hitStop(this, result.crit ? 120 : 60, () => this.applyTurnSpeed());
       if (result.crit) {
         sfxCrit();
-        // Crit kicker: short camera shake to sell the impact. The hit-pause
-        // (a brief scene-wide freeze) is sequenced in animateAttack so it
-        // doesn't fight with this frame's tweens.
+        // Crit kicker: heavier camera shake on top of the hit-stop.
         this.cameras.main.shake(180, 0.012);
       } else {
         sfxAttackHit();
+        // Every hit moves the camera a little — scaled by damage so a
+        // 3-point poke whispers and a 14-point cleave thumps.
+        this.cameras.main.shake(70, 0.0035 + Math.min(0.004, result.damage * 0.0002));
+      }
+      // Directional flinch: the defender is shoved along the blow's line
+      // and recovers. Skipped on kills — the death dissolve owns the
+      // sprite from here. startBreathing on completion re-anchors them
+      // to their tile (the anti-float invariant).
+      if (!result.defenderKilled) {
+        const fx = Math.cos(impactAngle) * (result.crit ? 11 : 7);
+        const fy = Math.sin(impactAngle) * (result.crit ? 11 : 7);
+        this.stopBreathing(tv);
+        this.tweens.add({
+          targets: tv.sprite,
+          x: tv.sprite.x + fx,
+          y: tv.sprite.y + fy,
+          duration: 80,
+          ease: "Cubic.easeOut",
+          yoyo: true,
+          onComplete: () => this.startBreathing(tv)
+        });
       }
       // Impact VFX: melee blows get the crescent slash sweep in the attack
       // direction; every hit gets the radial spark. Arrows skip the slash —
@@ -3071,23 +3173,7 @@ export class BattleScene extends Phaser.Scene {
     if (result.defenderKilled) {
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
-      playUnitState(this, tv.sprite, defender, "death");
-      this.stopBreathing(tv);
-      this.tweens.add({
-        targets: tv.sprite,
-        alpha: 0.18,
-        angle: 90,
-        duration: 420
-      });
-      // Shadow shrinks and fades with the body so the corpse doesn't sit on
-      // a still-vivid black puddle.
-      this.tweens.add({
-        targets: tv.shadow,
-        alpha: 0,
-        scaleX: 0.5,
-        scaleY: 0.5,
-        duration: 420
-      });
+      this.playDeathDissolve(tv, defender);
       // XP award: only player kills of enemies count. Allied kills (friendly
       // fire, AI vs AI) and enemy kills of players don't award anything.
       // The reward is computed from base-by-class × level-diff modifier; a
@@ -3221,10 +3307,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          playUnitState(this, av.sprite, u, "death");
-          this.stopBreathing(av);
-          this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
-          this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
+          this.playDeathDissolve(av, u);
         }
         this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
       }
@@ -3285,10 +3368,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          playUnitState(this, av.sprite, u, "death");
-          this.stopBreathing(av);
-          this.tweens.add({ targets: av.sprite, alpha: 0.18, angle: 90, duration: 420 });
-          this.tweens.add({ targets: av.shadow, alpha: 0, scaleX: 0.5, scaleY: 0.5, duration: 420 });
+          this.playDeathDissolve(av, u);
         }
         this.pushLog(`${actualDefender.name}'s last act drags ${u.name} down.`);
       }

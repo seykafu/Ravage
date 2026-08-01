@@ -4,6 +4,7 @@ import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBan
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
+import type { AtmosphereKind } from "../scenes/battle/Atmosphere";
 import type { DialogBeat } from "../story/beats";
 
 // ---- Mid-battle dialogue --------------------------------------------------
@@ -80,6 +81,11 @@ export interface BattleNode {
   buildEnemies?: () => UnitDef[];
   difficultyLabel: string;
   unlockNote?: string;
+  // Ambient particle weather override. When absent, the biome default
+  // from atmosphereForBackdrop applies (backdrop-driven). Set it when a
+  // battle's story wants different air than its backdrop implies —
+  // e.g., B22 shares bg_grude with the harbor fights but burns.
+  atmosphere?: AtmosphereKind;
   // What a victory here unlocks. Three states:
   //   undefined → default: the next battle in the BATTLES array. Right
   //               for the linear B1–B17 spine.
@@ -2328,6 +2334,7 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
+    atmosphere: "dust", // churned field air over the war ground
     map: warFieldMap,
     buildPlayers: () => [
       PLAYERS.maya(),
@@ -2395,6 +2402,7 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
+    atmosphere: "dust", // road dust off two hundred boots
     map: kingsRoadMap,
     buildPlayers: () => [
       PLAYERS.amar(),
@@ -2463,6 +2471,7 @@ export const BATTLES: BattleNode[] = [
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
+    atmosphere: "embers", // the district is burning
     map: upperDistrictMap,
     buildPlayers: () => [
       PLAYERS.amar(),

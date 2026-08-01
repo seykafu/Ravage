@@ -18,7 +18,7 @@ const DOT_TEX = "atmo_dot";
 
 // One soft radial-gradient dot, tinted per emitter. Mirrors the cached
 // canvas-texture pattern in RavageVfx.ts.
-const ensureDotTexture = (scene: Phaser.Scene): string => {
+export const ensureDotTexture = (scene: Phaser.Scene): string => {
   if (scene.textures.exists(DOT_TEX)) return DOT_TEX;
   const size = 16;
   const tex = scene.textures.createCanvas(DOT_TEX, size, size);
