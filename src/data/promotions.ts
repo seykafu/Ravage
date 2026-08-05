@@ -27,7 +27,12 @@ const STANDARD_BOOST: Partial<UnitStats> = {
   power: 2,
   armor: 2,
   speed: 2,
-  movement: 1
+  movement: 1,
+  // The Tier 2 signature: one more action every turn. AP is the
+  // strongest stat in the game — this is what makes a promotion FEEL
+  // like a promotion, and the late-game enemy AP scaling in
+  // Difficulty.ts exists to answer it.
+  ap: 1
 };
 
 // Per-character promotion table. Keyed by the character's UnitDef.id so

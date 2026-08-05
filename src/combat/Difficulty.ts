@@ -58,6 +58,12 @@ const POWER_BUMP = 1;
 const MOOK_RATES = { hp: 1.25, power: 0.65, armor: 0.30, speed: 0.30 };
 const BOSS_RATES = { hp: 3.0, power: 0.55, armor: 0.25, speed: 0.20 };
 
+// Rank-and-file fielded far above their reference level also gain +1 AP
+// — the answer to the squad's promotion AP. Kicks in at the same era
+// promotions do (war-arc royal guards, late bandit veterans). Bosses
+// already run 3 AP by design.
+const MOOK_AP_BONUS_AT = 8;
+
 export const applyDifficultyToEnemy = (def: UnitDef, battleId: BattleId): UnitDef => {
   if (BASELINE_BATTLES.has(battleId)) return def;
   const isBoss = def.classKind === "boss";
@@ -70,7 +76,8 @@ export const applyDifficultyToEnemy = (def: UnitDef, battleId: BattleId): UnitDe
       hp: Math.round(def.stats.hp + rates.hp * levelsAbove) + (isBoss ? 0 : HP_BUMP),
       power: Math.round(def.stats.power + rates.power * levelsAbove) + (isBoss ? 0 : POWER_BUMP),
       armor: Math.round(def.stats.armor + rates.armor * levelsAbove),
-      speed: Math.round(def.stats.speed + rates.speed * levelsAbove)
+      speed: Math.round(def.stats.speed + rates.speed * levelsAbove),
+      ap: def.stats.ap + (!isBoss && levelsAbove >= MOOK_AP_BONUS_AT ? 1 : 0)
     }
   };
 };

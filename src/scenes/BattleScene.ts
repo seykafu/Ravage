@@ -16,6 +16,7 @@ import { FastForwardButton } from "../ui/FastForwardButton";
 import { IconToggleButton } from "../ui/IconToggleButton";
 import { allEnemyDanger } from "../combat/Danger";
 import { battleById, resolveBattleForPath } from "../data/battles";
+import { PROMOTIONS } from "../data/promotions";
 import {
   BattleState,
   applyAttackOutcome,
@@ -422,9 +423,17 @@ export class BattleScene extends Phaser.Scene {
       for (const p of players) {
         const rec = getCharacterRecord(save, p.id);
         if (rec) {
+          const factoryAp = p.stats.ap;
           p.level = rec.level;
           p.state.xp = rec.xp;
           p.stats = { ...rec.stats };
+          // Back-fill the Tier 2 AP for records promoted BEFORE the
+          // +1 AP promotion boost landed: promoted class, AP still at
+          // the factory baseline. One-time — the post-battle record
+          // snapshot persists the corrected value.
+          if (rec.classKind && rec.classKind === PROMOTIONS[p.id]?.toClass && p.stats.ap <= factoryAp) {
+            p.stats.ap = factoryAp + 1;
+          }
           p.state.hp = rec.stats.hp; // start the battle at full HP
           if (rec.classKind) p.classKind = rec.classKind;
           if (rec.abilities) p.abilities = rec.abilities;
