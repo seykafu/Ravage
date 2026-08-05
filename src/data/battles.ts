@@ -2553,7 +2553,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.remnantColonel(18),
@@ -2732,7 +2738,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.bellWarden(18),
@@ -2870,7 +2882,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.ravageTrooper("fa_t1", 2501, 19),
@@ -2934,7 +2952,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.ravageTrooper("ch_t1", 2601, 19),
@@ -2999,7 +3023,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.ravageHerald(19),
@@ -3062,7 +3092,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.ravageCommander(20),
@@ -3192,7 +3228,7 @@ export const BATTLES: BattleNode[] = [
       duty: {
         subtitle: "The Path Ends — Under Orders",
         intro: "Dawn's command staff drafted the order three times and could not make an officer sign it: engage the Ravage command in the open and hold it on the ground until the coast batteries range the flagship. It is a staying order. Whoever executes it is the anvil. Amar read it once, signed it himself, and picked the squad that has never once broken under him. The path of duty ends where every honest officer knows it ends: at the front of your own order.",
-        outro: "The order held. The batteries spoke. The fleet rose. The report says four names held the processional against the Ravage command, and for once the report and the truth are the same document.",
+        outro: "The order held. The batteries spoke. The fleet rose. The report says six names held the processional against the Ravage command, and for once the report and the truth are the same document.",
         dialogues: [
           {
             id: "b28_d_open",
@@ -3201,7 +3237,7 @@ export const BATTLES: BattleNode[] = [
               { speaker: "Amar", portraitId: "amar", expression: "resolute",
                 body: "The order is HOLD, squad. Not win. Hold the commander on this marble until the batteries range that ship. I signed it myself because I will not make another officer carry it. Anyone who wants to fall back, fall back now, and no report will ever know." },
               { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
-                body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. All four names present." }
+                body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. All six names present." }
             ]
           },
           {
@@ -3209,7 +3245,7 @@ export const BATTLES: BattleNode[] = [
             trigger: { kind: "before_victory" },
             beats: [
               { portraitId: "narrator",
-                body: "The commander falls as the first battery finds its range, and the flagship's shadow slides off the processional like a tide going out. The anvil held. The anvil is still standing, all four names of it." },
+                body: "The commander falls as the first battery finds its range, and the flagship's shadow slides off the processional like a tide going out. The anvil held. The anvil is still standing, all six names of it." },
               { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
                 body: "(to the squad, hoarse) Report as written. (He folds the order away.) Khonu, wherever you are: I read it before I signed it. I'd sign it again. That's the whole doctrine, sergeant. It works." }
             ]
@@ -3280,7 +3316,13 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      // Rejoined at the held city (post_grude_burns): Selene, hunting the
+      // same war from its shadows since her B7 escape, and Ranatoli,
+      // freed when the district fires cracked the prison row. The fleet
+      // arc plays six-strong.
+      PLAYERS.selene(),
+      PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
       ENEMIES.royalGuard("am_rg1", 2901, 17),

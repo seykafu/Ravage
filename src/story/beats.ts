@@ -1308,6 +1308,12 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "It isn't good or bad, Leo. It's spending. Everyone here is spending something. (She looks at Amar.) The question is always who keeps the ledger." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "Then we keep our own. Every name on those doors goes in it. Not Dawn's arithmetic. Ours: what it cost, and what it bought, and who it saved." },
+      N("They come with the morning's second hour. First, out of the prison row the fires cracked open: a shield the size of a door, and behind it, greyer and thinner and grinning like the war never touched him, Ranatoli."),
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "lecturing",
+        body: "Steel up, Amar. We bleed together or we feast together. Anything in between is shame. (He looks the squad over, two years late.) I said that to a boy once. Look what grew while I was in a cell." },
+      N("And behind him, out of the smoke like she was cut from it, the huntress who escaped a monastery and crossed an ocean on the trail of the same names the squad has been crossing out: Selene."),
+      { speaker: "Selene", portraitId: "selene",
+        body: "I've been three streets behind you since the harbour, watching who you spare. (A pause, and something in her settles.) Lucian's boy after all. Whatever the sky wants, it takes it from six of us now." },
       N("East of the city, past the harbour, the horizon has been the wrong colour for three days. Sailors won't put out. Birds are flying inland. The war believes it is the biggest thing in the world."),
       N("The sky is about to disagree. But first, the war has one more bottleneck to force: the canyon narrows, and whoever is waiting in them.")
     ]

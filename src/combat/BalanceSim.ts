@@ -67,6 +67,17 @@ const expectedSwing = (attacker: Unit, defender: Unit): number => {
 
 const avg = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
 
+// Offense is measured over the STRIKE CORE — the squad's four best
+// attackers against the target in question. The guardrail bounds were
+// tuned when every roster was four attackers; the fleet arc fields six
+// including a dedicated shieldbearer (Ranatoli), and a plain mean would
+// let one low-offense tank read as "enemies too spongy" when the units
+// that actually do the killing are on curve. The tank's contribution is
+// survivability, which enemyHtkPlayer already measures.
+const STRIKE_CORE = 4;
+const coreAvg = (perPlayerHtk: number[]): number =>
+  avg([...perPlayerHtk].sort((a, b) => a - b).slice(0, STRIKE_CORE));
+
 export interface BalanceRow {
   label: string;
   index: number;
@@ -88,13 +99,13 @@ const simulateNode = (node: BattleNode, label: string): BalanceRow | null => {
   const mooks = mookDefs.map((d) => createUnit(d, { x: 0, y: 0 }));
   const bosses = bossDefs.map((d) => createUnit(d, { x: 0, y: 0 }));
 
-  const pVsM = avg(players.flatMap((p) => mooks.map((m) => m.stats.hp / expectedSwing(p, m))));
+  const pVsM = coreAvg(players.map((p) => avg(mooks.map((m) => m.stats.hp / expectedSwing(p, m)))));
   const mVsP = avg(mooks.flatMap((m) => players.map((p) => p.stats.hp / expectedSwing(m, p))));
   const bVsP = bosses.length
     ? avg(bosses.flatMap((b) => players.map((p) => p.stats.hp / expectedSwing(b, p))))
     : null;
   const pVsB = bosses.length
-    ? avg(players.flatMap((p) => bosses.map((b) => b.stats.hp / expectedSwing(p, b))))
+    ? coreAvg(players.map((p) => avg(bosses.map((b) => b.stats.hp / expectedSwing(p, b)))))
     : null;
 
   return {

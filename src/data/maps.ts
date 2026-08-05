@@ -1336,7 +1336,9 @@ export const narrowsMap: MapDef = buildMap("narrows", "The Narrows", narrowsRows
     { x: 1, y: 3 }, // Amar
     { x: 1, y: 5 }, // Maya
     { x: 2, y: 4 }, // Ning
-    { x: 1, y: 4 }  // Leo
+    { x: 1, y: 4 }, // Leo
+    { x: 2, y: 3 }, // Selene
+    { x: 2, y: 5 }  // Ranatoli
   ],
   enemy: [
     { x: 11, y: 4 }, // Colonel Vasse (boss)
@@ -1375,7 +1377,9 @@ export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bel
     { x: 4, y: 7 }, // Amar
     { x: 5, y: 7 }, // Maya
     { x: 6, y: 7 }, // Ning
-    { x: 7, y: 7 }  // Leo
+    { x: 7, y: 7 }, // Leo
+    { x: 3, y: 7 }, // Selene
+    { x: 8, y: 7 }  // Ranatoli
   ],
   enemy: [
     { x: 5, y: 1 },  // Warden Sarto (boss), before the bell
@@ -1414,7 +1418,9 @@ export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Fi
     { x: 1, y: 4 }, // Amar
     { x: 1, y: 5 }, // Maya
     { x: 2, y: 4 }, // Ning
-    { x: 2, y: 5 }  // Leo
+    { x: 2, y: 5 }, // Leo
+    { x: 1, y: 3 }, // Selene
+    { x: 1, y: 6 }  // Ranatoli
   ],
   enemy: [
     { x: 10, y: 3 }, // trooper
@@ -1431,7 +1437,9 @@ export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Fi
     { x: 1, y: 4 }, // Amar
     { x: 2, y: 5 }, // Maya
     { x: 1, y: 6 }, // Ning
-    { x: 2, y: 3 }  // Leo
+    { x: 2, y: 3 }, // Leo
+    { x: 1, y: 5 }, // Selene
+    { x: 2, y: 6 }  // Ranatoli
   ],
   enemy: [
     { x: 11, y: 5 }, // Herald of the Ravage (boss)
@@ -1468,7 +1476,9 @@ export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coa
     { x: 2, y: 3 }, // Amar
     { x: 2, y: 5 }, // Maya
     { x: 1, y: 4 }, // Ning
-    { x: 2, y: 4 }  // Leo
+    { x: 2, y: 4 }, // Leo
+    { x: 1, y: 2 }, // Selene
+    { x: 1, y: 6 }  // Ranatoli
   ],
   enemy: [
     { x: 10, y: 2 }, // trooper
@@ -1508,7 +1518,9 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 5, y: 9 }, // Amar
     { x: 6, y: 9 }, // Maya
     { x: 5, y: 8 }, // Ning
-    { x: 7, y: 9 }  // Leo
+    { x: 7, y: 9 }, // Leo
+    { x: 4, y: 9 }, // Selene
+    { x: 7, y: 8 }  // Ranatoli
   ],
   enemy: [
     { x: 6, y: 1 },  // the path's final opponent (boss)
@@ -1528,7 +1540,9 @@ export const aftermathMap: MapDef = buildMap("aftermath", "The Field, After", wa
     { x: 2, y: 5 }, // Amar
     { x: 1, y: 4 }, // Maya
     { x: 2, y: 6 }, // Ning
-    { x: 1, y: 6 }  // Leo
+    { x: 1, y: 6 }, // Leo
+    { x: 1, y: 5 }, // Selene
+    { x: 2, y: 4 }  // Ranatoli
   ],
   enemy: [
     { x: 11, y: 3 }, // royal guard remnant

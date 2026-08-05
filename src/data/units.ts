@@ -15,7 +15,11 @@ const G_LUCIAN:   GrowthTable = { hp: 75, power: 50, armor: 60, speed: 25, movem
 const G_NING:     GrowthTable = { hp: 50, power: 60, armor: 25, speed: 60, movement: 15 };
 const G_MAYA:     GrowthTable = { hp: 50, power: 55, armor: 30, speed: 70, movement: 20 };
 const G_LEO:      GrowthTable = { hp: 65, power: 60, armor: 50, speed: 45, movement: 10 };
-const G_RANATOLI: GrowthTable = { hp: 80, power: 40, armor: 70, speed: 25, movement: 5 };
+// Ranatoli's power growth sits above pure-support so his rejoin at the
+// fleet arc (caught up ~10 levels past his authored L10) still chips
+// meaningfully through late armor. He remains a shieldbearer, not a
+// striker — the sim's strike-core metric excludes him for kill speed.
+const G_RANATOLI: GrowthTable = { hp: 80, power: 50, armor: 70, speed: 25, movement: 5 };
 const G_SELENE:   GrowthTable = { hp: 60, power: 70, armor: 35, speed: 65, movement: 15 };
 const G_KIAN:     GrowthTable = { hp: 65, power: 55, armor: 55, speed: 50, movement: 10 };
 // Rose joins the squad at B13 (Madame Dawn's Rebellion) as Dawn's
