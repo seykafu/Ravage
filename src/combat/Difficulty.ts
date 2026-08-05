@@ -32,25 +32,45 @@ const BASELINE_BATTLES: ReadonlySet<BattleId> = new Set<BattleId>([
   "b01_palace_coup"
 ]);
 
-// The bump itself. Conservative — +2 HP / +1 power across the board is
+// The flat bump. Conservative — +2 HP / +1 power across the board is
 // roughly "one extra clean swing of survival" on most mooks without
 // tipping into "you cannot win this without a Royal Lens" territory.
-// Armor intentionally NOT bumped — armor scales damage non-linearly
-// (damage = power - armor with a floor of 1), so even +1 armor on a
-// stack of mooks compounds into a meaningful slog.
 const HP_BUMP = 2;
 const POWER_BUMP = 1;
 
+// ---- Level scaling -----------------------------------------------------------
+//
+// Enemy factories author stats against a REFERENCE level
+// (UnitDef.statReferenceLevel — e.g. the Royal Guard's 30 HP was tuned
+// for L6). Battles field those same factories at much higher authored
+// levels, but until this pass the LEVEL only fed XP math — so a L16
+// guard fought with a L6 statline while the squad arrived with sixteen
+// levels of compounded growth and a promotion. The measured result
+// (see BalanceSim + BalanceReport): from B12 onward, enemies needed
+// 40-80 swings to kill a player. The war had no teeth.
+//
+// The scaling below grants per-level gains for every level above the
+// reference, at rates tuned against the simulated campaign curve so
+// rank-and-file stay killable in ~2-4 focused swings while genuinely
+// threatening the squad, and bosses keep out-pressuring their escorts.
+// Rates are per level; totals are rounded once at the end so partial
+// gains accumulate instead of vanishing.
+const MOOK_RATES = { hp: 1.25, power: 0.65, armor: 0.30, speed: 0.30 };
+const BOSS_RATES = { hp: 3.0, power: 0.55, armor: 0.25, speed: 0.20 };
+
 export const applyDifficultyToEnemy = (def: UnitDef, battleId: BattleId): UnitDef => {
   if (BASELINE_BATTLES.has(battleId)) return def;
-  // Bosses skip the bump — they're already long fights.
-  if (def.classKind === "boss") return def;
+  const isBoss = def.classKind === "boss";
+  const rates = isBoss ? BOSS_RATES : MOOK_RATES;
+  const levelsAbove = Math.max(0, def.level - (def.statReferenceLevel ?? def.level));
   return {
     ...def,
     stats: {
       ...def.stats,
-      hp: def.stats.hp + HP_BUMP,
-      power: def.stats.power + POWER_BUMP
+      hp: Math.round(def.stats.hp + rates.hp * levelsAbove) + (isBoss ? 0 : HP_BUMP),
+      power: Math.round(def.stats.power + rates.power * levelsAbove) + (isBoss ? 0 : POWER_BUMP),
+      armor: Math.round(def.stats.armor + rates.armor * levelsAbove),
+      speed: Math.round(def.stats.speed + rates.speed * levelsAbove)
     }
   };
 };

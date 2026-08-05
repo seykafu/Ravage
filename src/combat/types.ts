@@ -181,6 +181,12 @@ export interface UnitDef {
   // growths table simply don't roll new stats on level up (used for
   // single-encounter bosses and the like).
   growths?: GrowthTable;
+  // The level this def's authored STATS were tuned for. The difficulty
+  // layer scales stats for levels above this reference, so a Royal Guard
+  // fielded at L16 fights like a L16 soldier instead of the L6 statline
+  // the factory was written against. Unset = stats are already correct
+  // for def.level (no scaling).
+  statReferenceLevel?: number;
 }
 
 export interface UnitState {
