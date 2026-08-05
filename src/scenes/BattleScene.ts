@@ -324,6 +324,7 @@ export class BattleScene extends Phaser.Scene {
     this.battleId = data.battleId;
     this.resumeRequested = data.resume === true;
     this.tutorial = undefined;
+    this.pressBegunInScene = false;
     // Scene instances are reused across battles. The spotlight RT from a
     // dark battle (B4/B7/B11/B13/B27) is destroyed by scene shutdown, but
     // the FIELD survives — and update() touches it every frame. Left
@@ -570,6 +571,8 @@ export class BattleScene extends Phaser.Scene {
     // times across a battle (every dialogue, every modal). The
     // SHUTDOWN listener registered separately tears it down.
     this.events.on(Phaser.Scenes.Events.RESUME, () => {
+      // Any press armed before the pause is stale — the overlay owned it.
+      this.pressBegunInScene = false;
       this.refreshAllUnits();
       const cur = this.initiative.current();
       if (cur) this.drawActiveMarker(cur);
@@ -1459,6 +1462,15 @@ export class BattleScene extends Phaser.Scene {
   // and the camera doesn't move — so a normal tile/unit click still
   // works exactly as before.
   private static readonly CAMERA_DRAG_THRESHOLD = 6;
+  // True once a pointer PRESS has been seen while this scene is active.
+  // Dialogue overlays advance on pointer-DOWN and the battle acts on
+  // pointer-UP — so the click that closes a dialogue used to leak its
+  // release into the resumed battle and, with the move overlay auto-
+  // shown, walk the active unit to whatever tile sat under the cursor.
+  // Requiring the press to have STARTED here swallows that phantom
+  // release: no character ever moves from a click the player aimed at
+  // a dialogue box.
+  private pressBegunInScene = false;
 
   // Camera panning. Originally right-click-drag only, which was
   // undiscoverable — players instinctively try LEFT-click drag, get
@@ -1474,6 +1486,9 @@ export class BattleScene extends Phaser.Scene {
   // drag stays cleanly separated.
   private setupCameraDragPan(): void {
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
+      // A press that BEGINS while the battle is active arms the click
+      // pipeline — see pressBegunInScene.
+      this.pressBegunInScene = true;
       // Record the press origin for every button. Whether this becomes
       // a pan is decided in pointermove once the pointer has actually
       // moved past the threshold.
@@ -2585,6 +2600,11 @@ export class BattleScene extends Phaser.Scene {
   // ---- Pointer handlers ----
   // Resolves on pointer-UP so a left-drag camera pan never commits an action.
   private handlePointerUp(p: Phaser.Input.Pointer): void {
+    // Phantom release: the press happened while a dialogue (or other
+    // overlay) had the scene paused. Swallow it — acting on it would
+    // move/attack from a click the player aimed at the overlay.
+    if (!this.pressBegunInScene) return;
+    this.pressBegunInScene = false;
     // A release that ended a camera pan is consumed by the pan, not the game.
     if (this.pressWasDrag) { this.pressWasDrag = false; return; }
     if (this.fsm.isInputBlocked()) return;
