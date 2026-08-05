@@ -270,22 +270,14 @@ export class BattleDialogueScene extends Phaser.Scene {
     this.showBeat(this.beats[this.idx]!);
   }
 
-  // Subtle life on the speaking portrait while text types: a slow scale
-  // pulse around the authored base scale. Stopped and snapped back to
-  // base the moment the reveal completes so the resting frame is clean.
-  private setSpeaking(on: boolean): void {
+  // Speaking-state hook. The voice blips carry the "talking" feel; the
+  // portrait itself stays STILL — an earlier version scale-pulsed it,
+  // but portraits are top-anchored so the growth read as the portrait
+  // bobbing up and down. Kept as a hook (and a defensive scale reset)
+  // in case a better-behaved life effect lands later.
+  private setSpeaking(_on: boolean): void {
     if (this.speakPulse) { this.speakPulse.stop(); this.speakPulse = undefined; }
-    if (!this.portrait) return;
-    this.portrait.setScale(this.portraitBaseScale);
-    if (!on) return;
-    this.speakPulse = this.tweens.add({
-      targets: this.portrait,
-      scale: this.portraitBaseScale * 1.012,
-      duration: 200,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut"
-    });
+    if (this.portrait) this.portrait.setScale(this.portraitBaseScale);
   }
 
   private ensurePortraitMask(centerX: number, topY: number): Phaser.GameObjects.Image {
