@@ -320,7 +320,7 @@ export const caravanMap: MapDef = buildMap("caravan", "Foothill Canyon Road", ca
   enemy: [
     { x: 4, y: 1 },  // North-shelf archer (advance west to engage)
     { x: 9, y: 1 },  // North-shelf archer
-    { x: 4, y: 7 },  // South-shelf archer
+    { x: 5, y: 7 },  // South-shelf archer (x=4 is a shelf rock — see row 7)
     { x: 9, y: 7 },  // South-shelf archer
     { x: 12, y: 4 }, // Spearton sealing east entrance
     { x: 11, y: 5 }, // Spearton sealing east
@@ -761,8 +761,8 @@ export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Arc
   // reflect Grude empire elite.
   enemy: [
     { x: 6,  y: 0 },  // Royal Captain (boss — holdPositionUntil)
-    { x: 3,  y: 1 },  // Crown Archer, podium west
-    { x: 10, y: 1 },  // Crown Archer, podium east
+    { x: 4,  y: 1 },  // Crown Archer, podium west (x=3 is a column)
+    { x: 9,  y: 1 },  // Crown Archer, podium east (x=10 is a column)
     { x: 2,  y: 4 },  // Royal Guard, north bench west
     { x: 11, y: 4 },  // Royal Guard, north bench east
     { x: 7,  y: 7 }   // Royal Guard, advancing through fountain
@@ -928,8 +928,8 @@ export const bridgeMap: MapDef = buildMap("bridge", "River Bridge, Grude", bridg
     { x: 11, y: 3 }, // Royal Guard, east
     { x: 12, y: 2 }, // Crown Archer, east-north
     { x: 12, y: 6 }, // Crown Archer, east-south
-    { x: 3,  y: 2 }, // hired knife (bandit swordsman) — drops in behind, NW
-    { x: 3,  y: 6 }  // hired knife (bandit swordsman) — drops in behind, SW
+    { x: 2,  y: 2 }, // hired knife (bandit swordsman) — drops in behind, NW (x=3 is a lamp)
+    { x: 2,  y: 6 }  // hired knife (bandit swordsman) — drops in behind, SW (x=3 is a lamp)
   ]
 });
 
@@ -1369,11 +1369,13 @@ const bellCourtRows = [
   [Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw]
 ];
 export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bellCourtRows, {
+  // Row 7 — the clear rank inside the south colonnade (row 8's x=4/x=7
+  // are pillars).
   player: [
-    { x: 4, y: 8 }, // Amar
-    { x: 5, y: 8 }, // Maya
-    { x: 6, y: 8 }, // Ning
-    { x: 7, y: 8 }  // Leo
+    { x: 4, y: 7 }, // Amar
+    { x: 5, y: 7 }, // Maya
+    { x: 6, y: 7 }, // Ning
+    { x: 7, y: 7 }  // Leo
   ],
   enemy: [
     { x: 5, y: 1 },  // Warden Sarto (boss), before the bell
@@ -1417,7 +1419,7 @@ export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Fi
   enemy: [
     { x: 10, y: 3 }, // trooper
     { x: 11, y: 5 }, // trooper
-    { x: 10, y: 7 }, // trooper
+    { x: 9,  y: 7 }, // trooper (x=10 is fused slag)
     { x: 12, y: 4 }, // lancer
     { x: 12, y: 6 }, // lancer
     { x: 13, y: 3 }, // marksman
@@ -1433,7 +1435,7 @@ export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Fi
   ],
   enemy: [
     { x: 11, y: 5 }, // Herald of the Ravage (boss)
-    { x: 9,  y: 3 }, // trooper
+    { x: 8,  y: 3 }, // trooper (x=9 is fused slag)
     { x: 9,  y: 7 }, // trooper
     { x: 10, y: 5 }, // lancer
     { x: 12, y: 2 }, // marksman
