@@ -6,6 +6,7 @@ import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
+import { speakBlip } from "../ui/voice";
 import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
@@ -98,6 +99,12 @@ export class StoryScene extends Phaser.Scene {
   private skipBtn!: Button;
   private bgImage!: Phaser.GameObjects.Image;
   private revealing = false;
+  // Speaking-portrait life: the current beat's voice id for blips, the
+  // portrait's authored base scale, and the pulse tween that breathes
+  // while text types.
+  private speakingId?: string;
+  private portraitBaseScale = 1;
+  private speakPulse?: Phaser.Tweens.Tween;
   private fullText = "";
   // Pagination state. A "beat" can span multiple "pages" if its body wraps to
   // more lines than fit in the panel. The portrait + speaker name stay fixed
@@ -223,6 +230,7 @@ export class StoryScene extends Phaser.Scene {
   private showBeat(beat: DialogBeat): void {
     // Portrait + speaker change only between beats, not between pages of the
     // same beat. Keep this work outside showCurrentPage().
+    this.speakingId = beat.portraitId;
     if (this.portrait) { this.portrait.destroy(); this.portrait = undefined; }
     if (beat.portraitId && beat.portraitId !== "narrator") {
       const key = this.resolvePortraitKey(beat.portraitId, beat.expression);
@@ -240,6 +248,7 @@ export class StoryScene extends Phaser.Scene {
         // large and consistent across square / portrait / landscape sources.
         const scale = Math.max(PORTRAIT_AREA_W / srcW, PORTRAIT_AREA_H / srcH);
         this.portrait.setScale(scale);
+        this.portraitBaseScale = scale;
         // Mask the bottom edge with a vertical gradient so the cropped
         // boundary feathers into the dialog panel instead of cutting hard.
         this.portrait.setMask(this.ensurePortraitMask(areaCenterX, areaTopY).createBitmapMask());
@@ -266,20 +275,27 @@ export class StoryScene extends Phaser.Scene {
     this.fullText = page;
     this.bodyText.setText("");
     this.revealing = true;
+    this.setSpeaking(true);
     const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;
     this.continueBtn.setLabel(hasMore ? "More ▾" : "Continue ▸");
     let i = 0;
     const reveal = () => {
       if (!this.revealing) {
         this.bodyText.setText(this.fullText);
+        this.setSpeaking(false);
         return;
       }
       i++;
       this.bodyText.setText(this.fullText.slice(0, i));
+      // Voice blip on every other letterlike character — the cadence
+      // that reads as speech without machine-gunning the ear.
+      const ch = this.fullText[i - 1] ?? "";
+      if (i % 2 === 0 && /[a-zA-Z0-9]/.test(ch)) speakBlip(this.speakingId);
       if (i < this.fullText.length) {
         this.time.delayedCall(14, reveal);
       } else {
         this.revealing = false;
+        this.setSpeaking(false);
       }
     };
     reveal();
@@ -288,6 +304,24 @@ export class StoryScene extends Phaser.Scene {
   // Returns a positioned Image whose alpha runs from 1.0 at the top to 0 at
   // the bottom 30% — used as a BitmapMask for the portrait so its bottom
   // crop fades into the dialog panel.
+  // Subtle life on the speaking portrait while text types: a slow scale
+  // pulse around the authored base scale. Stopped and snapped back to
+  // base the moment the reveal completes so the resting frame is clean.
+  private setSpeaking(on: boolean): void {
+    if (this.speakPulse) { this.speakPulse.stop(); this.speakPulse = undefined; }
+    if (!this.portrait) return;
+    this.portrait.setScale(this.portraitBaseScale);
+    if (!on) return;
+    this.speakPulse = this.tweens.add({
+      targets: this.portrait,
+      scale: this.portraitBaseScale * 1.012,
+      duration: 200,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+  }
+
   private ensurePortraitMask(centerX: number, topY: number): Phaser.GameObjects.Image {
     if (!this.textures.exists(PORTRAIT_MASK_KEY)) {
       const tex = this.textures.createCanvas(PORTRAIT_MASK_KEY, PORTRAIT_AREA_W, PORTRAIT_AREA_H);
@@ -331,6 +365,7 @@ export class StoryScene extends Phaser.Scene {
     // before the reveal finishes.
     if (this.revealing) {
       this.revealing = false;
+      this.setSpeaking(false);
       this.bodyText.setText(this.fullText);
       // Re-evaluate the button label now that the page is fully shown.
       const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;

@@ -319,6 +319,13 @@ export const sfxXpGain = (): void => {
   tone({ freq: 1568, duration: 0.35, type: "sine", vol: 0.04, at: 0.07, send: 0.4 });
 };
 
+// Dialogue voice blip — one short syllable-tick of a character's voice.
+// Pitch and wave come from the per-character map in ui/voice.ts; a small
+// random detune per call keeps a sentence from sounding machine-gun flat.
+export const sfxVoiceBlip = (freq: number, type: OscillatorType = "triangle", vol = 0.035): void => {
+  tone({ freq: freq * rand(0.94, 1.06), duration: 0.045, type, vol, attack: 0.004 });
+};
+
 export const sfxPageTurn = (): void => {
   // Paper: breathy band-passed noise that rises then falls.
   noise({ duration: 0.07, vol: 0.05, filterType: "bandpass", freq: 900, freqEnd: 2800, q: 0.7, attack: 0.015 });

@@ -21,10 +21,31 @@ type WorldTag = <T extends Phaser.GameObjects.GameObject>(obj: T) => T;
 
 const DEPTH_IMPACT = 38;
 
-// Monotonic token so overlapping hit-stops (counter chains) don't have
-// the FIRST restore un-freeze the SECOND stop early. Only the latest
-// stop's timer restores.
+// Monotonic token so overlapping dilations (counter chains, a hit-stop
+// inside a Ravage slow-mo) don't have the FIRST restore un-freeze the
+// SECOND early. Only the latest dilation's timer restores.
 let stopToken = 0;
+
+// General time dilation: scale the scene's tween + timer clocks for a
+// wall-clock duration, then restore through the caller's callback (so
+// fast-forward's 2x comes back correctly).
+export const timeDilate = (
+  scene: Phaser.Scene,
+  scale: number,
+  ms: number,
+  restore: () => void
+): void => {
+  scene.tweens.timeScale = scale;
+  scene.time.timeScale = scale;
+  const token = ++stopToken;
+  // Wall-clock timer — scene timers are slowed by the dilation itself.
+  setTimeout(() => {
+    if (token !== stopToken) return;
+    // Scene may have shut down while we waited.
+    if (!scene.scene || !scene.sys || !scene.sys.isActive()) return;
+    restore();
+  }, ms);
+};
 
 export const hitStop = (
   scene: Phaser.Scene,
@@ -34,16 +55,7 @@ export const hitStop = (
   // Near-zero, not zero: a true 0 timescale stalls tween onComplete
   // chains some callers await. 0.05 freezes the eye without freezing
   // the machinery.
-  scene.tweens.timeScale = 0.05;
-  scene.time.timeScale = 0.05;
-  const token = ++stopToken;
-  // Wall-clock timer — scene timers are frozen by the stop itself.
-  setTimeout(() => {
-    if (token !== stopToken) return;
-    // Scene may have shut down while we waited.
-    if (!scene.scene || !scene.sys || !scene.sys.isActive()) return;
-    restore();
-  }, ms);
+  timeDilate(scene, 0.05, ms, restore);
 };
 
 // Dark ash motes at a death: kicked upward, then fluttering down past

@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
+import { speakBlip } from "../ui/voice";
 import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { getMusic, type MusicKey } from "../audio/Music";
@@ -92,6 +93,12 @@ export class BattleDialogueScene extends Phaser.Scene {
   private portrait?: Phaser.GameObjects.Image;
   private continueBtn!: Button;
   private revealing = false;
+  // Speaking-portrait life: the current beat's voice id for blips, the
+  // portrait's authored base scale, and the pulse tween that breathes
+  // while text types.
+  private speakingId?: string;
+  private portraitBaseScale = 1;
+  private speakPulse?: Phaser.Tweens.Tween;
   private fullText = "";
   private currentBeatPages: string[] = [];
   private currentPageIdx = 0;
@@ -181,6 +188,7 @@ export class BattleDialogueScene extends Phaser.Scene {
     // Portrait — render only when the beat names a character (skip
     // narrator and beats with only a speaker label). Silent failure to
     // resolve a portrait is by design: the dialog still shows.
+    this.speakingId = beat.portraitId;
     if (this.portrait) { this.portrait.destroy(); this.portrait = undefined; }
     if (beat.portraitId && beat.portraitId !== "narrator") {
       const key = this.resolvePortraitKey(beat.portraitId, beat.expression);
@@ -193,6 +201,7 @@ export class BattleDialogueScene extends Phaser.Scene {
         const srcH = tex.height || PORTRAIT_H;
         const scale = Math.max(PORTRAIT_AREA_W / srcW, PORTRAIT_AREA_H / srcH);
         this.portrait.setScale(scale);
+        this.portraitBaseScale = scale;
         this.portrait.setMask(this.ensurePortraitMask(areaCenterX, areaTopY).createBitmapMask());
       }
     }
@@ -212,20 +221,27 @@ export class BattleDialogueScene extends Phaser.Scene {
     this.fullText = page;
     this.bodyText.setText("");
     this.revealing = true;
+    this.setSpeaking(true);
     const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;
     this.continueBtn.setLabel(hasMore ? "More ▾" : "Continue ▸");
     let i = 0;
     const reveal = (): void => {
       if (!this.revealing) {
         this.bodyText.setText(this.fullText);
+        this.setSpeaking(false);
         return;
       }
       i++;
       this.bodyText.setText(this.fullText.slice(0, i));
+      // Voice blip on every other letterlike character — the cadence
+      // that reads as speech without machine-gunning the ear.
+      const ch = this.fullText[i - 1] ?? "";
+      if (i % 2 === 0 && /[a-zA-Z0-9]/.test(ch)) speakBlip(this.speakingId);
       if (i < this.fullText.length) {
         this.time.delayedCall(14, reveal);
       } else {
         this.revealing = false;
+        this.setSpeaking(false);
       }
     };
     reveal();
@@ -234,6 +250,7 @@ export class BattleDialogueScene extends Phaser.Scene {
   private advance(): void {
     if (this.revealing) {
       this.revealing = false;
+      this.setSpeaking(false);
       this.bodyText.setText(this.fullText);
       const hasMore = this.currentPageIdx + 1 < this.currentBeatPages.length;
       this.continueBtn.setLabel(hasMore ? "More ▾" : "Continue ▸");
@@ -251,6 +268,24 @@ export class BattleDialogueScene extends Phaser.Scene {
       return;
     }
     this.showBeat(this.beats[this.idx]!);
+  }
+
+  // Subtle life on the speaking portrait while text types: a slow scale
+  // pulse around the authored base scale. Stopped and snapped back to
+  // base the moment the reveal completes so the resting frame is clean.
+  private setSpeaking(on: boolean): void {
+    if (this.speakPulse) { this.speakPulse.stop(); this.speakPulse = undefined; }
+    if (!this.portrait) return;
+    this.portrait.setScale(this.portraitBaseScale);
+    if (!on) return;
+    this.speakPulse = this.tweens.add({
+      targets: this.portrait,
+      scale: this.portraitBaseScale * 1.012,
+      duration: 200,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
   }
 
   private ensurePortraitMask(centerX: number, topY: number): Phaser.GameObjects.Image {

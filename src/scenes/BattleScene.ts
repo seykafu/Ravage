@@ -111,7 +111,7 @@ import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
 import { addTorchGlow } from "./battle/Lighting";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
-import { ashBurst, hitStop, soulWisp } from "./battle/Impact";
+import { ashBurst, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 
 interface BattleArgs {
   battleId: BattleId;
@@ -572,10 +572,9 @@ export class BattleScene extends Phaser.Scene {
       // unit detail stay in sync with whatever the dialogue may have
       // changed (XP awards from before_victory beats, etc.).
       if (this.panelUnit) this.refreshSidePanel(this.panelUnit);
-      // Safety net: the battle theme is already started in create(), so
-      // this is normally a no-op (battleMusicStarted is set). Kept so a
-      // hypothetical future path that hasn't started music yet still
-      // recovers the theme on the first resume.
+      // For battles that opened on a round-1 dialogue, THIS is where the
+      // theme actually starts: the first resume is the opening dialogue
+      // closing. Idempotent — every later resume is a no-op.
       this.startBattleMusic();
     });
 
@@ -877,17 +876,23 @@ export class BattleScene extends Phaser.Scene {
     this.input.on("pointerup", (p: Phaser.Input.Pointer) => this.handlePointerUp(p));
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => this.handlePointerMove(p));
 
-    // Battle music — start the battle theme immediately on entering the
-    // battle map. Earlier this was deferred for battles that open on a
-    // round-1 dialogue so the theme wouldn't swell under the dialogue,
-    // but that let the BattlePrep cue carry over and play through any
-    // pre-fight beat staged on the battle map (Kian's blockade, the
-    // colony reveal, Rose's brief, etc.). Starting the theme here retires
-    // the prep loop at the seam (MusicManager.play cross-fades on a key
-    // change) so no pre-battle scene on the map ever inherits prep music.
-    // The RESUME handler's startBattleMusic() call is now a pure no-op
-    // (the flag is already set) — kept only as belt-and-suspenders.
-    this.startBattleMusic();
+    // Battle music timing. Two rules, both about the seams:
+    //   1. The BattlePrep cue must NEVER carry onto the battle map — so
+    //      when a battle opens on a round-1 dialogue we STOP the music
+    //      outright (fade to silence) rather than playing the theme
+    //      under the dialogue. The opening beats land in quiet.
+    //   2. The battle theme starts when the fight actually starts: the
+    //      first RESUME (the opening dialogue closing) calls
+    //      startBattleMusic. Battles with no opening dialogue, and
+    //      suspend-resumes (dialogue long since seen), start it here.
+    const opensOnDialogue = (node.dialogues ?? []).some(
+      (d) => d.trigger.kind === "round_start" && d.trigger.round <= 1
+    );
+    if (opensOnDialogue && !this.resumeRequested) {
+      getMusic(this).stop(600);
+    } else {
+      this.startBattleMusic();
+    }
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
     // Settings opener — sits on the top bar so it doesn't overlap the side panel.
@@ -1070,9 +1075,58 @@ export class BattleScene extends Phaser.Scene {
   private clearRavageAura(v: UnitView): void {
     clearRavageAura(v);
   }
+  // THE RAVAGE MOMENT — the title mechanic's signature. For about a
+  // second of wall time: the world slows to a third, drains of colour,
+  // a red shockwave rings off the unit, and the screen pulses red while
+  // the heartbeat riser (sfxRavage, inside announceRavaged) pounds.
+  // Then everything snaps back saturated and at speed. Non-blocking —
+  // the turn continues underneath, slowed.
   private announceRavaged(unit: Unit): void {
     const view = this.unitViews.get(unit.id);
     if (!view) return;
+
+    // 1. Time dilation — restores through applyTurnSpeed so the
+    //    fast-forward 2x comes back correctly.
+    timeDilate(this, 0.3, 950, () => this.applyTurnSpeed());
+
+    // 2. World desaturation: a temporary colour-matrix on the world
+    //    camera only (UI stays lit). Removed on the wall clock since
+    //    the scene clocks are dilated.
+    const fx = this.cameras.main.postFX.addColorMatrix();
+    fx.saturate(-0.85);
+    setTimeout(() => {
+      // Phaser's typings return Display.ColorMatrix from addColorMatrix
+      // while remove() wants FX.Controller — the runtime object is both.
+      try { this.cameras.main.postFX.remove(fx as unknown as Phaser.FX.Controller); } catch { /* scene gone */ }
+    }, 1050);
+
+    // 3. Red shockwave ring off the unit (world space; the dilated
+    //    clock stretches it in sync with the slow-mo).
+    const ring = this.addWorld(this.add.circle(view.sprite.x, view.sprite.y, 12));
+    ring.setStrokeStyle(3, 0xff3b30, 0.95).setDepth(39);
+    this.tweens.add({
+      targets: ring,
+      scale: 6,
+      alpha: 0,
+      duration: 420,
+      ease: "Cubic.easeOut",
+      onComplete: () => ring.destroy()
+    });
+
+    // 4. Red screen pulse — full-frame, pinned to the UI camera.
+    const flash = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0xc22418, 0.2)
+      .setOrigin(0, 0)
+      .setDepth(1150);
+    this.pin(flash);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 260,
+      ease: "Sine.easeOut",
+      onComplete: () => flash.destroy()
+    });
+
+    // 5. The floater, camera shake, riser, and log line.
     announceRavaged(this, view.sprite, unit, (msg) => this.pushLog(msg));
   }
 
