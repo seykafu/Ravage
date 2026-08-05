@@ -112,6 +112,7 @@ import { DialogueDirector } from "./battle/DialogueDirector";
 import { addTorchGlow } from "./battle/Lighting";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
 import { ashBurst, hitStop, soulWisp, timeDilate } from "./battle/Impact";
+import { TutorialDirector } from "./battle/Tutorial";
 
 interface BattleArgs {
   battleId: BattleId;
@@ -281,6 +282,9 @@ export class BattleScene extends Phaser.Scene {
   private dangerVisible = false;
   private dangerG!: Phaser.GameObjects.Graphics;
   private dangerToggle?: IconToggleButton;
+  // First-battle guided tutorial (B1 only, once per save). Constructed in
+  // create() when wanted; scene hooks forward events via notify().
+  private tutorial?: TutorialDirector;
   // Mid-battle dialogue trigger evaluation + firing. Owns its own
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
@@ -319,6 +323,7 @@ export class BattleScene extends Phaser.Scene {
   init(data: BattleArgs): void {
     this.battleId = data.battleId;
     this.resumeRequested = data.resume === true;
+    this.tutorial = undefined;
     // Scene instances are reused across battles. The spotlight RT from a
     // dark battle (B4/B7/B11/B13/B27) is destroyed by scene shutdown, but
     // the FIELD survives — and update() touches it every frame. Left
@@ -921,6 +926,13 @@ export class BattleScene extends Phaser.Scene {
     // routes it to the UI camera automatically.
     if (!this.resumeRequested) this.showBattleTitleCard(node.title, node.subtitle);
 
+    // First-battle guided tutorial — pop-ups + arrows through the first
+    // fight's controls. B1 only, once per save, never on resume.
+    if (TutorialDirector.wanted(this.battleId, this.resumeRequested)) {
+      this.tutorial = new TutorialDirector(this, (o) => this.pin(o));
+      this.tutorial.notify("battleStart");
+    }
+
     this.pushLog(`${node.subtitle} begins.`);
     this.initiativeBar.refresh();
 
@@ -1276,6 +1288,7 @@ export class BattleScene extends Phaser.Scene {
     // is idempotent per round, so resuming won't refill twice). If the
     // tab closes mid-turn, resume replays this turn from its start.
     this.writeSuspend();
+    this.tutorial?.notify("roundStart", this.initiative.round);
     // beginUnitTurn just promoted ravagedNextTurn → ravagedActive (if it
     // was set). Surface that with a one-shot RAVAGED! floater + camera
     // shake so the player sees the moment the buff lands. Persistent
@@ -1313,10 +1326,12 @@ export class BattleScene extends Phaser.Scene {
           this.fsm.send({ tag: "END_ENEMY_TURN" });
         }
         this.buildActionButtons(u);
+        this.tutorial?.notify("playerTurn");
       } else {
         // Enter enemyTurn before kicking off the AI loop so any tile click
         // arriving during the 450ms grace window is properly blocked.
         this.fsm.send({ tag: "BEGIN_ENEMY_TURN" });
+        this.tutorial?.notify("enemyPhase");
         this.time.delayedCall(450, () => this.runEnemyTurn(u));
       }
     };
@@ -2911,6 +2926,7 @@ export class BattleScene extends Phaser.Scene {
     this.startBreathing(view);
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} moves.`);
+    if (u.faction === "player") this.tutorial?.notify("moved");
     this.refreshUnitView(u);
     this.refreshSidePanel(u);
     // Rebuild the active marker's pulse tweens at the new sprite position.
@@ -3353,6 +3369,7 @@ export class BattleScene extends Phaser.Scene {
   private async animateAttack(u: Unit, target: Unit): Promise<void> {
     // Committing action — the move that got us here can no longer be undone.
     this.undoStack.length = 0;
+    if (u.faction === "player") this.tutorial?.notify("attacked");
     await this.lunge(u, target);
 
     // Player path is interpose-aware: roll the attack outcome WITHOUT
