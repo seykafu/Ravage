@@ -79,6 +79,7 @@ export interface ManifestEntry {
 const PORTRAIT_IDS = [
   // Named characters
   "amar", "lucian", "ning", "maya", "leo", "ranatoli", "selene",
+  "veya", "corin",
   "kian", "ndari", "nebu",
   "dawn", "fergus", "ndara", "archbold", "khione", "mira", "tali",
   "rose", "coyne",
