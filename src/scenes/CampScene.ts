@@ -451,17 +451,36 @@ export class CampScene extends Phaser.Scene {
       this.add.container(sx, sy, [sg, name, rule]).setRotation(tilt);
     });
 
-    // Lucian-specific: festival flag from B11's sea burial. If
-    // Lucian fell, his flag hangs near the marker.
+    // Lucian-specific: his spear, planted at the row's end the way
+    // soldiers mark their own. Leans a few degrees, worn haft wrap at
+    // the grip, firelight catching the blade's right edge (the camp
+    // fire is up-right of this spot). Quiet and readable at a glance —
+    // replaced an earlier festival-pennant graphic that read as noise.
     if (fallen.find((f) => f.id === "lucian")) {
-      const flagX = cx + 70;
-      const flagY = cy - 40;
-      g.fillStyle(0x6a3a2a, 1);
-      g.fillRect(flagX, flagY, 4, 80);
-      g.fillStyle(0xc97a4a, 0.85);
-      g.fillTriangle(flagX + 4, flagY, flagX + 50, flagY + 12, flagX + 4, flagY + 24);
-      g.lineStyle(1, 0x1a0e04, 1);
-      g.strokeRect(flagX, flagY, 4, 80);
+      const sg = this.add.graphics();
+      // Haft — weathered ash wood, darker at the soil line.
+      sg.fillStyle(0x5a4530, 1);
+      sg.fillRect(-1.5, -66, 3, 74);
+      sg.fillStyle(0x3c2e1e, 1);
+      sg.fillRect(-1.5, 2, 3, 6);
+      // Grip wrap: three worn leather bands where his hands lived.
+      sg.fillStyle(0x2e2318, 1);
+      sg.fillRect(-2.5, -34, 5, 3);
+      sg.fillRect(-2.5, -28, 5, 3);
+      sg.fillRect(-2.5, -22, 5, 3);
+      // Blade — leaf-shaped head, dark steel with a firelit right edge.
+      sg.fillStyle(0x6e7076, 1);
+      sg.fillTriangle(0, -88, -5, -66, 5, -66);
+      sg.fillStyle(0xc9a86a, 0.9);
+      sg.fillTriangle(0, -88, 2, -70, 5, -66);
+      // Socket collar.
+      sg.fillStyle(0x4a4038, 1);
+      sg.fillRect(-3, -67, 6, 3);
+      // Soil mound where it was driven in.
+      sg.fillStyle(0x2a2218, 1);
+      sg.fillEllipse(0, 6, 18, 6);
+      const spear = this.add.container(cx + 70, cy + 24, [sg]);
+      spear.setRotation(0.06);
     }
 
     this.add.text(cx, cy + 56, "Memorial", {

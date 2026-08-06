@@ -87,7 +87,7 @@ import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura } from "./battle/RavageVfx";
-import { fireArrow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
+import { critShockwave, fireArrow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
@@ -145,6 +145,12 @@ interface UnitView {
   // top of the glow rather than being washed out by it.
   ravageAura?: Phaser.GameObjects.Image;
   ravageAuraTween?: Phaser.Tweens.Tween;
+  // Damage-lag ghost: the HP ratio the bar is currently DISPLAYING.
+  // On damage the pale segment holds at the old value for a beat, then
+  // drains down to the real ratio — the classic "how much that hit
+  // actually cost" read. Healing snaps it up instantly.
+  hpShown?: number;
+  hpGhostTween?: Phaser.Tweens.Tween;
 }
 
 const PANEL_W = 280;
@@ -179,6 +185,15 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
 // with the bar's bottom.
 const TOP_BAR_HEIGHT = 80;
 const MAP_TOP_OFFSET = 92;
+
+// Terrains with no authored direction — safe to rotate in 90° steps for
+// per-cell variety. Directional surfaces (plank grain, carpet weave,
+// wall/door architecture, water/lava flow highlights) only mirror, so
+// their grain stays continuous across the board.
+const ISOTROPIC_TERRAINS: ReadonlySet<string> = new Set([
+  "grass", "stone", "dirt", "snow", "mud", "marble", "sand", "forest",
+  "rubble", "cobblestone", "cracked_earth", "ice", "moss_stone"
+]);
 
 export class BattleScene extends Phaser.Scene {
   private battleId!: BattleId;
@@ -613,14 +628,70 @@ export class BattleScene extends Phaser.Scene {
         // the alpha blend happens at the GPU level instead of being
         // baked into the bitmap.
         const tileKey = ensureTileTexture(this, tile.terrain, tileSeed + (x * 73 + y * 131));
-        this.add.image(px.x, px.y, tileKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+        const img = this.add.image(px.x, px.y, tileKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+        // De-repetition: every terrain used to stamp the SAME texture on
+        // every cell, so a field of grass read as wallpaper. A cheap
+        // seeded hash per cell picks a flip (and, for direction-free
+        // terrains, a 90° rotation step) plus a ±4% brightness jitter —
+        // same texture memory, but no two neighbouring cells identical.
+        const cellHash = ((x * 73856093) ^ (y * 19349663) ^ (tileSeed * 83492791)) >>> 0;
+        img.setFlipX((cellHash & 1) === 1);
+        if (ISOTROPIC_TERRAINS.has(tile.terrain)) {
+          img.setFlipY((cellHash & 2) === 2);
+          img.setRotation(((cellHash >> 2) & 3) * Math.PI / 2);
+        }
+        const lum = 0xf2 + ((cellHash >> 4) % 14); // 0xf2..0xff per channel
+        img.setTint((lum << 16) | (lum << 8) | lum);
         const obsKey = ensureObstacleTexture(this, tile.obstacle);
         if (obsKey) {
-          this.add.image(px.x, px.y, obsKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+          // Contact shadow first so the obstacle sits IN the world
+          // instead of floating on the tile like a sticker.
+          this.add.ellipse(px.x, px.y + TILE_SIZE * 0.3, TILE_SIZE * 0.72, TILE_SIZE * 0.2, 0x000000, 0.28);
+          const obs = this.add.image(px.x, px.y, obsKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
+          // Seeded mirror + a hair of scale wobble — a row of trees or
+          // rocks stops reading as copy-paste. Torches keep their facing
+          // (the flame highlight is authored) and thrones stay regal.
+          if (tile.obstacle !== "torch" && tile.obstacle !== "throne") {
+            obs.setFlipX((cellHash & 4) === 4);
+            const wobble = 0.96 + ((cellHash >> 6) % 9) / 100; // 0.96..1.04
+            obs.setDisplaySize(TILE_SIZE * wobble, TILE_SIZE * wobble);
+          }
           // Dynamic lighting (Tier 1) — warm flickering pool at each torch.
           // Added here (pre UI-pin) so it pools under units on the world camera.
           if (tile.obstacle === "torch") addTorchGlow(this, px.x, px.y);
         }
+      }
+    }
+
+    // Cloud shadows — outdoor maps get two huge, soft, near-black blobs
+    // drifting slowly across the board. Added after the tiles and before
+    // the overlays/units in add-order, so they darken the ground but
+    // never the pieces standing on it. The motion is what matters: a
+    // static board with moving light reads as a place, not a screenshot.
+    // Interiors and fire-lit battles (embers) skip them — ceilings and
+    // smoke columns don't cast drifting cumulus.
+    const atmoKind = node.atmosphere ?? atmosphereForBackdrop(node.backdropKey);
+    if (atmoKind === "snow" || atmoKind === "dust" || atmoKind === "motes") {
+      const worldW = map.width * TILE_SIZE;
+      const worldH = map.height * TILE_SIZE;
+      const dotKey = ensureDotTexture(this);
+      for (let c = 0; c < 2; c++) {
+        const cloud = this.add.image(
+          this.originX - 420 - c * (worldW * 0.6 + 500),
+          this.originY + worldH * (c === 0 ? 0.3 : 0.72),
+          dotKey
+        );
+        cloud.setTint(0x000000);
+        cloud.setAlpha(0.10);
+        cloud.setDisplaySize(560 + c * 180, 320 + c * 90);
+        this.tweens.add({
+          targets: cloud,
+          x: this.originX + worldW + 460,
+          duration: 52000 + c * 21000,
+          repeat: -1,
+          delay: c * 9000,
+          onRepeat: () => { cloud.x = this.originX - 460; }
+        });
       }
     }
 
@@ -987,7 +1058,11 @@ export class BattleScene extends Phaser.Scene {
     //   so the side bar text + portraits stay sharp + readable.
     //   Added on top of the main camera so UI composites above the
     //   FX'd world AND above the darkness layer.
-    applyCinematicFX(this);
+    // Vignette was wired in CinematicFX but never used — battles are
+    // exactly the "clear focal point" case it was built for. Subtle:
+    // darkened corners push the eye into the board without dimming UI
+    // (the UI camera never carries post-FX).
+    applyCinematicFX(this, { vignette: 0.3 });
     this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
     // Bulk-ignore all pinned UI on the world camera (post-FX cam).
     this.cameras.main.ignore(this.uiObjects);
@@ -1066,18 +1141,39 @@ export class BattleScene extends Phaser.Scene {
     // round wraps because Initiative.advance resets hasActedThisRound on
     // every unit when it bumps the round counter.
     this.applySpentTint(v.sprite, u);
-    const barW = 36;
-    const barH = 4;
-    const bx = px.x - barW / 2;
-    const by = px.y + TILE_SIZE / 2 - 8;
-    v.hpBg.fillStyle(0x000000, 0.7);
-    v.hpBg.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+    // HP bar with damage-lag ghost. On a hit the pale segment holds at
+    // the pre-hit ratio for a beat and then drains — the cost of the hit
+    // stays readable for half a second instead of vanishing in a frame.
     const ratio = Math.max(0, u.state.hp / u.stats.hp);
-    const color = u.faction === "player" ? 0x6db2ff : 0xd05a4a;
-    v.hpBar.fillStyle(0x2a2a36, 1);
-    v.hpBar.fillRect(bx, by, barW, barH);
-    v.hpBar.fillStyle(color, 1);
-    v.hpBar.fillRect(bx, by, Math.max(0, Math.floor(barW * ratio)), barH);
+    if (v.hpShown === undefined || ratio >= v.hpShown) {
+      // First draw, or healing: no ghost, snap to live.
+      v.hpGhostTween?.stop();
+      v.hpGhostTween = undefined;
+      v.hpShown = ratio;
+    } else {
+      // Took damage. Restart the drain from wherever the ghost currently
+      // is, so rapid successive hits stack into one continuous drain.
+      v.hpGhostTween?.stop();
+      const from = v.hpShown;
+      v.hpGhostTween = this.tweens.addCounter({
+        from,
+        to: ratio,
+        delay: 260,
+        duration: 460,
+        ease: "Cubic.easeOut",
+        onUpdate: (tw) => {
+          v.hpShown = tw.getValue() ?? ratio;
+          this.drawHpBar(v, v.unit);
+        },
+        onComplete: () => {
+          v.hpGhostTween = undefined;
+          v.hpShown = Math.max(0, v.unit.state.hp / v.unit.stats.hp);
+          this.drawHpBar(v, v.unit);
+        }
+      });
+    }
+    this.drawHpBar(v, u);
+    const by = px.y + TILE_SIZE / 2 - 8;
     v.stanceIcon.setPosition(px.x, by - 14);
     // Predicates, not equality — the combined "both" stance (Ready +
     // Defend in the same turn) must show BOTH glyphs, not fall through
@@ -1090,6 +1186,34 @@ export class BattleScene extends Phaser.Scene {
     // — refreshUnitView already runs after every action so the glow appears
     // / disappears in step with turn boundaries without an explicit hook.
     this.refreshRavageAura(v, u);
+  }
+
+  // Draw a unit's HP bar: dark backing, pale damage-ghost segment (the
+  // ratio still displayed from before the last hit), live fill on top.
+  // Called from refreshUnitView and from the ghost tween's onUpdate, so
+  // it must be safe against the unit dying mid-drain.
+  private drawHpBar(v: UnitView, u: Unit): void {
+    v.hpBg.clear();
+    v.hpBar.clear();
+    if (!isAlive(u)) return;
+    const px = this.projection.tileToWorld(u.state.position);
+    const barW = 36;
+    const barH = 4;
+    const bx = px.x - barW / 2;
+    const by = px.y + TILE_SIZE / 2 - 8;
+    v.hpBg.fillStyle(0x000000, 0.7);
+    v.hpBg.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+    const ratio = Math.max(0, u.state.hp / u.stats.hp);
+    const shown = Math.max(ratio, v.hpShown ?? ratio);
+    v.hpBar.fillStyle(0x2a2a36, 1);
+    v.hpBar.fillRect(bx, by, barW, barH);
+    if (shown > ratio) {
+      v.hpBar.fillStyle(0xf2e6cf, 0.9);
+      v.hpBar.fillRect(bx, by, Math.max(0, Math.floor(barW * shown)), barH);
+    }
+    const color = u.faction === "player" ? 0x6db2ff : 0xd05a4a;
+    v.hpBar.fillStyle(color, 1);
+    v.hpBar.fillRect(bx, by, Math.max(0, Math.floor(barW * ratio)), barH);
   }
 
   // Ravage State VFX moved out to src/scenes/battle/RavageVfx.ts as the
@@ -2939,6 +3063,9 @@ export class BattleScene extends Phaser.Scene {
               view.sprite.setFlipX(u.state.facingX === -1);
             }
             sfxStep();
+            // Kick a small puff at each stride boundary (not just the
+            // push-off) so a long run leaves a readable dust trail.
+            if (i > 0) this.spawnDust(a.x, a.y + 18);
           }
           const x = a.x + (b.x - a.x) * f;
           const y = a.y + (b.y - a.y) * f - 4;
@@ -2955,6 +3082,22 @@ export class BattleScene extends Phaser.Scene {
     view.shadow.setPosition(end.x, end.y - 4 + 22);
     view.baseY = end.y - 4;
     playUnitState(this, view.sprite, u, "idle");
+    // Landing weight: a fast, tiny squash-and-recover on arrival. Scale
+    // only — never y (baseY/breathing own that), so the anti-float
+    // invariant holds. Origin is the sprite's center, so the squash
+    // reads as settling onto the ground.
+    const sx0 = view.sprite.scaleX;
+    const sy0 = view.sprite.scaleY;
+    this.tweens.add({
+      targets: view.sprite,
+      scaleX: sx0 * 1.05,
+      scaleY: sy0 * 0.92,
+      duration: 60,
+      yoyo: true,
+      ease: "Sine.easeOut",
+      onComplete: () => view.sprite.setScale(sx0, sy0)
+    });
+    this.spawnDust(end.x, end.y + 18);
     this.startBreathing(view);
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} moves.`);
@@ -3178,6 +3321,27 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    // Anticipation: a 60ms coil (squash down, slight lean back) before
+    // the strike. Animation 101 — the wind-up is what makes the lunge
+    // land. Scale-only, so the anti-float invariant holds.
+    const lsx = av.sprite.scaleX;
+    const lsy = av.sprite.scaleY;
+    const dirX = tx > sx ? 1 : -1;
+    await new Promise<void>((res) => {
+      this.tweens.add({
+        targets: av.sprite,
+        scaleX: lsx * 1.04,
+        scaleY: lsy * 0.9,
+        x: sx - dirX * 3,
+        duration: 60,
+        ease: "Sine.easeOut",
+        yoyo: true,
+        onComplete: () => {
+          av.sprite.setScale(lsx, lsy);
+          res();
+        }
+      });
+    });
     // Shadow only follows the horizontal lunge — the body leans in but feet
     // stay on the same tile.
     this.tweens.add({
@@ -3283,6 +3447,8 @@ export class BattleScene extends Phaser.Scene {
         slashArc(this, (o) => this.addWorld(o), tx, ty, impactAngle, result.crit);
       }
       hitSpark(this, (o) => this.addWorld(o), tx, ty, result.crit);
+      // Crits own the moment: a gold ring snaps outward from the impact.
+      if (result.crit) critShockwave(this, (o) => this.addWorld(o), tx, ty);
       // Crisp white impact flash — reads instantly as "got hit", regardless
       // of unit palette. Red tint blended in with enemy reds before.
       this.flashSprite(tv.sprite, 0xffffff, defender);

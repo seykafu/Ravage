@@ -215,6 +215,33 @@ export const hitSpark = (
   }
 };
 
+// Crit shockwave — a thin gold ring that snaps outward from the impact
+// point and dies fast. Rides on top of hitSpark (which already goes gold
+// and grows on crits); the ring adds the "screen-owning moment" read
+// without any screen flash. Cheap: one Graphics, one tween.
+export const critShockwave = (
+  scene: Phaser.Scene,
+  world: WorldTag,
+  x: number,
+  y: number
+): void => {
+  const g = world(scene.add.graphics({ x, y }));
+  g.setDepth(DEPTH_IMPACT);
+  g.lineStyle(2.5, 0xffd45a, 0.95);
+  g.strokeCircle(0, 0, 6);
+  g.lineStyle(5, 0xffd45a, 0.25);
+  g.strokeCircle(0, 0, 6);
+  g.setScale(0.4);
+  scene.tweens.add({
+    targets: g,
+    scale: 4.2,
+    alpha: 0,
+    duration: 260,
+    ease: "Cubic.easeOut",
+    onComplete: () => g.destroy()
+  });
+};
+
 // A soft air-puff drifting past the defender — the visual for a miss,
 // so a whiffed swing shows motion instead of nothing but the floater.
 export const missWhiff = (
