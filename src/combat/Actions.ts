@@ -17,9 +17,15 @@ export interface BattleState {
 // Returned as a +N bonus added to the unit's base movement stat.
 // dactyl_king is the Tier 2 promotion of dactyl_rider (Leo) — it is still
 // mounted, so it must keep the bonus or a promoted dactyl would silently
-// lose 2 movement the moment it upgrades.
+// lose 2 movement the moment it upgrades. khan is the Tier 2 of knight
+// (Corin) and keeps the horse for the same reason.
 export const mountBonus = (u: Unit): number => {
-  if (u.classKind === "knight" || u.classKind === "dactyl_rider" || u.classKind === "dactyl_king") return 2;
+  if (
+    u.classKind === "knight" ||
+    u.classKind === "khan" ||
+    u.classKind === "dactyl_rider" ||
+    u.classKind === "dactyl_king"
+  ) return 2;
   return 0;
 };
 

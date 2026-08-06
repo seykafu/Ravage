@@ -94,35 +94,36 @@ const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   b15_inner_coup:      ["amar", "ning", "maya", "leo", "veya"],
   // B16: the five are ambushed on the Grude river bridge.
   b16_proposal:        ["amar", "ning", "maya", "leo", "veya"],
-  // B17: the five break for Khione's ship through Dawn's loyalists.
-  b17_lie:             ["amar", "ning", "maya", "leo", "veya"],
-  // B18: the five repel the empire's last boarding party on the open sea
+  // B17: six off the quay — Corin Eseldra breaks with Dawn's line
+  // mid-scene and fights his first battle against his old marshal.
+  b17_lie:             ["amar", "ning", "maya", "leo", "veya", "corin"],
+  // B18: the six repel the empire's last boarding party on the open sea
   // before Amar chooses his path. Same squad — no joins or losses at B18.
-  b18_path_chosen:     ["amar", "ning", "maya", "leo", "veya"],
+  b18_path_chosen:     ["amar", "ning", "maya", "leo", "veya", "corin"],
   // B19 path openers — squad composition is part of each path's meaning.
   // Exile and Forgetting are Amar alone: those paths ARE the leaving.
-  b19_path_opener_vengeance:   ["amar", "ning", "maya", "leo", "veya"],
-  b19_path_opener_restoration: ["amar", "ning", "maya", "leo", "veya"],
-  b19_path_opener_revolution:  ["amar", "ning", "maya", "leo", "veya"],
-  b19_path_opener_duty:        ["amar", "ning", "maya", "leo", "veya"],
+  b19_path_opener_vengeance:   ["amar", "ning", "maya", "leo", "veya", "corin"],
+  b19_path_opener_restoration: ["amar", "ning", "maya", "leo", "veya", "corin"],
+  b19_path_opener_revolution:  ["amar", "ning", "maya", "leo", "veya", "corin"],
+  b19_path_opener_duty:        ["amar", "ning", "maya", "leo", "veya", "corin"],
   b19_path_opener_exile:       ["amar"],
-  b19_path_opener_mercy:       ["amar", "ning", "maya", "leo", "veya"],
+  b19_path_opener_mercy:       ["amar", "ning", "maya", "leo", "veya", "corin"],
   b19_path_opener_forgetting:  ["amar"],
   // War arc (B20–B22): the five war-facing paths converge with the
-  // standing squad of five. Exile/forgetting never reach these.
-  b20_dawn_war:                ["amar", "ning", "maya", "leo", "veya"],
-  b21_archbold_advances:       ["amar", "ning", "maya", "leo", "veya"],
-  b22_grude_burns:             ["amar", "ning", "maya", "leo", "veya"],
-  // Fleet arc (B23-B29): seven-strong. Selene and Ranatoli rejoin at the
+  // standing squad of six. Exile/forgetting never reach these.
+  b20_dawn_war:                ["amar", "ning", "maya", "leo", "veya", "corin"],
+  b21_archbold_advances:       ["amar", "ning", "maya", "leo", "veya", "corin"],
+  b22_grude_burns:             ["amar", "ning", "maya", "leo", "veya", "corin"],
+  // Fleet arc (B23-B29): eight-strong. Selene and Ranatoli rejoin at the
   // held city (post_grude_burns) — the original coup squad's survivors
   // back for the end.
-  b23_path_climax_a:           ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b24_path_climax_b:           ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b25_fleet_arrival:           ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b26_coastal_hold:            ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b27_orbital_descent:         ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b28_path_final:              ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"],
-  b29_aftermath:               ["amar", "ning", "maya", "leo", "veya", "selene", "ranatoli"]
+  b23_path_climax_a:           ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b24_path_climax_b:           ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b25_fleet_arrival:           ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b26_coastal_hold:            ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b27_orbital_descent:         ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b28_path_final:              ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
+  b29_aftermath:               ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"]
 };
 
 // Resolve the player's current active squad based on their save's

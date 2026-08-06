@@ -5,7 +5,7 @@ import type { ArcId, RouteRef } from "../data/contentIds";
 
 export type PortraitId =
   | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
-  | "veya"
+  | "veya" | "corin"
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
   | "rose" | "coyne"
@@ -1094,8 +1094,15 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
         body: "Both are true, your highness. Your mother's cruelty: real love, real arithmetic, neither moving the other. This choice is only yours. Decide it elsewhere. Dawn's house has ears." },
       N("Word travels fast: the rebellion won't let its heir stroll onto a boat. Loyalists line the quay before Khione's gangway, Marshal Othren at their centre, and he won't step aside."),
+      N("At the line's flank, dismounted beside a grey warhorse, stands a lancer in oxblood plate with a small silver rose pinned at his cloak: Captain Corin Eseldra. Nine years Dawn's cavalry. Rose's younger brother. He is looking at the clasp, not the squad."),
+      { speaker: "Corin", portraitId: "corin", expression: "torn",
+        body: "Marshal. One question before we hold this dock. The plan the heir is running from, the one that burns the colony. Was my sister's post at the plaza part of that arithmetic? ...You sleep well, you said. That's my answer." },
+      { speaker: "Corin", portraitId: "corin", expression: "resolute",
+        body: "Rose took four bolts believing Dawn would never spend her. She was spent anyway, for a sum she was never shown. (He walks his horse across the line.) One lance for the gangway, your highness. My sister trained your Maya. Consider the account open." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "(quietly, to Amar) He stands the way she did. Exactly the way she did. Take the lance." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Then we don't ask him to. Squad: the gangway, the ship, open water. We're leaving Grude now. We'll decide what's next somewhere my mother hasn't drawn the map." }
+        body: "Then we don't ask him to step aside. Captain, welcome to nobody's arithmetic. Squad: the gangway, the ship, open water. We're leaving Grude now. We'll decide what's next somewhere my mother hasn't drawn the map." }
     ]
   },
   // -------- Post-Battle 17 (the break; Dawn lets him go) --------
@@ -1125,7 +1132,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("The water widens. Neither waves; they hold each other's eyes until the mist takes the dock. Then Dawn is gone, Grude with her, and the ship turns onto open sea."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "(after a long quiet) It isn't her board anymore, Amar. Not anyone's. The next move is yours. Whatever you choose, we're standing next to you. Lucian's instruction." },
-      N("The ship runs west; Grude sinks behind. Ahead, nothing is written: no warrant, no map, no army. Only the sea, the squad, and a question only Amar can answer.")
+      N("At the stern rail Corin stands alone with the silver rose clasp in his palm, watching the only country his sister is buried in get smaller. Nobody bothers him for a long while. Then Amar comes and stands beside him, and neither speaks, which is the correct amount."),
+      { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
+        body: "She'd have shown me the lemon tree, if I'd ever been let near your safe house. Nine years two streets apart and the rebellion kept us in separate pockets. Compartments. (He pins the clasp back on.) I ride with you now, your highness. Wherever the map isn't drawn." },
+      N("The ship runs west; Grude sinks behind. Ahead, nothing is written: no warrant, no map, no army. Only the sea, the squad, a lancer learning his sister secondhand, and a question only Amar can answer.")
     ]
   },
 
@@ -1331,6 +1341,9 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("And behind him, out of the smoke like she was cut from it, the huntress who escaped a monastery and crossed an ocean on the trail of the same names the squad has been crossing out: Selene."),
       { speaker: "Selene", portraitId: "selene",
         body: "I've been three streets behind you since the harbour, watching who you spare. (A pause, and something in her settles.) Lucian's boy after all. Whatever the sky wants, it takes it from all of us now." },
+      N("In the prison-row stables Corin finds what the empire left behind: a Grude destrier, deep-chested, war-trained, unridden since its rider died in the processional. They size each other up for a long minute. Then it lowers its head. The squad's Thuling veterans have a word from their border wars for a lancer who leads from the front of the front: Khan."),
+      { speaker: "Corin", portraitId: "corin", expression: "resolute",
+        body: "Rose held doors. I open them. (He swings up; the destrier turns without being asked.) Whatever's wrong with that horizon, it will meet the cavalry first.", promote: "corin" },
       N("East of the city, past the harbour, the horizon has been the wrong colour for three days. Sailors won't put out. Birds are flying inland. The war believes it is the biggest thing in the world."),
       N("The sky is about to disagree. But first, the war has one more bottleneck to force: the canyon narrows, and whoever is waiting in them.")
     ]

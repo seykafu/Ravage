@@ -31,6 +31,9 @@ const VOICES: Record<string, VoiceProfile> = {
   // a craftswoman's voice, distinct from the square-wave men (kian 185,
   // ndari 175) by sitting a fair way above them.
   veya:     { freq: 225, type: "square",   vol: 0.029 },
+  // Corin: a soldier's baritone — triangle warmth (he is not a villain
+  // register) sitting between Ranatoli (165) and Kian (185).
+  corin:    { freq: 195, type: "triangle", vol: 0.032 },
   ndari:    { freq: 175, type: "square",   vol: 0.028 },
   ndara:    { freq: 245, type: "triangle", vol: 0.034 },
   nebu:     { freq: 145, type: "square",   vol: 0.028 },

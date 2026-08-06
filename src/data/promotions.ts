@@ -87,6 +87,15 @@ export const PROMOTIONS: Partial<Record<string, PromotionData>> = {
     newAbility: "Refract",
     spriteClassOverride: "shinobi",
     statBoost: STANDARD_BOOST
+  },
+  // Corin fills the khan line — the one Tier 2 that sat in the union
+  // with no character promoting into it. Charge is declared-not-wired
+  // like the other Tier 2 signatures.
+  corin: {
+    toClass: "khan",
+    newAbility: "Charge",
+    spriteClassOverride: "spearton",
+    statBoost: STANDARD_BOOST
   }
   // kian: never promotes — turns hostile in B10 before any promotion beat fires.
   // selene: starts as "swordmaster" — already a Tier 2 at recruit (B7).

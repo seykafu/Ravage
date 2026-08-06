@@ -26,6 +26,11 @@ const G_SELENE:   GrowthTable = { hp: 60, power: 70, armor: 35, speed: 65, movem
 // damage curve stays flat and reliable — the growths just keep the raw
 // number relevant while everyone else's plate thickens.
 const G_VEYA:     GrowthTable = { hp: 45, power: 70, armor: 15, speed: 45, movement: 5 };
+// Corin: professional cavalry — balanced soldier growths, a touch of
+// everything, nothing spiked. His identity lives in the mount (+2 MOV
+// from mountBonus) and, post-promotion, the Khan's first-strike Charge,
+// not in any single stat outgrowing the roster.
+const G_CORIN:    GrowthTable = { hp: 65, power: 55, armor: 45, speed: 50, movement: 10 };
 const G_KIAN:     GrowthTable = { hp: 65, power: 55, armor: 55, speed: 50, movement: 10 };
 // Rose joins the squad at B13 (Madame Dawn's Rebellion) as Dawn's
 // most senior lieutenant — quick, deadly, devoted. Dies in
@@ -211,6 +216,30 @@ export const PLAYERS = {
     // average the moment she's first fielded.
     level: 1,
     growths: G_VEYA
+  }),
+  corin: (): UnitDef => ({
+    id: "corin",
+    name: "Corin",
+    shortName: "Co",
+    faction: "player",
+    classKind: "knight",
+    weapon: "spear",
+    // The squad's first mounted ground unit: knight classKind carries
+    // the +2 mountBonus (6 effective movement), spear reaches 1-2, and
+    // Roam extends the ride after the lance work is done. Solid but not
+    // tanky — cavalry dies when it stands still.
+    stats: { hp: 32, power: 11, armor: 5, speed: 8, movement: 4, ap: 3 },
+    artSeed: 11,
+    palette: PLAYER_PALETTES.corin,
+    portrait: true,
+    abilities: ["Roam"],
+    // No knight sprite folder yet — the spearton's lance silhouette
+    // stands in until cavalry art ships (same pattern as Kian).
+    spriteClassOverride: "spearton",
+    // Joins at B17 (the quay, breaking with Dawn's line). L1 like every
+    // recruit — catch-up fast-forwards him on first fielding.
+    level: 1,
+    growths: G_CORIN
   }),
   kian: (): UnitDef => ({
     id: "kian",

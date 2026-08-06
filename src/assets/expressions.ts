@@ -53,7 +53,9 @@ export const DEFAULT_VARIANT_FOR: ReadonlyMap<string, string> = new Map([
   ["rose", "neutral"],
   // Veya ships only named variants (neutral / wry_smile / focused /
   // alarmed / grim_resolve) — no plain veya.png. Same pattern as Rose.
-  ["veya", "neutral"]
+  ["veya", "neutral"],
+  // Corin: same pattern — five named variants, no plain corin.png.
+  ["corin", "neutral"]
 ]);
 
 // NOTE on "registered but no PNG on disk yet": listing a slug here does NOT
@@ -102,6 +104,10 @@ export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   // set shipped together — "focused" is the loupe-down sighting look
   // used for battle beats.
   veya:     ["neutral", "wry_smile", "focused", "alarmed", "grim_resolve"],
+  // Corin (B17+): Rose's brother, Dawn's cavalry captain turned. Full
+  // five-piece set shipped together — "torn" is the order he cannot
+  // follow; "quiet_grief" is Rose's ghost.
+  corin:    ["neutral", "quiet_grief", "torn", "battle_fury", "resolute"],
   mira:     [],
   tali:     []
 };

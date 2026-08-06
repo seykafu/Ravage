@@ -1690,14 +1690,17 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: quayMap,
     buildPlayers: () => [
-      // Post-Rose squad of five. Khione readies the ship — she is
-      // narratively present but not a combatant. Map slots ordered
-      // [Maya, Amar, Ning, Leo].
+      // Six from the quay: Corin breaks ranks with Dawn's line in
+      // before_lie and fights his first battle against his old
+      // marshal. Khione readies the ship — narratively present, not a
+      // combatant. Map slots ordered [Maya, Amar, Ning, Leo, Veya,
+      // Corin].
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // Marshal Othren + Dawn's loyalist rank-and-file. Her rebellion's
@@ -1755,6 +1758,18 @@ export const BATTLES: BattleNode[] = [
             body: "Then you and Coyne would have had a great deal to say to each other. He counted too. (Steel up.) I'm done being a number in everyone's sum, Othren. Mine or hers or yours. Move." }
         ]
       },
+      // adjacent_eot Corin/Othren — the marshal and the captain he
+      // trained. The rebellion's discipline arguing with its debt.
+      {
+        id: "b17_corin_othren",
+        trigger: { kind: "adjacent_eot", unitA: "corin", unitB: "dawn_loyalist" },
+        beats: [
+          { speaker: "Marshal Othren",
+            body: "Eseldra. Nine years I kept you mounted, fed, promoted. Your sister would put you back in this line by the ear." },
+          { speaker: "Corin", portraitId: "corin", expression: "battle_fury",
+            body: "Say her name with the number, Marshal. Rose, four bolts, for a plan she never saw whole. You counted her and slept. I'm done being in any column you keep. Ride through or stand down." }
+        ]
+      },
       // before_victory: the squad reaches the gangway. Othren, down or
       // bypassed, does not chase — he was an anchor, not a hound.
       {
@@ -1801,7 +1816,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // An imperial household boarding party — royal-tier, NOT bandits. This
@@ -1890,7 +1906,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // Lord Castor again — B14's retrieval knight, now the first name on
@@ -1960,7 +1977,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // War-scavengers — the lawlessness the empire's war leaves behind.
@@ -2029,7 +2047,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // The depot garrison — royal-tier supply troops under a depot
@@ -2099,7 +2118,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // An imperial assault column — more than a thin command should be
@@ -2224,7 +2244,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       // Only the holdout captain and his few hardliners fight — the rest
@@ -2353,7 +2374,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       ENEMIES.imperialGeneral(18),
@@ -2422,7 +2444,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       ENEMIES.vanguardCaptain(17),
@@ -2492,7 +2515,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
-      PLAYERS.veya()
+      PLAYERS.veya(),
+      PLAYERS.corin()
     ],
     buildEnemies: () => [
       ENEMIES.incendiaryCaptain(17),
@@ -2568,10 +2592,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2754,10 +2779,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2899,10 +2925,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2970,10 +2997,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3042,10 +3070,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3112,10 +3141,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3337,10 +3367,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ning(),
       PLAYERS.leo(),
       PLAYERS.veya(),
+      PLAYERS.corin(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays seven-strong.
+      // arc plays eight-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],

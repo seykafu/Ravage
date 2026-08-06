@@ -19,6 +19,10 @@ export const PLAYER_PALETTES: Record<string, UnitPalette> = {
   // Veya (B14+): slate-blue optician's coat over a scorched work apron,
   // amber lens-light accent — matches her portrait set.
   veya:   { primary: 0x4a6b8a, secondary: 0x5a4632, accent: 0xffb347, skin: 0x8a5c3f, hair: 0x3d3733 },
+  // Corin (B17+): charcoal riding coat leading, oxblood lacquer plates
+  // second, silver clasp accent. Charcoal-first deliberately — a red
+  // PRIMARY would read as an enemy palette on the board.
+  corin:  { primary: 0x3e3e48, secondary: 0x7e2b26, accent: 0xc9ccd4, skin: 0xb08a62, hair: 0x151210 },
   // Kian rides with the squad in early-game battles (b02 referenced, b04
   // ambush, b07/b08 escort), and turns hostile from b10 onward when his
   // suspicion crystallizes. Same character — same palette — appears here

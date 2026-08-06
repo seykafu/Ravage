@@ -149,7 +149,8 @@ export const dawnBanditsMap: MapDef = buildMap("dawn_bandits", "Outskirts of Thu
     { x: 6, y: 7 }, // Lucian
     { x: 4, y: 8 }, // Ning
     { x: 10, y: 5 }, // Maya — east flank, separated
-    { x: 5, y: 6 }  // Veya
+    { x: 5, y: 6 }, // Veya
+    { x: 4, y: 7 }  // Corin
 
   ],
   // Seven raiders in/around the rubble at the north field. Two archers
@@ -314,7 +315,9 @@ export const caravanMap: MapDef = buildMap("caravan", "Foothill Canyon Road", ca
     { x: 0, y: 4 }, // Lucian (anchor)
     { x: 1, y: 3 }, // Ning (north flank — has bowline up the perch)
     { x: 1, y: 5 }, // Maya (south flank — the script's "took command of one flank")
-    { x: 2, y: 4 }  // Leo (mounted, can swing wide either way)
+    { x: 2, y: 4 }, // Leo (mounted, can swing wide either way)
+    { x: 2, y: 3 }  // Corin
+
   ],
   // Eight bandits — coordinated ambush per the script. Two perched
   // archers each on the N and S shelves; two speartons sealing the east
@@ -981,7 +984,8 @@ export const quayMap: MapDef = buildMap("quay", "Harbour Quay, Grude", quayRows,
     { x: 5, y: 1 }, // Amar (center)
     { x: 6, y: 1 }, // Ning (bowline)
     { x: 7, y: 1 }, // Leo (dactyl)
-    { x: 5, y: 2 }  // Veya
+    { x: 5, y: 2 }, // Veya
+    { x: 6, y: 2 }  // Corin
 
   ],
   // Othren holds the open quay centre — holdPositionUntil keeps his
@@ -1032,7 +1036,8 @@ export const shipDeckMap: MapDef = buildMap("ship_deck", "Khione's Deck, Open Wa
     { x: 5, y: 9 }, // Amar (center)
     { x: 6, y: 9 }, // Ning (bowline)
     { x: 7, y: 9 }, // Leo (dactyl)
-    { x: 5, y: 8 }  // Veya
+    { x: 5, y: 8 }, // Veya
+    { x: 6, y: 8 }  // Corin
 
   ],
   // Boarders swarm the bow + both rails. No boss — this is a swarm to be
@@ -1068,7 +1073,8 @@ export const granaryMap: MapDef = buildMap("granary", "Border Granary, Imperial 
     { x: 5, y: 8 }, // Amar
     { x: 6, y: 8 }, // Ning
     { x: 7, y: 8 }, // Leo
-    { x: 5, y: 7 }  // Veya
+    { x: 5, y: 7 }, // Veya
+    { x: 4, y: 7 }  // Corin
 
   ],
   // Depot commander (royal captain) holds the north stores; garrison
@@ -1094,7 +1100,8 @@ export const dutyBridgeMap: MapDef = buildMap("duty_bridge", "Frontier Bridge", 
     { x: 1, y: 4 }, // Amar (the captaincy — center of the line)
     { x: 2, y: 5 }, // Ning
     { x: 3, y: 4 }, // Leo
-    { x: 2, y: 2 }  // Veya
+    { x: 2, y: 2 }, // Veya
+    { x: 3, y: 3 }  // Corin
 
   ],
   // The imperial column stacks the east end and pushes west down the
@@ -1120,7 +1127,8 @@ export const fortMap: MapDef = buildMap("mercy_fort", "Greywall Fort", monastery
     { x: 8, y: 13 }, // Maya
     { x: 6, y: 14 }, // Ning
     { x: 9, y: 14 }, // Leo
-    { x: 7, y: 12 }  // Veya
+    { x: 7, y: 12 }, // Veya
+    { x: 8, y: 12 }  // Corin
 
   ],
   // The holdout captain at the keep steps; three hardliners between him
@@ -1229,7 +1237,8 @@ export const warFieldMap: MapDef = buildMap("war_field", "The Field Before Grude
     { x: 2, y: 8 }, // Amar
     { x: 1, y: 7 }, // Ning
     { x: 2, y: 7 }, // Leo
-    { x: 3, y: 7 }  // Veya
+    { x: 3, y: 7 }, // Veya
+    { x: 3, y: 8 }  // Corin
 
   ],
   // Serrick holds the NE rise behind his guard line (holdPositionUntil).
@@ -1273,7 +1282,8 @@ export const kingsRoadMap: MapDef = buildMap("kings_road", "The King's Road West
     { x: 4, y: 4 }, // Maya, road south lane
     { x: 3, y: 2 }, // Ning, forest verge (bow line)
     { x: 4, y: 5 }, // Leo, south shoulder
-    { x: 3, y: 3 }  // Veya
+    { x: 3, y: 3 }, // Veya
+    { x: 5, y: 3 }  // Corin
 
   ],
   // The vanguard pours in from the east edge, Halden at the front —
@@ -1319,7 +1329,8 @@ export const upperDistrictMap: MapDef = buildMap("upper_district", "The Upper Di
     { x: 5, y: 9 }, // Maya
     { x: 6, y: 9 }, // Ning
     { x: 7, y: 9 }, // Leo
-    { x: 5, y: 8 }  // Veya
+    { x: 5, y: 8 }, // Veya
+    { x: 4, y: 8 }  // Corin
 
   ],
   // Brask at the fountain square (north centre); burn teams working
@@ -1361,9 +1372,10 @@ export const narrowsMap: MapDef = buildMap("narrows", "The Narrows", narrowsRows
     { x: 1, y: 5 }, // Maya
     { x: 2, y: 4 }, // Ning
     { x: 1, y: 4 }, // Leo
-    { x: 2, y: 3 }, // Selene
-    { x: 2, y: 5 }, // Ranatoli
-    { x: 3, y: 3 }  // Veya
+    { x: 2, y: 3 }, // Veya
+    { x: 2, y: 5 }, // Selene
+    { x: 3, y: 3 }, // Ranatoli
+    { x: 2, y: 2 }  // Corin
 
   ],
   enemy: [
@@ -1404,9 +1416,10 @@ export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bel
     { x: 5, y: 7 }, // Maya
     { x: 6, y: 7 }, // Ning
     { x: 7, y: 7 }, // Leo
-    { x: 3, y: 7 }, // Selene
-    { x: 8, y: 7 }, // Ranatoli
-    { x: 2, y: 7 }  // Veya
+    { x: 3, y: 7 }, // Veya
+    { x: 8, y: 7 }, // Selene
+    { x: 2, y: 7 }, // Ranatoli
+    { x: 3, y: 6 }  // Corin
 
   ],
   enemy: [
@@ -1447,9 +1460,10 @@ export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Fi
     { x: 1, y: 5 }, // Maya
     { x: 2, y: 4 }, // Ning
     { x: 2, y: 5 }, // Leo
-    { x: 1, y: 3 }, // Selene
-    { x: 1, y: 6 }, // Ranatoli
-    { x: 2, y: 3 }  // Veya
+    { x: 1, y: 3 }, // Veya
+    { x: 1, y: 6 }, // Selene
+    { x: 2, y: 3 }, // Ranatoli
+    { x: 3, y: 4 }  // Corin
 
   ],
   enemy: [
@@ -1468,9 +1482,10 @@ export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Fi
     { x: 2, y: 5 }, // Maya
     { x: 1, y: 6 }, // Ning
     { x: 2, y: 3 }, // Leo
-    { x: 1, y: 5 }, // Selene
-    { x: 2, y: 6 }, // Ranatoli
-    { x: 1, y: 3 }  // Veya
+    { x: 1, y: 5 }, // Veya
+    { x: 2, y: 6 }, // Selene
+    { x: 1, y: 3 }, // Ranatoli
+    { x: 3, y: 4 }  // Corin
 
   ],
   enemy: [
@@ -1509,9 +1524,10 @@ export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coa
     { x: 2, y: 5 }, // Maya
     { x: 1, y: 4 }, // Ning
     { x: 2, y: 4 }, // Leo
-    { x: 1, y: 2 }, // Selene
-    { x: 1, y: 6 }, // Ranatoli
-    { x: 1, y: 3 }  // Veya
+    { x: 1, y: 2 }, // Veya
+    { x: 1, y: 6 }, // Selene
+    { x: 1, y: 3 }, // Ranatoli
+    { x: 3, y: 3 }  // Corin
 
   ],
   enemy: [
@@ -1553,9 +1569,10 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 6, y: 9 }, // Maya
     { x: 5, y: 8 }, // Ning
     { x: 7, y: 9 }, // Leo
-    { x: 4, y: 9 }, // Selene
-    { x: 7, y: 8 }, // Ranatoli
-    { x: 6, y: 8 }  // Veya
+    { x: 4, y: 9 }, // Veya
+    { x: 7, y: 8 }, // Selene
+    { x: 6, y: 8 }, // Ranatoli
+    { x: 4, y: 8 }  // Corin
 
   ],
   enemy: [
@@ -1577,9 +1594,10 @@ export const aftermathMap: MapDef = buildMap("aftermath", "The Field, After", wa
     { x: 1, y: 4 }, // Maya
     { x: 2, y: 6 }, // Ning
     { x: 1, y: 6 }, // Leo
-    { x: 1, y: 5 }, // Selene
-    { x: 2, y: 4 }, // Ranatoli
-    { x: 3, y: 5 }  // Veya
+    { x: 1, y: 5 }, // Veya
+    { x: 2, y: 4 }, // Selene
+    { x: 3, y: 5 }, // Ranatoli
+    { x: 3, y: 4 }  // Corin
 
   ],
   enemy: [
