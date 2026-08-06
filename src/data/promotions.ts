@@ -81,6 +81,12 @@ export const PROMOTIONS: Partial<Record<string, PromotionData>> = {
     newAbility: "Bulwark",
     spriteClassOverride: "sentinel",
     statBoost: STANDARD_BOOST
+  },
+  veya: {
+    toClass: "prismarch",
+    newAbility: "Refract",
+    spriteClassOverride: "shinobi",
+    statBoost: STANDARD_BOOST
   }
   // kian: never promotes — turns hostile in B10 before any promotion beat fires.
   // selene: starts as "swordmaster" — already a Tier 2 at recruit (B7).
@@ -96,6 +102,7 @@ export const CLASS_DISPLAY_NAMES: Partial<Record<ClassKind, string>> = {
   shinobi: "Shinobi",
   sentinel: "Sentinel",
   dactyl_rider: "Dactyl Rider",
+  lenscaster: "Lenscaster",
   swordmaster: "Swordmaster",
   spearton_lord: "Spearton Lord",
   khan: "Khan",
@@ -103,6 +110,7 @@ export const CLASS_DISPLAY_NAMES: Partial<Record<ClassKind, string>> = {
   dactyl_king: "Dactyl King",
   shinobi_master: "Shinobi Master",
   guardian: "Guardian",
+  prismarch: "Prismarch",
   boss: "Boss"
 };
 
@@ -122,5 +130,6 @@ export const ABILITY_DISPLAY: Partial<Record<Ability, { name: string; blurb: str
   Pierce:      { name: "Pierce",       blurb: "Bow attacks ignore 50% of target armor." },
   Stoop:       { name: "Stoop",        blurb: "Once per battle: free move + attack within 6 movement." },
   Vanish:      { name: "Vanish",       blurb: "After attacking, take −50% damage until next turn." },
-  Bulwark:     { name: "Bulwark",      blurb: "Cannot be moved by enemy effects; +2 effective armor." }
+  Bulwark:     { name: "Bulwark",      blurb: "Cannot be moved by enemy effects; +2 effective armor." },
+  Refract:     { name: "Refract",      blurb: "A killing beam splashes 50% damage to one enemy adjacent to the target." }
 };

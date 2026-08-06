@@ -52,8 +52,8 @@ export const reachableForUnit = (state: BattleState, u: Unit, range = effectiveM
 
 export const targetsForUnit = (state: BattleState, u: Unit): Unit[] => {
   const out: Unit[] = [];
-  const minR = u.weapon === "bow" ? 2 : 1;
-  const maxR = u.weapon === "bow" ? 4 : u.weapon === "spear" ? 2 : 1;
+  const minR = u.weapon === "bow" || u.weapon === "lens" ? 2 : 1;
+  const maxR = u.weapon === "bow" ? 4 : u.weapon === "lens" ? 3 : u.weapon === "spear" ? 2 : 1;
   for (const tile of state.grid.attackTargetTiles(u.state.position, minR, maxR)) {
     const t = unitAt(state, tile);
     if (t && t.faction !== u.faction && isAlive(t)) out.push(t);

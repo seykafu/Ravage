@@ -3,7 +3,12 @@
 
 export type Faction = "player" | "enemy" | "ally";
 
-export type WeaponKind = "sword" | "spear" | "shield" | "bow" | "dactyl";
+// "lens" — Veya's focused-light instrument (B14+). Sits OUTSIDE the
+// sword>spear>shield triangle (neutral to everything, like dactyl),
+// range 2-3, and its beams ignore half the target's armor (see
+// LENS_ARMOR_PIERCE in Damage.ts). The squad's answer to late-game
+// plate; fragile and slow to carry as compensation.
+export type WeaponKind = "sword" | "spear" | "shield" | "bow" | "dactyl" | "lens";
 
 export type ClassKind =
   // Tier 1
@@ -14,6 +19,7 @@ export type ClassKind =
   | "shinobi"
   | "sentinel"
   | "dactyl_rider"
+  | "lenscaster"
   // Tier 2 (post-promotion). swordmaster ships first because Selene already
   // joins as one in B7. The other six don't have sprite folders yet — units
   // that promote into them rely on spriteClassOverride pointing back at the
@@ -25,6 +31,7 @@ export type ClassKind =
   | "dactyl_king"
   | "shinobi_master"
   | "guardian"
+  | "prismarch"
   // Special
   | "boss";
 
@@ -55,9 +62,12 @@ export type Stance = "none" | "defensive" | "ready" | "both";
 //   Stoop:       Dactyl King — once per battle, free move + attack within 6 mv.
 //   Vanish:      Shinobi Master — after attacking, take −50% damage until next turn.
 //   Bulwark:     Guardian — cannot be moved by enemy effects; +2 effective armor.
+//   Refract:     Prismarch — a killing beam splashes 50% damage to one enemy
+//                adjacent to the target.
 export type Ability =
   | "BossFighter" | "Aide" | "Destruct" | "Roam"
-  | "CritPlus" | "Phalanx" | "Charge" | "Pierce" | "Stoop" | "Vanish" | "Bulwark";
+  | "CritPlus" | "Phalanx" | "Charge" | "Pierce" | "Stoop" | "Vanish" | "Bulwark"
+  | "Refract";
 export const MAX_ABILITIES = 2;
 
 // Battle inventory. Capped at MAX_INVENTORY (5) per unit.

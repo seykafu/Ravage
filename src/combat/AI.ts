@@ -51,10 +51,10 @@ const scoreAttackFromTile = (
       score -= 30;
     }
   }
-  // small bonus for ending adjacent to a player unit (melee) or in attack range (archers)
-  if (unit.weapon === "bow") {
+  // small bonus for ending adjacent to a player unit (melee) or in attack range (ranged)
+  if (unit.weapon === "bow" || unit.weapon === "lens") {
     let inRange = false;
-    for (const tile of state.grid.attackTargetTiles(fromTile, 2, 4)) {
+    for (const tile of state.grid.attackTargetTiles(fromTile, 2, unit.weapon === "bow" ? 4 : 3)) {
       const t = unitAt(state, tile);
       if (t && t.faction !== unit.faction && isAlive(t)) {
         inRange = true;
@@ -119,8 +119,8 @@ export const planEnemyTurn = (
       const occ = unitAt(state, dest);
       if (occ && occ !== unit) continue;
       // find best target from this dest
-      const minR = unit.weapon === "bow" ? 2 : 1;
-      const maxR = unit.weapon === "bow" ? 4 : unit.weapon === "spear" ? 2 : 1;
+      const minR = unit.weapon === "bow" || unit.weapon === "lens" ? 2 : 1;
+      const maxR = unit.weapon === "bow" ? 4 : unit.weapon === "lens" ? 3 : unit.weapon === "spear" ? 2 : 1;
       for (const tile of state.grid.attackTargetTiles(dest, minR, maxR)) {
         const target = unitAt(state, tile);
         if (!target || target.faction === unit.faction || !isAlive(target)) continue;

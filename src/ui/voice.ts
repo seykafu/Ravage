@@ -27,6 +27,10 @@ const VOICES: Record<string, VoiceProfile> = {
   kian:     { freq: 185, type: "square",   vol: 0.028 },
   ranatoli: { freq: 165, type: "triangle", vol: 0.036 },
   selene:   { freq: 275, type: "triangle", vol: 0.033 },
+  // Veya: lower-mid register with the square's slight machine-shop edge —
+  // a craftswoman's voice, distinct from the square-wave men (kian 185,
+  // ndari 175) by sitting a fair way above them.
+  veya:     { freq: 225, type: "square",   vol: 0.029 },
   ndari:    { freq: 175, type: "square",   vol: 0.028 },
   ndara:    { freq: 245, type: "triangle", vol: 0.034 },
   nebu:     { freq: 145, type: "square",   vol: 0.028 },

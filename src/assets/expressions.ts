@@ -50,7 +50,10 @@ export const DEFAULT_VARIANT_FOR: ReadonlyMap<string, string> = new Map([
   // plain rose.png. Default load resolves to rose_neutral.png so any beat
   // that omits an expression renders correctly. B13's beats already use
   // expression: "neutral" explicitly, which now lands on the same file.
-  ["rose", "neutral"]
+  ["rose", "neutral"],
+  // Veya ships only named variants (neutral / wry_smile / focused /
+  // alarmed / grim_resolve) — no plain veya.png. Same pattern as Rose.
+  ["veya", "neutral"]
 ]);
 
 // NOTE on "registered but no PNG on disk yet": listing a slug here does NOT
@@ -70,7 +73,6 @@ export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   // "alarmed" — Lucian's B-side reaction beats. Art pending; falls back.
   lucian:   ["alarmed", "dying", "fatherly_smile", "grim_resolve"],
   ning:     ["eager_grin", "exhausted", "focused_bow", "startled"],
-  // "alarmed" — Maya's clipped warnings mid-fight. Art pending; falls back.
   maya:     ["alarmed", "calculating_side_glance", "guarded_neutral", "soft_genuine_smile", "steel_cold_confession_face", "tearful"],
   // "ready"/"resolute" — Leo's B8 defection declaration (the dactyl walks to
   // the partisan side). The emotional centre of his arc; art pending, falls
@@ -96,6 +98,10 @@ export const PORTRAIT_EXPRESSIONS: Record<string, readonly string[]> = {
   // covers the tactical brief + captain-drop approval; falling covers
   // the death scene's before_victory dialogue.
   rose:     ["neutral", "brisk", "falling"],
+  // Veya (B14+): the court optician turned lenscaster. Full five-piece
+  // set shipped together — "focused" is the loupe-down sighting look
+  // used for battle beats.
+  veya:     ["neutral", "wry_smile", "focused", "alarmed", "grim_resolve"],
   mira:     [],
   tali:     []
 };

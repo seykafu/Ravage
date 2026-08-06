@@ -126,8 +126,20 @@ const baseHitForWeapon = (w: WeaponKind): number => {
       return 75;
     case "dactyl":
       return 80;
+    case "lens":
+      // Precision instrument — the highest base hit in the game. The
+      // lens's power budget lives in its armor pierce, not raw damage,
+      // so the reliability is what makes the class feel surgical.
+      return 90;
   }
 };
+
+// Lens beams ignore this fraction of the target's armor — focused light
+// doesn't care how thick the plate is, only where the seams are. This is
+// the weapon's core identity (the anti-armor answer from B14 onward) and
+// is intentionally inherent to the WEAPON, not an ability, so it applies
+// in the sim, previews, counters, and any future enemy lens unit alike.
+const LENS_ARMOR_PIERCE = 0.5;
 
 export const previewAttack = (
   attacker: Unit,
@@ -142,7 +154,8 @@ export const previewAttack = (
   const abilityMod = attackerAbilityModifier(attacker, defender) * defenderAbilityModifier(defender, allUnits);
   const ravageAtkMod = attackerRavageModifier(attacker);
   const classMod = attackerClassBonus(attacker, defender);
-  const armor = effectiveArmor(defender);
+  let armor = effectiveArmor(defender);
+  if (attacker.weapon === "lens") armor = Math.round(armor * (1 - LENS_ARMOR_PIERCE));
   const baseDamage =
     attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * ravageAtkMod * classMod -
     armor;

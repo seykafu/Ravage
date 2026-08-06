@@ -54,6 +54,7 @@ import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
   sfxAttackMiss,
+  sfxLensBeam,
   sfxCancel,
   sfxClick,
   sfxCrit,
@@ -86,7 +87,7 @@ import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura } from "./battle/RavageVfx";
-import { fireArrow, hitSpark, missWhiff, slashArc } from "./battle/CombatVfx";
+import { fireArrow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
@@ -155,14 +156,16 @@ const WEAPON_INFO: Record<string, { title: string; body: string }> = {
   spear:  { title: "Spear",  body: "Beats Shield (\u00d71.15)\nLoses to Sword  (\u00d70.85)\nBase hit 80%   Range 1\nMelee — can counter and be countered." },
   shield: { title: "Shield", body: "Beats Sword  (\u00d71.15)\nLoses to Spear  (\u00d70.85)\nBase hit 80%   Range 1\nDurable — strong with Defend stance." },
   bow:    { title: "Bow",    body: "Range 2 only — outranges all melee.\nCannot Ready stance counter.\nBase hit 75%.\nSafe at distance, weak up close." },
-  dactyl: { title: "Dactyl", body: "Mounted melee. Range 1.\nNo weapon-triangle bonus or penalty.\nBase hit 80%.\nFast and resilient — boss-tier mount." }
+  dactyl: { title: "Dactyl", body: "Mounted melee. Range 1.\nNo weapon-triangle bonus or penalty.\nBase hit 80%.\nFast and resilient — boss-tier mount." },
+  lens:   { title: "Lens",   body: "Range 2-3 beam — ignores HALF the target's armor.\nNo weapon-triangle bonus or penalty.\nBase hit 90% — the surest shot in the game.\nFragile carrier; keep her screened." }
 };
 
 const ABILITY_INFO: Record<string, { title: string; body: string }> = {
   BossFighter: { title: "Boss Fighter", body: "+100% damage when attacking a boss-class enemy.\nThe finisher you build a strategy around." },
   Aide:        { title: "Aide",         body: "Take half damage while adjacent to a friendly unit.\nReward for keeping your line tight." },
   Destruct:    { title: "Destruct",     body: "On death, the unit that landed the killing blow also dies.\nMakes finishing this unit very expensive." },
-  Roam:        { title: "Roam",         body: "Once per turn, after all AP is spent, take one free Move.\nClosing distance or repositioning out of danger." }
+  Roam:        { title: "Roam",         body: "Once per turn, after all AP is spent, take one free Move.\nClosing distance or repositioning out of danger." },
+  Refract:     { title: "Refract",      body: "A killing beam splashes 50% damage to one enemy\nadjacent to the target." }
 };
 
 // ---- Initiative bar ----
@@ -3156,6 +3159,25 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
+    // Lens attacks: no lunge, no projectile — Veya plants, the rig
+    // charges, and the beam simply arrives. A slight brace-back sells
+    // the recoil of holding focused light on target.
+    if (attacker.weapon === "lens") {
+      const dirX = tx > sx ? 1 : -1;
+      this.tweens.add({
+        targets: av.sprite,
+        x: sx - dirX * 3,
+        duration: 110,
+        ease: "Sine.easeOut",
+        yoyo: true
+      });
+      sfxLensBeam();
+      await lensBeam(this, (o) => this.addWorld(o), sx + dirX * 8, sy - 8, tx, ty);
+      playUnitState(this, av.sprite, attacker, "idle");
+      this.startBreathing(av);
+      return;
+    }
+
     // Shadow only follows the horizontal lunge — the body leans in but feet
     // stay on the same tile.
     this.tweens.add({
@@ -3256,7 +3278,8 @@ export class BattleScene extends Phaser.Scene {
       // Impact VFX: melee blows get the crescent slash sweep in the attack
       // direction; every hit gets the radial spark. Arrows skip the slash —
       // the projectile itself already carried the motion.
-      if (attacker.weapon !== "bow") {
+      // (lens skips it too — the beam's landing scatter is its impact.)
+      if (attacker.weapon !== "bow" && attacker.weapon !== "lens") {
         slashArc(this, (o) => this.addWorld(o), tx, ty, impactAngle, result.crit);
       }
       hitSpark(this, (o) => this.addWorld(o), tx, ty, result.crit);

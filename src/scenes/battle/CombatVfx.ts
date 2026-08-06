@@ -94,6 +94,58 @@ export const fireArrow = (
   });
 };
 
+// Lens beam — Veya's focused-light attack. A brief amber charge glint at
+// the rig, then a bright core beam with a soft halo snaps to the target
+// and burns out from the origin end. Resolves at the moment the beam
+// connects so damage application lands with the flash (same contract as
+// fireArrow). No projectile travel: light doesn't fly, it arrives.
+export const lensBeam = (
+  scene: Phaser.Scene,
+  world: WorldTag,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number
+): Promise<void> => {
+  const CORE = 0xffd98a;
+  const HALO = 0xffb347;
+  // Charge glint: a small expanding ring at the lens, pulling focus.
+  const glint = world(scene.add.circle(fromX, fromY, 2, CORE, 0.9));
+  glint.setDepth(DEPTH_ARROW);
+  scene.tweens.add({
+    targets: glint,
+    radius: 7,
+    alpha: 0,
+    duration: 110,
+    ease: "Sine.easeOut",
+    onComplete: () => glint.destroy()
+  });
+  return new Promise((res) => {
+    scene.time.delayedCall(90, () => {
+      const g = world(scene.add.graphics());
+      g.setDepth(DEPTH_ARROW);
+      g.lineStyle(6, HALO, 0.35);
+      g.lineBetween(fromX, fromY, toX, toY);
+      g.lineStyle(2, CORE, 1);
+      g.lineBetween(fromX, fromY, toX, toY);
+      // Prismatic scatter where the beam lands.
+      for (let i = 0; i < 4; i++) {
+        const a = Math.random() * Math.PI * 2;
+        g.lineStyle(1.5, i % 2 ? CORE : 0xfff2d9, 0.8);
+        g.lineBetween(toX, toY, toX + Math.cos(a) * 9, toY + Math.sin(a) * 9);
+      }
+      res(); // impact — caller applies damage now, beam lingers as it fades
+      scene.tweens.add({
+        targets: g,
+        alpha: 0,
+        duration: 200,
+        ease: "Cubic.easeOut",
+        onComplete: () => g.destroy()
+      });
+    });
+  });
+};
+
 // Crescent sweep at the impact point, rotated to the attack direction.
 // A short arc stroke that rotates ~70° while fading — reads as the
 // blade passing through, without needing frame art.

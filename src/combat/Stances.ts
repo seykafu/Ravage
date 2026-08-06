@@ -14,6 +14,7 @@ export const SPEED_COUNTER_THRESHOLD = 10;
 // closes the gap. Spear's 1–2 reach matches its attack range.
 const reachFor = (w: WeaponKind): { min: number; max: number } => {
   if (w === "bow") return { min: 2, max: 4 };
+  if (w === "lens") return { min: 2, max: 3 };
   if (w === "spear") return { min: 1, max: 2 };
   return { min: 1, max: 1 }; // sword / shield / dactyl
 };

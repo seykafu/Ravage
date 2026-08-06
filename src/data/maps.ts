@@ -148,7 +148,9 @@ export const dawnBanditsMap: MapDef = buildMap("dawn_bandits", "Outskirts of Thu
     { x: 5, y: 7 }, // Amar
     { x: 6, y: 7 }, // Lucian
     { x: 4, y: 8 }, // Ning
-    { x: 10, y: 5 } // Maya — east flank, separated
+    { x: 10, y: 5 }, // Maya — east flank, separated
+    { x: 5, y: 6 }  // Veya
+
   ],
   // Seven raiders in/around the rubble at the north field. Two archers
   // perched on hay/rubble for first-round shots, two swordsmen pressing
@@ -810,7 +812,9 @@ export const originMap: MapDef = buildMap("origin", "Safe-House Street, Grude", 
     { x: 5, y: 9 }, // Maya
     { x: 6, y: 9 }, // Amar (center)
     { x: 7, y: 9 }, // Ning (bowline)
-    { x: 8, y: 9 }  // Leo (dactyl, east)
+    { x: 8, y: 9 }, // Leo (dactyl, east)
+    { x: 7, y: 8 }  // Veya
+
   ],
   // Lord Castor at the north street mouth — holdPositionUntil keeps
   // him back until his line is thinned. Two crown archers on row 1
@@ -866,7 +870,9 @@ export const courtyardMap: MapDef = buildMap("courtyard", "Candle-Maker's Courty
     { x: 4, y: 8 }, // Maya
     { x: 5, y: 8 }, // Amar (center)
     { x: 6, y: 8 }, // Ning (bowline)
-    { x: 7, y: 8 }  // Leo (dactyl)
+    { x: 7, y: 8 }, // Leo (dactyl)
+    { x: 5, y: 7 }  // Veya
+
   ],
   // Coyne holds the back gate (north) — holdPositionUntil keeps him
   // there until his line is thinned. Two imperial agents he smuggled
@@ -918,7 +924,9 @@ export const bridgeMap: MapDef = buildMap("bridge", "River Bridge, Grude", bridg
     { x: 1, y: 3 }, // Maya
     { x: 1, y: 4 }, // Amar (center)
     { x: 1, y: 5 }, // Ning (bowline)
-    { x: 2, y: 4 }  // Leo (dactyl)
+    { x: 2, y: 4 }, // Leo (dactyl)
+    { x: 2, y: 3 }  // Veya
+
   ],
   // Wren rushes — no holdPositionUntil; the King's Knife comes
   // straight for Amar. Her main force holds the east end; two hired
@@ -972,7 +980,9 @@ export const quayMap: MapDef = buildMap("quay", "Harbour Quay, Grude", quayRows,
     { x: 4, y: 1 }, // Maya
     { x: 5, y: 1 }, // Amar (center)
     { x: 6, y: 1 }, // Ning (bowline)
-    { x: 7, y: 1 }  // Leo (dactyl)
+    { x: 7, y: 1 }, // Leo (dactyl)
+    { x: 5, y: 2 }  // Veya
+
   ],
   // Othren holds the open quay centre — holdPositionUntil keeps his
   // line formed until the squad thins it. Loyalist fighters (Dawn's
@@ -1021,7 +1031,9 @@ export const shipDeckMap: MapDef = buildMap("ship_deck", "Khione's Deck, Open Wa
     { x: 4, y: 9 }, // Maya
     { x: 5, y: 9 }, // Amar (center)
     { x: 6, y: 9 }, // Ning (bowline)
-    { x: 7, y: 9 }  // Leo (dactyl)
+    { x: 7, y: 9 }, // Leo (dactyl)
+    { x: 5, y: 8 }  // Veya
+
   ],
   // Boarders swarm the bow + both rails. No boss — this is a swarm to be
   // broken (rout victory), the empire's last grab at the heir before the
@@ -1055,7 +1067,9 @@ export const granaryMap: MapDef = buildMap("granary", "Border Granary, Imperial 
     { x: 4, y: 8 }, // Maya
     { x: 5, y: 8 }, // Amar
     { x: 6, y: 8 }, // Ning
-    { x: 7, y: 8 }  // Leo
+    { x: 7, y: 8 }, // Leo
+    { x: 5, y: 7 }  // Veya
+
   ],
   // Depot commander (royal captain) holds the north stores; garrison
   // spread through the yard behind the sledges.
@@ -1079,7 +1093,9 @@ export const dutyBridgeMap: MapDef = buildMap("duty_bridge", "Frontier Bridge", 
     { x: 2, y: 3 }, // Maya
     { x: 1, y: 4 }, // Amar (the captaincy — center of the line)
     { x: 2, y: 5 }, // Ning
-    { x: 3, y: 4 }  // Leo
+    { x: 3, y: 4 }, // Leo
+    { x: 2, y: 2 }  // Veya
+
   ],
   // The imperial column stacks the east end and pushes west down the
   // deck. No boss — pressure is the enemy.
@@ -1103,7 +1119,9 @@ export const fortMap: MapDef = buildMap("mercy_fort", "Greywall Fort", monastery
     { x: 7, y: 13 }, // Amar
     { x: 8, y: 13 }, // Maya
     { x: 6, y: 14 }, // Ning
-    { x: 9, y: 14 }  // Leo
+    { x: 9, y: 14 }, // Leo
+    { x: 7, y: 12 }  // Veya
+
   ],
   // The holdout captain at the keep steps; three hardliners between him
   // and the gate. Deliberately sparse — this is a duel of conviction,
@@ -1210,7 +1228,9 @@ export const warFieldMap: MapDef = buildMap("war_field", "The Field Before Grude
     { x: 1, y: 8 }, // Maya
     { x: 2, y: 8 }, // Amar
     { x: 1, y: 7 }, // Ning
-    { x: 2, y: 7 }  // Leo
+    { x: 2, y: 7 }, // Leo
+    { x: 3, y: 7 }  // Veya
+
   ],
   // Serrick holds the NE rise behind his guard line (holdPositionUntil).
   enemy: [
@@ -1252,7 +1272,9 @@ export const kingsRoadMap: MapDef = buildMap("kings_road", "The King's Road West
     { x: 4, y: 3 }, // Amar, on the road north lane
     { x: 4, y: 4 }, // Maya, road south lane
     { x: 3, y: 2 }, // Ning, forest verge (bow line)
-    { x: 4, y: 5 }  // Leo, south shoulder
+    { x: 4, y: 5 }, // Leo, south shoulder
+    { x: 3, y: 3 }  // Veya
+
   ],
   // The vanguard pours in from the east edge, Halden at the front —
   // no holdPosition; he leads the push himself.
@@ -1296,7 +1318,9 @@ export const upperDistrictMap: MapDef = buildMap("upper_district", "The Upper Di
     { x: 4, y: 9 }, // Amar
     { x: 5, y: 9 }, // Maya
     { x: 6, y: 9 }, // Ning
-    { x: 7, y: 9 }  // Leo
+    { x: 7, y: 9 }, // Leo
+    { x: 5, y: 8 }  // Veya
+
   ],
   // Brask at the fountain square (north centre); burn teams working
   // the alleys and market row.
@@ -1338,7 +1362,9 @@ export const narrowsMap: MapDef = buildMap("narrows", "The Narrows", narrowsRows
     { x: 2, y: 4 }, // Ning
     { x: 1, y: 4 }, // Leo
     { x: 2, y: 3 }, // Selene
-    { x: 2, y: 5 }  // Ranatoli
+    { x: 2, y: 5 }, // Ranatoli
+    { x: 3, y: 3 }  // Veya
+
   ],
   enemy: [
     { x: 11, y: 4 }, // Colonel Vasse (boss)
@@ -1379,7 +1405,9 @@ export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bel
     { x: 6, y: 7 }, // Ning
     { x: 7, y: 7 }, // Leo
     { x: 3, y: 7 }, // Selene
-    { x: 8, y: 7 }  // Ranatoli
+    { x: 8, y: 7 }, // Ranatoli
+    { x: 2, y: 7 }  // Veya
+
   ],
   enemy: [
     { x: 5, y: 1 },  // Warden Sarto (boss), before the bell
@@ -1420,7 +1448,9 @@ export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Fi
     { x: 2, y: 4 }, // Ning
     { x: 2, y: 5 }, // Leo
     { x: 1, y: 3 }, // Selene
-    { x: 1, y: 6 }  // Ranatoli
+    { x: 1, y: 6 }, // Ranatoli
+    { x: 2, y: 3 }  // Veya
+
   ],
   enemy: [
     { x: 10, y: 3 }, // trooper
@@ -1439,7 +1469,9 @@ export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Fi
     { x: 1, y: 6 }, // Ning
     { x: 2, y: 3 }, // Leo
     { x: 1, y: 5 }, // Selene
-    { x: 2, y: 6 }  // Ranatoli
+    { x: 2, y: 6 }, // Ranatoli
+    { x: 1, y: 3 }  // Veya
+
   ],
   enemy: [
     { x: 11, y: 5 }, // Herald of the Ravage (boss)
@@ -1478,7 +1510,9 @@ export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coa
     { x: 1, y: 4 }, // Ning
     { x: 2, y: 4 }, // Leo
     { x: 1, y: 2 }, // Selene
-    { x: 1, y: 6 }  // Ranatoli
+    { x: 1, y: 6 }, // Ranatoli
+    { x: 1, y: 3 }  // Veya
+
   ],
   enemy: [
     { x: 10, y: 2 }, // trooper
@@ -1520,7 +1554,9 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 5, y: 8 }, // Ning
     { x: 7, y: 9 }, // Leo
     { x: 4, y: 9 }, // Selene
-    { x: 7, y: 8 }  // Ranatoli
+    { x: 7, y: 8 }, // Ranatoli
+    { x: 6, y: 8 }  // Veya
+
   ],
   enemy: [
     { x: 6, y: 1 },  // the path's final opponent (boss)
@@ -1542,7 +1578,9 @@ export const aftermathMap: MapDef = buildMap("aftermath", "The Field, After", wa
     { x: 2, y: 6 }, // Ning
     { x: 1, y: 6 }, // Leo
     { x: 1, y: 5 }, // Selene
-    { x: 2, y: 4 }  // Ranatoli
+    { x: 2, y: 4 }, // Ranatoli
+    { x: 3, y: 5 }  // Veya
+
   ],
   enemy: [
     { x: 11, y: 3 }, // royal guard remnant

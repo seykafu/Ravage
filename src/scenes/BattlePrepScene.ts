@@ -27,6 +27,7 @@ const classLabel = (k: ClassKind): string => {
     case "shinobi":   return "Shinobi";
     case "sentinel":  return "Sentinel";
     case "dactyl_rider": return "Dactyl Rider";
+    case "lenscaster":   return "Lenscaster";
     // Tier 2 — added when the promotion system landed.
     case "swordmaster":    return "Swordmaster";
     case "spearton_lord":  return "Spearton Lord";
@@ -35,6 +36,7 @@ const classLabel = (k: ClassKind): string => {
     case "dactyl_king":    return "Dactyl King";
     case "shinobi_master": return "Shinobi Master";
     case "guardian":       return "Guardian";
+    case "prismarch":      return "Prismarch";
     // Special
     case "boss": return "Adversary";
   }
@@ -47,6 +49,7 @@ const weaponLabel = (w: WeaponKind): string => {
     case "shield": return "Shield";
     case "bow": return "Bow";
     case "dactyl": return "Dactyl";
+    case "lens": return "Lens";
   }
 };
 

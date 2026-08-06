@@ -233,6 +233,15 @@ export const sfxAttackHit = (): void => {
   thump(130 * p, 48, 0.13, 0.11, 0.008);
 };
 
+export const sfxLensBeam = (): void => {
+  // Veya's lens: a glassy charge sweep up into a bright, brief sear.
+  // Reads as light, not steel — no metal ring, no body knock.
+  const p = rand(0.96, 1.04);
+  tone({ freq: 620 * p, freqEnd: 1900 * p, duration: 0.09, type: "sine", vol: 0.05, send: 0.25 });
+  tone({ freq: 2400 * p, duration: 0.12, type: "triangle", vol: 0.035, at: 0.085, send: 0.35 });
+  noise({ duration: 0.07, vol: 0.05, filterType: "highpass", freq: 6200, attack: 0.002, at: 0.085 });
+};
+
 export const sfxAttackMiss = (): void => {
   // A real whoosh: band-passed noise with the FILTER swept down through
   // the swing arc (static hiss never reads as motion).

@@ -63,6 +63,35 @@ describe("weaponModifier", () => {
     expect(weaponModifier("dactyl", "spear")).toBe(1.0);
     expect(weaponModifier("spear", "dactyl")).toBe(1.0);
   });
+  it("lens sits fully outside the triangle — neutral both ways vs everything", () => {
+    for (const w of ["sword", "spear", "shield", "bow", "dactyl"] as const) {
+      expect(weaponModifier("lens", w)).toBe(1.0);
+      expect(weaponModifier(w, "lens")).toBe(1.0);
+    }
+  });
+});
+
+describe("lens armor pierce (Veya's weapon identity)", () => {
+  it("a lens attack applies only half the target's armor", () => {
+    // Same attacker statline, sword vs lens, into a heavily armored
+    // target: the lens hit must land harder by exactly the armor saved.
+    const tank = mkUnit({ classKind: "sentinel", weapon: "shield", stats: { hp: 40, power: 8, armor: 12, speed: 4, movement: 3, ap: 2 } }, { x: 2, y: 0 });
+    // Sword eats the shield's triangle edge; dactyl is neutral like lens,
+    // so compare dactyl vs lens to isolate the armor term.
+    const rider = mkUnit({ classKind: "dactyl_rider", weapon: "dactyl", stats: { hp: 30, power: 14, armor: 5, speed: 8, movement: 5, ap: 3 } });
+    const caster = mkUnit({ classKind: "lenscaster", weapon: "lens", stats: { hp: 24, power: 14, armor: 2, speed: 8, movement: 3, ap: 2 } });
+    const viaDactyl = previewAttack(rider, tank, NEUTRAL_TILE);
+    const viaLens = previewAttack(caster, tank, NEUTRAL_TILE);
+    // 14 power - 12 armor = 2 vs 14 - 6 = 8.
+    expect(viaDactyl.damage).toBe(2);
+    expect(viaLens.damage).toBe(8);
+  });
+  it("lens has the highest base hit in the game (90)", () => {
+    const caster = mkUnit({ classKind: "lenscaster", weapon: "lens" });
+    const target = mkUnit({ classKind: "swordsman", weapon: "sword" }, { x: 2, y: 0 });
+    // Equal speeds — the preview hit rate IS the base hit.
+    expect(previewAttack(caster, target, NEUTRAL_TILE).hitRate).toBe(90);
+  });
 });
 
 describe("attackerClassBonus (shinobi matchups)", () => {

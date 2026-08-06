@@ -1395,12 +1395,13 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: originMap,
     buildPlayers: () => [
-      // Post-Rose squad of four. Map player slots are ordered
-      // [Maya, Amar, Ning, Leo] — buildPlayers must match.
+      // Post-Rose squad of five. Map player slots are ordered
+      // [Maya, Amar, Ning, Leo, Veya] — buildPlayers must match.
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Lord Castor's household retrieval detail — 5 elite + the
@@ -1494,12 +1495,13 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: courtyardMap,
     buildPlayers: () => [
-      // Post-Rose squad of four. Ndara is in a coma — not on the
-      // field. Map player slots are ordered [Maya, Amar, Ning, Leo].
+      // Post-Rose squad of five. Ndara is in a coma — not on the
+      // field. Map player slots are ordered [Maya, Amar, Ning, Leo, Veya].
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Coyne + the faction he assembled: two turncoat rebels (people
@@ -1591,11 +1593,12 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: bridgeMap,
     buildPlayers: () => [
-      // Post-Rose squad of four. Map slots ordered [Maya, Amar, Ning, Leo].
+      // Post-Rose squad of five. Map slots ordered [Maya, Amar, Ning, Leo, Veya].
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Wren + a household kill-team: the empire's main force holds
@@ -1687,13 +1690,14 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: quayMap,
     buildPlayers: () => [
-      // Post-Rose squad of four. Khione readies the ship — she is
+      // Post-Rose squad of five. Khione readies the ship — she is
       // narratively present but not a combatant. Map slots ordered
       // [Maya, Amar, Ning, Leo].
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Marshal Othren + Dawn's loyalist rank-and-file. Her rebellion's
@@ -1791,12 +1795,13 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: shipDeckMap,
     buildPlayers: () => [
-      // Post-Rose squad of four. Khione holds the wheel (present, not a
-      // combatant). Map slots ordered [Maya, Amar, Ning, Leo].
+      // Post-Rose squad of five. Khione holds the wheel (present, not a
+      // combatant). Map slots ordered [Maya, Amar, Ning, Leo, Veya].
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // An imperial household boarding party — royal-tier, NOT bandits. This
@@ -1884,7 +1889,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Lord Castor again — B14's retrieval knight, now the first name on
@@ -1953,7 +1959,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // War-scavengers — the lawlessness the empire's war leaves behind.
@@ -2021,7 +2028,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // The depot garrison — royal-tier supply troops under a depot
@@ -2090,7 +2098,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // An imperial assault column — more than a thin command should be
@@ -2214,7 +2223,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       // Only the holdout captain and his few hardliners fight — the rest
@@ -2342,7 +2352,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.amar(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       ENEMIES.imperialGeneral(18),
@@ -2410,7 +2421,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       ENEMIES.vanguardCaptain(17),
@@ -2479,7 +2491,8 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.amar(),
       PLAYERS.maya(),
       PLAYERS.ning(),
-      PLAYERS.leo()
+      PLAYERS.leo(),
+      PLAYERS.veya()
     ],
     buildEnemies: () => [
       ENEMIES.incendiaryCaptain(17),
@@ -2554,10 +2567,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2739,10 +2753,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2883,10 +2898,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -2953,10 +2969,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3024,10 +3041,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3093,10 +3111,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],
@@ -3228,7 +3247,7 @@ export const BATTLES: BattleNode[] = [
       duty: {
         subtitle: "The Path Ends — Under Orders",
         intro: "Dawn's command staff drafted the order three times and could not make an officer sign it: engage the Ravage command in the open and hold it on the ground until the coast batteries range the flagship. It is a staying order. Whoever executes it is the anvil. Amar read it once, signed it himself, and picked the squad that has never once broken under him. The path of duty ends where every honest officer knows it ends: at the front of your own order.",
-        outro: "The order held. The batteries spoke. The fleet rose. The report says six names held the processional against the Ravage command, and for once the report and the truth are the same document.",
+        outro: "The order held. The batteries spoke. The fleet rose. The report says one unbroken line of names held the processional against the Ravage command, and for once the report and the truth are the same document.",
         dialogues: [
           {
             id: "b28_d_open",
@@ -3237,7 +3256,7 @@ export const BATTLES: BattleNode[] = [
               { speaker: "Amar", portraitId: "amar", expression: "resolute",
                 body: "The order is HOLD, squad. Not win. Hold the commander on this marble until the batteries range that ship. I signed it myself because I will not make another officer carry it. Anyone who wants to fall back, fall back now, and no report will ever know." },
               { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
-                body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. All six names present." }
+                body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. Every name present." }
             ]
           },
           {
@@ -3245,7 +3264,7 @@ export const BATTLES: BattleNode[] = [
             trigger: { kind: "before_victory" },
             beats: [
               { portraitId: "narrator",
-                body: "The commander falls as the first battery finds its range, and the flagship's shadow slides off the processional like a tide going out. The anvil held. The anvil is still standing, all six names of it." },
+                body: "The commander falls as the first battery finds its range, and the flagship's shadow slides off the processional like a tide going out. The anvil held. The anvil is still standing, every name of it." },
               { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
                 body: "(to the squad, hoarse) Report as written. (He folds the order away.) Khonu, wherever you are: I read it before I signed it. I'd sign it again. That's the whole doctrine, sergeant. It works." }
             ]
@@ -3317,10 +3336,11 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.maya(),
       PLAYERS.ning(),
       PLAYERS.leo(),
+      PLAYERS.veya(),
       // Rejoined at the held city (post_grude_burns): Selene, hunting the
       // same war from its shadows since her B7 escape, and Ranatoli,
       // freed when the district fires cracked the prison row. The fleet
-      // arc plays six-strong.
+      // arc plays seven-strong.
       PLAYERS.selene(),
       PLAYERS.ranatoli()
     ],

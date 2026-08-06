@@ -16,6 +16,9 @@ export const PLAYER_PALETTES: Record<string, UnitPalette> = {
   leo:    { primary: 0xb55330, secondary: 0x6e2e1c, accent: 0xf3d572, skin: 0xd09a78, hair: 0xb46d2b },
   ranatoli: { primary: 0x6c7188, secondary: 0x3a3e54, accent: 0xc7c4d8, skin: 0xc69372, hair: 0x1a1a1a },
   selene: { primary: 0x222238, secondary: 0x101020, accent: 0xc83a3a, skin: 0xd2a380, hair: 0x111111 },
+  // Veya (B14+): slate-blue optician's coat over a scorched work apron,
+  // amber lens-light accent — matches her portrait set.
+  veya:   { primary: 0x4a6b8a, secondary: 0x5a4632, accent: 0xffb347, skin: 0x8a5c3f, hair: 0x3d3733 },
   // Kian rides with the squad in early-game battles (b02 referenced, b04
   // ambush, b07/b08 escort), and turns hostile from b10 onward when his
   // suspicion crystallizes. Same character — same palette — appears here

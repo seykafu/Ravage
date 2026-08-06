@@ -13,8 +13,8 @@ import { isAlive } from "./Unit";
 
 // Weapon reach — must mirror targetsForUnit in Actions.ts.
 export const weaponRange = (u: Unit): { min: number; max: number } => ({
-  min: u.weapon === "bow" ? 2 : 1,
-  max: u.weapon === "bow" ? 4 : u.weapon === "spear" ? 2 : 1
+  min: u.weapon === "bow" || u.weapon === "lens" ? 2 : 1,
+  max: u.weapon === "bow" ? 4 : u.weapon === "lens" ? 3 : u.weapon === "spear" ? 2 : 1
 });
 
 export const dangerZoneTiles = (state: BattleState, u: Unit): TilePos[] => {

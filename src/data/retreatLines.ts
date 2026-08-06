@@ -52,6 +52,10 @@ const RETREAT_LINES: Record<string, string[]> = {
     "...Cut deeper than I let it. Falling back. Hold the line. Finish what we came in for.",
     "I'm down. Don't break formation over me. Do the thing. I'll find you after."
   ],
+  veya: [
+    "Rig's cracked and so am I. Withdrawing. Mind the seams without me, they won't aim themselves.",
+    "That's my lens arm gone. I grind, I don't bleed well. Back before the next inspection."
+  ],
   ranatoli: [
     "Bleed only what you can spare, and I have spared quite enough. Falling back. Hold.",
     "Down, not dead. Cover the gap I'm leaving. We feast together yet, all of us."

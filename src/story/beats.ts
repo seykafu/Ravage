@@ -5,6 +5,7 @@ import type { ArcId, RouteRef } from "../data/contentIds";
 
 export type PortraitId =
   | "amar" | "lucian" | "ning" | "maya" | "leo" | "ranatoli" | "selene"
+  | "veya"
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
   | "rose" | "coyne"
@@ -887,7 +888,16 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
         body: "That is the far-watch signal. Soldiers on the street, moving with purpose, more than a patrol. They have found the house." },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-        body: "Then the rest of the conversation waits. Amar, down the stairs, into the street, before they can stack the door. Whatever you are, you are also still the person they are here for. Move." }
+        body: "Then the rest of the conversation waits. Amar, down the stairs, into the street, before they can stack the door. Whatever you are, you are also still the person they are here for. Move." },
+      N("On the workshop landing below, a broad woman in a scorched leather apron is already lifting a bronze rig down from the wall rack, unhurried, as if the alarm were a delivery bell. Veya. The court's master optician, until Dawn stole her from Archbold's palace two winters ago; the hands behind every sighting-glass in the rebellion."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+        body: "(from the stairs, without turning) Veya goes with you. She has been asking me for a field posting since the plaza. I have run out of reasons to waste her on my windowsills." },
+      { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "Household guard. Vasse-forge plate, court pattern. I sat through nine years of their inspections; light goes through the throat seam if you ask it politely. Stand somewhere that isn't my line and I'll show you." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "You grind lenses and you're volunteering for a street fight. Why?" },
+      { speaker: "Veya", portraitId: "veya", expression: "grim_resolve",
+        body: "Because I spent a career helping men see farther so they could take more. The plaza put my name on their lists anyway. So. From here I aim the other way. Downstairs, your highness. They're stacking the door." }
     ]
   },
   // -------- Post-Battle 14 (the unfinished conversation) --------
@@ -914,6 +924,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "...Lucian told me, dying: fight for the people next to you. Not the colony, not the empire, not a flag. The only instruction in two years without strings." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
         body: "Then your foreman was the better strategist. I have known since Maya's third report. Keep his instruction, Amar. You will need something of your own when this worsens." },
+      N("In the workshop, Veya cleans the rig's front element with her apron hem and sets it back on the rack like a tradeswoman closing the till. Four of Castor's guard went down without one of them reaching her, and she is trying very hard not to look pleased about the arithmetic."),
+      { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "Throat seam. Told you. Nine years I signed off that plate, and the court never once asked me what I'd learned about where it fails. Their loss walks with you now, if you'll have a middle-aged optician with strong opinions." },
+      N("Nobody says no. Ning is already asking her how the rig works. From tonight, the squad is five."),
       N("Maya catches Amar on the stairs afterward. She is not calculating anything; for once she just looks tired."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "Eleven years of a false story about your father, and I never caught the seam. If Dawn can fool me, who's fooling her? I'll watch the watchers. Sleep." },
@@ -1311,9 +1325,12 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("They come with the morning's second hour. First, out of the prison row the fires cracked open: a shield the size of a door, and behind it, greyer and thinner and grinning like the war never touched him, Ranatoli."),
       { speaker: "Ranatoli", portraitId: "ranatoli", expression: "lecturing",
         body: "Steel up, Amar. We bleed together or we feast together. Anything in between is shame. (He looks the squad over, two years late.) I said that to a boy once. Look what grew while I was in a cell." },
+      N("Behind them Veya has commandeered the district glassworks. She has been up two nights fusing salvage from the burned observatory into the rig: a crown of stacked prisms where the single lens sat. She calls the new array 'overdue'. The squad calls her, from this morning, the Prismarch."),
+      { speaker: "Veya", portraitId: "veya", expression: "focused",
+        body: "One lens asks the light politely. Seven of them insist. Hold still, war. I have your measurements.", promote: "veya" },
       N("And behind him, out of the smoke like she was cut from it, the huntress who escaped a monastery and crossed an ocean on the trail of the same names the squad has been crossing out: Selene."),
       { speaker: "Selene", portraitId: "selene",
-        body: "I've been three streets behind you since the harbour, watching who you spare. (A pause, and something in her settles.) Lucian's boy after all. Whatever the sky wants, it takes it from six of us now." },
+        body: "I've been three streets behind you since the harbour, watching who you spare. (A pause, and something in her settles.) Lucian's boy after all. Whatever the sky wants, it takes it from all of us now." },
       N("East of the city, past the harbour, the horizon has been the wrong colour for three days. Sailors won't put out. Birds are flying inland. The war believes it is the biggest thing in the world."),
       N("The sky is about to disagree. But first, the war has one more bottleneck to force: the canyon narrows, and whoever is waiting in them.")
     ]

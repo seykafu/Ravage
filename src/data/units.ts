@@ -21,6 +21,11 @@ const G_LEO:      GrowthTable = { hp: 65, power: 60, armor: 50, speed: 45, movem
 // striker — the sim's strike-core metric excludes him for kill speed.
 const G_RANATOLI: GrowthTable = { hp: 80, power: 50, armor: 70, speed: 25, movement: 5 };
 const G_SELENE:   GrowthTable = { hp: 60, power: 70, armor: 35, speed: 65, movement: 15 };
+// Veya trades body for beam: highest power growth on the roster, worst
+// hp/armor. Her lens already halves enemy armor (Damage.ts), so her
+// damage curve stays flat and reliable — the growths just keep the raw
+// number relevant while everyone else's plate thickens.
+const G_VEYA:     GrowthTable = { hp: 45, power: 70, armor: 15, speed: 45, movement: 5 };
 const G_KIAN:     GrowthTable = { hp: 65, power: 55, armor: 55, speed: 50, movement: 10 };
 // Rose joins the squad at B13 (Madame Dawn's Rebellion) as Dawn's
 // most senior lieutenant — quick, deadly, devoted. Dies in
@@ -182,6 +187,30 @@ export const PLAYERS = {
     // at the monastery in B7. L10 baseline + catch-up rule applies.
     level: 10,
     growths: G_SELENE
+  }),
+  veya: (): UnitDef => ({
+    id: "veya",
+    name: "Veya",
+    shortName: "Ve",
+    faction: "player",
+    classKind: "lenscaster",
+    weapon: "lens",
+    // Fragile artillery: range 2-3 beam that halves armor (Damage.ts),
+    // priced with the worst hp/armor/movement on the roster and 2 AP.
+    // She kills through plate; she cannot hold a doorway.
+    stats: { hp: 24, power: 11, armor: 2, speed: 7, movement: 3, ap: 2 },
+    artSeed: 10,
+    palette: PLAYER_PALETTES.veya,
+    portrait: true,
+    abilities: ["Aide"],
+    // No lenscaster sprite folder yet — the shinobi's cloaked silhouette
+    // stands in for her coat-and-apron figure until bespoke art ships.
+    spriteClassOverride: "shinobi",
+    // Joins at B14 (Grude, after Dawn's rebellion). L1 like every other
+    // recruit — the catch-up rule fast-forwards her to the squad's
+    // average the moment she's first fielded.
+    level: 1,
+    growths: G_VEYA
   }),
   kian: (): UnitDef => ({
     id: "kian",
