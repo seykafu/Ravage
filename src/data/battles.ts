@@ -1501,6 +1501,12 @@ export const BATTLES: BattleNode[] = [
     backdropKey: "bg_grude",
     playable: true,
     map: courtyardMap,
+    // Night fight: Maya's mole hunt ran below the floorboards after
+    // dark, Ndara was found in the courtyard "breathing, not waking",
+    // and Coyne is slipping out the BACK gate — this is a clandestine
+    // coup-within-the-coup by candle-light, not a daylight arrest.
+    // The fog-of-war spotlight sells the searching.
+    darkBattle: true,
     buildPlayers: () => [
       // Post-Rose squad of five. Ndara is in a coma — not on the
       // field. Map player slots are ordered [Maya, Amar, Ning, Leo, Veya].
@@ -1697,6 +1703,11 @@ export const BATTLES: BattleNode[] = [
     backdropKey: "bg_grude",
     playable: true,
     map: quayMap,
+    // Pre-dawn fight: before_lie stages this explicitly — "Amar goes to
+    // the quay before dawn." The squad breaks for the gangway in the
+    // last dark hour, torch-lit dock, Othren's line half-shadow. The
+    // spotlight makes the ship's lamps the destination.
+    darkBattle: true,
     buildPlayers: () => [
       // Six from the quay: Corin breaks ranks with Dawn's line in
       // before_lie and fights his first battle against his old

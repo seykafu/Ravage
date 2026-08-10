@@ -345,7 +345,7 @@ export class BattleScene extends Phaser.Scene {
     this.tutorial = undefined;
     this.pressBegunInScene = false;
     // Scene instances are reused across battles. The spotlight RT from a
-    // dark battle (B4/B7/B11/B13/B27) is destroyed by scene shutdown, but
+    // dark battle (B4/B7/B11/B13/B15/B17/B27) is destroyed by scene shutdown, but
     // the FIELD survives — and update() touches it every frame. Left
     // stale, the first frame of the NEXT battle after a dark one crashes
     // inside RenderTexture.clear (null gl). Reset it with the rest.
@@ -1068,11 +1068,14 @@ export class BattleScene extends Phaser.Scene {
     //   so the side bar text + portraits stay sharp + readable.
     //   Added on top of the main camera so UI composites above the
     //   FX'd world AND above the darkness layer.
-    // Vignette was wired in CinematicFX but never used — battles are
-    // exactly the "clear focal point" case it was built for. Subtle:
-    // darkened corners push the eye into the board without dimming UI
-    // (the UI camera never carries post-FX).
-    applyCinematicFX(this, { vignette: 0.3 });
+    // NO post-FX vignette here — this was tried (0.3) and reverted. The
+    // battle already darkens its surroundings twice: the backdrop art
+    // carries its own baked-in edge vignette, and the dim gradient below
+    // adds 0.22→0.42 on top. A third layer pushed the board's frame to
+    // near-black, and on bright maps (B5's snowfield) the fight read as
+    // "surrounded by darkness". Dropping it also saves a full-screen
+    // shader pass per frame at the native-res buffer size.
+    applyCinematicFX(this);
     this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
     // Bulk-ignore all pinned UI on the world camera (post-FX cam).
     this.cameras.main.ignore(this.uiObjects);
@@ -1091,9 +1094,11 @@ export class BattleScene extends Phaser.Scene {
     if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
 
     // Fog-of-war spotlight overlay — opt-in per battle via
-    // node.darkBattle. For moody / interior / nocturnal battles
-    // (B7 monastery corridors, B11 cliffs at night, B13 night plaza
-    // strike). Daylight outdoor battles render normally.
+    // node.darkBattle. Curated to SEVEN nocturnal/interior battles:
+    // B4 swamp murk, B7 monastery corridors, B11 cliffs at night,
+    // B13 night plaza strike, B15 back-gate coup by candle-light,
+    // B17 the quay before dawn, B27 orbital descent. Daylight outdoor
+    // battles render normally.
     if (node.darkBattle) {
       this.setupSpotlightOverlay(boundsW, boundsH);
     }
