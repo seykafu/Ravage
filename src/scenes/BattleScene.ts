@@ -613,6 +613,16 @@ export class BattleScene extends Phaser.Scene {
       this.startBattleMusic();
     });
 
+    // The suspend write is idle-deferred (see writeSuspend). Two exits
+    // bypass idle: scene shutdown (DevJump warp, defeat restart) and the
+    // tab closing. Flush on both so the last turn boundary is never lost.
+    const flushOnLeave = () => this.flushSuspend();
+    window.addEventListener("pagehide", flushOnLeave);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener("pagehide", flushOnLeave);
+      this.flushSuspend();
+    });
+
     // Tiles
     const tileSeed = map.id.length * 31 + 7;
     for (let y = 0; y < map.height; y++) {
@@ -2207,19 +2217,56 @@ export class BattleScene extends Phaser.Scene {
   // Capture the live board into the save's suspend slot. Runs at every
   // turn boundary; cleared by transitionToEndScene when the battle
   // resolves. See src/combat/Suspend.ts for the snapshot shape.
+  //
+  // Split into a synchronous CAPTURE and a deferred WRITE. The capture
+  // (plain object building) is cheap and must happen at the turn
+  // boundary while the state is coherent. The write is the expensive
+  // half — loadSave's JSON.parse, a full-save stringify, two
+  // localStorage.setItems, and the remote push — and it used to run
+  // synchronously on the exact frame a new turn (often an enemy move
+  // animation) was starting. On slow storage that's a per-turn hitch.
+  // requestIdleCallback slides it into frame slack; the timeout bounds
+  // staleness, and shutdown/end-scene paths flush or cancel explicitly.
+  private pendingSuspend?: Parameters<typeof writeSuspendedBattle>[0];
+  private suspendFlushScheduled = false;
   private writeSuspend(): void {
     if (this.fsm.isEnded()) return;
-    writeSuspendedBattle({
+    this.pendingSuspend = {
       battleId: this.battleId,
       savedAt: new Date().toISOString(),
       units: this.state.units.map(serializeUnit),
       initiative: this.initiative.serialize(),
       dialogue: this.dialogue.serialize()
-    });
+    };
+    if (this.suspendFlushScheduled) return; // latest capture wins at flush
+    this.suspendFlushScheduled = true;
+    const flush = () => {
+      this.suspendFlushScheduled = false;
+      this.flushSuspend();
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(flush, { timeout: 400 });
+    } else {
+      window.setTimeout(flush, 150);
+    }
+  }
+
+  // Write whatever capture is pending, now. Called by the idle flush,
+  // and directly by scene shutdown (warping away mid-battle must not
+  // lose the last turn boundary).
+  private flushSuspend(): void {
+    if (!this.pendingSuspend) return;
+    const snap = this.pendingSuspend;
+    this.pendingSuspend = undefined;
+    writeSuspendedBattle(snap);
   }
 
   private transitionToEndScene(v: "player" | "enemy"): void {
     // Battle resolved — the suspend snapshot is now stale history.
+    // Drop any capture still waiting on the idle flush FIRST, or the
+    // deferred write would resurrect the suspend we're about to clear
+    // and EndScene's "resume battle?" would offer a finished fight.
+    this.pendingSuspend = undefined;
     clearSuspendedBattle();
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);

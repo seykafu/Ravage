@@ -33,9 +33,18 @@ const config: Phaser.Types.Core.GameConfig = {
   // RENDER_SCALE === 1 → unchanged 1280x720.
   width: GAME_WIDTH * RENDER_SCALE,
   height: GAME_HEIGHT * RENDER_SCALE,
-  pixelArt: true,
-  roundPixels: true,
-  antialias: false,
+  // NOTE: when a `render` block exists, Phaser's Config reads ALL render
+  // settings from it and ignores same-named top-level keys — so the
+  // pixelArt/roundPixels/antialias trio lives inside it, not beside it.
+  render: {
+    pixelArt: true,
+    roundPixels: true,
+    antialias: false,
+    // Dual-GPU laptops default WebGL to the battery-saving integrated
+    // chip; at a 2560×1440 native-res buffer with post-FX that's the
+    // difference between 60fps and a slideshow. Ask for the real GPU.
+    powerPreference: "high-performance"
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH

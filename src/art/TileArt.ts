@@ -2,7 +2,41 @@ import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor, mixColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
 import type { ObstacleKind, TerrainKind } from "../combat/types";
-import { TILE_SIZE, TILE_ART_SCALE } from "../util/constants";
+import { TILE_SIZE, TILE_ART_SCALE, RENDER_SCALE } from "../util/constants";
+
+// Pre-downsample a large painted texture to its actual on-screen size,
+// once, into a canvas texture. The painted tiles ship at ~600×600 but
+// render at TILE_SIZE×RENDER_SCALE (96×96 device px) — a 6× LINEAR
+// minification with no mipmaps (the sources aren't power-of-two, so the
+// GPU can't build any). Sampling that across every visible board cell
+// on every frame is a memory-bandwidth burn — the single biggest
+// per-frame cost on integrated GPUs — and it shimmers under camera pan.
+// One high-quality canvas resample at first use kills both: ~40× less
+// texture data touched per frame, and a cleaner downsample than the
+// GPU's 4-tap LINEAR could ever produce. Returns the source key
+// untouched when the source is already display-sized (procedural
+// fallbacks) or the canvas can't be created.
+const ensureDownsampled = (
+  scene: Phaser.Scene,
+  srcKey: string,
+  dsKey: string,
+  size: number
+): string => {
+  if (scene.textures.exists(dsKey)) return dsKey;
+  const src = scene.textures.get(srcKey).getSourceImage() as
+    | HTMLImageElement
+    | HTMLCanvasElement;
+  if (!src.width || src.width <= size * 1.5) return srcKey;
+  const tex = scene.textures.createCanvas(dsKey, size, size);
+  if (!tex) return srcKey;
+  const ctx = tex.getContext();
+  ctx.imageSmoothingEnabled = true;
+  (ctx as CanvasRenderingContext2D).imageSmoothingQuality = "high";
+  ctx.drawImage(src, 0, 0, size, size);
+  tex.refresh();
+  scene.textures.get(dsKey).setFilter(Phaser.Textures.FilterMode.LINEAR);
+  return dsKey;
+};
 
 // Render a tile as a pseudo-3D block: top face + slight side highlight + speckled detail.
 // We use TILE_SIZE for the top-face square; the bevel is drawn just inside its borders.
@@ -221,10 +255,13 @@ export const ensureTileTexture = (
   terrain: TerrainKind,
   seed: number
 ): string => {
-  // Prefer the painted PNG. BootScene already applied LINEAR filter to
-  // any texture key starting with "tile:" so the GPU downsamples smoothly.
+  // Prefer the painted PNG — pre-shrunk to display size (see
+  // ensureDownsampled above) so the board doesn't grind the GPU
+  // minifying 600×600 sources into 96×96 cells every frame.
   const realKey = `tile:${terrain}`;
-  if (scene.textures.exists(realKey)) return realKey;
+  if (scene.textures.exists(realKey)) {
+    return ensureDownsampled(scene, realKey, `tile_ds:${terrain}`, TILE_SIZE * RENDER_SCALE);
+  }
   // Fallback: procedural tile painter. Cached per terrain + seed so cells
   // sharing the same combo don't allocate a new texture each.
   const key = tileTextureKey(terrain, seed);
@@ -251,7 +288,9 @@ export const ensureObstacleTexture = (
 ): string | null => {
   if (obstacle === "none") return null;
   const realKey = `obstacle:${obstacle}`;
-  if (scene.textures.exists(realKey)) return realKey;
+  if (scene.textures.exists(realKey)) {
+    return ensureDownsampled(scene, realKey, `obstacle_ds:${obstacle}`, TILE_SIZE * RENDER_SCALE);
+  }
   const procKey = procObstacleKey(obstacle);
   if (scene.textures.exists(procKey)) return procKey;
   const px = new PixelCanvas(TILE_SIZE, TILE_SIZE, TILE_ART_SCALE);

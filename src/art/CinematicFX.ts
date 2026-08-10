@@ -71,9 +71,17 @@ export const applyCinematicFX = (
     // We let the blur stay tight (1px offset) and modulate the visible
     // intensity through `strength`. Higher bloomIntensity → both a
     // slightly wider blur and a brighter halo.
+    //
+    // steps: 2, not the default 4. Each step is TWO full-buffer shader
+    // passes, and with native-res rendering the buffer is 2560×1440 —
+    // the default bloom alone was eight ~3.7-megapixel passes per frame,
+    // the single biggest fixed GPU cost in the game. At the subtle
+    // strengths we run, two steps is visually indistinguishable and
+    // halves that bill. Measured target: integrated-GPU laptops holding
+    // 60fps mid-battle.
     const blurStrength = 0.5 + cfg.bloomIntensity * 0.5;  // 0.5 → 1.0
     const strength = cfg.bloomIntensity;
-    cam.postFX.addBloom(cfg.bloomColor, 1, 1, blurStrength, strength);
+    cam.postFX.addBloom(cfg.bloomColor, 1, 1, blurStrength, strength, 2);
   }
 
   if (cfg.saturation !== 0 || cfg.brightness !== 1) {
