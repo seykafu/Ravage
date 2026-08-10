@@ -38,6 +38,30 @@ export class Initiative {
     return null;
   }
 
+  // The unit at the cursor WITHOUT the dead-skip. current() advances the
+  // cursor past corpses as a convenience — which is exactly wrong for the
+  // end-of-turn path, where "who just acted" must never slide forward onto
+  // an innocent bystander because the actor died mid-turn.
+  atCursor(): Unit | null {
+    return this.order[this.cursor] ?? null;
+  }
+
+  // End-of-turn advance that tolerates the actor having died during its
+  // own turn (counter kill, Destruct trade). If the cursor unit is dead,
+  // skipping the corpse IS the advance — consuming another slot on top of
+  // that would eat the next unit's turn: they'd be marked acted with 0 AP
+  // and never get to move, standing wherever the enemy wants them.
+  advancePastCurrent(allUnits: Unit[]): Unit | null {
+    const at = this.order[this.cursor];
+    if (at && !isAlive(at)) {
+      const next = this.current(); // walks the cursor past corpses only
+      if (next) return next;
+      // The corpse-skip exhausted the queue — wrap into the next round.
+      return this.advance(allUnits);
+    }
+    return this.advance(allUnits);
+  }
+
   // Advance to the next living unit. Triggers a new round if the queue is exhausted.
   advance(allUnits: Unit[]): Unit | null {
     this.cursor++;

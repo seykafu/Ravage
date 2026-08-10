@@ -2072,15 +2072,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private endCurrentTurn(): void {
-    const cur = this.initiative.current();
-    if (cur) endUnitTurn(cur);
+    // atCursor, NOT current(): current() skips dead units by advancing
+    // the cursor. If the actor died during its own turn (a counter kill,
+    // a Destruct trade), current() would return the NEXT unit in the
+    // queue — and the endUnitTurn + advance pair below would zero that
+    // innocent unit's AP, mark it acted, and step past its slot. One
+    // death upstream silently ate a teammate's whole turn.
+    const cur = this.initiative.atCursor();
+    if (cur && isAlive(cur)) endUnitTurn(cur);
     this.clearActionButtons();
     this.clearOverlays();
     // Advance BEFORE evaluating victory so round-based conditions
     // (surviveRounds, protectUnit) see the new round counter on the same
     // tick the player crosses the threshold. The rout/defeat-unit checks
     // are state-only and don't care about ordering.
-    this.initiative.advance(this.state.units);
+    this.initiative.advancePastCurrent(this.state.units);
     if (this.checkEnd()) return;
     this.beginCurrentTurn();
   }

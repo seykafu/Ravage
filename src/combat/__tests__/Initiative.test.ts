@@ -114,3 +114,62 @@ describe("Initiative class", () => {
     expect(init.current()?.id).toBe("p3");
   });
 });
+
+// The mid-turn-death regression. When the ACTOR dies during its own turn
+// (killed by a Ready-stance counter, or trading into a Destruct), the
+// end-of-turn path must not consume the NEXT unit's slot on top of the
+// corpse-skip — that combination marked an innocent teammate as spent
+// with zero AP and left them standing wherever the enemy wanted them.
+describe("actor dies during its own turn", () => {
+  it("atCursor returns the corpse instead of sliding to the next unit", () => {
+    const units = [mkUnit("p1", "player", 10), mkUnit("p2", "player", 8)];
+    const init = new Initiative();
+    init.reseed(units);
+    units[0]!.state.alive = false;
+    expect(init.atCursor()?.id).toBe("p1");   // the dead actor
+    expect(init.current()?.id).toBe("p2");    // current() skips, by design
+  });
+
+  it("advancePastCurrent lands on the next unit, not past it", () => {
+    const units = [
+      mkUnit("p1", "player", 10),
+      mkUnit("p2", "player", 8),
+      mkUnit("e1", "enemy", 12)
+    ];
+    const init = new Initiative();
+    init.reseed(units);
+    expect(init.current()?.id).toBe("p1");
+    // p1 attacks, eats a counter, dies mid-turn.
+    units[0]!.state.alive = false;
+    const next = init.advancePastCurrent(units);
+    // The old current()+advance() pair landed on e1 here — p2's turn
+    // was eaten. The corpse-skip alone IS the advance.
+    expect(next?.id).toBe("p2");
+    expect(init.current()?.id).toBe("p2");
+    expect(units[1]!.state.hasActedThisRound).toBe(false);
+  });
+
+  it("still advances exactly one slot when the actor survived", () => {
+    const units = [mkUnit("p1", "player", 10), mkUnit("p2", "player", 8)];
+    const init = new Initiative();
+    init.reseed(units);
+    const next = init.advancePastCurrent(units);
+    expect(next?.id).toBe("p2");
+  });
+
+  it("wraps the round when the dying actor was last in the queue", () => {
+    const units = [mkUnit("p1", "player", 10), mkUnit("e1", "enemy", 8)];
+    const init = new Initiative();
+    init.reseed(units);
+    init.advance(units); // cursor at e1
+    expect(init.current()?.id).toBe("e1");
+    units[0]!.state.hasActedThisRound = true;
+    // e1 attacks p1's Destruct carrier and dies with them mid-turn...
+    // (p1 stays alive here — the point is e1 dying in the LAST slot.)
+    units[1]!.state.alive = false;
+    const next = init.advancePastCurrent(units);
+    expect(init.round).toBe(2);
+    expect(next?.id).toBe("p1");
+    expect(units[0]!.state.hasActedThisRound).toBe(false);
+  });
+});
