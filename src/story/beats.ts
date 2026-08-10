@@ -46,9 +46,13 @@ export interface StoryArc {
   // fall-through at runtime.
   next: RouteRef;
   music:
-    | "everydayAnthros" | "adventureAnthros" | "adventure1" | "lifeInGrude" | "danger" | "battlePrep"
+    | "adventureAnthros" | "lifeInGrude" | "danger" | "battlePrep"
     | "mainTheme" | "emotional" | "everydayLife" | "trailer" | "ravageDaredevil"
-    | "sadness" | "sadness2" | "grudeBattle1" | "death";
+    | "sadness" | "sadness2" | "grudeBattle1" | "death"
+    // The ending suite — all five war-path codas share this closing
+    // texture so the endings converge musically even as they diverge
+    // in content.
+    | "emotionalLife";
   // Optional backdrop key — must match a key in BACKDROPS (see BackdropArt).
   // If omitted, StoryScene falls back to the generic Thuling sky.
   // NOTE: this is the camelCase BACKDROPS key, NOT the bg_<label> BackdropKey
@@ -1357,7 +1361,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_ending_vengeance",
     title: "The Emptied List",
     subtitle: "The canyon rim, one year later",
-    music: "emotional",
+    music: "emotionalLife",
     backdrop: "cliffs",
     next: "credits",
     beats: [
@@ -1375,7 +1379,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_ending_restoration",
     title: "The First Harvest",
     subtitle: "A road in Anthros, in autumn",
-    music: "everydayLife",
+    music: "emotionalLife",
     backdrop: "farmland",
     next: "credits",
     beats: [
@@ -1393,7 +1397,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_ending_revolution",
     title: "No Thrones",
     subtitle: "The processional, reclaimed by grass",
-    music: "death",
+    music: "emotionalLife",
     backdrop: "grude",
     next: "credits",
     beats: [
@@ -1411,7 +1415,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_ending_duty",
     title: "The Officer Who Reads",
     subtitle: "A garrison desk, early",
-    music: "everydayLife",
+    music: "emotionalLife",
     backdrop: "study",
     next: "credits",
     beats: [
@@ -1429,7 +1433,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     id: "post_ending_mercy",
     title: "The Surrendered Sword",
     subtitle: "A ward that used to be an armoury",
-    music: "emotional",
+    music: "emotionalLife",
     backdrop: "monastery",
     next: "credits",
     beats: [

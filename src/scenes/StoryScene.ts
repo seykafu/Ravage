@@ -40,9 +40,8 @@ const PORTRAIT_TABLE: Record<string, PortraitMeta> = {
 // beats.ts without adding a row here is a compile error — was Record<string,
 // MusicKey>, which silently returned undefined and crashed at runtime.
 const arcMusic: Record<StoryArc["music"], MusicKey> = {
-  everydayAnthros: MUSIC.everydayAnthros,
+  emotionalLife: MUSIC.emotionalLife,
   adventureAnthros: MUSIC.adventureAnthros,
-  adventure1: MUSIC.adventure1,
   lifeInGrude: MUSIC.lifeInGrude,
   danger: MUSIC.danger,
   battlePrep: MUSIC.battlePrep,
