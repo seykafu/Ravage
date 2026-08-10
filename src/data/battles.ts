@@ -1389,7 +1389,11 @@ export const BATTLES: BattleNode[] = [
       "Barely an hour into the conversation, the candle-maker downstairs taps the warning rhythm. King Archbold's household guard has found the safe house. The empire doesn't want Amar dead — a living heir is a key it can turn. Lord Castor's orders: take the emperor's son breathing. The squad has other plans. Maya is already at the door.",
     outro:
       "Castor's detail retreats, carrying their commander. The retrieval failed — but it was a message: the empire knows what Amar is, and it will keep reaching. In the study, Dawn finishes her sentence. Half of Amar's blood is the rebellion's. The other half is the throne it exists to break.",
-    music: MUSIC.battleTheme2,
+    // GrudeBattle1 — the city's own battle palette. The Grude act now
+    // alternates it with the Spine variant (B12 G, B13 spine, B14 G,
+    // B15 stronghold, B16 G, B17 spine, B18 G) instead of running
+    // battleTheme2 five battles straight.
+    music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
@@ -1489,7 +1493,10 @@ export const BATTLES: BattleNode[] = [
       "Maya found the seam: every message for three months passed through Quartermaster Coyne. He is the leak — how Castor's detail found the door. Ndara worked it out first and faced him alone. They found her in the courtyard, breathing, not waking. Coyne waits at the back gate with turned men and imperial agents. He means to leave on his terms.",
     outro:
       "Coyne goes down at the gate he never reached. The safe house is theirs again — and Dawn knows now it was never safe. Ndara breathes upstairs and does not wake. For thirty years Dawn has asked people to follow her. After tonight, the asking stops.",
-    music: MUSIC.battleTheme2,
+    // Entering the Stronghold — B1's palace-coup theme, returning on
+    // purpose: the mole hunt is a coup inside Dawn's own stronghold,
+    // and the leitmotif says so before any dialogue does.
+    music: MUSIC.enteringStronghold,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
@@ -1587,7 +1594,8 @@ export const BATTLES: BattleNode[] = [
       "Dawn's proposal still sits unanswered in Amar's chest when she sends the squad across the river after dark — an ordinary errand. Halfway over the bridge, the far lamps die one by one, and two figures step out behind you. Archbold has stopped trying to retrieve his son. The woman walking toward Amar is Wren. The King calls her his Knife.",
     outro:
       "Wren falls on the bridge meant to be Amar's grave. The empire's message lands anyway: no version of next year leaves him alone. Hide, they hunt him. Take the throne, they fight him. Dawn was right — the only choice is which cost. She'll ask again. His answer is closer.",
-    music: MUSIC.battleTheme2,
+    // GrudeBattle1 — see B14's note on the Grude-act alternation.
+    music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
