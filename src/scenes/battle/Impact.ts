@@ -42,7 +42,15 @@ export const timeDilate = (
   setTimeout(() => {
     if (token !== stopToken) return;
     // Scene may have shut down while we waited.
-    if (!scene.scene || !scene.sys || !scene.sys.isActive()) return;
+    if (!scene.scene || !scene.sys) return;
+    // PAUSED still restores. A player death pops the retreat dialogue,
+    // which pauses BattleScene — with the old isActive()-only guard the
+    // restore silently skipped, and the battle came back from the
+    // dialogue stuck at 5% speed until the next hit reset it (death
+    // slow-mo that never let go; counters crawling so slowly they read
+    // as never firing). Writing timeScale on a paused scene is safe —
+    // its tweens simply aren't advancing.
+    if (!scene.sys.isActive() && !scene.sys.isPaused()) return;
     restore();
   }, ms);
 };

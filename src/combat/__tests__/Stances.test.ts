@@ -16,7 +16,7 @@ import {
   spendReady,
   SPEED_COUNTER_THRESHOLD
 } from "../Stances";
-import { enterStance } from "../Actions";
+import { enterStance, performAttack } from "../Actions";
 import { Grid } from "../Grid";
 import { createUnit } from "../Unit";
 import type { MapDef, Unit, UnitDef } from "../types";
@@ -89,6 +89,52 @@ describe("Ready counter — range gating per weapon", () => {
     expect(canTriggerReadyCounter(def, atk, GRID)).toBe(false);
     def.state.stance = "defensive";
     expect(canTriggerReadyCounter(def, atk, GRID)).toBe(false);
+  });
+});
+
+// The user-reported scenario, locked end-to-end through performAttack:
+// a spear-carrier holding Ready must counter a ranged attacker firing
+// from the diagonal "corner" (Manhattan 2) and any attacker striking
+// from 1 tile away — not just the straight-line reach-2 poke.
+describe("spear Ready counter fires through the full attack resolution", () => {
+  const alwaysHit = { rollPercent: (pct: number) => pct > 0 } as unknown as import("../../util/rng").Rng;
+  const mkState = (units: Unit[]) => ({ units, grid: GRID, rng: alwaysHit });
+
+  const spearman = () => {
+    const d = mkUnit({ id: "lucian_like", weapon: "spear", classKind: "spearton" }, { x: 4, y: 4 });
+    d.state.stance = "ready";
+    return d;
+  };
+
+  it("counters a bow shot from the diagonal corner (Manhattan 2)", () => {
+    const def = spearman();
+    const archer = mkUnit({ id: "archer", weapon: "bow", classKind: "archer", faction: "enemy" }, { x: 5, y: 5 });
+    const res = performAttack(mkState([def, archer]), archer, def);
+    expect(res.hit).toBe(true);
+    expect(res.counterTriggered).toBe(true);
+    expect(archer.state.hp).toBeLessThan(archer.stats.hp);
+  });
+
+  it("counters a bow shot from straight-line range 2", () => {
+    const def = spearman();
+    const archer = mkUnit({ id: "archer", weapon: "bow", classKind: "archer", faction: "enemy" }, { x: 4, y: 6 });
+    const res = performAttack(mkState([def, archer]), archer, def);
+    expect(res.counterTriggered).toBe(true);
+  });
+
+  it("counters a spear poke from 1 tile away", () => {
+    const def = spearman();
+    const lancer = mkUnit({ id: "lancer", weapon: "spear", classKind: "spearton", faction: "enemy" }, { x: 4, y: 5 });
+    const res = performAttack(mkState([def, lancer]), lancer, def);
+    expect(res.counterTriggered).toBe(true);
+  });
+
+  it("documents the reach limit: no counter against an archer at range 3", () => {
+    const def = spearman();
+    const archer = mkUnit({ id: "archer", weapon: "bow", classKind: "archer", faction: "enemy" }, { x: 4, y: 7 });
+    const res = performAttack(mkState([def, archer]), archer, def);
+    expect(res.counterTriggered).toBe(false);
+    expect(hasReadyStance(def)).toBe(true); // stance NOT wasted out of reach
   });
 });
 

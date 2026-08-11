@@ -611,6 +611,12 @@ export class BattleScene extends Phaser.Scene {
       // theme actually starts: the first resume is the opening dialogue
       // closing. Idempotent — every later resume is a no-op.
       this.startBattleMusic();
+      // Normalize the time scale on EVERY resume. If a hit-stop or
+      // Ravage dilation was mid-flight when a dialogue paused this
+      // scene (death retreat beat, interpose prompt), the wall-clock
+      // restore may have raced the pause — never come back from a
+      // dialogue in slow motion.
+      this.applyTurnSpeed();
     });
 
     // The suspend write is idle-deferred (see writeSuspend). Two exits
