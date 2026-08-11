@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { Unit } from "../combat/types";
 import { animKey, hasUnitAnimation } from "./animations";
+import { resolveSpriteClass } from "../art/UnitArt";
 import type { UnitAnimState } from "./manifest";
 
 // Plays a state animation on a unit sprite.
@@ -30,9 +31,11 @@ export const playUnitState = (
   unit: Unit,
   state: UnitAnimState
 ): void => {
-  // Mirror UnitArt.ensureUnitTexture: prefer the override sprite class so
-  // animation lookups stay consistent with whichever spritesheet was loaded.
-  const spriteClass = unit.spriteClassOverride ?? unit.classKind;
+  // Mirror UnitArt.ensureUnitTexture exactly (via the shared resolver) so
+  // animation lookups stay consistent with whichever spritesheet the
+  // static texture came from — real class art first, override stand-in
+  // second.
+  const spriteClass = resolveSpriteClass(scene, unit);
   if (hasUnitAnimation(spriteClass, state)) {
     stopIdleFallback(sprite);
     sprite.play(animKey(spriteClass, state), true);

@@ -182,12 +182,24 @@ const unitTexKey = (u: Unit): string => `unit-${u.id}`;
 // fallback log doesn't fire on every camera redraw.
 const warnedFallback = new Set<string>();
 
+// Which class folder should this unit render from? The unit's REAL
+// class always wins when its sprite art exists on disk — so dropping a
+// lenscaster/ or knight/ folder into public/assets/sprites/ upgrades
+// Veya, Corin (and Kian) everywhere with zero code changes. The
+// spriteClassOverride is a stand-in for classes whose folders haven't
+// shipped, not a permanent identity.
+export const resolveSpriteClass = (scene: Phaser.Scene, u: Unit): ClassKind => {
+  if (scene.textures.exists(`unit:${u.classKind}:idle`)) return u.classKind;
+  return u.spriteClassOverride ?? u.classKind;
+};
+
 export const ensureUnitTexture = (scene: Phaser.Scene, u: Unit): string => {
   // The sprite class can be overridden separately from the mechanical
   // classKind — this lets a unit get its class's mechanics (e.g., knight
   // gets +2 mountBonus from Actions.ts) while rendering with another
-  // class's sprites until proper assets ship for theirs.
-  const spriteClass = u.spriteClassOverride ?? u.classKind;
+  // class's sprites until proper assets ship for theirs. Real class art
+  // takes precedence the moment it exists (see resolveSpriteClass).
+  const spriteClass = resolveSpriteClass(scene, u);
 
   // If a real idle spritesheet exists for that class, prefer it. The first
   // frame becomes the static texture used by code paths that don't animate.

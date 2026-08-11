@@ -236,6 +236,33 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       // No post_para or later — Kian leaves the squad before B10 to
       // act on the warrant. He's the boss of B10/B11.
     }
+  },
+  // -------- VEYA -------- (joins B14; every camp she attends resolves
+  // to the "crossing" era bucket, so her lines are written era-neutral)
+  veya: {
+    characterId: "veya",
+    name: "Veya",
+    portraitId: "veya",
+    eras: {
+      crossing: [
+        { body: "I ground lenses for nine years so men could see farther and take more. Now I sit at a fire where nobody is measuring anything, and my hands don't know what to do. I'm learning to let them idle. Slowly.", expression: "wry_smile" },
+        { body: "Ning asked me tonight how the rig works. I talked for forty minutes. She stayed for all forty. (A pause.) The court never once stayed past five. I'd have defected years earlier if someone had told me about the forty.", expression: "wry_smile" },
+        { body: "The rig's front element has a flaw, lower left, from the quay. I could regrind it in an afternoon with a proper bench. I'm keeping it. Some flaws are records.", expression: "grim_resolve" }
+      ]
+    }
+  },
+  // -------- CORIN -------- (joins B17; same era-neutral "crossing" rule)
+  corin: {
+    characterId: "corin",
+    name: "Corin",
+    portraitId: "corin",
+    eras: {
+      crossing: [
+        { body: "Nine years I kept a cavalry rotation: feed, tack, watch, sleep. The squad keeps no rotation at all and somehow the watch is always kept. Rose would have hated it. Rose would have loved it. Both, I think.", expression: "quiet_grief" },
+        { body: "Maya stands the way my sister taught her. First position, weight back, chin level. I watched her drill tonight and forgot to breathe for a moment. It isn't grief exactly. It's nearer to visiting.", expression: "quiet_grief" },
+        { body: "The horse is settling. Takes a saddle without an argument now. (He almost smiles.) Everyone in this camp is something the war tried to spend and missed. The horse included. Maybe me.", expression: "resolute" }
+      ]
+    }
   }
 };
 

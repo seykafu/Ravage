@@ -6,6 +6,7 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
 import { PLAYERS } from "../data/units";
+import { getActiveSquadIds, ROSTER_ORDER } from "../data/activeRoster";
 import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
@@ -728,20 +729,17 @@ export class CampScene extends Phaser.Scene {
   }
 
   private resolvePlayerFactory(id: string): (() => UnitDef) | undefined {
-    // Map character ids to PLAYER factories. amar_true / amarHidden
-    // share the visual with amar but represent different statlines —
-    // use the canonical "amar" sprite for the camp.
-    const factories: Record<string, () => UnitDef> = {
-      amar: PLAYERS.amar,
-      lucian: PLAYERS.lucian,
-      ning: PLAYERS.ning,
-      maya: PLAYERS.maya,
-      leo: PLAYERS.leo,
-      ranatoli: PLAYERS.ranatoli,
-      selene: PLAYERS.selene,
-      kian: PLAYERS.kian
-    };
-    return factories[id];
+    // Derived from the shared ROSTER_ORDER table — this method used to
+    // carry its own id→factory map, the THIRD private fork of the
+    // roster data, and like the others it had gone stale: Veya and
+    // Corin resolved to undefined and silently never rendered at the
+    // fire even though activeSquadIds listed them. One table now feeds
+    // the battle rosters, the roster UI, and the camp.
+    //
+    // amar_true (the pre-amnesia B1 statline) shares amar's canonical
+    // camp sprite.
+    if (id === "amar_true") return PLAYERS.amar;
+    return ROSTER_ORDER.find((r) => r.recordId === id)?.factory;
   }
 
   // Fallen-character resolver — returns the names + ids of squad
@@ -898,30 +896,13 @@ export class CampScene extends Phaser.Scene {
 
   // ---- Active squad resolver (unchanged from commit 1) ---------------------
   private activeSquadIds(completedBattles: string[]): string[] {
-    const ROSTER: Partial<Record<string, string[]>> = {
-      b01_palace_coup:    ["amar"],
-      b02_farmland:       ["amar", "lucian", "ning"],
-      b03_dawn_bandits:   ["amar", "lucian", "ning", "maya"],
-      b04_swamp:          ["amar", "lucian", "ning", "maya", "kian"],
-      b05_mountain_ndari: ["amar", "lucian", "ning", "maya", "kian", "leo"],
-      b06_caravan:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
-      b07_monastery:      ["amar", "lucian", "ning", "maya", "kian", "leo"],
-      b08_orinhal:        ["amar", "lucian", "ning", "maya", "kian", "leo"],
-      b09_ravine:         ["amar", "lucian", "ning", "maya", "kian", "leo"],
-      b10_leaving_thuling: ["amar", "lucian", "ning", "maya", "leo"],
-      b11_cliffs:          ["amar", "ning", "maya", "leo"]
-    };
-    const completed = completedBattles
-      .map((id) => BATTLES.find((b) => b.id === id))
-      .filter((b): b is typeof BATTLES[number] => b !== undefined)
-      .sort((a, b) => b.index - a.index);
-    for (const b of completed) {
-      const squad = ROSTER[b.id];
-      if (squad) return squad;
-    }
-    // No completed battles yet — show the starting trio so the camp
-    // doesn't read as empty on a fresh save.
-    return ["amar"];
+    // Shared resolver — see src/data/activeRoster.ts. This method used
+    // to carry a private copy of the squad table that stopped updating
+    // at B11: everyone recruited after the crossing (Rose, Veya, Corin,
+    // the returning Selene and Ranatoli) never appeared at the fire.
+    const ids = getActiveSquadIds(completedBattles);
+    // Fresh save, nothing completed — show Amar so camp isn't empty.
+    return ids.length > 0 ? ids : ["amar"];
   }
 }
 

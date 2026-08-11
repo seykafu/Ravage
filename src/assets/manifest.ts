@@ -120,7 +120,13 @@ const portraitEntries: ManifestEntry[] = [...baseEntries, ...expressionEntries];
 // (we suppress the load error and fall back to procedural).
 const CLASSES: ClassKind[] = [
   "swordsman", "spearton", "knight", "archer",
-  "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss"
+  "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss",
+  // Classes still rendering through spriteClassOverride stand-ins.
+  // Registered so the moment art lands in public/assets/sprites/<class>/
+  // it loads on boot and resolveSpriteClass upgrades every unit of that
+  // class automatically — no code change. Missing folders 404 harmlessly.
+  "lenscaster", "khan", "prismarch", "spearton_lord",
+  "robinhelm", "dactyl_king", "shinobi_master", "guardian"
 ];
 
 const ANIM_STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
