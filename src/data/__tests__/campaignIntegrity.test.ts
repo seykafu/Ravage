@@ -191,3 +191,25 @@ describe("campaign integrity", () => {
     }
   });
 });
+
+describe("war-arc path flavor (B20-B22)", () => {
+  const WAR_BATTLES: BattleId[] = ["b20_dawn_war", "b21_archbold_advances", "b22_grude_burns"];
+
+  it("every war path speaks exactly once per shared war battle, additively", () => {
+    for (const bid of WAR_BATTLES) {
+      const node = battleById(bid)!;
+      const base = node.dialogues?.length ?? 0;
+      expect(base, `${bid} lost its shared script`).toBeGreaterThan(0);
+      for (const path of WAR_PATHS) {
+        const extra = node.pathOverrides?.[path]?.extraDialogues;
+        expect(extra?.length, `${bid}:${path} must add exactly one flavor beat`).toBe(1);
+        const resolved = resolveBattleForPath(node, path);
+        expect(resolved.dialogues?.length, `${bid}:${path} must keep the shared script AND the flavor beat`).toBe(base + 1);
+        // The appended beat is the path's own, not a replacement of a shared one.
+        expect(resolved.dialogues?.at(-1)?.id).toBe(`${bid}_path_${path}`);
+      }
+      // No path chosen (should be impossible past B19, but the resolver must not invent dialogue).
+      expect(resolveBattleForPath(node, null).dialogues?.length).toBe(base);
+    }
+  });
+});

@@ -2443,7 +2443,62 @@ export const BATTLES: BattleNode[] = [
             body: "(quietly) They're cheering for you, not for her. Be careful with that, Amar. Cheers are how her arithmetic gets its hands on people." }
         ]
       }
-    ]
+    ],
+    // War-arc path flavor: the shared war keeps its shared script;
+    // the player's chosen philosophy speaks once per battle on top
+    // (additive extraDialogues — see PathOverride).
+    pathOverrides: {
+      vengeance: {
+        extraDialogues: [{
+          id: "b20_dawn_war_path_vengeance",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+              body: "Two armies, and somewhere behind the far one, one man. Every line between me and Archbold is arithmetic now. I didn't pick this path to admire the field. Cut through." }
+          ]
+        }]
+      },
+      restoration: {
+        extraDialogues: [{
+          id: "b20_dawn_war_path_restoration",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Amar", portraitId: "amar", expression: "resolute",
+              body: "See the farmland under the mud? This field goes back to barley when we're done with it. Fight like the ground is borrowed — because on our path, it is. We give it back." }
+          ]
+        }]
+      },
+      revolution: {
+        extraDialogues: [{
+          id: "b20_dawn_war_path_revolution",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+              body: "Look at it, Amar: two crowns spending other people's sons on the same afternoon. Remember this field next time someone asks why every throne must burn. Both of these already are. They just haven't heard." }
+          ]
+        }]
+      },
+      duty: {
+        extraDialogues: [{
+          id: "b20_dawn_war_path_duty",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Corin", portraitId: "corin", expression: "resolute",
+              body: "The rotation holds even here, Captain: feed, tack, watch, fight. The anger is real. The ORDER is what brings six of us home. We hold the line because we said we would." }
+          ]
+        }]
+      },
+      mercy: {
+        extraDialogues: [{
+          id: "b20_dawn_war_path_mercy",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Amar", portraitId: "amar", expression: "resolute",
+              body: "Pass it down the line before the charge: any man who drops his blade walks off this field alive. I mean it today of all days. The sum is high enough without us adding to it." }
+          ]
+        }]
+      }
+    }
   },
   {
     id: "b21_archbold_advances",
@@ -2514,7 +2569,62 @@ export const BATTLES: BattleNode[] = [
             body: "(leaning on the barricade) Every hour counts. Lucian used to say that about harvests. (A breath.) We just bought Grude a night. Fall back before they change their minds." }
         ]
       }
-    ]
+    ],
+    // War-arc path flavor: the shared war keeps its shared script;
+    // the player's chosen philosophy speaks once per battle on top
+    // (additive extraDialogues — see PathOverride).
+    pathOverrides: {
+      vengeance: {
+        extraDialogues: [{
+          id: "b21_archbold_advances_path_vengeance",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+              body: "He's on this road. Behind that advance, sitting his horse under his own dry canvas, is my father. If my hands forget the plan, Maya — remind them. Slowly, if you have to." }
+          ]
+        }]
+      },
+      restoration: {
+        extraDialogues: [{
+          id: "b21_archbold_advances_path_restoration",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Leo", portraitId: "leo", expression: "wounded_pride",
+              body: "Every field he takes is a season somebody has to replant. So on our path we're not just holding him — we're keeping the roads, the wells, the mill by the ford. Lose him NOTHING we'll need after." }
+          ]
+        }]
+      },
+      revolution: {
+        extraDialogues: [{
+          id: "b21_archbold_advances_path_revolution",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
+              body: "Ten thousand levied sons marched here to retrieve one of his own. THAT is the machine we're breaking, Amar — not the man. The man is only the proof the machine exists." }
+          ]
+        }]
+      },
+      duty: {
+        extraDialogues: [{
+          id: "b21_archbold_advances_path_duty",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Corin", portraitId: "corin", expression: "resolute",
+              body: "An advance breaks on the thing that does not move. Today we are the thing that does not move. Stand where you said you would stand. That is the whole of the doctrine, and it is enough." }
+          ]
+        }]
+      },
+      mercy: {
+        extraDialogues: [{
+          id: "b21_archbold_advances_path_mercy",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Veya", portraitId: "veya", expression: "grim_resolve",
+              body: "Half those boys were levied at spear-point out of villages like the ones we're defending. Officers direct — so give my lens the officers. Break the head, spare the hands." }
+          ]
+        }]
+      }
+    }
   },
   {
     id: "b22_grude_burns",
@@ -2585,7 +2695,62 @@ export const BATTLES: BattleNode[] = [
             body: "Until the sky answers, Ning. (He looks east, where the horizon has been wrong for days.) And something tells me it's about to." }
         ]
       }
-    ]
+    ],
+    // War-arc path flavor: the shared war keeps its shared script;
+    // the player's chosen philosophy speaks once per battle on top
+    // (additive extraDialogues — see PathOverride).
+    pathOverrides: {
+      vengeance: {
+        extraDialogues: [{
+          id: "b22_grude_burns_path_vengeance",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+              body: "He would burn his own capital rather than let it feed me. Mark the lesson — it is the entire biography of the man I am hunting. Brask first. Then the road north to his father." }
+          ]
+        }]
+      },
+      restoration: {
+        extraDialogues: [{
+          id: "b22_grude_burns_path_restoration",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
+              body: "Those larders could feed my whole town for a winter. The war ends someday — hunger doesn't sign an armistice. We hold the granaries, or nothing else we do tonight counts." }
+          ]
+        }]
+      },
+      revolution: {
+        extraDialogues: [{
+          id: "b22_grude_burns_path_revolution",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+              body: "Watch closely what a crown does the moment it starts losing. Remember this street when someone asks you — and someone will — why every throne has to go. Answer with tonight." }
+          ]
+        }]
+      },
+      duty: {
+        extraDialogues: [{
+          id: "b22_grude_burns_path_duty",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Corin", portraitId: "corin", expression: "resolute",
+              body: "Tonight bucket lines are soldiers and soldiers are bucket lines. Fire discipline is still discipline. We hold the district by the manual: corner by corner, in order, no heroics." }
+          ]
+        }]
+      },
+      mercy: {
+        extraDialogues: [{
+          id: "b22_grude_burns_path_mercy",
+          trigger: { kind: "round_start", round: 2 },
+          beats: [
+            { speaker: "Veya", portraitId: "veya", expression: "focused",
+              body: "Brask's teams burn on orders, not appetite. Break the orders — drop the captain — and the torches find the gutters on their own. Mercy has a target tonight, and it is exactly one man." }
+          ]
+        }]
+      }
+    }
   },
   // ---- B23-B24: Path-specific climax pair -----------------------------------
   // These fire as different battles per chosen path; ids stay constant
@@ -3457,7 +3622,14 @@ export interface PathOverride {
   outro?: string;
   victory?: VictoryCondition;
   buildEnemies?: () => UnitDef[];
+  // Full replacement of the battle's dialogue set (the climax battles
+  // B23/B24/B28 use this — each path fights a genuinely different scene).
   dialogues?: BattleDialogue[];
+  // ADDITIVE dialogues — appended to the battle's base set after any
+  // replacement above. The war arc (B20-B22) uses this for one
+  // path-flavored beat per battle: the shared war keeps its shared
+  // script, and the player's chosen philosophy speaks once on top.
+  extraDialogues?: BattleDialogue[];
   atmosphere?: AtmosphereKind;
 }
 
@@ -3466,7 +3638,13 @@ export const resolveBattleForPath = (
   path: SevenPath | null
 ): BattleNode => {
   const o = path ? node.pathOverrides?.[path] : undefined;
-  return o ? { ...node, ...o, pathOverrides: undefined } : node;
+  if (!o) return node;
+  const { extraDialogues, ...rest } = o;
+  const merged: BattleNode = { ...node, ...rest, pathOverrides: undefined };
+  if (extraDialogues && extraDialogues.length > 0) {
+    merged.dialogues = [...(merged.dialogues ?? []), ...extraDialogues];
+  }
+  return merged;
 };
 
 // Accepts a plain string for ergonomic call sites (URL params, save files,
