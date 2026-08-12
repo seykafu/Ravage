@@ -137,23 +137,49 @@ describe("xpRewardFor", () => {
 });
 
 describe("catchUpToSquad", () => {
-  it("levels a veteran up to (squad_avg - 2)", () => {
+  it("levels a joiner to the FLAT squad average (no -2 handicap)", () => {
     const veteran = mkUnit({ level: 10, growths: HIGH_GROWTH });
-    const gained = catchUpToSquad(veteran, 15, () => 0); // squad avg 15 → target 13
-    expect(veteran.level).toBe(13);
-    expect(gained).toBe(3);
+    const gained = catchUpToSquad(veteran, 15);
+    expect(veteran.level).toBe(15);
+    expect(gained).toBe(5);
   });
 
-  it("is a no-op when already at or above (squad_avg - 2)", () => {
-    const u = mkUnit({ level: 14 });
+  it("grants deterministic expected-value stat gains (growth% x levels)", () => {
+    // Growths 60/55/45/50/10 over exactly 10 levels → +6/+6(rounded from
+    // 5.5)/+5(4.5)/+5/+1. No RNG: an unlucky joiner can no longer land
+    // below the curve the balance sim certifies.
+    const u = mkUnit({
+      level: 5,
+      growths: { hp: 60, power: 55, armor: 45, speed: 50, movement: 10 }
+    });
+    const base = { ...u.stats };
+    catchUpToSquad(u, 15);
+    expect(u.level).toBe(15);
+    expect(u.stats.hp).toBe(base.hp + 6);
+    expect(u.stats.power).toBe(base.power + 6);
+    expect(u.stats.armor).toBe(base.armor + 5);
+    expect(u.stats.speed).toBe(base.speed + 5);
+    expect(u.stats.movement).toBe(base.movement + 1);
+    // Repeatability — the whole point of dropping the RNG.
+    const twin = mkUnit({
+      id: "twin",
+      level: 5,
+      growths: { hp: 60, power: 55, armor: 45, speed: 50, movement: 10 }
+    });
+    catchUpToSquad(twin, 15);
+    expect(twin.stats).toEqual(u.stats);
+  });
+
+  it("is a no-op when already at or above the squad average", () => {
+    const u = mkUnit({ level: 15 });
     const gained = catchUpToSquad(u, 15);
-    expect(u.level).toBe(14);
+    expect(u.level).toBe(15);
     expect(gained).toBe(0);
   });
 
   it("respects the level cap", () => {
     const u = mkUnit({ level: LEVEL_CAP - 1, growths: HIGH_GROWTH });
-    const gained = catchUpToSquad(u, 30, () => 0);
+    const gained = catchUpToSquad(u, 30);
     expect(u.level).toBe(LEVEL_CAP);
     expect(gained).toBe(1);
   });

@@ -130,30 +130,48 @@ export const awardXp = (
 
 // ---- Catch-up rule (original-8 veterans rejoining) ----------------------
 
-// When a veteran (Selene, Ranatoli, etc.) rejoins the active squad after the
-// rest of the squad has out-leveled them, fast-forward them to keep pace.
-// They retain their narrative L10 baseline; if the squad's average level is
-// higher, they catch up to (squad_avg - 2), capped at LEVEL_CAP.
+// When a joiner (Veya at B14, Corin at B17, the returning veterans at
+// B23) enters the active squad after the rest have out-leveled them,
+// fast-forward them to the squad's average level, capped at LEVEL_CAP.
 //
 // Mutates `unit` in place. Returns the number of levels gained (0 if no
 // catch-up was needed). The caller can use that count for "Selene catches
 // up: +N levels" log lines if desired.
 //
-// Why (squad_avg - 2) instead of squad_avg flat? Veterans should feel
-// strong at rejoin, but not OP — leaving them slightly behind the squad
-// average preserves the player's reward for leveling their core team and
-// avoids "always swap to whoever just rejoined" degenerate strategy.
+// Two deliberate choices, both re-tuned after playtests reported joiners
+// arriving too weak for the campaign's position:
+//
+//  * FLAT squad average, not (avg - 2). The old handicap guarded against
+//    "always swap to whoever just rejoined" — but these are permanent
+//    story joiners who arrive unpromoted and with empty item bags, which
+//    already leaves them behind the veterans in effective power. Docking
+//    two further levels put them 2-4 under the ENEMY curve on arrival.
+//
+//  * DETERMINISTIC expected-value gains, not per-level RNG rolls. The
+//    balance guardrails (BalanceSim.projectPlayer) certify the campaign
+//    against exactly this projection — base + growth% x levels. Rolling
+//    a 10-level catch-up at random let an unlucky joiner land far below
+//    the curve the sim promised, with no player counterplay. Ordinary
+//    in-battle level-ups stay random; the one-shot catch-up block is the
+//    statement of where this character SHOULD be, so it pays the mean.
 export const catchUpToSquad = (
   unit: Unit,
-  squadAverageLevel: number,
-  roll: () => number = Math.random
+  squadAverageLevel: number
 ): number => {
-  const target = Math.min(LEVEL_CAP, squadAverageLevel - 2);
+  const target = Math.min(LEVEL_CAP, squadAverageLevel);
   if (target <= unit.level) return 0;
   const levelsToGain = target - unit.level;
-  for (let i = 0; i < levelsToGain; i++) {
-    unit.level += 1;
-    if (unit.growths) applyOneLevel(unit, unit.growths, roll);
+  unit.level = target;
+  if (unit.growths) {
+    const g = unit.growths;
+    const grant = (pct: number): number => Math.round((pct / 100) * levelsToGain);
+    unit.stats.hp += grant(g.hp);
+    unit.stats.power += grant(g.power);
+    unit.stats.armor += grant(g.armor);
+    unit.stats.speed += grant(g.speed);
+    unit.stats.movement += grant(g.movement);
+    // HP gains heal up to the new max — same convention as applyOneLevel.
+    unit.state.hp = Math.min(unit.stats.hp, unit.state.hp + grant(g.hp));
   }
   return levelsToGain;
 };
