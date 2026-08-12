@@ -109,22 +109,55 @@ installCrispText();
 // src/util/renderScale.ts.
 installRenderScale();
 
+// Wait for the self-hosted fonts BEFORE constructing the game. Phaser
+// measures every Text object against whatever font is available at
+// creation time and never re-measures — when the web fonts hadn't
+// arrived yet (or, before self-hosting, when fonts.googleapis.com was
+// blocked outright), the whole UI was laid out against a fallback
+// serif: the title overflowed the screen, labels spilled out of their
+// buttons. The 3s race means a missing font file can only ever delay
+// boot, never prevent it.
+const fontsReady = (): Promise<unknown> => {
+  try {
+    const probes = [
+      "700 40px 'Cinzel Decorative'",
+      "600 20px 'Cinzel'",
+      "400 16px 'EB Garamond'",
+      "400 16px 'Inter'"
+    ].map((f) => document.fonts.load(f));
+    return Promise.race([
+      Promise.all([...probes, document.fonts.ready]),
+      new Promise((r) => setTimeout(r, 3000))
+    ]);
+  } catch {
+    return Promise.resolve();
+  }
+};
+
 // If construction still throws (no renderer at all), say so on the
 // loader instead of leaving "loading…" up forever — the failure text is
 // what turns a dead-site report into a fixable bug report.
-let game: Phaser.Game;
-try {
-  game = new Phaser.Game(config);
-} catch (err) {
-  const loaderEl = document.getElementById("loader");
-  if (loaderEl) {
-    loaderEl.innerHTML =
-      "Ravage — failed to start.<br><small style=\"text-transform:none;letter-spacing:normal\">" +
-      String(err instanceof Error ? err.message : err).replace(/</g, "&lt;") +
-      "<br>Please report this — a screenshot of this message is enough.</small>";
+const constructGame = (): Phaser.Game => {
+  try {
+    return new Phaser.Game(config);
+  } catch (err) {
+    const loaderEl = document.getElementById("loader");
+    if (loaderEl) {
+      loaderEl.innerHTML =
+        "Ravage — failed to start.<br><small style=\"text-transform:none;letter-spacing:normal\">" +
+        String(err instanceof Error ? err.message : err).replace(/</g, "&lt;") +
+        "<br>Please report this — a screenshot of this message is enough.</small>";
+    }
+    throw err;
   }
-  throw err;
-}
+};
+
+void fontsReady().then(() => {
+  const game = constructGame();
+  wireGame(game);
+});
+
+function wireGame(game: Phaser.Game): void {
 
 // With RENDER_SCALE > 1 the backing buffer is LARGER than the window on
 // typical displays, so the browser's final canvas scale is a downscale.
@@ -196,4 +229,5 @@ if (import.meta.env.DEV) {
     game.scene.pause(pausedKey);
     game.scene.run("DevJumpScene", { resumeKey: pausedKey });
   });
+}
 }

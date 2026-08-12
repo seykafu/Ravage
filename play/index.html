@@ -40,12 +40,31 @@
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XSNSMMB78R"></script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
-    />
+    <!-- Fonts are SELF-HOSTED (public/fonts/, latin subsets, ~510KB).
+         They used to come from fonts.googleapis.com — and on machines
+         where that host is blocked (privacy tooling, locked-down
+         networks; observed in the field), Phaser measured and rendered
+         every text object with a fallback serif at wildly different
+         metrics: the title overflowed the screen, labels spilled out of
+         their buttons. Local fonts remove the third-party dependency;
+         main.ts additionally waits for document.fonts before boot so
+         text is never measured against the fallback. -->
+    <style>
+      @font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/cinzel-500.woff2') format('woff2'); }
+      @font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/cinzel-600.woff2') format('woff2'); }
+      @font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/cinzel-700.woff2') format('woff2'); }
+      @font-face { font-family: 'Cinzel Decorative'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/cinzel-decorative-700.woff2') format('woff2'); }
+      @font-face { font-family: 'Cinzel Decorative'; font-style: normal; font-weight: 900; font-display: swap; src: url('/fonts/cinzel-decorative-900.woff2') format('woff2'); }
+      @font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400; font-display: swap; src: url('/fonts/eb-garamond-400-italic.woff2') format('woff2'); }
+      @font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 500; font-display: swap; src: url('/fonts/eb-garamond-500-italic.woff2') format('woff2'); }
+      @font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/eb-garamond-400.woff2') format('woff2'); }
+      @font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/eb-garamond-500.woff2') format('woff2'); }
+      @font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/eb-garamond-600.woff2') format('woff2'); }
+      @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-400.woff2') format('woff2'); }
+      @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-500.woff2') format('woff2'); }
+      @font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-600.woff2') format('woff2'); }
+      @font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-700.woff2') format('woff2'); }
+    </style>
     <style>
       :root { color-scheme: dark; }
       html, body {
