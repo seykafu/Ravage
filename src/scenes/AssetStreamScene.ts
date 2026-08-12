@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { MUSIC, MUSIC_FILES, getMusic, type MusicKey } from "../audio/Music";
-import { MANIFEST } from "../assets/manifest";
+import { MANIFEST, versionedPath } from "../assets/manifest";
 import { wireLoaderBookkeeping } from "../assets/streaming";
 import { registerUnitAnimations } from "../assets/animations";
 
@@ -46,7 +46,7 @@ export class AssetStreamScene extends Phaser.Scene {
     // 1. Music (minus the title theme BootScene already fetched).
     for (const f of MUSIC_FILES) {
       if (f.key === MUSIC.mainTheme) continue;
-      this.load.audio(f.key, f.src);
+      this.load.audio(f.key, versionedPath(f.src));
     }
 
     // 2-4. Manifest, partitioned so the heavy portrait tail goes last.
@@ -60,18 +60,18 @@ export class AssetStreamScene extends Phaser.Scene {
     for (const entry of ordered) {
       switch (entry.kind) {
         case "image":
-          this.load.image(entry.id, entry.path);
+          this.load.image(entry.id, versionedPath(entry.path));
           break;
         case "spritesheet":
           if (entry.frame) {
-            this.load.spritesheet(entry.id, entry.path, {
+            this.load.spritesheet(entry.id, versionedPath(entry.path), {
               frameWidth: entry.frame.w,
               frameHeight: entry.frame.h
             });
           }
           break;
         case "audio":
-          this.load.audio(entry.id, entry.path);
+          this.load.audio(entry.id, versionedPath(entry.path));
           break;
       }
     }

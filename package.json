@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/hashAssets.mjs",
     "build": "tsc -b && vite build",
+    "pretest": "node scripts/hashAssets.mjs",
     "preview": "vite preview --port 4173",
     "test": "vitest run",
     "test:watch": "vitest",
