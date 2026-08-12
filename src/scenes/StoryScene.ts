@@ -435,6 +435,13 @@ export class StoryScene extends Phaser.Scene {
       this.scene.start("ChoiceScene");
       return;
     }
+    if (next === "romance") {
+      // The marriage question (post-B29 war endings). RomanceScene offers
+      // the path's two partners or walking on alone, persists the pick,
+      // and routes into the matching wed_*/end_alone coda arc.
+      this.scene.start("RomanceScene");
+      return;
+    }
     if (next === "overworld") {
       // Legacy route, kept as an escape hatch for arcs that explicitly
       // want to drop the player into the world map without going

@@ -171,7 +171,19 @@ export type ArcId =
   | "post_ending_restoration"
   | "post_ending_revolution"
   | "post_ending_duty"
-  | "post_ending_mercy";
+  | "post_ending_mercy"
+  // Romance codas. Each war path's ending routes through RomanceScene
+  // (RouteRef "romance"), where the player chooses the path's woman, the
+  // path's man, or no one — then one of these plays before credits.
+  // Partner availability per path lives in src/data/romance.ts.
+  | "wed_maya"
+  | "wed_selene"
+  | "wed_ning"
+  | "wed_veya"
+  | "wed_ndara"
+  | "wed_leo"
+  | "wed_corin"
+  | "end_alone";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping
@@ -215,4 +227,9 @@ export type RouteRef =
   // The Seven Paths divergence. An arc ending in "choice" (post_path_chosen)
   // hands off to ChoiceScene, where the player commits to one of the seven
   // philosophies; ChoiceScene then routes to the chosen path's B19 opener.
-  | "choice";
+  | "choice"
+  // The marriage question. War-path ending codas (post_ending_*) hand off
+  // to RomanceScene, which offers the path's two partners (one woman, one
+  // man — see src/data/romance.ts) or walking on alone, then routes into
+  // the matching wed_* / end_alone coda arc.
+  | "romance";

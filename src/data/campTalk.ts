@@ -65,7 +65,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       ],
       post_thuling: [
         { body: "Lucian gave me a half-smile when I came back from the road. He hasn't asked. He hasn't NOT asked, either. I don't know which I'm more afraid of. (The silence holds.)", expression: "guarded" },
-        { body: "Ning's getting better with the bow every week. Thirty arrows last night, all in the same hand-span on the target. She won't say it but she's proud. I'm proud for her. (A small smile.)", expression: "fatherly_smile" },
+        { body: "Ning put thirty arrows in the same hand-span last night, then re-set the fletching bench because ours was 'built by someone who's never fletched'. She was right. She's usually right. I keep noticing that. (A small smile.)", expression: "warm_half_smile" },
         { body: "Mira brought me a bowl of stew tonight. I tried to thank her in two languages before I caught myself. Only one came out. She didn't notice. I don't think she did. I'm not sure.", expression: "guarded" }
       ],
       post_field: [

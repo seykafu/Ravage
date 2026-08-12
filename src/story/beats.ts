@@ -1139,7 +1139,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("At the stern rail Corin stands alone with the silver rose clasp in his palm, watching the only country his sister is buried in get smaller. Nobody bothers him for a long while. Then Amar comes and stands beside him, and neither speaks, which is the correct amount."),
       { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
         body: "She'd have shown me the lemon tree, if I'd ever been let near your safe house. Nine years two streets apart and the rebellion kept us in separate pockets. Compartments. (He pins the clasp back on.) I ride with you now, your highness. Wherever the map isn't drawn." },
-      N("The ship runs west; Grude sinks behind. Ahead, nothing is written: no warrant, no map, no army. Only the sea, the squad, a lancer learning his sister secondhand, and a question only Amar can answer.")
+      N("Below decks there is a bright cabin Khione lets no one question. A cot is lashed to the wall, and on it, breathing her steady unreachable breath: Ndara. Khione carried her aboard two nights before the quay. She was 'readying the ship'. The readying included the rebellion's spine."),
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "She sails with us. Thirty steady years, and Dawn had begun to spend her too — a marshal in a coma still anchors a story, and stories were becoming currency in that house. Some things I refuse to leave behind. Sit with her sometimes. She always knew who was in the room." },
+      N("The ship runs west; Grude sinks behind. Ahead, nothing is written: no warrant, no map, no army. Only the sea, the squad, a lancer learning his sister secondhand, a sleeping marshal, and a question only Amar can answer.")
     ]
   },
 
@@ -1157,7 +1160,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "prep:b18_path_chosen",
     beats: [
-      N("Three days at sea. The squad has slept; the shaking has stopped. Khione holds the wheel. Below, four sit around a crate, nobody saying the thing that saying makes real."),
+      N("Three days at sea. The squad has slept; the shaking has stopped. Khione holds the wheel. Below, the squad sits around a crate, nobody saying the thing that saying makes real."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "Landfall in four days, Amar. The squad goes where you point. Empire wants you dead, rebellion wants you spent. Only you decide what you're FOR. What are we?" },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
@@ -1168,6 +1171,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Seven names. Seven people who decided what I'm for: Dawn, my father, Nebu, Fergus, Kian. All handed me the answer pre-written. I'm tired of other people's sums, Maya." },
       { speaker: "Leo", portraitId: "leo", expression: "wounded_pride",
         body: "(from the shadows) My father handed me a list; I flew the other way. No regrets. Pick the name you can stand, Captain. We're coming either way." },
+      N("And then, from the bright cabin, a sound nobody aboard has heard in three weeks: a voice, hoarse and level, asking a question of its own through the wall — 'Whose watch is it?'"),
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "(in the doorway, upright by will alone) Three days I have listened to you count other people's answers through this wall. A marshal's advice, your highness: stop counting. The only vote in this hold is yours. I will stand behind whichever it is. Sitting down, for a while." },
+      N("Khione is down the ladder before anyone speaks, and for a moment the captain who watched thirty steady years lie still holds the marshal upright, and neither of them makes a sound about it. The sword arm is gone — the courtyard took it. The spine never left. Wars run on spines."),
       N("A sail closing fast, flying imperial colours. The empire hasn't let Amar go. The choice must wait one more fight, but it has been asked. Four days to landfall.")
     ]
   },
@@ -1363,7 +1370,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The canyon rim, one year later",
     music: "emotionalLife",
     backdrop: "cliffs",
-    next: "credits",
+    next: "romance",
     beats: [
       N("They come back to the canyon where the first name fell, because Maya says ledgers should be closed where they were opened."),
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
@@ -1381,7 +1388,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A road in Anthros, in autumn",
     music: "emotionalLife",
     backdrop: "farmland",
-    next: "credits",
+    next: "romance",
     beats: [
       N("The war ends and the paperwork begins, and Amar discovers that Lucian was right about this too: the slow work doesn't cheer, it just holds."),
       { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
@@ -1399,7 +1406,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The processional, reclaimed by grass",
     music: "emotionalLife",
     backdrop: "grude",
-    next: "credits",
+    next: "romance",
     beats: [
       N("They bury Madame Dawn on the marble where she meant to be crowned, because her son decides the difference between a grave and a throne is exactly the difference the revolution was for."),
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
@@ -1417,7 +1424,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A garrison desk, early",
     music: "emotionalLife",
     backdrop: "study",
-    next: "credits",
+    next: "romance",
     beats: [
       N("The new army keeps him. Not as a king, which he refuses yearly, but as the officer whose signature means the order was read, costed, and true."),
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
@@ -1435,7 +1442,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A ward that used to be an armoury",
     music: "emotionalLife",
     backdrop: "monastery",
-    next: "credits",
+    next: "romance",
     beats: [
       N("The King lives. That single sentence does more work in the new world than any battle did: every garrison that hears it lowers its price for yielding."),
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
@@ -1444,6 +1451,154 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "The surrendered sword hangs over the ward door, hilt out, where every wounded soldier from both armies can see it on the way in. Nobody has taken it down in four years, Amar. Nobody's even touched it." },
       N("The wards empty slowly, the way wars actually end. Imperial sergeants teach rebel farmhands to set bone. Somebody complains about the porridge in two accents at once."),
       N("Mercy, held all the way to the end, is the only path whose monument keeps working after the story stops: a door people walk through, a sword nobody needs, a war that is genuinely, boringly, mercifully over.")
+    ]
+  },
+
+  // ═══════════ Romance codas ═══════════
+  // Reached from RomanceScene after a war path's ending. One arc per
+  // partner (each partner appears on 1-3 paths — see data/romance.ts)
+  // plus the walking-on-alone coda. All close to credits, all scored by
+  // the shared ending texture.
+
+  wed_selene: {
+    id: "wed_selene",
+    title: "Out Loud",
+    subtitle: "A headland over the sea, the war a year quiet",
+    music: "emotionalLife",
+    backdrop: "cliffs",
+    next: "credits",
+    beats: [
+      N("A headland over cold water, a year after the last blade dropped. Selene watches the horizon out of habit. There is nothing left out there that is hunting either of them. Neither of them has fully believed it yet."),
+      { speaker: "Selene", portraitId: "selene",
+        body: "On the crossing, you heard me in my sleep. Don't, don't, don't. You never asked what it meant. (A long breath.) It was never don't go. It was don't die where I can't see it. Ten years I loved you the way I love people — silently. Uselessly." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Then here is the whole of my counter-offer, Selene. Stay where I can see YOU. Every morning. Say the silent thing back to me once a year and I'll live on it. Marry me." },
+      { speaker: "Selene", portraitId: "selene", expression: "breaking",
+        body: "...Ask me out loud, he says. As if I crossed one ocean and half a war for the scenery. (Her hand finds his.) Yes. Out loud: yes." },
+      N("They marry on the headland with the squad in a half-circle and no one official within forty miles, which suits everyone. Ranatoli cries and claims it is the wind. The sea says nothing. It has seen this before, and it keeps every vow made over it.")
+    ]
+  },
+  wed_corin: {
+    id: "wed_corin",
+    title: "The Account, Closed",
+    subtitle: "The cavalry camp at first frost",
+    music: "emotionalLife",
+    backdrop: "field_night_camp",
+    next: "credits",
+    beats: [
+      N("First frost. The cavalry camp keeps its rotation out of love rather than need now: feed, tack, watch, sleep. Corin stands the last watch himself, the way he has since the quay. Amar has taken to standing it with him."),
+      { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
+        body: "The night I crossed Othren's line I told you the account was open. Rose's account. I have done the sums since. (He unpins the silver rose clasp.) It was never a debt you owed. It was everything I had left, looking for somewhere to live." },
+      { speaker: "Corin", portraitId: "corin", expression: "resolute",
+        body: "Eseldras give this to family. There are no more Eseldras to give it. So either it goes in the ground with her name, or — (he pins it to Amar's collar, hands steady) — or there are more Eseldras. Your call, Captain. I have made mine." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Then witness it, whoever's awake: I am marrying the last of the Eseldras, and the account stays open forever, and we are ALL keeping the rotation. Feed, tack, watch, sleep. Him and me on every watch that matters." },
+      N("The cavalry marries them at dawn under an arch of lances, because cavalry cannot help itself. The clasp stays on Amar's collar for the rest of his life. Somewhere, the plaza keeps a name; the camp keeps two more.")
+    ]
+  },
+  wed_ning: {
+    id: "wed_ning",
+    title: "The Third Round",
+    subtitle: "The rebuilt forge at Thuling, festival night",
+    music: "emotionalLife",
+    backdrop: "farmland",
+    next: "credits",
+    beats: [
+      N("The forge runs again. Ning rebuilt the rivet press herself, first machine in the new Thuling, and shot the ribbon off the doorway at thirty paces rather than cut it, because some things about a person do not change."),
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "Festival night. Same tavern. And this time the third round is MINE, and nobody overrules me, because I held the fence line at the farm, and the wall at Orinhal, and you, upright, half of the war. I've earned the round and the right to say a thing." },
+      { speaker: "Ning", portraitId: "ning", expression: "startled",
+        body: "...The thing is. You read fights like books you've already finished. So you've already read this one. (Quietly, steady.) I'm not the girl from the rivet press asking. I'm the woman who walked the whole road back here beside you. Marry me, Amar." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "I was going to ask at the fence line tomorrow. You outdrew me again. (He takes her hand across the table.) Yes. And Ning — I knew exactly who was asking." },
+      N("Mira dances at the wedding on the foot that never healed straight, because Tali asks her to and nobody in that family knows how to refuse. Lucian's old anvil rings once at midnight. Nobody is standing near it. Thuling has its own opinions, and for once, all of them are yes.")
+    ]
+  },
+  wed_leo: {
+    id: "wed_leo",
+    title: "The Coast",
+    subtitle: "A cliff runway at sunrise, Ash saddled for two",
+    music: "emotionalLife",
+    backdrop: "cliffs",
+    next: "credits",
+    beats: [
+      N("When it ended, Leo said he and Ash were going to fly the coast. He has been postponing it for a year, one excuse at a time, all of the excuses shaped like Amar."),
+      { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "You keep hearing it wrong, you know. I said WE'RE going to fly the coast. Present company. You assumed I meant the dactyl. Ash assumed I meant you. Ash is smarter than both of us and has said so at length." },
+      { speaker: "Leo", portraitId: "leo", expression: "ready",
+        body: "My father handed me a list of what my life would be. I flew the other way and found you at the bottom of the climb. So. Two rings in my jacket, one runway, one sunrise. Get on the dactyl, Amar. Marry me somewhere with no owners and no claims." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "You proposed logistics for a year and called it postponing. (He swings up behind him.) Yes. Fly. And Leo — tell Ash he was right." },
+      N("They marry themselves over open water, which is not legal anywhere and binding everywhere. The coast runs out before the morning does. Ash, for the record, considers the whole thing overdue.")
+    ]
+  },
+  wed_maya: {
+    id: "wed_maya",
+    title: "Off the Books",
+    subtitle: "The marble, one year into the republic",
+    music: "emotionalLife",
+    backdrop: "finalBoss",
+    next: "credits",
+    beats: [
+      N("One year into the republic. The marble where Dawn meant to be crowned holds her grave and no throne, and the two people who decided that stand beside it with the first year's ledger balanced and nothing left to burn."),
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "Eleven years I reported on you. Every grip you corrected, every night you didn't sleep, every kindness you did when you thought no one watched. Dawn got all of it. (Pause.) Almost all. One line item I kept off the books, every single report, for years." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Then file it now, officer. The republic keeps honest ledgers. Say it on the record, Maya. I've been waiting to countersign longer than you've been hiding it." },
+      { speaker: "Maya", portraitId: "maya", expression: "tearful",
+        body: "For the record, then. The watcher loved the watched. From about the third report. Through the lie, through the quay, through the war. No handler ordered it and no ending was planned for it. (Her voice steadies.) Entry complete. Marry me and countersign." },
+      N("They marry on the marble with the whole squad as witnesses and no crown within a thousand miles. Two chairs at the head table, exactly level. Somewhere under the stone, the woman who planned everything gets the one ending she never once planned for — and it is a good one.")
+    ]
+  },
+  wed_veya: {
+    id: "wed_veya",
+    title: "The Forty Minutes",
+    subtitle: "The workshop with the good bench, after the war",
+    music: "emotionalLife",
+    backdrop: "study",
+    next: "credits",
+    beats: [
+      N("A workshop with a proper bench at last. Veya grinds lenses for lighthouses now — instruments that only ever help things be seen coming. On the good bench, under a cloth, something small she has machined and re-machined nine times, which for Veya means nerves."),
+      { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "The court never stayed past five minutes. Ning stayed forty, once, and I told you I'd have defected years earlier if someone had told me about the forty. You have stayed, by my count, four years. My instruments say what that is. I re-checked the math nine times." },
+      { speaker: "Veya", portraitId: "veya", expression: "grim_resolve",
+        body: "(She uncovers it: a ring, bronze and glass, a lens no wider than a fingernail set where a stone would sit.) It has a flaw, lower left. I left it in on purpose. Some flaws are records. This one records the day a person chose to stay. Marry me, Amar, and I'll grind you nothing but true glass the rest of my life." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Four years, forty minutes, one flaw kept on purpose. Veya — yes. And I'm keeping the flaw too. It's the truest thing anyone's ever made me." },
+      N("They marry in the workshop because the light is honest there. Through the little lens on his hand, the world bends warm at one edge, always, ever after. He never has it reground. Some flaws are records.")
+    ]
+  },
+  wed_ndara: {
+    id: "wed_ndara",
+    title: "Terms of Service",
+    subtitle: "The war office, the last ledger closed",
+    music: "emotionalLife",
+    backdrop: "field_night_camp",
+    next: "credits",
+    beats: [
+      N("She ran the war's spine from a chair, as promised: supply, signals, the rear lines that never broke. Tonight the last ledger closes. Ndara squares it on the desk, and then, uncharacteristically, does not stand to leave."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "Thirty years I served Dawn with my whole spine. Then the courtyard, and the long dark, and I woke on a ship to a man counting names through a wall — and I found, listening, that I had picked mine before I opened my eyes. I have served two causes, your highness. I am applying for a third." },
+      { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
+        body: "Terms of service: the rest of my life. Duties: standing where you stand, at whatever pace the courtyard left me. Compensation: your mornings. Non-negotiable. (She slides the paper across.) Sign or decline, Captain. I have survived worse than a no. But sign." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "You wrote it as a commission because asking plainly costs more than thirty years of war. I know the trick — I've used it. (He signs. Both lines.) Accepted, Marshal. Every term. And the compensation clause goes both ways." },
+      N("They marry with full honors, which she pretends to tolerate and privately keeps every ribbon of. The duty path chose the two people in the world who understand that love, written down and signed, is still love — it is just love that plans to LAST.")
+    ]
+  },
+  end_alone: {
+    id: "end_alone",
+    title: "The Name, Answered",
+    subtitle: "The long table, set for everyone",
+    music: "emotionalLife",
+    backdrop: "thuling",
+    next: "credits",
+    beats: [
+      N("No ring. It is not that kind of ending, and it is not a lesser one. The house Amar keeps has a long table, and the squad has worn grooves in the road to it — Ning's chair, Leo's chair, the one nobody sits in that was always Lucian's."),
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Seven people decided what I was for, once. Then the people at this table un-decided it, one battle at a time, until the only name I answer to is the one I picked myself. I didn't marry. I wasn't alone for a single day of it. Those are different things." },
+      N("The fire pops twice, the way it always did at camp. Somebody laughs in the kitchen. The war is a story now, told slightly differently by everyone who was there, and the teller he loves best is all of them."),
+      N("Of the seven names, one. Of the world that was, this table. Of Amar — everything, kept.")
     ]
   }
 };
