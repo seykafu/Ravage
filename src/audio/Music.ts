@@ -16,6 +16,13 @@ export class MusicManager {
   private current: Phaser.Sound.BaseSound | null = null;
   private currentKey: MusicKey | null = null;
   private targetVolume = 0.55;
+  // Deferred playback for the streaming boot: if a scene asks for a
+  // track that hasn't finished background-loading yet (AssetStreamScene
+  // pulls the ~60MB music tail in behind the title screen), remember the
+  // request and start it the moment the file lands. Only the LATEST
+  // request is kept — scenes overwrite each other's pending intent the
+  // same way play() calls overwrite live tracks.
+  private pendingPlay: { key: MusicKey; opts: { loop?: boolean; fadeMs?: number } } | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -76,7 +83,23 @@ export class MusicManager {
     }
   }
 
+  // Called by AssetStreamScene when a background-loaded track arrives.
+  onTrackLoaded(key: MusicKey): void {
+    if (this.pendingPlay && this.pendingPlay.key === key) {
+      const p = this.pendingPlay;
+      this.pendingPlay = null;
+      this.play(p.key, p.opts);
+    }
+  }
+
   play(key: MusicKey, opts: { loop?: boolean; fadeMs?: number } = {}): void {
+    // Not loaded yet (streaming boot) — hold the request; onTrackLoaded
+    // starts it when the file lands. Clears any older pending intent.
+    if (!this.scene.cache.audio.exists(key)) {
+      this.pendingPlay = { key, opts };
+      return;
+    }
+    this.pendingPlay = null;
     const { loop = true, fadeMs = 700 } = opts;
 
     // Ensure the WebAudio context is running BEFORE the same-key check
@@ -164,6 +187,9 @@ export class MusicManager {
   }
 
   stop(fadeMs = 500): void {
+    // An explicit stop also cancels any not-yet-loaded pending request —
+    // a deferred track must never start AFTER the scene asked for silence.
+    this.pendingPlay = null;
     const old = this.current;
     this.current = null;
     this.currentKey = null;

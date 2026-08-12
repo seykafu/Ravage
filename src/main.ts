@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
+import { AssetStreamScene } from "./scenes/AssetStreamScene";
 import { TitleScene } from "./scenes/TitleScene";
 import { IntroVideoScene } from "./scenes/IntroVideoScene";
 import { StoryScene } from "./scenes/StoryScene";
@@ -60,6 +61,9 @@ const config: Phaser.Types.Core.GameConfig = {
     // and disappear. Fixed by moving CampScene up here with the
     // other "page" scenes.
     BootScene,
+    // Invisible background asset streamer — launched by BootScene at
+    // title handoff, never stopped. See scenes/AssetStreamScene.ts.
+    AssetStreamScene,
     TitleScene,
     IntroVideoScene,
     AuthScene,

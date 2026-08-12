@@ -32,12 +32,17 @@ export const hasUnitAnimation = (cls: ClassKind, state: UnitAnimState): boolean 
 
 const STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
 
-// Idempotent. Call once after preload completes.
+// Idempotent (existing anim keys skip; missing textures skip) — safe to
+// re-call as background-streamed sheets arrive. The class list mirrors
+// the manifest's CLASSES so newly shipped folders (lenscaster, knight's
+// Tier 2s, ...) get animations without touching this file again.
 export const registerUnitAnimations = (scene: Phaser.Scene): void => {
   const anims = scene.anims;
   const classes: ClassKind[] = [
     "swordsman", "spearton", "knight", "archer",
-    "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss"
+    "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss",
+    "lenscaster", "khan", "prismarch", "spearton_lord",
+    "robinhelm", "dactyl_king", "shinobi_master", "guardian"
   ];
 
   for (const cls of classes) {

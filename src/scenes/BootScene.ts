@@ -1,8 +1,7 @@
 import Phaser from "phaser";
-import { MUSIC_FILES } from "../audio/Music";
+import { MUSIC, MUSIC_FILES } from "../audio/Music";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { MANIFEST, markFailed, markLoaded } from "../assets/manifest";
-import { registerUnitAnimations } from "../assets/animations";
+import { wireLoaderBookkeeping } from "../assets/streaming";
 import { applySettings } from "../util/settings";
 
 // Loads music + any manifest assets that exist on disk, then hands off to TitleScene.
@@ -52,74 +51,28 @@ export class BootScene extends Phaser.Scene {
       front.fillRect(barX, barY, barW * v, barH);
     });
 
-    // Pin every asset path to the site root. Manifest entries store paths
-    // like "assets/foo.png" / "audio/bar.mp3" without a leading slash, so
-    // by default Phaser would resolve them relative to the page's URL. Once
-    // the game is hosted at /play/, that turns into /play/assets/... which
-    // 404s (the assets are at /assets/). Setting the loader baseURL to "/"
-    // makes every subsequent load fetch from the site root regardless of
-    // which route hosts the game shell.
-    this.load.setBaseURL("/");
+    // Shared loader bookkeeping (baseURL pin, hasAsset marking, LINEAR
+    // filter for painted art) — see src/assets/streaming.ts.
+    wireLoaderBookkeeping(this);
 
-    // Music — required.
-    for (const f of MUSIC_FILES) this.load.audio(f.key, f.src);
-
-    // Manifest — optional. Failed loads are silently dropped; the procedural
-    // fallback handles missing assets. We mark each successful load so art
-    // helpers know which entries are real.
-    //
-    // Per-texture filter override: the global Phaser config sets
-    // pixelArt: true (necessary for the chunky 32×40 unit spritesheets to
-    // stay crisp), which forces NEAREST-neighbor sampling on every texture.
-    // That's wrong for the high-res painted assets (portraits at 600×600,
-    // backdrops at 1280×720, painted tiles at 600×600 downscaled to 48×48):
-    // nearest-neighbor on a downscale of those produces grainy, posterized
-    // garbage. We flip them to LINEAR per texture so the GPU samples them
-    // smoothly. Sprites, VFX, and UI keep NEAREST.
-    this.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string) => {
-      // Phaser uses the asset id as the texture key; mark it loaded.
-      markLoaded(key);
-      if (
-        key.startsWith("portrait:") ||
-        key.startsWith("backdrop:") ||
-        key.startsWith("tile:") ||
-        key.startsWith("obstacle:")
-      ) {
-        // setFilter is a Texture method; safe to call as long as the texture
-        // exists, which it does at FILE_COMPLETE for image assets.
-        const tex = this.textures.get(key);
-        if (tex) tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
-      }
-    });
-    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
-      markFailed(file.key);
-    });
-
-    for (const entry of MANIFEST) {
-      switch (entry.kind) {
-        case "image":
-          this.load.image(entry.id, entry.path);
-          break;
-        case "spritesheet":
-          if (entry.frame) {
-            this.load.spritesheet(entry.id, entry.path, {
-              frameWidth: entry.frame.w,
-              frameHeight: entry.frame.h
-            });
-          }
-          break;
-        case "audio":
-          this.load.audio(entry.id, entry.path);
-          break;
-      }
-    }
+    // STAGE 1: only what the title screen needs — the main theme. The
+    // game's full payload is ~440MB of optional art and music; loading
+    // it all here meant minutes of loading bar on cold caches, which
+    // players reported as "the site doesn't load". Everything else
+    // streams in the background via AssetStreamScene (launched in
+    // create below) while the player sits on the menu. Every asset is
+    // optional by architecture — whatever hasn't arrived when a scene
+    // needs it falls back procedurally and pops in on the next lookup.
+    const mainTheme = MUSIC_FILES.find((f) => f.key === MUSIC.mainTheme);
+    if (mainTheme) this.load.audio(mainTheme.key, mainTheme.src);
   }
 
   create(): void {
-    // Build animations from any spritesheets that successfully loaded.
-    registerUnitAnimations(this);
     // Apply persisted audio preferences before any music plays.
     applySettings(this);
+    // Background-stream the remaining ~440MB. Launched (not started) so
+    // it coexists with every scene that follows and never stops.
+    this.scene.launch("AssetStreamScene");
     this.scene.start("TitleScene");
   }
 }
