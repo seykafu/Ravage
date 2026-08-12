@@ -35,8 +35,26 @@ export const TILE_SIZE = 48;
 const rsOverride = typeof window !== "undefined"
   ? Number(new URLSearchParams(window.location.search).get("rs"))
   : 0;
+
+// Native-res requires the WebGL renderer. On machines where WebGL is
+// refused (driver blocklists, remote desktops — the same machines
+// main.ts's type:AUTO rescues with the Canvas renderer), the camera
+// zoom patch renders a zoomed, cropped frame: the title screen showed
+// the top-left half of itself at 2x. Probe once here and let those
+// machines take the documented rs=1 degradation path automatically.
+const webglAvailable = (() => {
+  if (typeof window === "undefined") return true; // Node / vitest import
+  try {
+    const probe = document.createElement("canvas");
+    return !!(probe.getContext("webgl2") || probe.getContext("webgl"));
+  } catch {
+    return false;
+  }
+})();
+
 export const RENDER_SCALE: number =
-  rsOverride === 1 || rsOverride === 2 ? rsOverride : 2;
+  rsOverride === 1 || rsOverride === 2 ? rsOverride
+  : webglAvailable ? 2 : 1;
 
 
 // HD procedural-art supersampling factor. Every procedurally generated
