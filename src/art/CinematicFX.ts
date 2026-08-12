@@ -62,6 +62,11 @@ export const applyCinematicFX = (
   scene: Phaser.Scene,
   opts: CinematicFXOptions = {}
 ): void => {
+  // Post-FX pipelines are WebGL-only. Under the Canvas fallback renderer
+  // (see main.ts type: AUTO) the FX component's add* methods are inert
+  // at best; skip cleanly so a WebGL-less machine plays ungraded rather
+  // than risking a throw.
+  if (scene.game.renderer.type !== Phaser.WEBGL) return;
   const cfg = { ...DEFAULTS, ...opts };
   const cam = scene.cameras.main;
 
@@ -105,5 +110,6 @@ export const applyCinematicFX = (
 // "Disable cinematic FX" toggle. Doesn't currently have a call site;
 // kept as a public API for future use.
 export const clearCinematicFX = (scene: Phaser.Scene): void => {
+  if (scene.game.renderer.type !== Phaser.WEBGL) return;
   scene.cameras.main.postFX.clear();
 };

@@ -25,7 +25,13 @@ import { installCrispText } from "./util/crispText";
 import { installRenderScale } from "./util/renderScale";
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.WEBGL,
+  // AUTO, not WEBGL: on machines where WebGL context creation is refused
+  // (driver blocklists, exhausted contexts, remote desktops), strict
+  // WEBGL made the Game constructor THROW — main.ts died before the
+  // loader-hide ever ran and the player sat on "Ravage — loading…"
+  // forever. AUTO falls back to the Canvas renderer: no post-FX, but a
+  // playable game (every postFX call site guards on renderer type).
+  type: Phaser.AUTO,
   parent: "app",
   backgroundColor: "#05060a",
   // Backing buffer = design size x RENDER_SCALE (native-resolution render).
@@ -103,7 +109,22 @@ installCrispText();
 // src/util/renderScale.ts.
 installRenderScale();
 
-const game = new Phaser.Game(config);
+// If construction still throws (no renderer at all), say so on the
+// loader instead of leaving "loading…" up forever — the failure text is
+// what turns a dead-site report into a fixable bug report.
+let game: Phaser.Game;
+try {
+  game = new Phaser.Game(config);
+} catch (err) {
+  const loaderEl = document.getElementById("loader");
+  if (loaderEl) {
+    loaderEl.innerHTML =
+      "Ravage — failed to start.<br><small style=\"text-transform:none;letter-spacing:normal\">" +
+      String(err instanceof Error ? err.message : err).replace(/</g, "&lt;") +
+      "<br>Please report this — a screenshot of this message is enough.</small>";
+  }
+  throw err;
+}
 
 // With RENDER_SCALE > 1 the backing buffer is LARGER than the window on
 // typical displays, so the browser's final canvas scale is a downscale.

@@ -125,6 +125,57 @@
     <div id="app"></div>
     <div id="loader">Ravage — loading…</div>
 
+    <!-- Loader self-diagnosis. The #loader div is hidden by main.ts once
+         the game constructs — which means ANY failure before that point
+         (the hashed bundle 404ing because a fresh deploy purged the one
+         this cached page references; a script error; WebGL refused) used
+         to leave "loading…" on screen forever with no explanation. Three
+         inline guards, deliberately independent of the bundle:
+           1. Bundle fetch failure → auto-refresh ONCE with a cache-buster
+              (the overwhelmingly common cause: stale HTML after a deploy).
+           2. Uncaught error before the canvas exists → show the message
+              so bug reports carry the actual error.
+           3. 25s watchdog → actionable "hard refresh" instructions. -->
+    <script>
+      (function () {
+        var loader = document.getElementById('loader');
+        var failed = false;
+        function show(msg) {
+          if (!loader || loader.classList.contains('hidden')) return;
+          failed = true;
+          loader.style.pointerEvents = 'auto';
+          loader.innerHTML = msg;
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (t && t.tagName === 'SCRIPT' && t.src && t.src.indexOf('/assets/') !== -1) {
+            // The game bundle failed to fetch — almost always a stale
+            // cached page pointing at a purged deploy. Refresh once.
+            var KEY = 'ravage:reloaded-once';
+            try {
+              if (!sessionStorage.getItem(KEY)) {
+                sessionStorage.setItem(KEY, '1');
+                show('New version found — refreshing…');
+                location.replace(location.pathname + '?v=' + Date.now());
+                return;
+              }
+            } catch (err) { /* sessionStorage blocked — fall through */ }
+            show('Ravage — the game files failed to load.<br><small style="text-transform:none;letter-spacing:normal">Please hard-refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac).</small>');
+          } else if (e.error && !document.querySelector('#app canvas')) {
+            show('Ravage — failed to start.<br><small style="text-transform:none;letter-spacing:normal">' +
+              String(e.error && e.error.message || e.message || 'unknown error').replace(/</g, '&lt;') +
+              '<br>Please report this — a screenshot of this message is enough.</small>');
+          }
+        }, true);
+        setTimeout(function () {
+          if (failed) return;
+          if (loader && !loader.classList.contains('hidden') && !document.querySelector('#app canvas')) {
+            show('Ravage — still loading…<br><small style="text-transform:none;letter-spacing:normal">This is taking longer than it should. Check your connection, or hard-refresh: Ctrl+Shift+R.</small>');
+          }
+        }, 25000);
+      })();
+    </script>
+
     <!-- ============== GDPR consent banner ============== -->
     <!-- Mirror of the banner in /index.html. Shares the localStorage
          key 'ravage:consent:v1' so a user who accepted on the landing

@@ -1263,14 +1263,18 @@ export class BattleScene extends Phaser.Scene {
 
     // 2. World desaturation: a temporary colour-matrix on the world
     //    camera only (UI stays lit). Removed on the wall clock since
-    //    the scene clocks are dilated.
-    const fx = this.cameras.main.postFX.addColorMatrix();
-    fx.saturate(-0.85);
-    setTimeout(() => {
-      // Phaser's typings return Display.ColorMatrix from addColorMatrix
-      // while remove() wants FX.Controller — the runtime object is both.
-      try { this.cameras.main.postFX.remove(fx as unknown as Phaser.FX.Controller); } catch { /* scene gone */ }
-    }, 1050);
+    //    the scene clocks are dilated. WebGL-only — under the Canvas
+    //    fallback renderer the moment keeps its slow-mo + ring + flash
+    //    and just skips the desaturation.
+    if (this.game.renderer.type === Phaser.WEBGL) {
+      const fx = this.cameras.main.postFX.addColorMatrix();
+      fx.saturate(-0.85);
+      setTimeout(() => {
+        // Phaser's typings return Display.ColorMatrix from addColorMatrix
+        // while remove() wants FX.Controller — the runtime object is both.
+        try { this.cameras.main.postFX.remove(fx as unknown as Phaser.FX.Controller); } catch { /* scene gone */ }
+      }, 1050);
+    }
 
     // 3. Red shockwave ring off the unit (world space; the dilated
     //    clock stretches it in sync with the slow-mo).
