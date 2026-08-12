@@ -152,7 +152,47 @@ const constructGame = (): Phaser.Game => {
   }
 };
 
+// Detect canvas-fingerprint defenses. Privacy extensions (CanvasBlocker,
+// JShelter, hardened profiles) add random noise to canvas text metrics —
+// and Phaser lays out every Text object from exactly those metrics, so a
+// poisoned profile renders oversized, overflowing text no matter which
+// fonts loaded. Honest browsers return IDENTICAL widths for identical
+// measureText calls; spoofers don't. Measuring the same string repeatedly
+// is therefore an exact, zero-false-positive detector. We still boot —
+// the game is degraded, not dead — but the player learns WHY it looks
+// wrong and how to fix it, instead of blaming the game.
+const detectCanvasInterference = (): boolean => {
+  try {
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("2d");
+    if (!ctx) return false;
+    ctx.font = "32px 'Cinzel', serif";
+    const widths = new Set<number>();
+    for (let i = 0; i < 6; i++) {
+      widths.add(ctx.measureText("Ravage — the spine of the world").width);
+    }
+    return widths.size > 1;
+  } catch {
+    return false;
+  }
+};
+
 void fontsReady().then(() => {
+  if (detectCanvasInterference()) {
+    const note = document.createElement("div");
+    note.style.cssText =
+      "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9998;" +
+      "max-width:640px;background:#0d111c;border:1px solid #c9b07a;color:#e8eaf2;" +
+      "padding:12px 40px 12px 16px;font:14px/1.45 'EB Garamond',Georgia,serif;" +
+      "box-shadow:0 8px 32px rgba(0,0,0,.6)";
+    note.innerHTML =
+      "A browser extension appears to be altering canvas rendering (anti-fingerprinting). " +
+      "Ravage draws everything on canvas, so text and layout will look wrong. " +
+      "Allow canvas access for this site, or try another browser/profile." +
+      "<span style=\"position:absolute;top:6px;right:12px;cursor:pointer;font-size:18px\" " +
+      "onclick=\"this.parentElement.remove()\">×</span>";
+    document.body.appendChild(note);
+  }
   const game = constructGame();
   wireGame(game);
 });
