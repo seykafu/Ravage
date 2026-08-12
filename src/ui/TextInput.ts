@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 
 interface TextInputOpts {
   x: number;          // top-left in Phaser game coords
@@ -71,14 +72,21 @@ export class TextInput {
     scene.events.once(Phaser.Scenes.Events.DESTROY, () => this.destroy());
   }
 
-  // Map Phaser game-space coords to DOM page coords using the canvas rect.
+  // Map DESIGN-space coords (1280x720 — what every caller passes) to DOM
+  // page coords using the canvas rect. NOT scale.gameSize: since the
+  // native-res pivot, gameSize is the enlarged backing buffer
+  // (GAME_* x RENDER_SCALE), and dividing by it landed every input at
+  // exactly half its intended position and size — the AuthScene fields
+  // floated detached at the screen's left edge. Dividing by the design
+  // constants is correct at ANY render scale: design->buffer is xRS and
+  // buffer->page is /RS of that, so RS cancels.
   private layout(): void {
     if (this.destroyed) return;
     const canvas = this.scene.game.canvas;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const sx = rect.width / this.scene.scale.gameSize.width;
-    const sy = rect.height / this.scene.scale.gameSize.height;
+    const sx = rect.width / GAME_WIDTH;
+    const sy = rect.height / GAME_HEIGHT;
     const left = rect.left + window.scrollX + this.opts.x * sx;
     const top = rect.top + window.scrollY + this.opts.y * sy;
     this.el.style.left = `${left}px`;
