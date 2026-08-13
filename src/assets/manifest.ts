@@ -111,8 +111,8 @@ const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => {
   return {
     id: `portrait:${id}`,
     path: variant
-      ? `assets/portraits/${id}_${variant}.png`
-      : `assets/portraits/${id}.png`,
+      ? `assets/portraits/${id}_${variant}.webp`
+      : `assets/portraits/${id}.webp`,
     kind: "image" as const
   };
 });
@@ -123,7 +123,7 @@ const baseEntries: ManifestEntry[] = PORTRAIT_IDS.map((id) => {
 const expressionEntries: ManifestEntry[] = Object.entries(PORTRAIT_EXPRESSIONS).flatMap(
   ([id, exprs]) => exprs.map((expr) => ({
     id: `portrait:${id}:${expr}`,
-    path: `assets/portraits/${id}_${expr}.png`,
+    path: `assets/portraits/${id}_${expr}.webp`,
     kind: "image" as const
   }))
 );
@@ -166,7 +166,7 @@ const BACKDROP_IDS = [
 
 const backdropEntries: ManifestEntry[] = BACKDROP_IDS.map((id) => ({
   id: `backdrop:${id}`,
-  path: `assets/backdrops/${id}.png`,
+  path: `assets/backdrops/${id}.webp`,
   kind: "image"
 }));
 
@@ -182,7 +182,7 @@ const TILE_IDS = [
 
 const tileEntries: ManifestEntry[] = TILE_IDS.map((id) => ({
   id: `tile:${id}`,
-  path: `assets/tiles/${id}.png`,
+  path: `assets/tiles/${id}.webp`,
   kind: "image"
 }));
 
@@ -232,8 +232,8 @@ const uiEntries: ManifestEntry[] = [
 // frame block below to match — Phaser slices the spritesheet using
 // the exact pixel dimensions registered here.
 const campEntries: ManifestEntry[] = [
-  { id: "camp:wagon", path: "assets/camp/wagon.png", kind: "image" },
-  { id: "camp:fire",  path: "assets/camp/fire.png",  kind: "spritesheet", frame: { w: 384, h: 1024 } },
+  { id: "camp:wagon", path: "assets/camp/wagon.webp", kind: "image" },
+  { id: "camp:fire",  path: "assets/camp/fire.webp",  kind: "spritesheet", frame: { w: 384, h: 1024 } },
   // Memorial headstone — ONE painted stone, stamped once per fallen
   // character by CampScene.renderMemorial (slight alternating tilt per
   // stamp so a row reads hand-placed, not cloned). Spec for the asset:
@@ -242,7 +242,7 @@ const campEntries: ManifestEntry[] = [
   // central face — the fallen character's name is engraved at runtime as
   // a text overlay, so any baked-in lettering would collide with it.
   // Missing file falls back to the procedural weathered-stone painter.
-  { id: "camp:memorial_stone", path: "assets/camp/memorial_stone.png", kind: "image" }
+  { id: "camp:memorial_stone", path: "assets/camp/memorial_stone.webp", kind: "image" }
 ];
 
 export const MANIFEST: ManifestEntry[] = [

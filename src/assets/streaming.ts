@@ -12,7 +12,11 @@ import Phaser from "phaser";
 import { markFailed, markLoaded } from "./manifest";
 
 export const wireLoaderBookkeeping = (scene: Phaser.Scene): void => {
-  scene.load.setBaseURL("/");
+  // BASE_URL is "/" on the normal build (assets at the site root even
+  // though the game page lives at /play/) and "./" on the itch.io build,
+  // where index.html sits at the zip root beside assets/ and audio/ and
+  // everything must resolve relative to the page. See scripts/buildItch.mjs.
+  scene.load.setBaseURL(import.meta.env.BASE_URL);
   scene.load.on(Phaser.Loader.Events.FILE_COMPLETE, (key: string) => {
     markLoaded(key);
     if (

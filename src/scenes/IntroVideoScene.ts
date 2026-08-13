@@ -18,8 +18,8 @@ interface IntroArgs {
 // for the landing-page hero, where the page can't get a user gesture before
 // autoplay and browsers therefore require muted playback.
 const VIDEO_SOURCES: ReadonlyArray<{ src: string; type: string }> = [
-  { src: "/video/intro_sound.webm", type: "video/webm" },
-  { src: "/video/intro_sound.mp4",  type: "video/mp4"  }
+  { src: `${import.meta.env.BASE_URL}video/intro_sound.webm`, type: "video/webm" },
+  { src: `${import.meta.env.BASE_URL}video/intro_sound.mp4`,  type: "video/mp4"  }
 ];
 
 // Plays the intro cinematic between Title → Menu. Uses an HTML <video> element

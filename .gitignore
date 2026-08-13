@@ -9,3 +9,5 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 .env.*.local
+dist-itch/
+release/
