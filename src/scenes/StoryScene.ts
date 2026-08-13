@@ -227,6 +227,12 @@ export class StoryScene extends Phaser.Scene {
   }
 
   private showBeat(beat: DialogBeat): void {
+    // Mid-arc music turn — see DialogBeat.music. Same-track requests
+    // no-op inside MusicManager, so this only sounds when a beat
+    // genuinely changes the score.
+    if (beat.music) {
+      getMusic(this).play(arcMusic[beat.music], { fadeMs: 1400 });
+    }
     // Portrait + speaker change only between beats, not between pages of the
     // same beat. Keep this work outside showCurrentPage().
     this.speakingId = beat.portraitId;

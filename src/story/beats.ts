@@ -33,6 +33,12 @@ export interface DialogBeat {
   // No-op if the character has already been promoted (idempotent across
   // dev replays via DevJumpScene).
   promote?: PortraitId;
+  // Mid-arc music switch. When set, StoryScene crossfades to this track
+  // as the beat appears (same-track requests no-op, so only genuine
+  // changes are audible). Lets a single arc turn — e.g. the main theme
+  // swelling when Ranatoli walks out of the prison row in
+  // post_grude_burns — without splitting the scene into two arcs.
+  music?: StoryArc["music"];
 }
 
 export interface StoryArc {
@@ -1303,7 +1309,12 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "The holdout captain's asking for you. Not to fight. He wants to know what you're planning to do with a war you won't win on purpose. (Beat.) I think it's been keeping him up." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "Good. It keeps me up too. (Rolling his sleeves.) Tell him to go look in the ward. Third cot from the door — his own sergeant, alive. Then he can come ask me again." },
-      N("Word of the fort surrendering UP travels faster than victory. Two more garrisons ask terms. Yul never asked which side a wound was on; neither does the war's strangest army.")
+      N("Word of the fort surrendering UP travels faster than victory. Two more garrisons ask terms. Yul never asked which side a wound was on; neither does the war's strangest army."),
+      // The figure Ning spotted at the gate (the battle's closing beat)
+      // is gone by the time Amar gets there. Seeds the full reunion at
+      // post_grude_burns without spending it early.
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(The gate, at dusk. Nobody there. Scratched in the dust with a boot heel: the old vanguard mark the seven used for road clear ahead.) ...Still watching my flanks. (He steps around the mark rather than through it.) Two years, Selene. Come in from the dark already." }
     ]
   },
 
@@ -1387,15 +1398,22 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "It's not good or bad, Leo. It's spending. (She looks at Amar.) Just mind who's keeping the ledger." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "We keep our own, then. Every name on those doors goes in it." },
-      N("They come with the morning's second hour. First, out of the prison row the fires cracked open: a shield the size of a door, and behind it, greyer and thinner and grinning like the war never touched him, Ranatoli."),
+      // The reunion turn — the main theme swells as the first of the
+      // old seven walks out of the smoke (DialogBeat.music crossfade).
+      { portraitId: "narrator", music: "mainTheme",
+        body: "They come with the morning's second hour. First, out of the prison row the fires cracked open: a shield the size of a door, and behind it, greyer and thinner and grinning like the war never touched him, Ranatoli." },
       { speaker: "Ranatoli", portraitId: "ranatoli", expression: "lecturing",
         body: "Steel up, Amar. We bleed together or we feast together. Anything in between is shame. (He looks the squad over, two years late.) I said that to a boy once. Look what grew while I was in a cell." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He's across the row before he knows he's moving; the embrace clangs off the shield, and neither of them lets go.) I stopped asking about the cells. Two years ago. I couldn't keep hearing nothing back. (Into the big man's shoulder, muffled:) Tonight we feast, old man. Tonight we feast." },
       N("Behind them Veya has commandeered the district glassworks. She has been up two nights fusing salvage from the burned observatory into the rig: a crown of stacked prisms where the single lens sat. She calls the new array 'overdue'. The squad calls her, from this morning, the Prismarch."),
       { speaker: "Veya", portraitId: "veya", expression: "focused",
         body: "One lens asks the light politely. Seven of them insist. Hold still, war. I have your measurements.", promote: "veya" },
       N("And behind him, out of the smoke like she was cut from it, the huntress who escaped a monastery and crossed an ocean on the trail of the same names the squad has been crossing out: Selene."),
       { speaker: "Selene", portraitId: "selene",
         body: "Three streets behind you since the harbour. Watching who you spare. (She shoulders her bow.) Lucian's boy after all. (At the horizon:) That sky's going to take from all of us. Soon." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "(He doesn't rush her — you don't, with Selene.) At the monastery you told me not to follow you past the bell. (Beat.) Follow me past this one. Stay. Please. That's the whole speech." },
       N("In the prison-row stables Corin finds what the empire left behind: a Grude destrier, deep-chested, war-trained, unridden since its rider died in the processional. They size each other up for a long minute. Then it lowers its head. The squad's Thuling veterans have a word from their border wars for a lancer who leads from the front of the front: Khan."),
       { speaker: "Corin", portraitId: "corin", expression: "resolute",
         body: "Rose held doors. I open them. (He swings up; the destrier turns without being asked.) Whatever's wrong with that horizon, it'll meet the cavalry first.", promote: "corin" },
