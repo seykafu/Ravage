@@ -79,6 +79,18 @@ export interface BattleNode {
   map?: MapDef;
   buildPlayers?: () => UnitDef[];
   buildEnemies?: () => UnitDef[];
+  // Scripted enemy waves for survive-the-clock battles. Each wave spawns
+  // as its round begins, entering at the requested tiles (nearest free
+  // walkable tile wins if one is occupied). Without these, a strong
+  // squad routs the opening roster and spends the rest of a
+  // surviveRounds battle ending turns at an empty field — the B26
+  // empty-beach bug.
+  reinforcements?: Array<{
+    round: number;
+    at: Array<{ x: number; y: number }>;
+    announce?: string;
+    units: () => UnitDef[];
+  }>;
   difficultyLabel: string;
   unlockNote?: string;
   // Ambient particle weather override. When absent, the biome default
@@ -2150,6 +2162,19 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("dt_ra1", 1935, 15),
       ENEMIES.royalArcher("dt_ra2", 1936, 15)
     ],
+    // The assault column's second file — the bridge hold stays a hold
+    // even if the squad routs the opening push.
+    reinforcements: [
+      {
+        round: 4,
+        at: [{ x: 13, y: 3 }, { x: 13, y: 5 }],
+        announce: "The second file reaches the bridge.",
+        units: () => [
+          ENEMIES.royalGuard("dt_w1", 1937, 15),
+          ENEMIES.royalArcher("dt_w2", 1938, 14)
+        ]
+      }
+    ],
     difficultyLabel: "Duty · Opener",
     unlocks: "b20_dawn_war", // war path continues into B20
     // Duty loadout — military precision. Standard officer kit: 1
@@ -2529,6 +2554,29 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalArcher("aa_ra1", 2104, 16),
       ENEMIES.royalArcher("aa_ra2", 2105, 15),
       ENEMIES.royalArcher("aa_ra3", 2106, 15)
+    ],
+    // The column has no end — the intro says two hundred at the bend.
+    // Halden feeds files onto the road until the clock runs out.
+    reinforcements: [
+      {
+        round: 3,
+        at: [{ x: 13, y: 3 }, { x: 13, y: 5 }, { x: 13, y: 1 }],
+        announce: "Halden feeds the next file onto the road.",
+        units: () => [
+          ENEMIES.royalGuard("aa_w1", 2107, 16),
+          ENEMIES.royalGuard("aa_w2", 2108, 15),
+          ENEMIES.royalArcher("aa_w3", 2109, 15)
+        ]
+      },
+      {
+        round: 5,
+        at: [{ x: 13, y: 4 }, { x: 13, y: 6 }],
+        announce: "And still the column comes.",
+        units: () => [
+          ENEMIES.royalGuard("aa_w4", 2110, 16),
+          ENEMIES.royalArcher("aa_w5", 2111, 15)
+        ]
+      }
     ],
     difficultyLabel: "Climactic",
     // Victory: pure delay. The vanguard outnumbers everything the squad
@@ -3197,6 +3245,30 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.ravageLancer("ch_l2", 2605, 19),
       ENEMIES.ravageMarksman("ch_m1", 2606, 19),
       ENEMIES.ravageMarksman("ch_m2", 2607, 18)
+    ],
+    // The tide. The intro promises six rounds of the sea walking ashore —
+    // these are the waves that keep the promise.
+    reinforcements: [
+      {
+        round: 3,
+        at: [{ x: 12, y: 4 }, { x: 11, y: 2 }, { x: 11, y: 6 }],
+        announce: "The tide brings the next line ashore.",
+        units: () => [
+          ENEMIES.ravageTrooper("ch_w31", 2611, 19),
+          ENEMIES.ravageTrooper("ch_w32", 2612, 19),
+          ENEMIES.ravageLancer("ch_w33", 2613, 19)
+        ]
+      },
+      {
+        round: 5,
+        at: [{ x: 12, y: 3 }, { x: 12, y: 5 }, { x: 11, y: 1 }],
+        announce: "One more line walks out of the surf.",
+        units: () => [
+          ENEMIES.ravageTrooper("ch_w51", 2614, 19),
+          ENEMIES.ravageLancer("ch_w52", 2615, 19),
+          ENEMIES.ravageMarksman("ch_w53", 2616, 18)
+        ]
+      }
     ],
     difficultyLabel: "Climactic",
     victory: surviveRounds(6),

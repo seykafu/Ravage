@@ -15,7 +15,7 @@ import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
 import { IconToggleButton } from "../ui/IconToggleButton";
 import { allEnemyDanger } from "../combat/Danger";
-import { battleById, resolveBattleForPath } from "../data/battles";
+import { battleById, resolveBattleForPath, type BattleNode } from "../data/battles";
 import { PROMOTIONS } from "../data/promotions";
 import {
   BattleState,
@@ -213,6 +213,11 @@ export class BattleScene extends Phaser.Scene {
   // here, not a 14-site edit. See src/render/Projection.ts.
   private projection!: Projection;
   private unitViews = new Map<string, UnitView>();
+  // Scripted enemy waves (survive battles) + which rounds already fired.
+  // The set is rebuilt on resume from the restored round counter, so it
+  // needs no serialization of its own.
+  private reinforcements: NonNullable<BattleNode["reinforcements"]> = [];
+  private spawnedWaveRounds = new Set<number>();
   private overlayG!: Phaser.GameObjects.Graphics;
   // Region-contour pass for the movement range — drawn separately from
   // overlayG so its "alive" alpha pulse doesn't throb the attack marks.
@@ -493,6 +498,17 @@ export class BattleScene extends Phaser.Scene {
     this.initiative.reseed(units);
     if (resumeSnap) this.initiative.restore(units, resumeSnap.initiative);
 
+    // Reinforcement bookkeeping. Waves spawn as their round begins; on
+    // resume, waves for rounds the battle already reached are treated as
+    // spawned — their survivors (or corpses) are in the unit snapshot.
+    this.reinforcements = node.reinforcements ?? [];
+    this.spawnedWaveRounds = new Set();
+    if (resumeSnap) {
+      for (const w of this.reinforcements) {
+        if (w.round <= this.initiative.round) this.spawnedWaveRounds.add(w.round);
+      }
+    }
+
     // Mid-battle dialogue director — fresh per battle, so its fired /
     // round bookkeeping starts clean on every entry / retry.
     this.dialogue = new DialogueDirector(
@@ -748,33 +764,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Units
     for (const u of units) {
-      const tex = ensureUnitTexture(this, u);
-      const px = this.projection.tileToWorld(u.state.position);
-      const baseY = px.y - 4;
-      // Cast-shadow first so the sprite is drawn on top of it.
-      const shadow = this.add.ellipse(px.x, baseY + 24, 33, 10, 0x000000, 0.42);
-      const sprite = this.add.sprite(px.x, baseY, tex).setDisplaySize(44, 55);
-      if (u.faction === "enemy") sprite.setFlipX(true);
-      const hpBg = this.add.graphics();
-      const hpBar = this.add.graphics();
-      const stanceIcon = this.add.text(px.x, px.y - TILE_SIZE / 2 + 2, "", {
-        fontFamily: FAMILY_HEADING,
-        fontSize: "12px",
-        color: "#ffd45a",
-        stroke: "#000",
-        strokeThickness: 2
-      }).setOrigin(0.5, 0);
-      const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon };
-      this.unitViews.set(u.id, view);
-      this.refreshUnitView(u);
-      playUnitState(this, sprite, u, "idle");
-      this.startBreathing(view);
-      // Units already dead at creation (resumed battle with casualties)
-      // never played a death animation — hide sprite AND shadow outright.
-      if (!isAlive(u)) {
-        sprite.setVisible(false);
-        shadow.setVisible(false);
-      }
+      this.buildUnitView(u);
     }
 
     // Snapshot children count before UI creation. Anything added between
@@ -1127,6 +1117,99 @@ export class BattleScene extends Phaser.Scene {
     // Composing them here keeps Projection free of any Phaser dependency.
     const wp = this.cameras.main.getWorldPoint(px, py);
     return this.projection.worldToTile(wp.x, wp.y);
+  }
+
+  // Land any reinforcement wave scheduled for the current round. Called
+  // from endCurrentTurn the moment the round counter wraps. New units go
+  // through the same difficulty/creation/view path as the opening
+  // roster, then the initiative reseeds — safe here because the wrap
+  // just cleared everyone's acted flags and reset the cursor, so the
+  // enlarged order simply restarts the fresh round.
+  private spawnReinforcements(): void {
+    const round = this.initiative.round;
+    let landed = false;
+    for (const wave of this.reinforcements) {
+      if (wave.round !== round || this.spawnedWaveRounds.has(wave.round)) continue;
+      this.spawnedWaveRounds.add(wave.round);
+      landed = true;
+      wave.units().forEach((def, i) => {
+        const want = wave.at[i] ?? wave.at[wave.at.length - 1] ?? { x: 0, y: 0 };
+        const unit = createUnit(applyDifficultyToEnemy(def, this.battleId), this.findSpawnTile(want));
+        this.state.units.push(unit);
+        this.buildUnitView(unit);
+        const view = this.unitViews.get(unit.id);
+        if (view) {
+          // Wade-in: fade up from nothing so arrivals read as arrivals,
+          // not as pop-in.
+          view.sprite.setAlpha(0);
+          view.shadow.setAlpha(0);
+          this.tweens.add({ targets: [view.sprite, view.shadow], alpha: 1, duration: 500, ease: "Sine.easeOut" });
+        }
+      });
+      if (wave.announce) this.pushLog(wave.announce);
+    }
+    if (landed) {
+      this.initiative.reseed(this.state.units);
+      this.refreshAllUnits();
+    }
+  }
+
+  // Nearest free walkable tile to the wave's requested entry point —
+  // BFS outward so an occupied surf tile shifts the arrival one tile
+  // along the beach instead of stacking units.
+  private findSpawnTile(want: { x: number; y: number }): { x: number; y: number } {
+    const free = (p: { x: number; y: number }): boolean =>
+      this.state.grid.inBounds(p) && !this.state.grid.tileAt(p).blocksMovement && !unitAt(this.state, p);
+    if (free(want)) return want;
+    const seen = new Set<string>([`${want.x},${want.y}`]);
+    const queue = [want];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      for (const n of this.state.grid.neighbors4(cur)) {
+        const key = `${n.x},${n.y}`;
+        if (seen.has(key) || !this.state.grid.inBounds(n)) continue;
+        seen.add(key);
+        if (free(n)) return n;
+        queue.push(n);
+      }
+    }
+    return want;
+  }
+
+  // Board visuals for one unit: sprite, shadow, HP bars, stance icon.
+  // Used by create()'s setup loop AND by mid-battle reinforcement
+  // spawns, so both paths produce identical views.
+  private buildUnitView(u: Unit): void {
+    const tex = ensureUnitTexture(this, u);
+    const px = this.projection.tileToWorld(u.state.position);
+    const baseY = px.y - 4;
+    // Cast-shadow first so the sprite is drawn on top of it. addWorld()
+    // no-ops during create() (uiCamera doesn't exist yet; the bulk
+    // ignore pass covers setup objects) and keeps mid-battle
+    // reinforcement spawns off the UI camera so they don't ghost-render.
+    const shadow = this.addWorld(this.add.ellipse(px.x, baseY + 24, 33, 10, 0x000000, 0.42));
+    const sprite = this.addWorld(this.add.sprite(px.x, baseY, tex).setDisplaySize(44, 55));
+    if (u.faction === "enemy") sprite.setFlipX(true);
+    const hpBg = this.addWorld(this.add.graphics());
+    const hpBar = this.addWorld(this.add.graphics());
+    const stanceIcon = this.addWorld(this.add.text(px.x, px.y - TILE_SIZE / 2 + 2, "", {
+      fontFamily: FAMILY_HEADING,
+      fontSize: "12px",
+      color: "#ffd45a",
+      stroke: "#000",
+      strokeThickness: 2
+    }).setOrigin(0.5, 0));
+    const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon };
+    this.unitViews.set(u.id, view);
+    this.refreshUnitView(u);
+    playUnitState(this, sprite, u, "idle");
+    this.startBreathing(view);
+    // Units already dead at creation (resumed battle with casualties)
+    // never played a death animation — hide sprite AND shadow outright.
+    if (!isAlive(u)) {
+      sprite.setVisible(false);
+      shadow.setVisible(false);
+    }
   }
 
   private refreshUnitView(u: Unit): void {
@@ -2111,7 +2194,12 @@ export class BattleScene extends Phaser.Scene {
     // (surviveRounds, protectUnit) see the new round counter on the same
     // tick the player crosses the threshold. The rout/defeat-unit checks
     // are state-only and don't care about ordering.
+    const roundBefore = this.initiative.round;
     this.initiative.advancePastCurrent(this.state.units);
+    // Round wrapped — land any reinforcement wave scheduled for the new
+    // round BEFORE victory evaluation, so a rout-style condition can't
+    // declare an empty-field win a tick ahead of the wave.
+    if (this.initiative.round !== roundBefore) this.spawnReinforcements();
     if (this.checkEnd()) return;
     this.beginCurrentTurn();
   }

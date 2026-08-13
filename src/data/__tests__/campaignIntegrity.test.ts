@@ -249,3 +249,42 @@ describe("post-battle story routing", () => {
     }
   });
 });
+
+describe("survive-battle reinforcement waves", () => {
+  // Pure surviveRounds battles MUST field waves: without them a strong
+  // squad routs the opening roster and spends the rest of the battle
+  // ending turns at an empty field (the B26 empty-beach bug).
+  const SURVIVE_WAVE_BATTLES: Array<[BattleId, number]> = [
+    ["b19_path_opener_duty", 6],
+    ["b21_archbold_advances", 6],
+    ["b26_coastal_hold", 6]
+  ];
+
+  it("every pure-survive battle has waves on valid tiles with unique unit ids", () => {
+    for (const [bid, holdRounds] of SURVIVE_WAVE_BATTLES) {
+      const node = battleById(bid)!;
+      const waves = node.reinforcements ?? [];
+      expect(waves.length, `${bid}: survive battle with no reinforcements`).toBeGreaterThan(0);
+      const grid = new Grid(node.map!);
+      const ids = new Set(node.buildEnemies!().map((u) => u.id));
+      for (const w of waves) {
+        // Round 1 waves would never fire (the wrap hook spawns them);
+        // waves past the hold would spawn into an already-won battle.
+        expect(w.round, `${bid}: wave round too early`).toBeGreaterThanOrEqual(2);
+        expect(w.round, `${bid}: wave lands after victory`).toBeLessThanOrEqual(holdRounds);
+        const defs = w.units();
+        expect(defs.length, `${bid} r${w.round}: empty wave`).toBeGreaterThan(0);
+        expect(w.at.length, `${bid} r${w.round}: fewer entry tiles than units`).toBeGreaterThanOrEqual(defs.length);
+        for (const p of w.at) {
+          expect(grid.inBounds(p), `${bid} r${w.round}: (${p.x},${p.y}) out of bounds`).toBe(true);
+          expect(grid.tileAt(p).blocksMovement, `${bid} r${w.round}: (${p.x},${p.y}) is impassable`).toBe(false);
+        }
+        for (const d of defs) {
+          expect(d.faction, `${bid}: wave unit ${d.id} not enemy faction`).toBe("enemy");
+          expect(ids.has(d.id), `${bid}: duplicate unit id ${d.id} would corrupt views/serialization`).toBe(false);
+          ids.add(d.id);
+        }
+      }
+    }
+  });
+});
