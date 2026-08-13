@@ -15,7 +15,7 @@ interface CreditLine {
 const CREDITS: CreditLine[] = [
   { kind: "title", text: "RAVAGE" },
   { kind: "spacer", text: "" },
-  { kind: "quote", text: "A tactical story of Anthros — vertical slice" },
+  { kind: "quote", text: "A tactical story of Anthros" },
   { kind: "spacer", text: "" },
   { kind: "spacer", text: "" },
 
@@ -53,11 +53,10 @@ const CREDITS: CreditLine[] = [
 
   { kind: "header", text: "Engine & Tools" },
   { kind: "name", text: "Phaser 3 · TypeScript · Vite · WebAudio" },
-  { kind: "name", text: "All sprites, portraits, and backdrops generated procedurally" },
   { kind: "spacer", text: "" },
   { kind: "spacer", text: "" },
 
-  { kind: "header", text: "Vertical Slice — Nine Battles" },
+  { kind: "header", text: "The Battles" },
   ...BATTLES.filter(b => b.playable).map((b): CreditLine => ({
     kind: "name",
     text: `Battle ${b.index} — ${b.subtitle}`
@@ -65,10 +64,7 @@ const CREDITS: CreditLine[] = [
   { kind: "spacer", text: "" },
   { kind: "spacer", text: "" },
 
-  { kind: "quote", text: "Twenty-one battles are planned. You have walked three of them." },
-  { kind: "quote", text: "The strategic layer, the bond conversations, the Trust Meter," },
-  { kind: "quote", text: "the Dawn route and the non-Dawn route, the Final Battle —" },
-  { kind: "quote", text: "all of it is yet to be built." },
+  { kind: "quote", text: "Seven answers. One name. Every road walked to its end." },
   { kind: "spacer", text: "" },
   { kind: "quote", text: "Thank you for playing." },
   { kind: "spacer", text: "" },

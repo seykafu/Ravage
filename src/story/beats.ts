@@ -1664,6 +1664,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Then here's my counter-offer. Stay where I can see you. Every morning. (Beat.) Say the quiet thing out loud once a year and I'll live on it. Marry me." },
       { speaker: "Selene", portraitId: "selene", expression: "breaking",
         body: "...Ask me out loud, he says. As if I crossed one ocean and half a war for the scenery. (Her hand finds his.) Yes. Out loud: yes." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(It takes him a moment. Ten years of quiet is a lot to be handed all at once.) On the ship I used to wake up and lie there hoping you'd say one more word. (Beat.) You just said four. I'm going to need a minute." },
+      { speaker: "Selene", portraitId: "selene",
+        body: "Take the minute. (She turns back to the horizon, but her shoulder finds his and stays.) I'm not going anywhere. (Beat.) First time I've ever said that and meant it." },
       N("They marry on the headland with the squad in a half-circle and no one official within forty miles, which suits everyone. Ranatoli cries and claims it is the wind. The sea says nothing. It has seen this before, and it keeps every vow made over it.")
     ]
   },
@@ -1682,6 +1686,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Eseldras give this to family. There are no more Eseldras to give it to. So it goes in the ground with her name — or (he pins it to Amar's collar, hands steady) there are more Eseldras. Your call, Captain. Mine's made." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "Whoever's awake — witness it. I'm marrying the last of the Eseldras. (Beat.) And we're keeping the rotation. Feed, tack, watch, sleep. Him and me on every watch that matters." },
+      { speaker: "Corin", portraitId: "corin", expression: "torn",
+        body: "(His hands are still at the clasp on Amar's collar. For a man who does everything by procedure, he appears to have lost the next step.) I drilled a speech for this. A month of it, every word in rotation order. (Beat.) It's gone. All of it." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "Good. Leave it lost. (He puts his hand over Corin's, over the clasp, and keeps it there.) Rose got the drilled version of you. I get whatever this is. (Quietly.) I think I got the better posting." },
       N("The cavalry marries them at dawn under an arch of lances, because cavalry cannot help itself. The clasp stays on Amar's collar for the rest of his life. Somewhere, the plaza keeps a name; the camp keeps two more.")
     ]
   },
@@ -1700,6 +1708,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "...The thing is. You always know where everyone's going to be before they do. So you already know what I'm about to say. (Quietly, steady.) I'm not the girl from the rivet press anymore. I walked the whole road back here beside you. Marry me, Amar." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "I was going to ask at the fence line tomorrow. You outdrew me again. (He takes her hand across the table.) Yes. And Ning — I knew exactly who was asking." },
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "(She lets out a breath she has been holding since the second round.) Okay. Okay! (She stands up, sits down, stands up again.) I practiced that speech on the dactyl. Ash liked it. (Beat.) You were really going to ask at the fence line?" },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Tomorrow, at first light. I've been carrying the words for a month. (He turns her hand over — the bow-callus palm — and just holds it.) The fence line's where I first watched you refuse to miss. It seemed right. (Beat.) This is better." },
       N("Mira dances at the wedding on the foot that never healed straight, because Tali asks her to and nobody in that family knows how to refuse. Lucian's old anvil rings once at midnight. Nobody is standing near it. Thuling has its own opinions, and for once, all of them are yes.")
     ]
   },
@@ -1718,6 +1730,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "My father handed me a list of what my life was going to be. I flew the other way, and you were what was there instead. (He pats the saddle.) Two rings in my jacket. One runway. Get on the dactyl, Amar. Marry me somewhere nobody owns." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "You proposed logistics for a year and called it postponing. (He swings up behind him.) Yes. Fly. And Leo — tell Ash he was right." },
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride",
+        body: "(For once in his life he doesn't have a line ready. He covers by checking a strap that doesn't need checking.) I was so sure you'd laugh. I had a whole bit prepared for if you laughed. (Beat.) I don't know what to do with yes." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Fly. That's what we do with yes. (He locks his arms around him as Ash opens her wings.) And Leo — I heard you right the first time. A year ago. (Beat.) I was just waiting for you to hear yourself." },
       N("They marry themselves over open water, which is not legal anywhere and binding everywhere. The coast runs out before the morning does. Ash, for the record, considers the whole thing overdue.")
     ]
   },
@@ -1736,6 +1752,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Then file it now, officer. The republic keeps honest ledgers. Say it on the record, Maya. I've been waiting to countersign longer than you've been hiding it." },
       { speaker: "Maya", portraitId: "maya", expression: "tearful",
         body: "For the record, then. (She doesn't look up.) The watcher loved the watched. From about the third report on. Through the lie, the quay, the war. Nobody ordered it. Nothing was planned. (Her voice steadies.) Entry complete. Marry me and countersign." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He signs slowly, the way you sign something you mean.) Eleven years you watched me, so you already know I don't have a speech. (Beat.) Here's the whole entry: you're the first person who ever saw all of it and stayed. Countersigned." },
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "(She reads the line twice, which is once more than she has ever needed to read anything.) Filed. (Her voice does something unprofessional.) Dawn taught me every kind of watching except this one. I'm glad there was one I had to learn on my own." },
       N("They marry on the marble with the whole squad as witnesses and no crown within a thousand miles. Two chairs at the head table, exactly level. Somewhere under the stone, the woman who planned everything gets the one ending she never once planned for — and it is a good one.")
     ]
   },
@@ -1754,6 +1774,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "(She uncovers it: a ring, bronze and glass, a lens no wider than a fingernail where a stone would sit.) There's a flaw, lower left. I left it in. Some flaws are records — this one is the day you chose to stay. (Fast, before she can stop herself.) Marry me and I'll grind you true glass the rest of my life." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "Yes. (He puts it on.) And the flaw stays. It's the truest thing anyone's ever made me." },
+      { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "(She checks the fit against his knuckle, entirely to have something to do with her hands.) Two-millimeter tolerance. It'll spin a little in winter — fingers shrink in the cold — (she stops herself). You said yes. (Beat.) You said yes, and I'm explaining shrinkage." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Keep explaining. I could listen to the whole tolerance table tonight. (He closes her hand in both of his, over the ring.) Forty minutes was the number, right? (Beat.) Ask Ning what mine is someday. I stopped counting the day you aimed the other way." },
       N("They marry in the workshop because the light is honest there. Through the little lens on his hand, the world bends warm at one edge, always, ever after. He never has it reground. Some flaws are records.")
     ]
   },
@@ -1772,6 +1796,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Terms of service: the rest of my life. Duties: standing where you stand, at whatever pace the courtyard left me. Compensation: your mornings. Non-negotiable. (She slides the paper across.) Sign or decline, Captain. I have survived worse than a no. But sign." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "You wrote it as a commission because asking plainly costs more than thirty years of war. I know the trick — I've used it. (He signs. Both lines.) Accepted, Marshal. Every term. And the compensation clause goes both ways." },
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "(She takes the signed commission back, folds it with two precise creases, and holds it against her chest one moment longer than filing requires.) Thirty years of paperwork, and this is the first document I have ever wanted to keep on my person. (Beat.) Note for the record: the Marshal is happy. She was not certain that capacity survived the courtyard." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "It survived. I watched it survive. (He comes around the desk — you don't make Ndara stand.) You held a wall for me before you ever liked me, and you listened through a wall before you ever saw my face. (Quietly.) The mornings are yours, Marshal. All of them." },
       N("They marry with full honors, which she pretends to tolerate and privately keeps every ribbon of. The duty path chose the two people in the world who understand that love, written down and signed, is still love — it is just love that plans to LAST.")
     ]
   },
