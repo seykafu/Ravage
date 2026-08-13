@@ -292,3 +292,32 @@ describe("survive-battle reinforcement waves", () => {
     }
   });
 });
+
+describe("battle dialogue portraits", () => {
+  it("every speaking beat carries a portraitId — no faceless dialogue panels", () => {
+    // A beat with a speaker but no portraitId renders an empty space next
+    // to the chat (BattleDialogueScene only draws when portraitId is set).
+    // Named bosses without painted art must use the generic enemy
+    // portraits (bandit/raider/reaver/royal_guard/crown_archer).
+    for (const base of BATTLES) {
+      for (const { label, node } of [{ label: base.id, node: base }]) {
+        const allDialogues = [
+          ...(node.dialogues ?? []),
+          ...Object.values(node.pathOverrides ?? {}).flatMap((o) => [
+            ...(o.dialogues ?? []),
+            ...(o.extraDialogues ?? [])
+          ])
+        ];
+        for (const d of allDialogues) {
+          for (const b of d.beats) {
+            if (!b.speaker) continue;
+            expect(
+              b.portraitId,
+              `${label}/${d.id}: "${b.speaker}" speaks with no portraitId — assign a real or generic portrait`
+            ).toBeTruthy();
+          }
+        }
+      }
+    }
+  });
+});

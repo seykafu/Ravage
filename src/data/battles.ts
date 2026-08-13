@@ -1766,7 +1766,7 @@ export const BATTLES: BattleNode[] = [
         id: "b17_othren_line",
         trigger: { kind: "round_start", round: 1 },
         beats: [
-          { speaker: "Marshal Othren",
+          { speaker: "Marshal Othren", portraitId: "raider",
             body: "Far enough. Nothing against you, but the man in your formation is the cause now. Dawn won't lose her heir to a boat. Turn around, Amar." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "I know the plan, Othren. \"The heir mattering\" ends with Thuling on fire, Orinhal on fire, every village Maya can name on fire. I won't be the torch." },
@@ -1783,7 +1783,7 @@ export const BATTLES: BattleNode[] = [
         id: "b17_amar_othren",
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "dawn_loyalist" },
         beats: [
-          { speaker: "Marshal Othren",
+          { speaker: "Marshal Othren", portraitId: "raider",
             body: "Nine years I've pictured it, Amar: Thuling burns, innocents with it, and Grude's cities put down their emperor. Forever. I sleep well. You fight a man who counted." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
             body: "Then you and Coyne would have had a great deal to say to each other. He counted too. (Steel up.) I'm done being a number in everyone's sum, Othren. Mine or hers or yours. Move." }
@@ -1795,7 +1795,7 @@ export const BATTLES: BattleNode[] = [
         id: "b17_corin_othren",
         trigger: { kind: "adjacent_eot", unitA: "corin", unitB: "dawn_loyalist" },
         beats: [
-          { speaker: "Marshal Othren",
+          { speaker: "Marshal Othren", portraitId: "raider",
             body: "Eseldra. Nine years I kept you mounted, fed, promoted. Your sister would put you back in this line by the ear." },
           { speaker: "Corin", portraitId: "corin", expression: "battle_fury",
             body: "Say her name with the number, Marshal. Rose, four bolts, for a plan she never saw whole. You counted her and slept. I'm done being in any column you keep. Ride through or stand down." }
@@ -1809,7 +1809,7 @@ export const BATTLES: BattleNode[] = [
         beats: [
           { portraitId: "narrator",
             body: "The line breaks. The gangway opens, Khione at the rail, hand out. Othren's loyalists don't chase: posted to hold a dock, not hunt a son. The only mercy." },
-          { speaker: "Marshal Othren",
+          { speaker: "Marshal Othren", portraitId: "raider",
             body: "(calling after them) She'll let you go. Your mother plans every road. You're just a different line of her arithmetic. ...Fair winds, your highness. I always did." },
           { portraitId: "narrator",
             body: "The squad crosses onto Khione's ship. Grude slides away. For the first time since Thuling, no one at the next harbor has already written what Amar will do." }
@@ -3350,7 +3350,7 @@ export const BATTLES: BattleNode[] = [
         id: "b27_seen",
         trigger: { kind: "round_start", round: 1 },
         beats: [
-          { speaker: "The Herald",
+          { speaker: "The Herald", portraitId: "reaver",
             body: "Show me the ones who held the shore. (The voice arrives in every harbor code at once, like the banners did.) Small. Soft-shelled. Loud. And yet." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "Look well, Herald. Everything on this field tonight was measured once by somebody bigger. Ask your commander what happened to them. Squad: the escort first. Make it watch." }
@@ -3360,7 +3360,7 @@ export const BATTLES: BattleNode[] = [
         id: "b27_why",
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "ravage_herald" },
         beats: [
-          { speaker: "The Herald",
+          { speaker: "The Herald", portraitId: "reaver",
             body: "Your world burns its own harvests. Kings spend sons. Mothers spend cities. We have READ your ledgers, heir. Why defend a thing that eats itself?" },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
             body: "Because it's ours. (Steel up.) And because you read the ledgers, but not the margins. The reasons live in the margins." }
@@ -3423,7 +3423,7 @@ export const BATTLES: BattleNode[] = [
         id: "b28_base_open",
         trigger: { kind: "round_start", round: 1 },
         beats: [
-          { speaker: "The Ravage Commander",
+          { speaker: "The Ravage Commander", portraitId: "reaver",
             body: "The Herald priced you. I came to pay. (It descends the ramp alone, then its guard follows.) One question first, mender of ledgers. When we are gone, will this world still be worth what you cost us?" },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "Ask the villages behind me in a hundred years. That's the only answer either of us would believe. (Draws.) Squad: everything we have. This is the door the whole war knocks on." }
