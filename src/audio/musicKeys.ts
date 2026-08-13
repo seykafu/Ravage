@@ -22,7 +22,7 @@
 export const MUSIC = {
   enteringStronghold: "music_entering_stronghold", // Battle 1: Palace Coup (+ B15's coup callback)
   strongholdMemories: "music_stronghold_memories", // First boss (Battle 5 — Ndara & Ndari)
-  finalBoss: "music_final_boss",                   // Final battle
+  finalBoss: "music_final_boss",                   // The Anthros finale: B10/B11, the Kian battles before the crossing
   adventureAnthros: "music_adventure_anthros",     // Overworld / world map (Anthros side)
   battlePrep: "music_battle_prep",                 // Battle preparation screen
   danger: "music_danger",                          // Battle 2 (farmland) and ambushes
@@ -62,7 +62,18 @@ export const MUSIC = {
   // Emotional Life — the ending suite. All five war-path codas
   // (post_ending_*) share this one closing texture: the paths diverge
   // in what they cost, and converge in how the music lets them rest.
-  emotionalLife: "music_emotional_life"
+  emotionalLife: "music_emotional_life",
+
+  // Endgame battle suite. The intense pair scores the semi-boss run
+  // (B24-B27), alternating so consecutive battles never repeat a track.
+  // The final-battle pair splits B28 by the chosen path's temperament:
+  // Sad for the emotional duels (restoration, revolution's matricide,
+  // mercy's spared father), Attack for the destructive ones (vengeance,
+  // duty's hold under the flagship).
+  intenseBattle2:    "music_intense_battle_v2",
+  intenseBattle3:    "music_intense_battle_v3",
+  finalBattleSad:    "music_final_battle_sad",
+  finalBattleAttack: "music_final_battle_attack"
 } as const;
 export type MusicKey = (typeof MUSIC)[keyof typeof MUSIC];
 
@@ -86,5 +97,9 @@ export const MUSIC_FILES: AudioFile[] = [
   { key: MUSIC.sadness2,           src: "audio/Sadness2.mp3" },
   { key: MUSIC.grudeBattle1,       src: "audio/GrudeBattle1.mp3" },
   { key: MUSIC.death,              src: "audio/Death.mp3" },
-  { key: MUSIC.emotionalLife,      src: "audio/Emotional_Life.mp3" }
+  { key: MUSIC.emotionalLife,      src: "audio/Emotional_Life.mp3" },
+  { key: MUSIC.intenseBattle2,     src: "audio/Intense Battle V2.mp3" },
+  { key: MUSIC.intenseBattle3,     src: "audio/Intense Battle V3.mp3" },
+  { key: MUSIC.finalBattleSad,     src: "audio/Final Battle Sad.mp3" },
+  { key: MUSIC.finalBattleAttack,  src: "audio/Final Battle Attack.mp3" }
 ];

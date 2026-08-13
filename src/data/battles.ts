@@ -901,7 +901,7 @@ export const BATTLES: BattleNode[] = [
       "The streets you walked every day. Kian waits outside Lucian's house with twelve guardsmen and a warrant sealed by the King himself — Lucian's wife and daughter inside. He's known about Amar since the second week, he says. Hoped he was wrong. The warrant is for Amar alone; the squad walks if he surrenders. Lucian is already drawing his spear.",
     outro:
       "The blockade breaks at the third barricade. Mira and Tali reach the cousin's farm; Kian doesn't chase. His voice follows the squad through the gate: \"The cliffs, Amar. We'll finish what your father started — before Madame Dawn turns you into a weapon.\"",
-    music: MUSIC.strongholdMemories,
+    music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
     playable: true,
@@ -1018,7 +1018,7 @@ export const BATTLES: BattleNode[] = [
       "Sundown over Para Harbor. The cliff staircase down to Madame Dawn's ship is the only way — and Kian waits on the lower landing with the King's elite, guards blocking every step. He looks tired in a way you've never seen. He waves the weapons down; he has something to say first. Behind you, Lucian draws his spear anyway.",
     outro:
       "Kian falls to a combined strike on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The cost was severe — but the full weight of it doesn't land until later, in the cabin, after the boat is already moving.",
-    music: MUSIC.strongholdMemories,
+    music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_cliffs",
     playable: true,
@@ -3000,7 +3000,7 @@ export const BATTLES: BattleNode[] = [
     subtitle: "The Bell Before the Sky",
     intro: "The bell court holds the west's last muster bell: ring it, and every village between here and the mountains knows to arm or to hide. Warden Sarto has orders to let no one ring it for any cause but the King's. The horizon has been the wrong colour for four days. The second test. The one you can't take back.",
     outro: "The bell rings. The sky changes within the hour.",
-    music: MUSIC.danger,
+    music: MUSIC.intenseBattle2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
     playable: true,
@@ -3145,7 +3145,7 @@ export const BATTLES: BattleNode[] = [
     subtitle: "The Sky Speaks",
     intro: "The fleet drops out of orbit at sunrise. The sky speaks first, a sound no one alive has heard, and then the landing craft come down on the plain east of the city like judgment with engines. What walks out of them calls itself the Ravage. The word did not come from any kingdom on the map.",
     outro: "The first wave is repelled. The second wave is already burning the air on its way down.",
-    music: MUSIC.finalBoss,
+    music: MUSIC.intenseBattle3,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: true,
@@ -3218,7 +3218,7 @@ export const BATTLES: BattleNode[] = [
     subtitle: "Hold the Coast",
     intro: "The second wave doesn't land on the plain. It comes out of the sea itself, walking out of the surf in line abreast. If the coast falls, the inland falls; if the inland falls, the war ends in a month and not in anyone's favor. The squad holds the dune line. Six rounds until the coast batteries the bell bought time to build come to bear.",
     outro: "The coast holds. Barely. The line is rewritten in salt and rust.",
-    music: MUSIC.finalBoss,
+    music: MUSIC.intenseBattle2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: true,
@@ -3313,7 +3313,7 @@ export const BATTLES: BattleNode[] = [
     subtitle: "Orbital Descent",
     intro: "At midnight the landing field lights up again: a single craft, escorted, deliberate. The Ravage command has sent its Herald down in person to see what has been repelling its waves. It wants to look at the thing before deciding what the thing is worth. The squad walks back onto the scarred plain to be looked at.",
     outro: "They have seen it. They are not deterred.",
-    music: MUSIC.finalBoss,
+    music: MUSIC.intenseBattle3,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: true,
@@ -3388,7 +3388,7 @@ export const BATTLES: BattleNode[] = [
     subtitle: "The Path Ends",
     intro: "The final reckoning, framed by the path you walked. The old coronation processional runs dead into the shadow of the grounded flagship, and at the top of the marble stands the person your whole road has been walking toward. Different opponents per path; same gravity.",
     outro: "The fight ends in the only way it could, given everything before it.",
-    music: MUSIC.finalBoss,
+    music: MUSIC.finalBattleSad,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_finalBoss",
     playable: true,
@@ -3442,6 +3442,7 @@ export const BATTLES: BattleNode[] = [
     ],
     pathOverrides: {
       vengeance: {
+        music: MUSIC.finalBattleAttack,
         subtitle: "The Path Ends — The Last Name",
         intro: "Archbold did not wait for the fleet to price his kingdom: he bargained with it. Safe passage off a burning board, bought with the coordinates of every coast battery the bell built. The King stands at the top of the processional under the flagship's shadow, guarded by the empire he sold and the buyers he sold it to. The last name on the list wrote itself onto the fleet's manifest.",
         outro: "The list ends on the marble where the kings of Grude were crowned. Maya takes the signet ring, not as a trophy: as a receipt. The fleet, its bargain dead, rises without a second glance at the world it almost bought.",
@@ -3487,6 +3488,7 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       revolution: {
+        music: MUSIC.finalBattleSad,
         subtitle: "The Path Ends — The Last Throne",
         intro: "The fleet is rising. It was never the final enemy of this path. Madame Dawn reached the flagship's shadow first and stood on the processional to meet her son, because she has run the arithmetic to its end: the world after the fleet needs a throne to organize its fear, and she has spent thirty years becoming the only person who can sit on it. The revolution's last throne is the one that loves you.",
         outro: "No thrones. It cost the revolution its heart to mean it, and on the marble where every crown in the west was ever set, nothing is set. The wind moves across the processional. It is enough.",
@@ -3534,6 +3536,7 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       duty: {
+        music: MUSIC.finalBattleAttack,
         subtitle: "The Path Ends — Under Orders",
         intro: "Dawn's command staff drafted the order three times and could not make an officer sign it: engage the Ravage command in the open and hold it on the ground until the coast batteries range the flagship. It is a staying order. Whoever executes it is the anvil. Amar read it once, signed it himself, and picked the squad that has never once broken under him. The path of duty ends where every honest officer knows it ends: at the front of your own order.",
         outro: "The order held. The batteries spoke. The fleet rose. The report says one unbroken line of names held the processional against the Ravage command, and for once the report and the truth are the same document.",
@@ -3561,6 +3564,7 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       mercy: {
+        music: MUSIC.finalBattleSad,
         subtitle: "The Path Ends — The Surrendered Sword",
         intro: "Archbold's empire is a corpse that hasn't fallen over: the fleet priced it and declined it, his marshals have stopped answering, and the King has retreated up the old coronation road with the last guard that still calls him sire. Every rule of the path you walked says the same thing about a cornered man who can still hurt people. Break him. Only him. The war will not miss one more body, and it will remember forever the one it didn't take.",
         outro: "On the marble where his ancestors were crowned, Archbold surrenders his sword to the son he tried to unmake, and lives. The fourth surrender was a captain. The last one is a king. The war ends with the sound of steel set down, not driven in.",
@@ -3637,6 +3641,9 @@ export interface PathOverride {
   outro?: string;
   victory?: VictoryCondition;
   buildEnemies?: () => UnitDef[];
+  // Per-path battle score. B28 splits its final-battle music by the
+  // chosen path's temperament (Sad vs Attack) through this.
+  music?: MusicKey;
   // Full replacement of the battle's dialogue set (the climax battles
   // B23/B24/B28 use this — each path fights a genuinely different scene).
   dialogues?: BattleDialogue[];
