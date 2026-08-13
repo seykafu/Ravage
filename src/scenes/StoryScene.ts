@@ -12,6 +12,7 @@ import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
 import { trackArcStarted } from "../util/analytics";
+import { getSevenPath, loadSave } from "../util/save";
 import type { ArcId, RouteRef } from "../data/contentIds";
 
 interface PortraitMeta {
@@ -442,10 +443,24 @@ export class StoryScene extends Phaser.Scene {
       return;
     }
     if (next === "romance") {
-      // The marriage question (post-B29 war endings). RomanceScene offers
+      // The marriage question (war-path endings). RomanceScene offers
       // the path's two partners or walking on alone, persists the pick,
       // and routes into the matching wed_*/end_alone coda arc.
       this.scene.start("RomanceScene");
+      return;
+    }
+    if (next === "ending") {
+      // Per-path campaign ending — post_path_final ends here and the
+      // saved war path picks the coda. Defensive credits fall-through if
+      // no path is set (unreachable in a normal run).
+      const path = getSevenPath(loadSave());
+      const coda =
+        path === "vengeance" || path === "restoration" || path === "revolution" ||
+        path === "duty" || path === "mercy"
+          ? (`post_ending_${path}` as ArcId)
+          : null;
+      if (coda) this.scene.start("StoryScene", { arcId: coda });
+      else this.scene.start("CreditsScene");
       return;
     }
     if (next === "overworld") {

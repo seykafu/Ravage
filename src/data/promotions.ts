@@ -140,5 +140,6 @@ export const ABILITY_DISPLAY: Partial<Record<Ability, { name: string; blurb: str
   Stoop:       { name: "Stoop",        blurb: "Once per battle: free move + attack within 6 movement." },
   Vanish:      { name: "Vanish",       blurb: "After attacking, take −50% damage until next turn." },
   Bulwark:     { name: "Bulwark",      blurb: "Cannot be moved by enemy effects; +2 effective armor." },
-  Refract:     { name: "Refract",      blurb: "A killing beam splashes 50% damage to one enemy adjacent to the target." }
+  Refract:     { name: "Refract",      blurb: "A killing beam splashes 50% damage to one enemy adjacent to the target." },
+  Mend:        { name: "Mend",         blurb: "Heal the most-wounded adjacent ally for 40% of max HP; the mender earns XP." }
 };

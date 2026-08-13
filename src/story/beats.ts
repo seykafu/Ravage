@@ -1535,7 +1535,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The processional, in the lifting shadow",
     music: "emotional",
     backdrop: "finalBoss",
-    next: "prep:b29_aftermath",
+    // "ending" resolves the saved war path into its post_ending_* coda —
+    // this shared scene is where all five wars converge one last time
+    // before diverging into their endings.
+    next: "ending",
     beats: [
       N("It ends on the marble the way it began on marble: with a body the whole road had been walking toward, and the squad still standing in the shadow of a grounded sky."),
       N("Then the shadow moves. The flagship's engines change pitch — not the settling note of conquest but the long inhale of departure — and across the whole sky the fleet folds itself away the way it came, without a word. The Ravage does not surrender. It settles accounts. Somewhere in its ledgers this shore has been re-priced, and the entry reads: too expensive."),
@@ -1543,10 +1546,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "They ran the numbers and walked away from the deal. (She's quiet a moment.) Twenty years of being somebody's asset. The first appraisal I'm proud of says unprofitable." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
         body: "My shore burned because it was cheap. Yours held because you made it dear. Every bell. Every barricade. Every name chalked on a door. (Beat.) Teach your children the difference. I never had the chance." },
-      { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
-        body: "Meanwhile, two empires dropped their armies when they fell, and the ground's still holding them. Remnants. Deserters. Stragglers the fleet didn't wait for. (Beat.) One more field, Captain. The dull kind." },
-      { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Dull sounds good. (He stands.) Form up. One more field." }
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "Two empires dropped their armies when they fell. Remnants, deserters, strays. (Beat.) None of it is a war anymore, Captain. It's work for garrisons and grain carts, and the west has both again. Stand the squad down." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He looks down the line — all eight of them still standing in the lifting light, nobody quite ready to move.) Then that's it. That's all of it. (Quietly.) Let's go home." },
+      N("Nobody moves for a while. Then Ranatoli laughs — the big laugh, the one from before the cells — and someone else joins, and the war is over.")
     ]
   },
   post_ending_vengeance: {

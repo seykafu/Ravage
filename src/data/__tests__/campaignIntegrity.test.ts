@@ -78,7 +78,7 @@ describe("campaign integrity", () => {
       if (ENDING_PATHS.includes(path)) {
         expect(last, `${path} should end at its opener`).toBe(openerFor(path));
       } else {
-        expect(last, `${path} should run the full campaign`).toBe("b29_aftermath");
+        expect(last, `${path} should run the full campaign`).toBe("b28_path_final");
         expect(visited, `${path} must pass through the war arc`).toContain("b20_dawn_war");
         expect(visited).toContain("b28_path_final");
       }
@@ -225,9 +225,14 @@ describe("post-battle story routing", () => {
     }
   });
 
-  it("b29 routes to the chosen path's ending coda", () => {
+  it("the final battle routes through post_path_final into the per-path codas", () => {
+    // B28 is the campaign's last battle: its shared epilogue must end in
+    // the dynamic "ending" route, and every war path must have a coda
+    // waiting on the other side of it.
+    expect(resolvePostArc("b28_path_final", "vengeance")).toBe("post_path_final");
+    expect(ARCS.post_path_final.next).toBe("ending");
     for (const path of WAR_PATHS) {
-      expect(resolvePostArc("b29_aftermath", path)).toBe(`post_ending_${path}`);
+      expect(ARCS[`post_ending_${path}` as keyof typeof ARCS], `missing coda for ${path}`).toBeTruthy();
     }
   });
 
@@ -240,8 +245,7 @@ describe("post-battle story routing", () => {
       ["b24_path_climax_b", "b25_fleet_arrival"],
       ["b25_fleet_arrival", "b26_coastal_hold"],
       ["b26_coastal_hold", "b27_orbital_descent"],
-      ["b27_orbital_descent", "b28_path_final"],
-      ["b28_path_final", "b29_aftermath"]
+      ["b27_orbital_descent", "b28_path_final"]
     ];
     for (const [from, to] of chain) {
       const arcId = resolvePostArc(from, "vengeance")!;

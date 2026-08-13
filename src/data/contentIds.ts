@@ -79,7 +79,6 @@ export type BattleId =
   // climax encounters). B29 shared cleanup. B30 = path-flavoured
   // epilogue (text + portraits; not a fight in most paths).
   | "b28_path_final"
-  | "b29_aftermath"
   | "b30_epilogue";
 
 // ---- Story arcs -----------------------------------------------------------
@@ -237,6 +236,11 @@ export type RouteRef =
   // hands off to ChoiceScene, where the player commits to one of the seven
   // philosophies; ChoiceScene then routes to the chosen path's B19 opener.
   | "choice"
+  // Per-path campaign ending. post_path_final (the B28 epilogue — the
+  // fleet withdrawing) ends in "ending"; StoryScene resolves the saved
+  // war path into its post_ending_* coda. Static next fields can't
+  // branch, so the one arc every war path shares routes dynamically.
+  | "ending"
   // The marriage question. War-path ending codas (post_ending_*) hand off
   // to RomanceScene, which offers the path's two partners (one woman, one
   // man — see src/data/romance.ts) or walking on alone, then routes into

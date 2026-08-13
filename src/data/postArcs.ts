@@ -51,33 +51,25 @@ export const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   b25_fleet_arrival: "post_fleet_arrival",
   b26_coastal_hold: "post_coastal_hold",
   b27_orbital_descent: "post_orbital_descent",
+  // The campaign's final battle. post_path_final ends the war (the fleet
+  // withdraws) and its next: "ending" routes to the chosen path's
+  // post_ending_* coda — see StoryScene.routeNext.
   b28_path_final: "post_path_final"
-  // b29_aftermath routes per path — see resolvePostArc.
 };
 
 // The campaign's terminal battles. Exile and forgetting end at their B19
 // epilogues (walking away from the war IS the ending); the five war
-// paths run the full campaign to B29 (The Aftermath), whose per-path
-// ending arc rolls credits.
+// paths run the full campaign to B28 (The Path Ends), whose shared
+// epilogue routes into the per-path ending coda.
 export const FINAL_PLAYABLE = new Set<BattleId>([
   "b19_path_opener_exile",
   "b19_path_opener_forgetting",
-  "b29_aftermath"
+  "b28_path_final"
 ]);
 
-// Post-battle arc for a given victory. Static POST_ARC covers the spine;
-// B29 (the campaign's final battle) routes to the chosen path's ending
-// arc: five different codas for five different wars.
-export const resolvePostArc = (battleId: BattleId, path: SevenPath | null): ArcId | undefined => {
-  if (battleId === "b29_aftermath") {
-    switch (path) {
-      case "vengeance":   return "post_ending_vengeance";
-      case "restoration": return "post_ending_restoration";
-      case "revolution":  return "post_ending_revolution";
-      case "duty":        return "post_ending_duty";
-      case "mercy":       return "post_ending_mercy";
-      default:            return undefined;
-    }
-  }
+// Post-battle arc for a given victory. The path parameter is kept for
+// call-site stability (EndScene always has it in hand) even though the
+// per-path branch now lives in post_path_final's "ending" route.
+export const resolvePostArc = (battleId: BattleId, _path: SevenPath | null): ArcId | undefined => {
   return POST_ARC[battleId];
 };

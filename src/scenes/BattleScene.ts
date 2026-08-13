@@ -57,6 +57,7 @@ import {
   sfxLensBeam,
   sfxCancel,
   sfxClick,
+  sfxConfirm,
   sfxCrit,
   sfxDeath,
   sfxDefeat,
@@ -171,7 +172,8 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
   Aide:        { title: "Aide",         body: "Take half damage while adjacent to a friendly unit.\nReward for keeping your line tight." },
   Destruct:    { title: "Destruct",     body: "On death, the unit that landed the killing blow also dies.\nMakes finishing this unit very expensive." },
   Roam:        { title: "Roam",         body: "Once per turn, after all AP is spent, take one free Move.\nClosing distance or repositioning out of danger." },
-  Refract:     { title: "Refract",      body: "A killing beam splashes 50% damage to one enemy\nadjacent to the target." }
+  Refract:     { title: "Refract",      body: "A killing beam splashes 50% damage to one enemy\nadjacent to the target." },
+  Mend:        { title: "Mend",         body: "Heal the most-wounded adjacent ally for 40% of their\nmax HP (1 AP). The mender earns XP for every heal." }
 };
 
 // ---- Initiative bar ----
@@ -471,6 +473,13 @@ export class BattleScene extends Phaser.Scene {
 
             if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
           }
+        }
+        // Mend back-fill — Ranatoli's L10 support ability. Granted here
+        // (not only in the factory) so records saved before the ability
+        // existed pick it up, and so a promotion that overwrote the
+        // second ability slot can't permanently cost him the heal.
+        if (p.id === "ranatoli" && p.level >= 10 && !(p.abilities ?? []).includes("Mend")) {
+          p.abilities = [...(p.abilities ?? []), "Mend"];
         }
         // Inventory hydration. createUnit now returns an empty bag —
         // BattlePrepScene's InventoryScene wrote each character's
@@ -2383,6 +2392,51 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ---- Action buttons ----
+  // Wounded living allies within reach of a Mend (Manhattan 1).
+  private mendTargetsFor(u: Unit): Unit[] {
+    return this.state.units.filter((t) =>
+      t.faction === u.faction &&
+      t.id !== u.id &&
+      isAlive(t) &&
+      t.state.hp < t.stats.hp &&
+      Math.abs(t.state.position.x - u.state.position.x) + Math.abs(t.state.position.y - u.state.position.y) === 1
+    );
+  }
+
+  // Mend: heal the most-wounded adjacent ally for 40% of their max HP.
+  // Costs 1 AP and pays the mender 20 XP — deliberately close to a mook
+  // kill (30), because the whole point of the ability is that a slow
+  // shield veteran can level by keeping people standing.
+  private static readonly MEND_FRACTION = 0.4;
+  private static readonly MEND_XP = 20;
+  private performMend(u: Unit): void {
+    const targets = this.mendTargetsFor(u);
+    if (targets.length === 0 || u.state.apRemaining < 1) return;
+    // Most-wounded first, by missing fraction.
+    targets.sort((a, b) => (a.state.hp / a.stats.hp) - (b.state.hp / b.stats.hp));
+    const target = targets[0]!;
+    const amount = Math.min(
+      target.stats.hp - target.state.hp,
+      Math.max(1, Math.round(target.stats.hp * BattleScene.MEND_FRACTION))
+    );
+    target.state.hp += amount;
+    u.state.apRemaining -= 1;
+    sfxConfirm();
+    const px = this.projection.tileToWorld(target.state.position);
+    this.spawnDamageNumber(px.x, px.y, `+${amount}`, 0x6fe08a);
+    this.pushLog(`${u.name} mends ${target.name} for ${amount}.`);
+    this.refreshUnitView(target);
+    const { totalAwarded, levelUps } = awardXp(u, BattleScene.MEND_XP);
+    if (totalAwarded > 0) {
+      this.pushLog(`${u.name} gains ${totalAwarded} XP.`);
+      this.announceXpGain(u, totalAwarded);
+    }
+    for (const lu of levelUps) this.announceLevelUp(u, lu);
+    this.clearActionButtons();
+    if (u.state.apRemaining > 0) this.buildActionButtons(u);
+    else this.endCurrentTurn();
+  }
+
   private clearActionButtons(): void {
     for (const b of this.actionButtons) b.destroy();
     this.actionButtons = [];
@@ -2465,6 +2519,13 @@ export class BattleScene extends Phaser.Scene {
       { label: "Item  1AP", primary: false, enabled: canUseItem, onClick: () => this.openItemPicker(u) },
       { label: "Undo Move", primary: false, enabled: canUndo, onClick: () => this.undoMove(u) }
     );
+    // Mend — support heal for units carrying the ability (Ranatoli L10+).
+    // Auto-targets the most-wounded adjacent ally; the button is disabled
+    // when nobody adjacent is hurt, so it doubles as a range prompt.
+    if (hasAbility(u, "Mend")) {
+      const canMend = hasAP && this.mendTargetsFor(u).length > 0;
+      placeFull("Mend  1AP  (heal adjacent ally)", true, canMend, () => this.performMend(u));
+    }
     if (canRoam) placeFull("Roam (free)", false, true, () => this.enterRoamMode(u));
     placeFull("End Turn", false, true, () => { sfxClick(); this.endCurrentTurn(); });
 

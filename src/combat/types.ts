@@ -64,10 +64,16 @@ export type Stance = "none" | "defensive" | "ready" | "both";
 //   Bulwark:     Guardian — cannot be moved by enemy effects; +2 effective armor.
 //   Refract:     Prismarch — a killing beam splashes 50% damage to one enemy
 //                adjacent to the target.
+//
+// Support abilities:
+//   Mend:        Ranatoli (L10+) — heal the most-wounded adjacent ally for
+//                40% of their max HP (1 AP). Awards the mender solid XP, so
+//                a shield-line veteran levels by keeping people standing
+//                instead of by stealing kills.
 export type Ability =
   | "BossFighter" | "Aide" | "Destruct" | "Roam"
   | "CritPlus" | "Phalanx" | "Charge" | "Pierce" | "Stoop" | "Vanish" | "Bulwark"
-  | "Refract";
+  | "Refract" | "Mend";
 export const MAX_ABILITIES = 2;
 
 // Battle inventory. Capped at MAX_INVENTORY (5) per unit.

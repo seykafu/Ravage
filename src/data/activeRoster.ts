@@ -125,7 +125,6 @@ export const ACTIVE_ROSTER: Partial<Record<string, string[]>> = {
   b26_coastal_hold:            ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
   b27_orbital_descent:         ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
   b28_path_final:              ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"],
-  b29_aftermath:               ["amar", "ning", "maya", "leo", "veya", "corin", "selene", "ranatoli"]
 };
 
 // Resolve the player's current active squad based on their save's

@@ -1,6 +1,6 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap, aftermathMap } from "./maps";
+import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId, SevenPath } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -3380,6 +3380,9 @@ export const BATTLES: BattleNode[] = [
   },
   {
     id: "b28_path_final",
+    // The campaign's final battle. The fleet's withdrawal ends the war;
+    // post_path_final routes to the per-path ending coda (RouteRef "ending").
+    unlocks: null,
     index: 28,
     title: "Twenty-Eighth Battle",
     subtitle: "The Path Ends",
@@ -3603,66 +3606,6 @@ export const BATTLES: BattleNode[] = [
         ]
       }
     }
-  },
-  {
-    id: "b29_aftermath",
-    index: 29,
-    title: "Twenty-Ninth Battle",
-    subtitle: "The Aftermath",
-    intro: "The Ravage fleet is gone. What remains on the field where Dawn's war began is everything the great powers dropped as they fell: imperial remnants with no king to answer to, deserters with empty larders, and a handful of Ravage stragglers the fleet did not wait for. The remaining fight is whatever survived your last decision. The squad crosses the old field one final time to close the door.",
-    outro: "The war is over for the people who lived through it.",
-    music: MUSIC.battleTheme2,
-    prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_finalBoss",
-    playable: true,
-    unlocks: null,
-    map: aftermathMap,
-    buildPlayers: () => [
-      PLAYERS.amar(),
-      PLAYERS.maya(),
-      PLAYERS.ning(),
-      PLAYERS.leo(),
-      PLAYERS.veya(),
-      PLAYERS.corin(),
-      // Rejoined at the held city (post_grude_burns): Selene, hunting the
-      // same war from its shadows since her B7 escape, and Ranatoli,
-      // freed when the district fires cracked the prison row. The fleet
-      // arc plays eight-strong.
-      PLAYERS.selene(),
-      PLAYERS.ranatoli()
-    ],
-    buildEnemies: () => [
-      ENEMIES.royalGuard("am_rg1", 2901, 17),
-      ENEMIES.royalGuard("am_rg2", 2902, 17),
-      ENEMIES.banditSwordsman("am_b1", 2903, 16),
-      ENEMIES.banditSpearton("am_b2", 2904, 16),
-      ENEMIES.ravageTrooper("am_rv1", 2905, 18),
-      ENEMIES.ravageTrooper("am_rv2", 2906, 18)
-    ],
-    difficultyLabel: "Climactic",
-    rewards: ["elixir", "elixir", "royal_lens"],
-    dialogues: [
-      {
-        id: "b29_open",
-        trigger: { kind: "round_start", round: 1 },
-        beats: [
-          { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-            body: "The same field, Amar. Serrick's trench line is still there under the grass. (She counts the figures picking over the wrecks.) Nobody out there is fighting for anything anymore. That's what makes them dangerous. It's also what makes this the last one." },
-          { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Then we end it the way we fought it. Clean, and for the people behind us. (Draws, one last time.) Squad: the door closes today. Walk it shut." }
-        ]
-      },
-      {
-        id: "b29_bv",
-        trigger: { kind: "before_victory" },
-        beats: [
-          { portraitId: "narrator",
-            body: "The last blade on the field drops, and no horn answers, no wave follows, no sky lights. The quiet arrives the way the fleet did: all at once, and bigger than anyone expected." },
-          { speaker: "Leo", portraitId: "leo", expression: "resolute",
-            body: "(listening to the nothing) Is that it? (Nobody answers.) Ash and me were going to fly the coast when it ended. (A breath.) It ended. We're going to go fly the coast." }
-        ]
-      }
-    ]
   },
   {
     id: "b30_epilogue",

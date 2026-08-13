@@ -170,7 +170,10 @@ export const PLAYERS = {
     artSeed: 6,
     palette: PLAYER_PALETTES.ranatoli,
     portrait: true,
-    abilities: ["Destruct"],
+    // Destruct makes finishing him expensive; Mend (L10 support — his
+    // baseline IS L10, so it's live from the moment he rejoins) lets a
+    // slow shield veteran earn XP by keeping the line standing.
+    abilities: ["Destruct", "Mend"],
     // Original-8 coup veteran. Uses L10 baseline; the catch-up rule in
     // Progression.catchUpToSquad will fast-forward him further if the
     // squad has out-leveled L10 by the time he rejoins.
