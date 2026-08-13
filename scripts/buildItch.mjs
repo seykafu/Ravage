@@ -44,6 +44,19 @@ html = html.replace(/url\('\//g, "url('");
 writeFileSync(join(out, "index.html"), html);
 rmSync(join(out, "play"), { recursive: true, force: true });
 
+console.log("[itch] pruning non-shipped files…");
+// The game plays video/intro_sound.* only. Everything else in video/ is
+// marketing-page material (intro.*, poster) or raw editing sources
+// (Footage.mp4, the .mov) that must not ship in the game package.
+const PRUNE = [
+  "video/Footage.mp4",
+  "video/Ravage - Intro Video.mov",
+  "video/intro.mp4",
+  "video/intro.webm",
+  "video/intro_poster.jpg"
+];
+for (const rel of PRUNE) rmSync(join(out, rel), { force: true });
+
 console.log("[itch] zipping…");
 const releaseDir = join(root, "release");
 if (!existsSync(releaseDir)) mkdirSync(releaseDir);
