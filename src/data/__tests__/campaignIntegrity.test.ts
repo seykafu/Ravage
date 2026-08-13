@@ -11,6 +11,7 @@ import { describe, it, expect } from "vitest";
 import { BATTLES, battleById, resolveBattleForPath, type BattleNode } from "../battles";
 import type { BattleId, SevenPath } from "../contentIds";
 import { ARCS } from "../../story/beats";
+import { FINAL_PLAYABLE, resolvePostArc } from "../postArcs";
 import { Grid } from "../../combat/Grid";
 import { createUnit } from "../../combat/Unit";
 import { applyDifficultyToEnemy } from "../../combat/Difficulty";
@@ -210,6 +211,41 @@ describe("war-arc path flavor (B20-B22)", () => {
       }
       // No path chosen (should be impossible past B19, but the resolver must not invent dialogue).
       expect(resolveBattleForPath(node, null).dialogues?.length).toBe(base);
+    }
+  });
+});
+
+describe("post-battle story routing", () => {
+  it("every non-terminal playable battle routes into a real story arc — no silent camp fall-through", () => {
+    for (const node of BATTLES) {
+      if (!node.playable || FINAL_PLAYABLE.has(node.id)) continue;
+      const arc = resolvePostArc(node.id, "vengeance");
+      expect(arc, `${node.id}: victory falls through to camp with no story`).toBeTruthy();
+      expect(ARCS[arc!], `${node.id} -> ${arc}: arc does not exist`).toBeTruthy();
+    }
+  });
+
+  it("b29 routes to the chosen path's ending coda", () => {
+    for (const path of WAR_PATHS) {
+      expect(resolvePostArc("b29_aftermath", path)).toBe(`post_ending_${path}`);
+    }
+  });
+
+  it("endgame epilogues chain each battle into the next battle's prep", () => {
+    const chain: Array<[BattleId, BattleId]> = [
+      ["b20_dawn_war", "b21_archbold_advances"],
+      ["b21_archbold_advances", "b22_grude_burns"],
+      ["b22_grude_burns", "b23_path_climax_a"],
+      ["b23_path_climax_a", "b24_path_climax_b"],
+      ["b24_path_climax_b", "b25_fleet_arrival"],
+      ["b25_fleet_arrival", "b26_coastal_hold"],
+      ["b26_coastal_hold", "b27_orbital_descent"],
+      ["b27_orbital_descent", "b28_path_final"],
+      ["b28_path_final", "b29_aftermath"]
+    ];
+    for (const [from, to] of chain) {
+      const arcId = resolvePostArc(from, "vengeance")!;
+      expect(ARCS[arcId].next, `${arcId} must bridge into ${to}`).toBe(`prep:${to}`);
     }
   });
 });

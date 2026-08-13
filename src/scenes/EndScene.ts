@@ -7,6 +7,7 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getSevenPath, loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
+import { FINAL_PLAYABLE, resolvePostArc } from "../data/postArcs";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ITEM_CATALOG } from "../combat/items";
 import type { ItemKind } from "../combat/types";
@@ -17,52 +18,10 @@ interface EndArgs {
   outcome: "player" | "enemy";
 }
 
-// Map a completed battle to the post-battle story arc that follows it.
-// If a battle has no scripted post arc, route Continue back to the overworld.
-// Both sides are typed: a stale BattleId or arc id is now a compile error.
-const POST_ARC: Partial<Record<BattleId, ArcId>> = {
-  b01_palace_coup: "post_palace",
-  b02_farmland: "post_farmland",
-  b03_dawn_bandits: "post_dawn_bandits",
-  b04_swamp: "post_swamp",
-  b05_mountain_ndari: "post_mountain",
-  b06_caravan: "post_caravan",
-  b07_monastery: "post_monastery",
-  b08_orinhal: "post_orinhal",
-  b09_ravine: "post_ravine",
-  b10_leaving_thuling: "post_leaving_thuling",
-  b11_cliffs: "post_cliffs",
-  b12_ravage: "post_ravage",
-  b13_dawn_rebellion: "post_dawn_rebellion",
-  b14_origin: "post_origin",
-  b15_inner_coup: "post_inner_coup",
-  b16_proposal: "post_proposal",
-  b17_lie: "post_lie",
-  b18_path_chosen: "post_path_chosen",
-  // B19 path openers — each routes to its own epilogue arc. The five
-  // war-facing paths (vengeance/restoration/revolution/duty/mercy) roll
-  // onward into B20 (Dawn's War); exile and forgetting are ENDINGS and
-  // roll credits. Only the chosen path's entry is ever reached in a run.
-  b19_path_opener_vengeance: "post_path_opener_vengeance",
-  b19_path_opener_restoration: "post_path_opener_restoration",
-  b19_path_opener_revolution: "post_path_opener_revolution",
-  b19_path_opener_duty: "post_path_opener_duty",
-  b19_path_opener_exile: "post_path_opener_exile",
-  b19_path_opener_mercy: "post_path_opener_mercy",
-  b19_path_opener_forgetting: "post_path_opener_forgetting",
-  // War arc — B22's epilogue bridges into the fleet arc (B23+).
-  b22_grude_burns: "post_grude_burns"
-};
-
-// The campaign's terminal battles. Exile and forgetting end at their B19
-// epilogues (walking away from the war IS the ending); the five war
-// paths run the full campaign to B29 (The Aftermath), whose per-path
-// ending arc rolls credits.
-const FINAL_PLAYABLE = new Set<BattleId>([
-  "b19_path_opener_exile",
-  "b19_path_opener_forgetting",
-  "b29_aftermath"
-]);
+// Post-battle arc routing lives in src/data/postArcs.ts so the
+// campaign-integrity suite can assert every non-terminal battle
+// actually routes into a real arc (b20/b21/b23-b28 once fell through
+// the camp fallback below with no story at all).
 
 export class EndScene extends Phaser.Scene {
   private battleId!: BattleId;
@@ -75,22 +34,8 @@ export class EndScene extends Phaser.Scene {
     this.outcome = data.outcome;
   }
 
-  // Post-battle arc routing. Static POST_ARC covers the linear spine;
-  // B29 (the campaign's final battle) routes to the chosen path's ending
-  // arc: five different codas for five different wars.
   private resolvePostArc(): ArcId | undefined {
-    if (this.battleId === "b29_aftermath") {
-      const path = getSevenPath(loadSave());
-      switch (path) {
-        case "vengeance":   return "post_ending_vengeance";
-        case "restoration": return "post_ending_restoration";
-        case "revolution":  return "post_ending_revolution";
-        case "duty":        return "post_ending_duty";
-        case "mercy":       return "post_ending_mercy";
-        default:            return undefined;
-      }
-    }
-    return POST_ARC[this.battleId];
+    return resolvePostArc(this.battleId, getSevenPath(loadSave()));
   }
 
   create(): void {

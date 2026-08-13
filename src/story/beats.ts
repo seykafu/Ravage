@@ -1327,6 +1327,50 @@ export const ARCS: Record<ArcId, StoryArc> = {
   // The last authored beat of the war stretch. Lands the cost of the
   // three battles and points the campaign at the sky (the Ravage fleet,
   // B23+). Routes to credits until the fleet arc ships.
+  // -------- War arc epilogues (B20, B21) --------
+  // The war battles used to fall through to camp with no scene at all —
+  // the only two chapters in the campaign that ended in silence.
+  post_dawn_war: {
+    id: "post_dawn_war",
+    title: "The Cheered Name",
+    subtitle: "The field camp, the evening after",
+    music: "emotional",
+    backdrop: "field_night_camp",
+    next: "prep:b21_archbold_advances",
+    beats: [
+      N("The field empties slowly, the way fields do when the living have to carry everything off them. Burial parties work both slopes by torchlight. Nobody argues anymore about whose colours go in which trench."),
+      N("Across the camp, Dawn's rebels are still singing the charge. The song has a name in it, right where the chorus lands hardest, and the name is not Dawn's."),
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "charismatic_warm_smile",
+        body: "A field victory over an imperial line. The first one anyone can point to in a hundred years. Whatever else we are to each other, Amar — take the evening. You earned it." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
+        body: "(She listens to the singing a moment too long.) I wrote every word of that song, you know. Every word except the name." },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Enjoy the chorus, Captain, then forget it. A crowd that learns your name learns where to send the bill. She knows that better than anyone alive." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "They are not cheering me. They are cheering the line that held — I just stood where it was visible. (He looks west, down the King's Road.) Serrick's line broke today. Archbold's answer is already riding." },
+      N("It is. By midnight the camp knows: the King has gathered the inner provinces and turned west himself. The war stopped being Dawn's rebellion this morning. Tomorrow it becomes a race to Grude.")
+    ]
+  },
+  post_archbold_advances: {
+    id: "post_archbold_advances",
+    title: "One Day's March",
+    subtitle: "The barricade line, after dark",
+    music: "sadness2",
+    backdrop: "field_night_camp",
+    next: "prep:b22_grude_burns",
+    beats: [
+      N("The barricade holds its shape in the dark: carts, fence rails, one broken-axled wagon nobody will ever move again. The squad eats standing up, watching the road they just made expensive."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "A holding action that ends with the road still shut is not a small thing, Captain. I have watched generals spend a thousand men for less than a day. You bought one with a fence." },
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride",
+        body: "It doesn't feel like winning. He is still coming. We gave ground all afternoon and I can still feel his cavalry through my boots." },
+      { speaker: "Ning", portraitId: "ning", expression: "exhausted",
+        body: "I stopped counting arrows today. I count faces now — everyone I aimed past is a face. It is a worse way to count and I am keeping it." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "He wanted this road cheap and he paid a day for it. A day is a city's worth of time. (He shoulders his pack.) Grude gets to spend it at dawn — so we march tonight." },
+      N("North, past the tree line, the horizon carries a colour it should not have at this hour. Not the east's strange wrongness — an older, simpler wrong. Something in Grude is burning.")
+    ]
+  },
   post_grude_burns: {
     id: "post_grude_burns",
     title: "The Held City",
@@ -1364,6 +1408,129 @@ export const ARCS: Record<ArcId, StoryArc> = {
   // The five wars end five ways. Each coda is the path's B19 epilogue
   // grown up: the same voice, after everything it cost.
 
+  // -------- Fleet arc epilogues (B23-B28) --------
+  // Each bridges directly into the next battle's prep, same cadence as
+  // post_grude_burns: the endgame doesn't detour through the overworld.
+  post_path_climax_a: {
+    id: "post_path_climax_a",
+    title: "What the Narrows Held",
+    subtitle: "The canyon's far mouth",
+    music: "emotional",
+    backdrop: "mountain",
+    next: "prep:b24_path_climax_b",
+    beats: [
+      N("The canyon lets them out the far side one at a time, the way it let the war in. Behind them, Colonel Vasse's remnant stacks its arms in the road — not surrendered so much as finished."),
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "dry_skeptical",
+        body: "He fought on because stopping would mean it was all for nothing. I know that arithmetic — a cell teaches it slowly. Somebody should tell him the war stopped being about the war three days ago." },
+      { speaker: "Selene", portraitId: "selene",
+        body: "I cut sign on the eastern ridge at dawn. Everything with legs is moving west — and I mean everything. Wolves travelling beside deer, neither hurrying, neither hunting. Animals know a landlord when one arrives." },
+      { speaker: "Veya", portraitId: "veya", expression: "focused",
+        body: "The prisms agree with the wolves. The light out of the east is arriving bent. That horizon is not a colour anymore — it is a temperature reading, and it is rising." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then the narrows were the last human argument we get to have. The bell court is half a day's march. Whatever is coming, the villages hear it from us before they see it." },
+      N("They march. Behind them, unasked, a dozen of Vasse's spearmen fall in at the column's tail. Nobody sends them away.")
+    ]
+  },
+  post_path_climax_b: {
+    id: "post_path_climax_b",
+    title: "The Hour After the Bell",
+    subtitle: "The bell court, through the night",
+    music: "trailer",
+    backdrop: "monastery",
+    next: "prep:b25_fleet_arrival",
+    beats: [
+      N("The muster bell has a range of forty miles and a vocabulary of one word: ready. All night the word spreads, relayed village to village, until the dark is a chain of small brave sounds heading for the mountains."),
+      { speaker: "Ndara", portraitId: "ndara", expression: "grim",
+        body: "Rung bells raise farmers, and farmers with pikes have stopped cavalry before — it is in the manuals. (She looks up.) There is no page in any manual of mine for that sky." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "I crossed one more ocean than any of you knew existed, a long time ago. I told myself the colour would be different this time, if it ever came. It is not different. It was never going to be." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
+        body: "I have found the angle on every room I ever stood in. Kings, wardens, Dawn herself. I am telling you plainly, Amar: I cannot find the angle on a sky." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then we stop looking for angles and stand where we said we would stand. In line, at sunrise, between it and them. It has worked twenty-four times." },
+      N("Sunrise comes. The sky speaks first.")
+    ]
+  },
+  post_fleet_arrival: {
+    id: "post_fleet_arrival",
+    title: "What Calls Itself Ravage",
+    subtitle: "The landing plain, among the fallen wave",
+    music: "danger",
+    backdrop: "finalBoss",
+    next: "prep:b26_coastal_hold",
+    beats: [
+      N("The first wave lies where it fell, in a crescent around the squad's line. What they leave behind does not bleed so much as go out — like lamps, one by one, some still trying to complete a final instruction."),
+      { speaker: "Leo", portraitId: "leo", expression: "wide-eyed_horror",
+        body: "I put three feet of steel through one and it looked surprised. Not hurt — SURPRISED. Like a ledger had come up wrong. What are they, that pain is a rounding error?" },
+      { speaker: "Khione", portraitId: "khione", expression: "revelation",
+        body: "They are called what they do. The Ravage. They cross skies the way your kings cross rivers, and they price whatever they find on the far bank. They came to my shore once, long before your maps. I am what surviving them looks like, given enough time." },
+      { speaker: "Selene", portraitId: "selene", expression: "cold_contempt",
+        body: "In the smoke at Grude I said the sky would take from all of us now. I am rarely wrong. I have never hated it more." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "Then the kings' war ended this morning — it just has not heard yet. Riders to Serrick's remnant, to Halden, to my father if he will read it: tonight nobody owns a crown. There is one war." },
+      N("East and very high, the second wave is already burning the air on its way down. It is not aiming for the plain. It is aiming for the sea.")
+    ]
+  },
+  post_coastal_hold: {
+    id: "post_coastal_hold",
+    title: "Salt and Rust",
+    subtitle: "The dune line, morning",
+    music: "sadness",
+    backdrop: "cliffs",
+    next: "prep:b27_orbital_descent",
+    beats: [
+      N("Morning on the dune line. The coast batteries steam where their crews poured seawater down the barrels, and the tide keeps delivering pieces of the second wave with the patience of a creditor."),
+      { speaker: "Ning", portraitId: "ning", expression: "exhausted",
+        body: "My bowstring wore through in the surf. Third one this week. Ranatoli splices them now before I even ask. (She turns a shell over in her fingers.) That is what we are now, I think. People who splice." },
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+        body: "We bleed together or we feast together — anything in between is shame. Tonight, for once, the line does both. Somebody find whatever passes for wine on this beach." },
+      { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
+        body: "Horses will not charge surf, so we dismounted and held the way Rose used to hold. I spent the whole tide learning that a door does not need hinges to be a door. Just someone who will not move." },
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+        body: "Look at the pattern, not the waves. They probe, they price, they escalate. This is not their war yet — it is their appraisal. The next thing that comes down will not be a wave. It will be a buyer." },
+      N("She is proved right before midnight. The landing field lights again: one craft, escorted, unhurried — descending the way authority descends, certain the ground will wait.")
+    ]
+  },
+  post_orbital_descent: {
+    id: "post_orbital_descent",
+    title: "Seen",
+    subtitle: "The scarred plain, after the Herald",
+    music: "death",
+    backdrop: "finalBoss",
+    next: "prep:b28_path_final",
+    beats: [
+      N("The Herald withdraws in good order, and it takes its dead with it. It is the first time the Ravage have bothered. Two waves of wrecks lie along the plain exactly where they were priced and abandoned — but not these."),
+      { speaker: "Veya", portraitId: "veya", expression: "grim_resolve",
+        body: "It ate four of my seven colours before it broke off, and it was not armour doing the eating. It was attention. It learned my light while I was cutting it." },
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "It looked at you and did not laugh. Understand what that purchases: when a Herald stops laughing, a shore stops being a shore in their ledgers and becomes a negotiation. Their flagship will come down to hold it in person." },
+      { speaker: "Leo", portraitId: "leo", expression: "resolute",
+        body: "Good. I am done being sampled by things without faces. Let it land where I can reach it." },
+      { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
+        body: "It will land on the coronation processional — of course it will. Kings and skies keep choosing the same marble. (He checks the edge on his blade.) Then that is where we finish this. All of it." },
+      N("Above the city, engines change pitch. Something the size of a district begins, very slowly, to come down.")
+    ]
+  },
+  post_path_final: {
+    id: "post_path_final",
+    title: "The Sky Withdraws",
+    subtitle: "The processional, in the lifting shadow",
+    music: "emotional",
+    backdrop: "finalBoss",
+    next: "prep:b29_aftermath",
+    beats: [
+      N("It ends on the marble the way it began on marble: with a body the whole road had been walking toward, and the squad still standing in the shadow of a grounded sky."),
+      N("Then the shadow moves. The flagship's engines change pitch — not the settling note of conquest but the long inhale of departure — and across the whole sky the fleet folds itself away the way it came, without a word. The Ravage does not surrender. It settles accounts. Somewhere in its ledgers this shore has been re-priced, and the entry reads: too expensive."),
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "They ran the numbers on us and walked away from the deal. Twenty years of being somebody's asset, and the first appraisal I have ever been proud of is UNPROFITABLE." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "My shore burned because it was cheap. Yours survived because you made it dear — every bell, every barricade, every name chalked on a door went into the price. Remember the difference. Teach it." },
+      { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
+        body: "And below all that arithmetic, two empires dropped their armies as they fell, and the ground is still holding them. Remnants, deserters, stragglers the fleet did not wait for. Someone has to pick up the war's leavings. One more field, Captain — the dull, necessary kind." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute",
+        body: "The dull kind is the kind you get to walk home from. Form up. One more field." }
+    ]
+  },
   post_ending_vengeance: {
     id: "post_ending_vengeance",
     title: "The Emptied List",

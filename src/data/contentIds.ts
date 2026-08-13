@@ -164,7 +164,16 @@ export type ArcId =
   | "post_path_opener_mercy"
   | "post_path_opener_forgetting"
   // War-arc bridge: after B22 (Grude Burns), into the fleet arc.
+  | "post_dawn_war"
+  | "post_archbold_advances"
   | "post_grude_burns"
+  // Fleet arc epilogues: B23-B28 each bridge into the next battle.
+  | "post_path_climax_a"
+  | "post_path_climax_b"
+  | "post_fleet_arrival"
+  | "post_coastal_hold"
+  | "post_orbital_descent"
+  | "post_path_final"
   // Campaign endings: after B29 (The Aftermath), one coda per
   // war-facing path. Exile and forgetting ended at their B19 epilogues.
   | "post_ending_vengeance"
