@@ -11,7 +11,7 @@
     <meta property="og:title" content="Ravage — A tactical RPG of stances and steel" />
     <meta property="og:description" content="Stances, the weapon triangle, and a thirty-battle campaign. Seven paths, seven endings, twenty-one painted characters — the full campaign, free, in your browser." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/assets/backdrops/palaceCoup.png" />
+    <meta property="og:image" content="/assets/backdrops/palaceCoup.webp" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Google Analytics (GA4) with Consent Mode v2 + GDPR banner.
@@ -137,7 +137,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: url("/assets/backdrops/palaceCoup.png") center / cover no-repeat;
+        background: url("/assets/backdrops/palaceCoup.webp") center / cover no-repeat;
         filter: contrast(1.05) saturate(1.05);
         z-index: -3;
       }
@@ -652,6 +652,76 @@
       })();
     </script>
 
+    <!-- ============== GAMEPLAY, LIVE ============== -->
+    <!-- First thing under the fold: real captured gameplay. The video
+         carries no sources until it scrolls into view (IntersectionObserver
+         attaches them on first intersect), then plays while visible and
+         pauses when scrolled away. prefers-reduced-motion gets the poster. -->
+    <style>
+      .gameplay-frame {
+        position: relative;
+        max-width: 960px;
+        margin: 28px auto 0;
+        border: 1px solid rgba(201, 176, 122, 0.45);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+        background: #05060a;
+      }
+      .gameplay-frame video { display: block; width: 100%; height: auto; }
+      .gameplay-cap {
+        text-align: center;
+        color: #7a7165;
+        font-size: 13px;
+        margin-top: 12px;
+        letter-spacing: 0.04em;
+      }
+    </style>
+    <section id="gameplay">
+      <div class="container">
+        <div class="section-eyebrow">In Motion</div>
+        <h2 class="section-title">The first battle, uncut.</h2>
+        <div class="gameplay-frame">
+          <video id="gameplay-video"
+                 muted
+                 loop
+                 playsinline
+                 preload="none"
+                 poster="/video/gameplay_poster.jpg"
+                 aria-label="Ravage gameplay: the Palace Coup battle, played live"></video>
+        </div>
+        <div class="gameplay-cap">Battle One — The Palace Coup, captured live. No cuts, no staging.</div>
+      </div>
+    </section>
+    <script>
+      (function () {
+        var v = document.getElementById("gameplay-video");
+        if (!v || !("IntersectionObserver" in window)) return;
+        var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) return; // poster only — no motion, no bandwidth
+        var loaded = false;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              if (!loaded) {
+                loaded = true;
+                var s = document.createElement("source");
+                s.src = "/video/gameplay.mp4";
+                s.type = "video/mp4";
+                v.appendChild(s);
+                v.load();
+              }
+              var p = v.play();
+              if (p && typeof p.catch === "function") p.catch(function () {});
+            } else if (loaded) {
+              v.pause();
+            }
+          });
+        }, { threshold: 0.35 });
+        io.observe(v);
+      })();
+    </script>
+
     <!-- ============== WHAT IT IS ============== -->
     <section>
       <div class="container">
@@ -672,35 +742,35 @@
 
         <div class="portrait-wall">
           <div class="portrait-card">
-            <img src="/assets/portraits/amar_warm_half_smile.png" alt="Amar smiling warmly" loading="lazy" />
+            <img src="/assets/portraits/amar_warm_half_smile.webp" alt="Amar smiling warmly" loading="lazy" />
             <div class="label"><span class="name">Amar</span><span class="expr">a warm half-smile</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/maya_tearful.png" alt="Maya tearful" loading="lazy" />
+            <img src="/assets/portraits/maya_tearful.webp" alt="Maya tearful" loading="lazy" />
             <div class="label"><span class="name">Maya</span><span class="expr">tearful</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/fergus_unmasked_treachery.png" alt="Fergus unmasked" loading="lazy" />
+            <img src="/assets/portraits/fergus_unmasked_treachery.webp" alt="Fergus unmasked" loading="lazy" />
             <div class="label"><span class="name">Fergus</span><span class="expr">unmasked treachery</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/leo_cocky_smirk.png" alt="Leo smirking" loading="lazy" />
+            <img src="/assets/portraits/leo_cocky_smirk.webp" alt="Leo smirking" loading="lazy" />
             <div class="label"><span class="name">Leo</span><span class="expr">cocky smirk</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/dawn_mask_slipping.png" alt="Dawn's mask slipping" loading="lazy" />
+            <img src="/assets/portraits/dawn_mask_slipping.webp" alt="Dawn's mask slipping" loading="lazy" />
             <div class="label"><span class="name">Dawn</span><span class="expr">the mask slipping</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/khione_revelation.png" alt="Khione revelation" loading="lazy" />
+            <img src="/assets/portraits/khione_revelation.webp" alt="Khione revelation" loading="lazy" />
             <div class="label"><span class="name">Khione</span><span class="expr">revelation</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/veya_wry_smile.png" alt="Veya with a wry smile" loading="lazy" />
+            <img src="/assets/portraits/veya_wry_smile.webp" alt="Veya with a wry smile" loading="lazy" />
             <div class="label"><span class="name">Veya</span><span class="expr">an engineer's told-you-so</span></div>
           </div>
           <div class="portrait-card">
-            <img src="/assets/portraits/corin_quiet_grief.png" alt="Corin in quiet grief" loading="lazy" />
+            <img src="/assets/portraits/corin_quiet_grief.webp" alt="Corin in quiet grief" loading="lazy" />
             <div class="label"><span class="name">Corin</span><span class="expr">quiet grief</span></div>
           </div>
         </div>
@@ -782,12 +852,12 @@
         <h2 class="section-title">From palace courtyards to the cliffs of Grude.</h2>
         <p class="section-lede">Each battle has its own map, its own mood, and its own music.</p>
         <div class="gallery">
-          <div class="shot"><img src="/assets/backdrops/palaceCoup.png" alt="Palace Coup" /><span class="shot-label">Palace Coup</span></div>
-          <div class="shot"><img src="/assets/backdrops/mountain.png" alt="Mountain pass" /><span class="shot-label">Mountain Pass</span></div>
-          <div class="shot"><img src="/assets/backdrops/finalBoss.png" alt="Final Boss" /><span class="shot-label">The Final Stand</span></div>
-          <div class="shot"><img src="/assets/backdrops/orinhal.png" alt="Orinhal" /><span class="shot-label">Orinhal</span></div>
-          <div class="shot"><img src="/assets/backdrops/cliffs.png" alt="Cliffs" /><span class="shot-label">Cliffs of Grude</span></div>
-          <div class="shot"><img src="/assets/backdrops/monastery.png" alt="Monastery" /><span class="shot-label">The Monastery</span></div>
+          <div class="shot"><img src="/assets/backdrops/palaceCoup.webp" alt="Palace Coup" /><span class="shot-label">Palace Coup</span></div>
+          <div class="shot"><img src="/assets/backdrops/mountain.webp" alt="Mountain pass" /><span class="shot-label">Mountain Pass</span></div>
+          <div class="shot"><img src="/assets/backdrops/finalBoss.webp" alt="Final Boss" /><span class="shot-label">The Final Stand</span></div>
+          <div class="shot"><img src="/assets/backdrops/orinhal.webp" alt="Orinhal" /><span class="shot-label">Orinhal</span></div>
+          <div class="shot"><img src="/assets/backdrops/cliffs.webp" alt="Cliffs" /><span class="shot-label">Cliffs of Grude</span></div>
+          <div class="shot"><img src="/assets/backdrops/monastery.webp" alt="Monastery" /><span class="shot-label">The Monastery</span></div>
         </div>
       </div>
     </section>

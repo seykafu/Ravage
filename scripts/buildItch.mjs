@@ -53,7 +53,10 @@ const PRUNE = [
   "video/Ravage - Intro Video.mov",
   "video/intro.mp4",
   "video/intro.webm",
-  "video/intro_poster.jpg"
+  "video/intro_poster.jpg",
+  // Marketing-page gameplay snippet (derived from Footage.mp4).
+  "video/gameplay.mp4",
+  "video/gameplay_poster.jpg"
 ];
 for (const rel of PRUNE) rmSync(join(out, rel), { force: true });
 
