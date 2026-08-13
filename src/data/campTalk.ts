@@ -85,7 +85,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       ],
       crossing: [
         { body: "The harbor lights have been gone for an hour. The sea is the only thing in any direction. Lucian's wood practice sword is in my pack. I've taken it out twice and put it back. (He looks back at the sea.)", expression: "wounded" },
-        { body: "Khione says fourteen months to Grude. Fourteen months to think about every name. Fourteen months to decide who I want to be when we land. I'll let you know what I come up with. (Half-smile.)", expression: "fatherly_smile" },
+        { body: "Khione says fourteen months to Grude. Fourteen months to think about every name. Fourteen months to decide who I want to be when we land. I'll let you know what I come up with. (Half-smile.)", expression: "warm_half_smile" },
         { body: "Selene was at the edge of a dream last night. She was saying don't, don't, don't — same word three times. I woke up before I could ask what I wasn't supposed to do. I haven't gone back to sleep.", expression: "wounded" }
       ]
     }
@@ -147,7 +147,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       ],
       crossing: [
         { body: "I didn't realize I was crying until Maya put a hand on my arm. Lucian was the first person who told me I was good at something. (Pause.) I'll write to Mira and Tali too. They should know what he was to us.", expression: "startled" },
-        { body: "Lucian's bowstring is on my belt. The wood practice sword Amar's carrying — Lucian carved that one too, he told me once. Lucian made things. We carry the things. That's how the dead stay with you.", expression: "focused_bow" },
+        { body: "Lucian's bowstring is on my belt. The wood practice sword Amar's carrying — Lucian carved that one too, he told me once. Lucian made things. We're carrying them now. All of us, something.", expression: "focused_bow" },
         { body: "Khione gave me a windrose this morning. Said the sea throws fletching off and a windrose helps you re-tune. I don't know why she gave it to me specifically. I think Maya said something to her.", expression: "focused_bow" }
       ]
     }
@@ -171,7 +171,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       post_doubt: [
         { body: "Said it tonight. The whole truth. Dawn, the planting, eleven months of reading you all. Lucian smiled. Lucian. I hadn't expected that. I'd planned for a knife.", expression: "steel_cold_confession_face" },
         { body: "Ning won't take a bolt for anyone in the squad again, and she'll be the one who decides who's worth one. That's the right shape for what she is now.", expression: "guarded_neutral" },
-        { body: "Amar asked me to wait before telling him what I know about his old life. I respected the ask. I will wait. But the ship to Grude takes fourteen months and I am NOT going to spend all fourteen of them not telling him.", expression: "calculating_side_glance" }
+        { body: "Amar asked me to wait before telling him what I know about his old life. I respected the ask. I will wait. But the ship to Grude takes fourteen months, and I am not going to spend all fourteen of them not telling him.", expression: "calculating_side_glance" }
       ],
       post_para: [
         { body: "The east watch caught me leaving the back gate of Lucian's house at 3:48 AM with Mira on one hip and Tali by the hand. She didn't recognize me. The makeup helped. Tali asked twice if I was a witch. I said yes. She seemed satisfied.", expression: "guarded_neutral" },
