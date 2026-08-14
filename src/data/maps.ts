@@ -599,28 +599,25 @@ const Cl = t("stone", "rock");          // cliff edge — impassable
 const Wo = t("wood");                   // ship deck at the south end
 
 const cliffsRows = [
-  // rows 0-3: cliff plateau where the squad spawns coming down from Thuling road
-  [Cl, Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl, Cl],
-  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
-  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
-  [Cl, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
-  // rows 4-6: staircase head — narrow descent begins (col 4-7 wide)
-  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
-  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
-  [Cl, Cl,  Cl,  StU, Mr, Mr, Mr, Mr, StU, Cl,  Cl,  Cl ],
-  // row 7: middle landing widens (col 2-9) — first tactical breathing room
-  [Cl, Cl,  StU, StU, Mr, Mr, Mr, Mr, StU, StU, Cl,  Cl ],
-  // rows 8-9: narrows again
-  [Cl, Cl,  Cl,  StU, Mr, Mr, Mr, Mr, StU, Cl,  Cl,  Cl ],
-  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
-  // row 10: lower landing (col 2-9) — Kian's stand
-  [Cl, Cl,  StU, StU, Mr, Mr, Mr, Mr, StU, StU, Cl,  Cl ],
-  // rows 11-12: final descent to the dock
-  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
-  [Cl, Cl,  Cl,  Cl,  Mr, Mr, Mr, Mr, Cl,  Cl,  Cl,  Cl ],
-  // rows 13-14: ship deck — wood planks where Dawn's ship is moored
-  [Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo],
-  [Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo]
+  [Cl , Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl , Cl],
+  [Cl , Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl , Cl],
+  [Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl , Cl , Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Sn2, Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , Cl , StU, StU, Mr , Mr , Mr , Mr , Mr , StU, Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , StU, StU, StU, Mr , Mr , Mr , Mr , Mr , StU, StU, StU, Cl , Cl],
+  [Cl , Cl , Cl , StU, StU, StU, Mr , Mr , Mr , Mr , Mr , StU, StU, StU, Cl , Cl],
+  [Cl , Cl , Cl , Cl , StU, StU, Mr , Mr , Mr , Mr , Mr , StU, Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , StU, StU, StU, Mr , Mr , Mr , Mr , Mr , StU, StU, StU, Cl , Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Cl , Cl , Cl , Cl , Cl , Cl , Mr , Mr , Mr , Mr , Mr , Cl , Cl , Cl , Cl , Cl],
+  [Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo],
+  [Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo , Wo],
 ] as const;
 
 export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", cliffsRows, {
@@ -628,11 +625,11 @@ export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", 
   // came down the Thuling road and met Kian's contingent already
   // positioned on the staircase below them.
   player: [
-    { x: 5, y: 1 },  // Amar (center, lead)
-    { x: 6, y: 1 },  // Lucian (right of Amar)
-    { x: 4, y: 2 },  // Maya (north-west)
-    { x: 7, y: 2 },  // Ning (north-east)
-    { x: 5, y: 3 }   // Leo (rear-center)
+    { x: 7, y: 1 }, // Amar (center, lead)
+    { x: 8, y: 1 }, // Lucian (right of Amar)
+    { x: 5, y: 3 }, // Maya (north-west)
+    { x: 10, y: 3 }, // Ning (north-east)
+    { x: 7, y: 4 }, // Leo (rear-center)
   ],
   // Kian holds the lower landing (row 10) — the squad has to come
   // through him. Two royal guards flank him on the same landing. Two
@@ -640,13 +637,13 @@ export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", 
   // squad descends. Two royal guards on the upper-mid stairs (rows
   // 8-9) sealing the descent so the squad can't simply rush past.
   enemy: [
-    { x: 5,  y: 10 }, // Kian (lower landing center — tags["boss"])
-    { x: 4,  y: 10 }, // Royal Guard flanking Kian (west)
-    { x: 7,  y: 10 }, // Royal Guard flanking Kian (east)
-    { x: 3,  y: 7 },  // Crown Archer, middle landing west
-    { x: 8,  y: 7 },  // Crown Archer, middle landing east
-    { x: 5,  y: 8 },  // Royal Guard, mid-stair seal
-    { x: 6,  y: 8 }   // Royal Guard, mid-stair seal
+    { x: 7, y: 13 }, // Kian (lower landing center — tags["boss"])
+    { x: 5, y: 13 }, // Royal Guard flanking Kian (west)
+    { x: 10, y: 13 }, // Royal Guard flanking Kian (east)
+    { x: 4, y: 9 }, // Crown Archer, middle landing west
+    { x: 11, y: 9 }, // Crown Archer, middle landing east
+    { x: 7, y: 10 }, // Royal Guard, mid-stair seal
+    { x: 8, y: 10 }, // Royal Guard, mid-stair seal
   ]
 });
 
@@ -731,17 +728,20 @@ export const ravageMap: MapDef = buildMap("ravage", "Grude Harbor District", rav
 const Pl = t("stone", "pillar");
 
 const dawnRebellionRows = [
-  [Wb, Wb, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Wb, Wb], // ← residence steps (captain's stand)
-  [Wb, Mr, Mr, Pl, Mr, Mr, Mr, Mr, Mr, Mr, Pl, Mr, Mr, Wb], // ← marble podium with ornamental columns
-  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← plaza north
-  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // ← street torches at the corners
-  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← stone benches (low cover)
-  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← dry fountain at plaza center
-  [Wb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Wb], // ← (fountain ring continues)
-  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Wb], // ← matching south benches
-  [Wb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Wb], // ← south torches
-  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← squad approach line
-  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb]  // ← south plaza entrance (squad spawn)
+  [Wb, Wb, Wb, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Wb, Wb],
+  [Wb, Wb, Wb, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Wb, Wb],
+  [Wb, Wb, Mr, Mr, Mr, Pl, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Mr, Pl, Mr, Mr, Mr, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Pl, Pl, Pl, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb],
 ] as const;
 
 export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Archbold's Nephew", dawnRebellionRows, {
@@ -750,12 +750,12 @@ export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Arc
   // so the round-1 dialogue with Rose adjacent fires reliably and
   // the squad can choose flanks without committing immediately.
   player: [
-    { x: 6, y: 10 }, // Amar (center, just behind Rose)
-    { x: 7, y: 10 }, // Rose (lead — she's been the eyes on this estate for weeks)
-    { x: 5, y: 10 }, // Maya (left of Amar)
-    { x: 8, y: 10 }, // Ning (right, bowline)
-    { x: 6, y: 9 },  // Leo (forward-left, dactyl)
-    { x: 7, y: 9 }   // (front-right, open slot — see buildPlayers)
+    { x: 9, y: 13 }, // Amar (center, just behind Rose)
+    { x: 10, y: 13 }, // Rose (lead — she's been the eyes on this estate for weeks)
+    { x: 7, y: 13 }, // Maya (left of Amar)
+    { x: 12, y: 13 }, // Ning (right, bowline)
+    { x: 9, y: 12 }, // Leo (forward-left, dactyl)
+    { x: 10, y: 12 }, // (front-right, open slot — see buildPlayers)
   ],
   // Royal Captain on the marble residence steps. Two crown archers
   // flanking him on the podium (row 1 cols 4 + 9) with full sight
@@ -765,12 +765,12 @@ export const dawnRebellionMap: MapDef = buildMap("dawn_rebellion", "Plaza of Arc
   // directly. Total 6 enemies — same count as B7, level-bumped to
   // reflect Grude empire elite.
   enemy: [
-    { x: 6,  y: 0 },  // Royal Captain (boss — holdPositionUntil)
-    { x: 4,  y: 1 },  // Crown Archer, podium west (x=3 is a column)
-    { x: 9,  y: 1 },  // Crown Archer, podium east (x=10 is a column)
-    { x: 2,  y: 4 },  // Royal Guard, north bench west
-    { x: 11, y: 4 },  // Royal Guard, north bench east
-    { x: 7,  y: 7 }   // Royal Guard, advancing through fountain
+    { x: 9, y: 0 }, // Royal Captain (boss — holdPositionUntil)
+    { x: 6, y: 1 }, // Crown Archer, podium west (x=3 is a column)
+    { x: 13, y: 1 }, // Crown Archer, podium east (x=10 is a column)
+    { x: 3, y: 5 }, // Royal Guard, north bench west
+    { x: 16, y: 5 }, // Royal Guard, north bench east
+    { x: 10, y: 9 }, // Royal Guard, advancing through fountain
   ]
 });
 
@@ -964,40 +964,41 @@ export const bridgeMap: MapDef = buildMap("bridge", "River Bridge, Grude", bridg
 // Map fits the viewport (13*48=624w, 10*48=480h) — no camera scroll.
 // Reuses Cb / Wb / Bd / Tr; Wo (ship's-deck wood) from the cliffs map.
 const quayRows = [
-  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb], // ← city edge (squad enters)
-  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
-  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← dock lamps
-  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb], // ← stacked cargo (cover)
-  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb], // ← open quay (Othren's line)
-  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
-  [Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Wb], // ← matching cargo
-  [Wb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Wb], // ← dock lamps
-  [Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb], // ← dock edge
-  [Wb, Wb, Wb, Wb, Wo, Wo, Wo, Wo, Wo, Wb, Wb, Wb, Wb]  // ← ship's gangway (Wo) — escape
+  [Wb, Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb],
+  [Wb, Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Cb, Wb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb],
+  [Wb, Wb, Cb, Bd, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Bd, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Cb, Tr, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Cb, Wb],
+  [Wb, Wb, Wb, Wb, Wb, Wb, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wo, Wb, Wb, Wb, Wb, Wb],
 ] as const;
 
 export const quayMap: MapDef = buildMap("quay", "Harbour Quay, Grude", quayRows, {
   // Squad enters north from the city, tight block so the round-1
   // dialogue fires reliably before they commit to a lane south.
   player: [
-    { x: 4, y: 1 }, // Maya
-    { x: 5, y: 1 }, // Amar (center)
-    { x: 6, y: 1 }, // Ning (bowline)
-    { x: 7, y: 1 }, // Leo (dactyl)
-    { x: 5, y: 2 }, // Veya
-    { x: 6, y: 2 }  // Corin
-
+    { x: 6, y: 1 }, // Maya
+    { x: 8, y: 1 }, // Amar (center)
+    { x: 9, y: 1 }, // Ning (bowline)
+    { x: 10, y: 1 }, // Leo (dactyl)
+    { x: 8, y: 2 }, // Veya
+    { x: 9, y: 2 }, // Corin
   ],
   // Othren holds the open quay centre — holdPositionUntil keeps his
   // line formed until the squad thins it. Loyalist fighters (Dawn's
   // rebellion rank-and-file, bandit-tier) spread across rows 3-5.
   enemy: [
-    { x: 6, y: 4 }, // Marshal Othren (boss — holdPositionUntil)
-    { x: 3, y: 4 }, // loyalist (bandit swordsman), west
-    { x: 9, y: 4 }, // loyalist (bandit spearton), east
-    { x: 3, y: 3 }, // loyalist archer (bandit archer), west cargo
-    { x: 9, y: 3 }, // loyalist archer (bandit archer), east cargo
-    { x: 6, y: 5 }  // loyalist (bandit swordsman), centre-south
+    { x: 9, y: 5 }, // Marshal Othren (boss — holdPositionUntil)
+    { x: 4, y: 5 }, // loyalist (bandit swordsman), west
+    { x: 14, y: 5 }, // loyalist (bandit spearton), east
+    { x: 4, y: 4 }, // loyalist archer (bandit archer), west cargo
+    { x: 14, y: 4 }, // loyalist archer (bandit archer), east cargo
+    { x: 9, y: 6 }, // loyalist (bandit swordsman), centre-south
   ]
 });
 
@@ -1219,36 +1220,38 @@ const Wk = t("grass", "barricade");     // thrown-up fieldworks
 const Wx = t("dirt", "wagon");          // burning supply wagon
 const Wr = t("grass", "rock");          // field boulders
 const warFieldRows = [
-  [Wf, Wf, Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
-  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf],
-  [Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wk, Wf, Wf, Wf],
-  [Wf, Wf, Wf, Wf, Wk, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf],
-  [Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd, Wd, Wd, Wd],
-  [Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd],
-  [Wf, Wf, Wf, Wk, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
-  [Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wk, Wf, Wf, Wr, Wf],
-  [Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
-  [Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf]
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wz, Wf, Wf, Wf, Wk, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wk, Wf, Wf, Wf, Wz, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd],
+  [Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wd, Wx, Wd, Wd, Wd, Wd, Wd, Wd],
+  [Wf, Wf, Wf, Wf, Wf, Wk, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wk, Wf, Wf, Wf, Wr, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wz, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
+  [Wf, Wf, Wf, Wf, Wr, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf, Wf],
 ];
 export const warFieldMap: MapDef = buildMap("war_field", "The Field Before Grude", warFieldRows, {
   // Squad enters SW, clustered for the round-1 dialogue.
   player: [
-    { x: 1, y: 8 }, // Maya
-    { x: 2, y: 8 }, // Amar
-    { x: 1, y: 7 }, // Ning
-    { x: 2, y: 7 }, // Leo
-    { x: 3, y: 7 }, // Veya
-    { x: 3, y: 8 }  // Corin
-
+    { x: 2, y: 11 }, // Maya
+    { x: 3, y: 11 }, // Amar
+    { x: 2, y: 9 }, // Ning
+    { x: 3, y: 9 }, // Leo
+    { x: 5, y: 9 }, // Veya
+    { x: 5, y: 11 }, // Corin
   ],
   // Serrick holds the NE rise behind his guard line (holdPositionUntil).
   enemy: [
-    { x: 11, y: 2 }, // General Serrick (boss)
-    { x: 9,  y: 3 }, // royal guard, line west
-    { x: 11, y: 4 }, // royal guard, line centre
-    { x: 12, y: 3 }, // royal guard, line east
-    { x: 8,  y: 2 }, // royal archer, ridge west
-    { x: 12, y: 1 }  // royal archer, ridge east
+    { x: 18, y: 3 }, // General Serrick (boss)
+    { x: 15, y: 4 }, // royal guard, line west
+    { x: 18, y: 5 }, // royal guard, line centre
+    { x: 19, y: 4 }, // royal guard, line east
+    { x: 13, y: 3 }, // royal archer, ridge west
+    { x: 19, y: 1 }, // royal archer, ridge east
   ]
 });
 
@@ -1265,37 +1268,38 @@ const Kf = t("grass", "fence");         // field fencing, south
 const Kw = t("forest");                 // north woods
 const Kt = t("forest", "tree");         // thick trunk (blocks)
 const kingsRoadRows = [
-  [Kw, Kw, Kt, Kw, Kw, Kw, Kt, Kw, Kw, Kw, Kw, Kt, Kw, Kw],
-  [Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw],
-  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
-  [Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
-  [Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
-  [Kr, Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
-  [Kg, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
-  [Kg, Kg, Kf, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg],
-  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg]
+  [Kw, Kw, Kw, Kw, Kt, Kw, Kw, Kw, Kw, Kw, Kt, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kt, Kw, Kw, Kw],
+  [Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw],
+  [Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw, Kw],
+  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
+  [Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kb, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr, Kr],
+  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
+  [Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kf, Kg, Kg, Kg, Kg, Kg],
+  [Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg, Kg],
 ];
 export const kingsRoadMap: MapDef = buildMap("kings_road", "The King's Road West", kingsRoadRows, {
   // Squad behind the barricade line, blocking the road.
   player: [
-    { x: 4, y: 3 }, // Amar, on the road north lane
-    { x: 4, y: 4 }, // Maya, road south lane
-    { x: 3, y: 2 }, // Ning, forest verge (bow line)
-    { x: 4, y: 5 }, // Leo, south shoulder
-    { x: 3, y: 3 }, // Veya
-    { x: 5, y: 3 }  // Corin
-
+    { x: 6, y: 4 }, // Amar, on the road north lane
+    { x: 6, y: 5 }, // Maya, road south lane
+    { x: 5, y: 2 }, // Ning, forest verge (bow line)
+    { x: 6, y: 6 }, // Leo, south shoulder
+    { x: 5, y: 4 }, // Veya
+    { x: 8, y: 4 }, // Corin
   ],
   // The vanguard pours in from the east edge, Halden at the front —
   // no holdPosition; he leads the push himself.
   enemy: [
-    { x: 12, y: 4 }, // Captain Halden (boss, front and centre)
-    { x: 13, y: 3 }, // royal guard
-    { x: 13, y: 5 }, // royal guard
-    { x: 12, y: 2 }, // royal guard, verge north
-    { x: 13, y: 1 }, // royal archer, woods line
-    { x: 13, y: 6 }, // royal archer, field south
-    { x: 12, y: 7 }  // royal archer, far south
+    { x: 19, y: 5 }, // Captain Halden (boss, front and centre)
+    { x: 21, y: 4 }, // royal guard
+    { x: 21, y: 6 }, // royal guard
+    { x: 19, y: 2 }, // royal guard, verge north
+    { x: 21, y: 1 }, // royal archer, woods line
+    { x: 21, y: 8 }, // royal archer, field south
+    { x: 19, y: 9 }, // royal archer, far south
   ]
 });
 
@@ -1311,38 +1315,40 @@ const Uf = t("stone", "torch");         // street on fire
 const Ur = t("rubble");                 // collapsed frontage
 const Ub = t("stone", "barricade");     // dragged-out furniture line
 const upperDistrictRows = [
-  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
-  [Us, Uw, Uw, Uw, Us, Us, Us, Uw, Uw, Uw, Us, Us],
-  [Us, Uw, Uw, Uw, Us, Uf, Us, Uw, Uw, Uw, Us, Us],
-  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Ur, Us, Us],
-  [Us, Uf, Us, Ub, Us, Us, Us, Ub, Us, Us, Us, Us],
-  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Uf, Us],
-  [Us, Uw, Uw, Uw, Us, Ur, Us, Uw, Uw, Uw, Us, Us],
-  [Us, Uw, Uw, Uw, Us, Us, Us, Uw, Uw, Uw, Us, Us],
-  [Us, Us, Us, Ur, Us, Us, Uf, Us, Us, Us, Us, Us],
-  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us]
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
+  [Us, Us, Uw, Uw, Uw, Uw, Us, Us, Us, Us, Uw, Uw, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Uw, Uw, Uw, Uw, Us, Us, Uf, Us, Uw, Uw, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Ur, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
+  [Us, Us, Uf, Us, Us, Ub, Us, Us, Us, Us, Ub, Us, Us, Us, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Uf, Us],
+  [Us, Us, Uw, Uw, Uw, Uw, Us, Us, Ur, Us, Uw, Uw, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Uw, Uw, Uw, Uw, Us, Us, Uw, Us, Uw, Uw, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Uw, Uw, Uw, Uw, Us, Us, Us, Us, Uw, Uw, Uw, Uw, Uw, Us, Us],
+  [Us, Us, Us, Us, Us, Ur, Us, Us, Us, Uf, Us, Us, Us, Us, Us, Us, Us],
+  [Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us, Us],
 ];
 export const upperDistrictMap: MapDef = buildMap("upper_district", "The Upper District, Grude", upperDistrictRows, {
   // Squad enters the south gate.
   player: [
-    { x: 4, y: 9 }, // Amar
-    { x: 5, y: 9 }, // Maya
-    { x: 6, y: 9 }, // Ning
-    { x: 7, y: 9 }, // Leo
-    { x: 5, y: 8 }, // Veya
-    { x: 4, y: 8 }  // Corin
-
+    { x: 6, y: 12 }, // Amar
+    { x: 7, y: 12 }, // Maya
+    { x: 9, y: 12 }, // Ning
+    { x: 10, y: 12 }, // Leo
+    { x: 7, y: 11 }, // Veya
+    { x: 6, y: 11 }, // Corin
   ],
   // Brask at the fountain square (north centre); burn teams working
   // the alleys and market row.
   enemy: [
-    { x: 5, y: 0 },  // Captain Brask (boss)
-    { x: 4, y: 2 },  // royal guard, west alley
-    { x: 6, y: 3 },  // royal guard, market row
-    { x: 10, y: 4 }, // royal guard, east lane
-    { x: 2, y: 5 },  // royal archer, west lane
-    { x: 10, y: 1 }, // royal archer, NE rooftop line
-    { x: 5, y: 5 }   // royal guard, centre push
+    { x: 7, y: 0 }, // Captain Brask (boss)
+    { x: 6, y: 3 }, // royal guard, west alley
+    { x: 9, y: 4 }, // royal guard, market row
+    { x: 15, y: 5 }, // royal guard, east lane
+    { x: 3, y: 7 }, // royal archer, west lane
+    { x: 15, y: 1 }, // royal archer, NE rooftop line
+    { x: 7, y: 7 }, // royal guard, centre push
   ]
 });
 
@@ -1356,34 +1362,34 @@ const Nr = t("rubble");                 // rockfall
 const Nb = t("stone", "barricade");     // remnant fieldworks
 const Nk = t("stone", "rock");          // fallen boulder
 const narrowsRows = [
-  [Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw],
-  [Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw],
-  [Nw, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nw],
-  [Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc],
-  [Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nb, Nc, Nc, Nc],
-  [Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc],
-  [Nw, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nw],
-  [Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw],
-  [Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw]
+  [Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw],
+  [Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw],
+  [Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw, Nw],
+  [Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw],
+  [Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc],
+  [Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nc, Nc, Nc],
+  [Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nr, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc],
+  [Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nk, Nc, Nc, Nc, Nc, Nc, Nc, Nb, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw],
+  [Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nc, Nw, Nw, Nw],
+  [Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nc, Nc, Nc, Nc, Nc, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw, Nw],
 ];
 export const narrowsMap: MapDef = buildMap("narrows", "The Narrows", narrowsRows, {
   player: [
-    { x: 1, y: 3 }, // Amar
-    { x: 1, y: 5 }, // Maya
-    { x: 2, y: 4 }, // Ning
-    { x: 1, y: 4 }, // Leo
-    { x: 2, y: 3 }, // Veya
-    { x: 2, y: 5 }, // Selene
-    { x: 3, y: 3 }, // Ranatoli
-    { x: 2, y: 2 }  // Corin
-
+    { x: 2, y: 3 }, // Amar
+    { x: 2, y: 6 }, // Maya
+    { x: 4, y: 4 }, // Ning
+    { x: 2, y: 4 }, // Leo
+    { x: 4, y: 3 }, // Veya
+    { x: 4, y: 6 }, // Selene
+    { x: 6, y: 3 }, // Ranatoli
+    { x: 4, y: 2 }, // Corin
   ],
   enemy: [
-    { x: 11, y: 4 }, // Colonel Vasse (boss)
-    { x: 9,  y: 3 }, // royal guard
-    { x: 9,  y: 5 }, // royal guard
-    { x: 10, y: 2 }, // royal archer
-    { x: 10, y: 6 }  // royal archer
+    { x: 21, y: 4 }, // Colonel Vasse (boss)
+    { x: 17, y: 3 }, // royal guard
+    { x: 17, y: 6 }, // royal guard
+    { x: 19, y: 2 }, // royal archer
+    { x: 19, y: 7 }, // royal archer
   ]
 });
 
@@ -1397,38 +1403,40 @@ const Bt = t("stone", "torch");         // corner braziers
 const Bw = t("wall");                   // court walls
 const Br = t("rubble");                 // collapsed arch
 const bellCourtRows = [
-  [Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw],
-  [Bw, Bt, Bc, Bc, Bp, Bc, Bc, Bp, Bc, Bc, Bt, Bw],
-  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
-  [Bc, Bc, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc],
-  [Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc, Bc, Bc],
-  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc],
-  [Bc, Bc, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc],
-  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
-  [Bw, Bt, Bc, Bc, Bp, Bc, Bc, Bp, Bc, Bc, Bt, Bw],
-  [Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw]
+  [Bw, Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw, Bw],
+  [Bw, Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw, Bw],
+  [Bw, Bw, Bt, Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bp, Bc, Bc, Bc, Bt, Bc, Bw],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Br, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bp, Bc, Bc, Bc],
+  [Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc],
+  [Bw, Bw, Bt, Bc, Bc, Bc, Bp, Bp, Bc, Bc, Bc, Bp, Bc, Bc, Bc, Bt, Bc, Bw],
+  [Bw, Bw, Bw, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bc, Bw, Bw, Bw],
 ];
 export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bellCourtRows, {
   // Row 7 — the clear rank inside the south colonnade (row 8's x=4/x=7
   // are pillars).
   player: [
-    { x: 4, y: 7 }, // Amar
-    { x: 5, y: 7 }, // Maya
-    { x: 6, y: 7 }, // Ning
-    { x: 7, y: 7 }, // Leo
-    { x: 3, y: 7 }, // Veya
-    { x: 8, y: 7 }, // Selene
-    { x: 2, y: 7 }, // Ranatoli
-    { x: 3, y: 6 }  // Corin
-
+    { x: 6, y: 9 }, // Amar
+    { x: 8, y: 9 }, // Maya
+    { x: 9, y: 9 }, // Ning
+    { x: 11, y: 9 }, // Leo
+    { x: 5, y: 9 }, // Veya
+    { x: 12, y: 9 }, // Selene
+    { x: 2, y: 9 }, // Ranatoli
+    { x: 5, y: 8 }, // Corin
   ],
   enemy: [
-    { x: 5, y: 1 },  // Warden Sarto (boss), before the bell
-    { x: 3, y: 2 },  // guard, west colonnade
-    { x: 8, y: 2 },  // guard, east colonnade
-    { x: 2, y: 4 },  // guard, west aisle
-    { x: 9, y: 4 },  // guard, east aisle
-    { x: 6, y: 3 }   // archer, centre line
+    { x: 8, y: 1 }, // Warden Sarto (boss), before the bell
+    { x: 5, y: 3 }, // guard, west colonnade
+    { x: 12, y: 3 }, // guard, east colonnade
+    { x: 2, y: 5 }, // guard, west aisle
+    { x: 15, y: 5 }, // guard, east aisle
+    { x: 9, y: 4 }, // archer, centre line
   ]
 });
 
@@ -1443,58 +1451,59 @@ const Lr = t("rubble");                 // impact scatter
 const Lk = t("dirt", "rock");           // heat-fused slag
 const Lt2 = t("dirt", "torch");         // burning craft debris
 const landingRows = [
-  [Lg, Lg, Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lg, Lg, Lg, Lg, Lg],
-  [Lg, Lg, Lf, Lf, Lf, Lr, Lf, Lf, Lr, Lf, Lf, Lg, Lg, Lg],
-  [Lg, Lf, Lf, Lk, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lg, Lg],
-  [Lf, Lf, Lf, Lf, Lf, Lt2, Lf, Lf, Lf, Lk, Lf, Lf, Lf, Lg],
-  [Lf, Lf, Lr, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lr, Lf, Lf],
-  [Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lt2, Lf, Lf, Lf, Lf, Lf],
-  [Lg, Lf, Lf, Lf, Lk, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lf, Lg],
-  [Lg, Lf, Lf, Lr, Lf, Lf, Lt2, Lf, Lf, Lf, Lk, Lf, Lg, Lg],
-  [Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lf, Lr, Lf, Lf, Lg, Lg, Lg],
-  [Lg, Lg, Lg, Lg, Lf, Lf, Lf, Lf, Lf, Lg, Lg, Lg, Lg, Lg]
+  [Lg , Lg , Lg , Lg , Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg , Lg , Lg , Lg , Lg , Lg , Lg],
+  [Lg , Lg , Lg , Lg , Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg , Lg , Lg , Lg , Lg , Lg , Lg],
+  [Lg , Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lr , Lf , Lf , Lf , Lr , Lr , Lf , Lf , Lf , Lg , Lg , Lg , Lg],
+  [Lg , Lg , Lf , Lf , Lf , Lk , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg , Lg , Lg],
+  [Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lt2, Lf , Lf , Lf , Lf , Lf , Lk , Lf , Lf , Lf , Lf , Lf , Lg],
+  [Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg],
+  [Lf , Lf , Lf , Lr , Lr , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lr , Lf , Lf , Lf],
+  [Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lt2, Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf],
+  [Lg , Lg , Lf , Lf , Lf , Lf , Lk , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg],
+  [Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg],
+  [Lg , Lg , Lf , Lf , Lf , Lr , Lf , Lf , Lf , Lt2, Lf , Lf , Lf , Lf , Lf , Lk , Lf , Lf , Lg , Lg , Lg],
+  [Lg , Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lr , Lr , Lf , Lf , Lf , Lg , Lg , Lg , Lg],
+  [Lg , Lg , Lg , Lg , Lg , Lg , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lf , Lg , Lg , Lg , Lg , Lg , Lg , Lg],
 ];
 export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Field", landingRows, {
   player: [
-    { x: 1, y: 4 }, // Amar
-    { x: 1, y: 5 }, // Maya
-    { x: 2, y: 4 }, // Ning
-    { x: 2, y: 5 }, // Leo
-    { x: 1, y: 3 }, // Veya
-    { x: 1, y: 6 }, // Selene
-    { x: 2, y: 3 }, // Ranatoli
-    { x: 3, y: 4 }  // Corin
-
+    { x: 2, y: 5 }, // Amar
+    { x: 2, y: 7 }, // Maya
+    { x: 3, y: 5 }, // Ning
+    { x: 3, y: 7 }, // Leo
+    { x: 2, y: 4 }, // Veya
+    { x: 2, y: 8 }, // Selene
+    { x: 3, y: 4 }, // Ranatoli
+    { x: 5, y: 5 }, // Corin
   ],
   enemy: [
-    { x: 10, y: 3 }, // trooper
-    { x: 11, y: 5 }, // trooper
-    { x: 9,  y: 7 }, // trooper (x=10 is fused slag)
-    { x: 12, y: 4 }, // lancer
-    { x: 12, y: 6 }, // lancer
-    { x: 13, y: 3 }, // marksman
-    { x: 13, y: 7 }  // marksman
+    { x: 15, y: 4 }, // trooper
+    { x: 17, y: 7 }, // trooper
+    { x: 14, y: 9 }, // trooper (x=10 is fused slag)
+    { x: 18, y: 5 }, // lancer
+    { x: 18, y: 8 }, // lancer
+    { x: 20, y: 4 }, // marksman
+    { x: 20, y: 9 }, // marksman
   ]
 });
 export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Field, at Night", landingRows, {
   player: [
-    { x: 1, y: 4 }, // Amar
-    { x: 2, y: 5 }, // Maya
-    { x: 1, y: 6 }, // Ning
-    { x: 2, y: 3 }, // Leo
-    { x: 1, y: 5 }, // Veya
-    { x: 2, y: 6 }, // Selene
-    { x: 1, y: 3 }, // Ranatoli
-    { x: 3, y: 4 }  // Corin
-
+    { x: 2, y: 5 }, // Amar
+    { x: 3, y: 7 }, // Maya
+    { x: 2, y: 8 }, // Ning
+    { x: 3, y: 4 }, // Leo
+    { x: 2, y: 7 }, // Veya
+    { x: 3, y: 8 }, // Selene
+    { x: 2, y: 4 }, // Ranatoli
+    { x: 5, y: 5 }, // Corin
   ],
   enemy: [
-    { x: 11, y: 5 }, // Herald of the Ravage (boss)
-    { x: 8,  y: 3 }, // trooper (x=9 is fused slag)
-    { x: 9,  y: 7 }, // trooper
-    { x: 10, y: 5 }, // lancer
-    { x: 12, y: 2 }, // marksman
-    { x: 12, y: 8 }  // marksman
+    { x: 17, y: 7 }, // Herald of the Ravage (boss)
+    { x: 12, y: 4 }, // trooper (x=9 is fused slag)
+    { x: 14, y: 9 }, // trooper
+    { x: 15, y: 7 }, // lancer
+    { x: 18, y: 3 }, // marksman
+    { x: 18, y: 11 }, // marksman
   ]
 });
 
@@ -1508,36 +1517,37 @@ const Cw = t("water");                  // the sea (impassable)
 const Cd = t("sand", "barricade");      // dune-line fieldworks
 const Ck = t("sand", "rock");           // shore boulders
 const coastHoldRows = [
-  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw],
-  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Ck, Cs, Cs, Cs, Cw, Cw],
-  [Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
-  [Cg, Cs, Cs, Cd, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cs, Cw],
-  [Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
-  [Cg, Cs, Cs, Cd, Cs, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cw],
-  [Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
-  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Ck, Cs, Cs, Cw, Cw],
-  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw]
+  [Cg, Cg, Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw, Cw],
+  [Cg, Cg, Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw, Cw],
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cs, Cs, Cw],
+  [Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cd, Cs, Cs, Cs, Cs, Ck, Cs, Cs, Cs, Cs, Cw, Cw],
+  [Cg, Cg, Cg, Cg, Cg, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cs, Cw, Cw, Cw, Cw],
 ];
 export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coastHoldRows, {
   player: [
-    { x: 2, y: 3 }, // Amar
-    { x: 2, y: 5 }, // Maya
-    { x: 1, y: 4 }, // Ning
-    { x: 2, y: 4 }, // Leo
+    { x: 3, y: 4 }, // Amar
+    { x: 3, y: 6 }, // Maya
+    { x: 1, y: 5 }, // Ning
+    { x: 3, y: 5 }, // Leo
     { x: 1, y: 2 }, // Veya
-    { x: 1, y: 6 }, // Selene
-    { x: 1, y: 3 }, // Ranatoli
-    { x: 3, y: 3 }  // Corin
-
+    { x: 1, y: 8 }, // Selene
+    { x: 1, y: 4 }, // Ranatoli
+    { x: 4, y: 4 }, // Corin
   ],
   enemy: [
-    { x: 10, y: 2 }, // trooper
-    { x: 11, y: 4 }, // trooper
-    { x: 10, y: 6 }, // trooper
-    { x: 11, y: 1 }, // lancer
-    { x: 11, y: 7 }, // lancer
-    { x: 12, y: 3 }, // marksman
-    { x: 12, y: 5 }  // marksman
+    { x: 15, y: 2 }, // trooper
+    { x: 16, y: 5 }, // trooper
+    { x: 15, y: 8 }, // trooper
+    { x: 16, y: 1 }, // lancer
+    { x: 16, y: 9 }, // lancer
+    { x: 18, y: 4 }, // marksman
+    { x: 18, y: 6 }, // marksman
   ]
 });
 
@@ -1552,60 +1562,37 @@ const Pp = t("stone", "pillar");        // shattered colonnade
 const Pr = t("rubble");                 // wreckage
 const Pt = t("stone", "torch");         // burning wreck-light
 const pathFinalRows = [
-  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
-  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
-  [Ps, Ps, Ps, Pr, Pm, Pm, Pm, Pm, Pm, Pr, Ps, Ps, Ps],
-  [Ps, Ps, Pt, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Pt, Ps, Ps],
-  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
-  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
-  [Ps, Ps, Pr, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Pr, Ps, Ps],
-  [Ps, Pp, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Pp, Ps],
-  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps],
-  [Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps]
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Pp, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Pr, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pr, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Pt, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Pt, Ps, Ps, Ps],
+  [Ps, Ps, Pp, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Pr, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Pr, Ps, Ps, Ps],
+  [Ps, Ps, Pp, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Pp, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Pp, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
+  [Ps, Ps, Ps, Ps, Ps, Ps, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Pm, Ps, Ps, Ps, Ps, Ps],
 ];
 export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", pathFinalRows, {
   player: [
-    { x: 5, y: 9 }, // Amar
-    { x: 6, y: 9 }, // Maya
-    { x: 5, y: 8 }, // Ning
-    { x: 7, y: 9 }, // Leo
-    { x: 4, y: 9 }, // Veya
-    { x: 7, y: 8 }, // Selene
-    { x: 6, y: 8 }, // Ranatoli
-    { x: 4, y: 8 }  // Corin
-
+    { x: 8, y: 13 }, // Amar
+    { x: 9, y: 13 }, // Maya
+    { x: 8, y: 12 }, // Ning
+    { x: 10, y: 13 }, // Leo
+    { x: 6, y: 13 }, // Veya
+    { x: 10, y: 12 }, // Selene
+    { x: 9, y: 12 }, // Ranatoli
+    { x: 6, y: 12 }, // Corin
   ],
   enemy: [
-    { x: 6, y: 1 },  // the path's final opponent (boss)
-    { x: 4, y: 2 },  // escort west
-    { x: 8, y: 2 },  // escort east
-    { x: 3, y: 4 },  // flank west
-    { x: 9, y: 4 }   // flank east
-  ]
-});
-
-// ============== Battle 29 — The Aftermath ==============
-// The same field where Dawn's war began (B20's rows, re-staged): the
-// remaining fight is whatever survived your last decision, met on
-// ground that remembers the first one.
-export const aftermathMap: MapDef = buildMap("aftermath", "The Field, After", warFieldRows, {
-  player: [
-    { x: 2, y: 5 }, // Amar
-    { x: 1, y: 4 }, // Maya
-    { x: 2, y: 6 }, // Ning
-    { x: 1, y: 6 }, // Leo
-    { x: 1, y: 5 }, // Veya
-    { x: 2, y: 4 }, // Selene
-    { x: 3, y: 5 }, // Ranatoli
-    { x: 3, y: 4 }  // Corin
-
-  ],
-  enemy: [
-    { x: 11, y: 3 }, // royal guard remnant
-    { x: 12, y: 5 }, // royal guard remnant
-    { x: 10, y: 7 }, // bandit deserter
-    { x: 12, y: 8 }, // bandit deserter
-    { x: 9,  y: 2 }, // ravage straggler
-    { x: 11, y: 6 }  // ravage straggler
+    { x: 9, y: 1 }, // the path's final opponent (boss)
+    { x: 6, y: 3 }, // escort west
+    { x: 12, y: 3 }, // escort east
+    { x: 4, y: 6 }, // flank west
+    { x: 14, y: 6 }, // flank east
   ]
 });

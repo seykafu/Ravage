@@ -1755,7 +1755,7 @@ export const BATTLES: BattleNode[] = [
     // Mirrors B10 (Leaving Thuling) — the cinematic intent is to board
     // and go, but a player who wants the full clear can take it.
     victory: anyOf(
-      escapeToTile({ x: 6, y: 9 }, { label: "Reach Khione's ship" }),
+      escapeToTile({ x: 9, y: 11 }, { label: "Reach Khione's ship" }),
       routEnemies
     ),
     dialogues: [
@@ -2559,8 +2559,8 @@ export const BATTLES: BattleNode[] = [
     // Halden feeds files onto the road until the clock runs out.
     reinforcements: [
       {
-        round: 3,
-        at: [{ x: 13, y: 3 }, { x: 13, y: 5 }, { x: 13, y: 1 }],
+        round: 2,
+        at: [{ x: 21, y: 4 }, { x: 21, y: 6 }, { x: 21, y: 1 }],
         announce: "Halden feeds the next file onto the road.",
         units: () => [
           ENEMIES.royalGuard("aa_w1", 2107, 16),
@@ -2569,8 +2569,8 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       {
-        round: 5,
-        at: [{ x: 13, y: 4 }, { x: 13, y: 6 }],
+        round: 4,
+        at: [{ x: 21, y: 5 }, { x: 21, y: 8 }],
         announce: "And still the column comes.",
         units: () => [
           ENEMIES.royalGuard("aa_w4", 2110, 16),
@@ -3250,8 +3250,8 @@ export const BATTLES: BattleNode[] = [
     // these are the waves that keep the promise.
     reinforcements: [
       {
-        round: 3,
-        at: [{ x: 12, y: 4 }, { x: 11, y: 2 }, { x: 11, y: 6 }],
+        round: 2,
+        at: [{ x: 18, y: 5 }, { x: 16, y: 2 }, { x: 16, y: 8 }],
         announce: "The tide brings the next line ashore.",
         units: () => [
           ENEMIES.ravageTrooper("ch_w31", 2611, 19),
@@ -3260,8 +3260,8 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       {
-        round: 5,
-        at: [{ x: 12, y: 3 }, { x: 12, y: 5 }, { x: 11, y: 1 }],
+        round: 4,
+        at: [{ x: 18, y: 4 }, { x: 18, y: 6 }, { x: 16, y: 1 }],
         announce: "One more line walks out of the surf.",
         units: () => [
           ENEMIES.ravageTrooper("ch_w51", 2614, 19),
