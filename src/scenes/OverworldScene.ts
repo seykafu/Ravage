@@ -5,7 +5,8 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
-import { getSevenPath, loadSave } from "../util/save";
+import { getSevenPath, loadSave, writeSave } from "../util/save";
+import { reconcileUnlocks } from "../data/unlocks";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
@@ -15,6 +16,16 @@ export class OverworldScene extends Phaser.Scene {
   constructor() { super("OverworldScene"); }
 
   create(): void {
+    // Self-heal the unlock cache before drawing a single card. Unlocks
+    // are derived from completed battles, so a save made before an
+    // unlock-graph change can be missing entries it has plainly earned
+    // — the reason Chapter 29 sat locked for players who had already
+    // beaten Chapter 28 when the epilogue was wired up. Only ever adds.
+    {
+      const raw = loadSave();
+      const healed = reconcileUnlocks(raw, getSevenPath(raw));
+      if (healed !== raw) writeSave(healed);
+    }
     const bgKey = ensureBackdropTexture(this, "bg_overworld", BACKDROPS.thuling);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
     const v = this.add.graphics();

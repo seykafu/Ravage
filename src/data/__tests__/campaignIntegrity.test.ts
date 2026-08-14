@@ -12,6 +12,8 @@ import { BATTLES, battleById, resolveBattleForPath, type BattleNode } from "../b
 import type { BattleId, SevenPath } from "../contentIds";
 import { ARCS } from "../../story/beats";
 import { FINAL_PLAYABLE, resolvePostArc } from "../postArcs";
+import { nextAfterVictory, reconcileUnlocks } from "../unlocks";
+import { defaultSave } from "../../util/save";
 import { Grid } from "../../combat/Grid";
 import { createUnit } from "../../combat/Unit";
 import { applyDifficultyToEnemy } from "../../combat/Difficulty";
@@ -26,13 +28,6 @@ const ALL_PATHS: SevenPath[] = [...WAR_PATHS, ...ENDING_PATHS];
 
 // Mirrors ChoiceScene's path → opener routing.
 const openerFor = (path: SevenPath): BattleId => `b19_path_opener_${path}` as BattleId;
-
-// Mirrors BattleScene.checkEnd's unlock semantics.
-const nextAfterVictory = (node: BattleNode): BattleId | null => {
-  if (node.unlocks !== undefined) return node.unlocks;
-  const idx = BATTLES.findIndex((b) => b.id === node.id);
-  return idx >= 0 && idx + 1 < BATTLES.length ? BATTLES[idx + 1]!.id : null;
-};
 
 // Every (battle, path) pairing that can occur in a run.
 const resolvedVariants = (node: BattleNode): Array<{ label: string; node: BattleNode }> => {
@@ -70,7 +65,7 @@ describe("campaign integrity", () => {
         expect(cur.playable, `${path}: reached unplayable ${cur.id}`).toBe(true);
         // B18's unlock is owned by ChoiceScene — follow the chosen path.
         const nextId: BattleId | null =
-          cur.id === "b18_path_chosen" ? openerFor(path) : nextAfterVictory(cur);
+          cur.id === "b18_path_chosen" ? openerFor(path) : nextAfterVictory(cur.id);
         cur = nextId ? battleById(nextId) : undefined;
         expect(nextId === null || cur !== undefined, `${path}: ${nextId} does not exist`).toBe(true);
       }
@@ -318,6 +313,44 @@ describe("battle dialogue portraits", () => {
           }
         }
       }
+    }
+  });
+});
+
+describe("unlock reconciliation", () => {
+  it("backfills unlocks a save has earned but never received", () => {
+    // Exactly the shipped-save case: B28 beaten before it unlocked the
+    // epilogue, so unlockedBattles never got b29_epilogue.
+    const stale = {
+      ...defaultSave(),
+      completedBattles: ["b01_palace_coup", "b18_path_chosen", "b19_path_opener_mercy", "b28_path_final"],
+      unlockedBattles: ["b01_palace_coup", "b28_path_final"]
+    };
+    const healed = reconcileUnlocks(stale, "mercy");
+    expect(healed.unlockedBattles, "the epilogue is earned by beating B28").toContain("b29_epilogue");
+    // B18's opener is ChoiceScene's job — reconcile has to know the path.
+    expect(healed.unlockedBattles).toContain("b19_path_opener_mercy");
+    // Never removes anything.
+    for (const id of stale.unlockedBattles) expect(healed.unlockedBattles).toContain(id);
+  });
+
+  it("is a no-op for a save that's already consistent", () => {
+    const fresh = defaultSave();
+    expect(reconcileUnlocks(fresh, null)).toBe(fresh);
+  });
+
+  it("every battle in the campaign is reachable — no orphan cards in the chapter select", () => {
+    // b30 was a vertical-slice scaffold that nothing unlocked and
+    // nothing referenced: a permanently locked card at the end of the
+    // list. Nothing should be able to sit there again.
+    const reachable = new Set<string>(["b01_palace_coup"]);
+    for (const b of BATTLES) {
+      const next = nextAfterVictory(b.id);
+      if (next) reachable.add(next);
+      if (b.id === "b18_path_chosen") for (const p of ALL_PATHS) reachable.add(openerFor(p));
+    }
+    for (const b of BATTLES) {
+      expect(reachable.has(b.id), `${b.id} is in the battle list but nothing unlocks it`).toBe(true);
     }
   });
 });

@@ -75,12 +75,12 @@ export type BattleId =
   | "b25_fleet_arrival"
   | "b26_coastal_hold"
   | "b27_orbital_descent"
-  // B28 = path-specific final battle (one of seven distinct boss /
-  // climax encounters). B29 shared cleanup. B30 = path-flavoured
-  // epilogue (text + portraits; not a fight in most paths).
+  // B28 = the path-specific final battle. B29 = the post-credits
+  // epilogue (the smallhold skirmish); the path-flavoured ending itself
+  // is story, not a battle — the codas, the marriage question and the
+  // credits all live in beats.ts.
   | "b28_path_final"
-  | "b29_epilogue"
-  | "b30_epilogue";
+  | "b29_epilogue";
 
 // ---- Story arcs -----------------------------------------------------------
 // Must stay in sync with the keys of ARCS in src/story/beats.ts. Currently

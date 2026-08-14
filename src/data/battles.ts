@@ -3679,20 +3679,8 @@ export const BATTLES: BattleNode[] = [
         ]
       }
     ]
-  },
-  {
-    id: "b30_epilogue",
-    index: 30,
-    title: "Final Battle",
-    subtitle: "Seven Names, One Life",
-    intro: "There is no fight here. There is the rest of your life, framed by the name you chose to answer to.",
-    outro: "Of the seven, one. Of the world that was, this. Of you, what's left.",
-    music: MUSIC.finalBoss,
-    prepMusic: MUSIC.battlePrep,
-    backdropKey: "bg_finalBoss",
-    playable: false,
-    difficultyLabel: "Epilogue"
   }
+
 ];
 
 // ---- Seven Paths divergence (B23/B24/B28) ----------------------------------
