@@ -3382,9 +3382,13 @@ export const BATTLES: BattleNode[] = [
   },
   {
     id: "b28_path_final",
-    // The campaign's final battle. The fleet's withdrawal ends the war;
-    // post_path_final routes to the per-path ending coda (RouteRef "ending").
-    unlocks: null,
+    // The war's last battle. post_path_final routes to the per-path
+    // ending coda (RouteRef "ending"), which runs on into the marriage
+    // question and the credits. Unlocking the epilogue here is what puts
+    // Chapter 29 in the chapter select — it's still handed to the player
+    // automatically after the credits, but a player who finishes 28 can
+    // also find it on the map instead of staring at a locked card.
+    unlocks: "b29_epilogue",
     index: 28,
     title: "Twenty-Eighth Battle",
     subtitle: "The Path Ends",

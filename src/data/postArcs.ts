@@ -66,7 +66,19 @@ export const POST_ARC: Partial<Record<BattleId, ArcId>> = {
 export const FINAL_PLAYABLE = new Set<BattleId>([
   "b19_path_opener_exile",
   "b19_path_opener_forgetting",
-  "b28_path_final"
+  "b29_epilogue"
+]);
+
+// Battles whose victory hands off to a TERMINAL story chain — the
+// path ending, the marriage question, the credits, the epilogue.
+// EndScene hides its "World Map" escape on these: taking it skipped
+// the entire ending with no route back to it, leaving the player at a
+// chapter select with a finished campaign they never saw the end of.
+export const ENDING_HANDOFF = new Set<BattleId>([
+  "b19_path_opener_exile",
+  "b19_path_opener_forgetting",
+  "b28_path_final",
+  "b29_epilogue"
 ]);
 
 // Post-battle arc for a given victory. The path parameter is kept for

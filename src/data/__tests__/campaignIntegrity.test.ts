@@ -78,7 +78,7 @@ describe("campaign integrity", () => {
       if (ENDING_PATHS.includes(path)) {
         expect(last, `${path} should end at its opener`).toBe(openerFor(path));
       } else {
-        expect(last, `${path} should run the full campaign`).toBe("b28_path_final");
+        expect(last, `${path} should run the full campaign`).toBe("b29_epilogue");
         expect(visited, `${path} must pass through the war arc`).toContain("b20_dawn_war");
         expect(visited).toContain("b28_path_final");
       }

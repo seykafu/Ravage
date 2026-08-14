@@ -7,7 +7,7 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat, sfxVictory } from "../audio/Sfx";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getSevenPath, loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
-import { FINAL_PLAYABLE, resolvePostArc } from "../data/postArcs";
+import { ENDING_HANDOFF, resolvePostArc } from "../data/postArcs";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ITEM_CATALOG } from "../combat/items";
 import type { ItemKind } from "../combat/types";
@@ -181,8 +181,9 @@ export class EndScene extends Phaser.Scene {
     const gap = 24;
 
     if (isVictory) {
-      const isFinalPlayable = FINAL_PLAYABLE.has(this.battleId); // last in the slice (any path opener)
-      const continueLabel = isFinalPlayable ? "Continue ▸" : "Continue ▸";
+      // On an ending handoff the ONLY way forward is Continue — see
+      // ENDING_HANDOFF. Elsewhere the player keeps the map escape.
+      const isEnding = ENDING_HANDOFF.has(this.battleId);
       const onContinue = () => {
         sfxConfirm();
         this.cameras.main.fadeOut(450, 0, 0, 0);
@@ -200,32 +201,34 @@ export class EndScene extends Phaser.Scene {
       };
 
       const continueBtn = new Button(this, {
-        x: GAME_WIDTH / 2 - btnW - gap / 2,
+        x: isEnding ? GAME_WIDTH / 2 - btnW / 2 : GAME_WIDTH / 2 - btnW - gap / 2,
         y: btnY,
         w: btnW,
         h: btnH,
-        label: continueLabel,
+        label: "Continue ▸",
         primary: true,
         fontSize: 18,
         onClick: onContinue
       });
+      void continueBtn;
 
-      const mapBtn = new Button(this, {
-        x: GAME_WIDTH / 2 + gap / 2,
-        y: btnY,
-        w: btnW,
-        h: btnH,
-        label: "World Map",
-        primary: false,
-        fontSize: 16,
-        onClick: () => {
-          sfxConfirm();
-          this.cameras.main.fadeOut(450, 0, 0, 0);
-          this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
-        }
-      });
-
-      void continueBtn; void mapBtn;
+      if (!isEnding) {
+        const mapBtn = new Button(this, {
+          x: GAME_WIDTH / 2 + gap / 2,
+          y: btnY,
+          w: btnW,
+          h: btnH,
+          label: "World Map",
+          primary: false,
+          fontSize: 16,
+          onClick: () => {
+            sfxConfirm();
+            this.cameras.main.fadeOut(450, 0, 0, 0);
+            this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
+          }
+        });
+        void mapBtn;
+      }
     } else {
       const retryBtn = new Button(this, {
         x: GAME_WIDTH / 2 - btnW - gap / 2,
