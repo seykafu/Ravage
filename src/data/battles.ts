@@ -3027,7 +3027,12 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.royalGuard("bc_rg2", 2402, 17),
       ENEMIES.royalGuard("bc_rg3", 2403, 16),
       ENEMIES.royalGuard("bc_rg4", 2404, 16),
-      ENEMIES.royalArcher("bc_ra1", 2405, 17)
+      ENEMIES.royalGuard("bc_rg5", 2406, 17),
+      ENEMIES.royalGuard("bc_rg6", 2407, 18),
+      ENEMIES.royalArcher("bc_ra1", 2405, 17),
+      ENEMIES.royalArcher("bc_ra2", 2408, 17),
+      ENEMIES.royalArcher("bc_ra3", 2409, 18),
+      ENEMIES.royalGuard("bc_rg7", 2410, 18)
     ],
     difficultyLabel: "Climactic",
     rewards: ["elixir", "elixir", "royal_lens"],
@@ -3173,8 +3178,12 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.ravageTrooper("fa_t3", 2503, 18),
       ENEMIES.ravageLancer("fa_l1", 2504, 19),
       ENEMIES.ravageLancer("fa_l2", 2505, 18),
+      ENEMIES.ravageTrooper("fa_t4", 2508, 19),
+      ENEMIES.ravageTrooper("fa_t5", 2509, 19),
+      ENEMIES.ravageLancer("fa_l3", 2510, 19),
       ENEMIES.ravageMarksman("fa_m1", 2506, 19),
-      ENEMIES.ravageMarksman("fa_m2", 2507, 18)
+      ENEMIES.ravageMarksman("fa_m2", 2507, 18),
+      ENEMIES.ravageMarksman("fa_m3", 2511, 19)
     ],
     difficultyLabel: "Climactic",
     rewards: ["elixir", "elixir", "royal_lens", "fang"],
@@ -3245,30 +3254,36 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.ravageTrooper("ch_t3", 2603, 19),
       ENEMIES.ravageLancer("ch_l1", 2604, 19),
       ENEMIES.ravageLancer("ch_l2", 2605, 19),
+      ENEMIES.ravageTrooper("ch_t4", 2608, 19),
+      ENEMIES.ravageLancer("ch_l3", 2609, 20),
       ENEMIES.ravageMarksman("ch_m1", 2606, 19),
-      ENEMIES.ravageMarksman("ch_m2", 2607, 18)
+      ENEMIES.ravageMarksman("ch_m2", 2607, 18),
+      ENEMIES.ravageMarksman("ch_m3", 2610, 19),
+      ENEMIES.ravageTrooper("ch_t5", 2612, 20)
     ],
     // The tide. The intro promises six rounds of the sea walking ashore —
     // these are the waves that keep the promise.
     reinforcements: [
       {
         round: 2,
-        at: [{ x: 18, y: 5 }, { x: 16, y: 2 }, { x: 16, y: 8 }],
+        at: [{ x: 18, y: 5 }, { x: 16, y: 2 }, { x: 16, y: 8 }, { x: 19, y: 3 }],
         announce: "The tide brings the next line ashore.",
         units: () => [
           ENEMIES.ravageTrooper("ch_w31", 2611, 19),
           ENEMIES.ravageTrooper("ch_w32", 2612, 19),
-          ENEMIES.ravageLancer("ch_w33", 2613, 19)
+          ENEMIES.ravageLancer("ch_w33", 2613, 19),
+          ENEMIES.ravageMarksman("ch_w34", 2622, 19)
         ]
       },
       {
         round: 4,
-        at: [{ x: 18, y: 4 }, { x: 18, y: 6 }, { x: 16, y: 1 }],
+        at: [{ x: 18, y: 4 }, { x: 18, y: 6 }, { x: 16, y: 1 }, { x: 19, y: 7 }],
         announce: "One more line walks out of the surf.",
         units: () => [
           ENEMIES.ravageTrooper("ch_w51", 2614, 19),
           ENEMIES.ravageLancer("ch_w52", 2615, 19),
-          ENEMIES.ravageMarksman("ch_w53", 2616, 18)
+          ENEMIES.ravageMarksman("ch_w53", 2616, 18),
+          ENEMIES.ravageTrooper("ch_w54", 2623, 20)
         ]
       }
     ],
@@ -3340,9 +3355,13 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.ravageHerald(19),
       ENEMIES.ravageTrooper("od_t1", 2701, 19),
       ENEMIES.ravageTrooper("od_t2", 2702, 19),
+      ENEMIES.ravageTrooper("od_t3", 2706, 20),
       ENEMIES.ravageLancer("od_l1", 2703, 19),
+      ENEMIES.ravageLancer("od_l2", 2707, 20),
+      ENEMIES.ravageLancer("od_l3", 2708, 19),
       ENEMIES.ravageMarksman("od_m1", 2704, 19),
-      ENEMIES.ravageMarksman("od_m2", 2705, 19)
+      ENEMIES.ravageMarksman("od_m2", 2705, 19),
+      ENEMIES.ravageMarksman("od_m3", 2709, 20)
     ],
     difficultyLabel: "Climactic",
     victory: defeatUnit("ravage_herald", { label: "Bring down the Herald" }),
@@ -3416,10 +3435,16 @@ export const BATTLES: BattleNode[] = [
     ],
     buildEnemies: () => [
       ENEMIES.ravageCommander(20),
+      ENEMIES.ravageTrooper("pf_t5", 2810, 20),
       ENEMIES.ravageTrooper("pf_t1", 2801, 19),
       ENEMIES.ravageTrooper("pf_t2", 2802, 19),
+      ENEMIES.ravageTrooper("pf_t3", 2805, 20),
+      ENEMIES.ravageTrooper("pf_t4", 2806, 20),
       ENEMIES.ravageLancer("pf_l1", 2803, 19),
-      ENEMIES.ravageLancer("pf_l2", 2804, 19)
+      ENEMIES.ravageLancer("pf_l2", 2804, 19),
+      ENEMIES.ravageLancer("pf_l3", 2807, 20),
+      ENEMIES.ravageMarksman("pf_m1", 2808, 20),
+      ENEMIES.ravageMarksman("pf_m2", 2809, 19)
     ],
     difficultyLabel: "Final Boss",
     victory: defeatUnit("ravage_commander", { label: "Break the Ravage Commander" }),
@@ -3455,10 +3480,16 @@ export const BATTLES: BattleNode[] = [
         victory: defeatUnit("archbold", { label: "The last name" }),
         buildEnemies: () => [
           ENEMIES.archbold(20),
+          ENEMIES.royalGuard("pf_v9", 2819, 20),
           ENEMIES.royalGuard("pf_v1", 2811, 18),
           ENEMIES.royalGuard("pf_v2", 2812, 18),
+          ENEMIES.royalGuard("pf_v5", 2815, 19),
+          ENEMIES.royalGuard("pf_v6", 2816, 20),
+          ENEMIES.royalArcher("pf_v7", 2817, 19),
+          ENEMIES.royalArcher("pf_v8", 2818, 20),
           ENEMIES.ravageTrooper("pf_v3", 2813, 19),
-          ENEMIES.ravageTrooper("pf_v4", 2814, 19)
+          ENEMIES.ravageTrooper("pf_v4", 2814, 19),
+          ENEMIES.ravageLancer("pf_v10", 2820, 20)
         ],
         dialogues: [
           {
@@ -3503,8 +3534,14 @@ export const BATTLES: BattleNode[] = [
           ENEMIES.dawnBoss(20),
           ENEMIES.dawnLoyalist(18),
           ENEMIES.banditSwordsman("pf_r1", 2821, 17),
+          ENEMIES.banditSwordsman("pf_r4", 2825, 19),
           ENEMIES.banditSpearton("pf_r2", 2822, 17),
-          ENEMIES.banditArcher("pf_r3", 2823, 17)
+          ENEMIES.banditSpearton("pf_r5", 2826, 19),
+          ENEMIES.banditArcher("pf_r3", 2823, 17),
+          ENEMIES.banditArcher("pf_r6", 2827, 19),
+          ENEMIES.royalGuard("pf_r7", 2828, 19),
+          ENEMIES.royalArcher("pf_r8", 2829, 19),
+          ENEMIES.ravageTrooper("pf_r9", 2830, 19)
         ],
         dialogues: [
           {
@@ -3577,10 +3614,16 @@ export const BATTLES: BattleNode[] = [
         victory: defeatUnit("archbold", { label: "Break the King" }),
         buildEnemies: () => [
           ENEMIES.archbold(20),
+          ENEMIES.royalGuard("pf_m8", 2838, 20),
           ENEMIES.royalGuard("pf_m1", 2831, 18),
           ENEMIES.royalGuard("pf_m2", 2832, 18),
+          ENEMIES.royalGuard("pf_m5", 2835, 19),
+          ENEMIES.royalGuard("pf_m6", 2836, 20),
           ENEMIES.royalArcher("pf_m3", 2833, 17),
-          ENEMIES.royalArcher("pf_m4", 2834, 17)
+          ENEMIES.royalArcher("pf_m4", 2834, 17),
+          ENEMIES.royalArcher("pf_m7", 2837, 19),
+          ENEMIES.ravageTrooper("pf_m9", 2839, 19),
+          ENEMIES.ravageLancer("pf_m10", 2840, 19)
         ],
         dialogues: [
           {

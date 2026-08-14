@@ -1436,7 +1436,13 @@ export const bellCourtMap: MapDef = buildMap("bell_court", "The Bell Court", bel
     { x: 12, y: 3 }, // guard, east colonnade
     { x: 2, y: 5 }, // guard, west aisle
     { x: 15, y: 5 }, // guard, east aisle
-    { x: 9, y: 4 }, // archer, centre line
+    { x: 9, y: 4 }, // archer, centre line,
+    { x: 8, y: 3 },
+    { x: 8, y: 4 },
+    { x: 9, y: 3 },
+    { x: 7, y: 3 },
+    { x: 7, y: 4 },
+    { x: 8, y: 2 }
   ]
 });
 
@@ -1483,7 +1489,13 @@ export const landingFieldMap: MapDef = buildMap("landing_field", "The Landing Fi
     { x: 18, y: 5 }, // lancer
     { x: 18, y: 8 }, // lancer
     { x: 20, y: 4 }, // marksman
-    { x: 20, y: 9 }, // marksman
+    { x: 20, y: 9 }, // marksman,
+    { x: 17, y: 6 },
+    { x: 18, y: 7 },
+    { x: 18, y: 6 },
+    { x: 16, y: 7 },
+    { x: 17, y: 8 },
+    { x: 16, y: 6 }
   ]
 });
 export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Field, at Night", landingRows, {
@@ -1503,7 +1515,13 @@ export const descentFieldMap: MapDef = buildMap("descent_field", "The Landing Fi
     { x: 14, y: 9 }, // trooper
     { x: 15, y: 7 }, // lancer
     { x: 18, y: 3 }, // marksman
-    { x: 18, y: 11 }, // marksman
+    { x: 18, y: 11 }, // marksman,
+    { x: 16, y: 7 },
+    { x: 16, y: 6 },
+    { x: 15, y: 6 },
+    { x: 16, y: 8 },
+    { x: 15, y: 8 },
+    { x: 17, y: 6 }
   ]
 });
 
@@ -1547,7 +1565,13 @@ export const coastHoldMap: MapDef = buildMap("coast_hold", "The Held Coast", coa
     { x: 16, y: 1 }, // lancer
     { x: 16, y: 9 }, // lancer
     { x: 18, y: 4 }, // marksman
-    { x: 18, y: 6 }, // marksman
+    { x: 18, y: 6 }, // marksman,
+    { x: 17, y: 5 },
+    { x: 16, y: 4 },
+    { x: 16, y: 6 },
+    { x: 17, y: 4 },
+    { x: 17, y: 6 },
+    { x: 15, y: 5 }
   ]
 });
 
@@ -1593,7 +1617,15 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 6, y: 3 }, // escort west
     { x: 12, y: 3 }, // escort east
     { x: 4, y: 6 }, // flank west
-    { x: 14, y: 6 }, // flank east
+    { x: 14, y: 6 }, // flank east,
+    { x: 9, y: 4 },
+    { x: 9, y: 3 },
+    { x: 8, y: 4 },
+    { x: 10, y: 4 },
+    { x: 9, y: 5 },
+    { x: 8, y: 3 },
+    { x: 10, y: 3 },
+    { x: 8, y: 5 }
   ]
 });
 
