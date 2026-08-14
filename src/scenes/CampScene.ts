@@ -6,7 +6,7 @@ import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { BATTLES } from "../data/battles";
 import { PLAYERS } from "../data/units";
-import { getActiveSquadIds, ROSTER_ORDER } from "../data/activeRoster";
+import { fallenCharacters, fallenIds, getActiveSquadIds, ROSTER_ORDER } from "../data/activeRoster";
 import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
@@ -747,18 +747,9 @@ export class CampScene extends Phaser.Scene {
   // Currently just Lucian (post_cliffs after B11). Future scripted
   // deaths in B13/B17/etc. plug in here.
   private fallenCharacters(completedBattles: string[]): { id: string; name: string }[] {
-    const fallen: { id: string; name: string }[] = [];
-    if (completedBattles.includes("b11_cliffs")) {
-      fallen.push({ id: "lucian", name: "Lucian" });
-    }
-    // Rose dies in post_dawn_rebellion (B13's post-arc), which plays before
-    // the player next reaches camp — so gating on the battle is correct.
-    // She is buried in Grude under the courtyard lemon tree; this stone is
-    // the squad's own marker, same as Lucian's (he rests at sea).
-    if (completedBattles.includes("b13_dawn_rebellion")) {
-      fallen.push({ id: "rose", name: "Rose" });
-    }
-    return fallen;
+    // Shared table — see FALLEN_AFTER in src/data/activeRoster.ts, which
+    // also drives the living-roster subtraction below.
+    return fallenCharacters(completedBattles);
   }
 
   // ---- Memorial / Memories overlays ----------------------------------------
@@ -901,8 +892,13 @@ export class CampScene extends Phaser.Scene {
     // at B11: everyone recruited after the crossing (Rose, Veya, Corin,
     // the returning Selene and Ranatoli) never appeared at the fire.
     const ids = getActiveSquadIds(completedBattles);
+    // The dead don't stand at the fire. Rose is in B13's battle roster
+    // and dies in its post-arc, so without this she was clickable at the
+    // campfire while her headstone stood ten feet away.
+    const gone = fallenIds(completedBattles);
+    const living = ids.filter((id) => !gone.has(id));
     // Fresh save, nothing completed — show Amar so camp isn't empty.
-    return ids.length > 0 ? ids : ["amar"];
+    return living.length > 0 ? living : ["amar"];
   }
 }
 

@@ -143,3 +143,24 @@ export const getActiveSquadIds = (completedBattles: string[]): string[] => {
   }
   return [];
 };
+
+// ---- The fallen -----------------------------------------------------------
+//
+// Characters who die in a story arc, keyed by the battle whose completion
+// puts that arc behind the player. Single source of truth: CampScene draws
+// a headstone for each AND subtracts them from the living roster at the
+// fire — before this existed, Rose spent the whole Grude arc standing at
+// the campfire next to her own grave.
+export const FALLEN_AFTER: Array<{ battleId: string; id: string; name: string }> = [
+  // Lucian dies below decks in post_cliffs; buried at sea off the western rail.
+  { battleId: "b11_cliffs", id: "lucian", name: "Lucian" },
+  // Rose takes four bolts in post_dawn_rebellion; buried in Grude under the
+  // candle-maker's lemon tree. The camp keeps its own marker.
+  { battleId: "b13_dawn_rebellion", id: "rose", name: "Rose" }
+];
+
+export const fallenCharacters = (completedBattles: string[]): { id: string; name: string }[] =>
+  FALLEN_AFTER.filter((f) => completedBattles.includes(f.battleId)).map(({ id, name }) => ({ id, name }));
+
+export const fallenIds = (completedBattles: string[]): Set<string> =>
+  new Set(fallenCharacters(completedBattles).map((f) => f.id));
