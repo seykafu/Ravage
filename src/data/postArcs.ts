@@ -54,7 +54,9 @@ export const POST_ARC: Partial<Record<BattleId, ArcId>> = {
   // The campaign's final battle. post_path_final ends the war (the fleet
   // withdraws) and its next: "ending" routes to the chosen path's
   // post_ending_* coda — see StoryScene.routeNext.
-  b28_path_final: "post_path_final"
+  b28_path_final: "post_path_final",
+  // Post-credits epilogue (reached from CreditsScene, not the unlock chain).
+  b29_epilogue: "post_epilogue"
 };
 
 // The campaign's terminal battles. Exile and forgetting end at their B19

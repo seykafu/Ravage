@@ -1555,6 +1555,51 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("Nobody moves for a while. Then Ranatoli laughs — the big laugh, the one from before the cells — and someone else joins, and the war is over.")
     ]
   },
+  // ═══════════ Post-credits: the small job, and the road after ═══════════
+  // Reached from CreditsScene on a finished war path. The war is a year
+  // gone; this is what it bought. before_epilogue frames the morning,
+  // post_epilogue is Khione on the road with the invitation to walk one
+  // of the lives Amar didn't pick.
+  before_epilogue: {
+    id: "before_epilogue",
+    title: "One Last Morning",
+    subtitle: "A year on, a road that belongs to the people on it",
+    music: "everydayLife",
+    backdrop: "farmland",
+    next: "prep:b29_epilogue",
+    beats: [
+      N("A year is a long time in a country that has stopped burning. The roads got repaired in the order people needed them, which is to say badly and immediately. The squad is scattered across three provinces and reassembles for weddings, harvests, and — twice now — arguments about a bridge."),
+      N("The letter comes from a smallhold two days east: a bandit crew, six or so, camped across their road. They are sorry to ask. They did not know who else to write to."),
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "(He reads it twice, mostly for the pleasure of it.) They apologized. In writing. For asking soldiers to deal with bandits. (He folds it.) Saddle up. We're going to go be extremely useful for one morning." }
+    ]
+  },
+  post_epilogue: {
+    id: "post_epilogue",
+    title: "The Road Back",
+    subtitle: "Afternoon, somewhere between the smallhold and home",
+    music: "emotionalLife",
+    backdrop: "farmland",
+    next: "another_path",
+    beats: [
+      N("The smallhold pays in bread, apples, and a jar of something the old woman insists is medicinal. The road home runs west through the long light, and for a while nobody has anything urgent to say, which is its own kind of luxury."),
+      N("There is a figure at the crossroads. She has been at a great many crossroads, and she does not appear to have aged since the crossing."),
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "Your highness. (She falls in beside him as though she has been walking there all afternoon.) Bread and apples. A road with nothing on it. I have crossed one more ocean than any of you knew existed, and this is the only cargo I have ever envied." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "You're welcome to an apple, Khione." },
+      { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
+        body: "(She takes one.) I have watched a shore make its choice more than once. Never the same way twice, and never — this is the part that keeps me sailing — never with the same people left standing at the end of it." },
+      { speaker: "Khione", portraitId: "khione", expression: "revelation",
+        body: "There was a hold on a ship, once, and a man in it counting seven names. He chose one and became this. (She nods at the road, the bread, the company.) The other six did not stop existing when he chose. They only stopped being his." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "...You're asking me if I regret it." },
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "No. I am telling you the other roads are still there, and that I know the water to every one of them. (She looks at him sideways, the way the sea looks at a coast.) If you ever wish to see who you would have been — I keep a ship. It costs nothing. Say the word and the hold is three days back." },
+      N("She does not press it, because she never presses anything. She eats the apple, tells Leo his dactyl is getting fat, and walks with them until the smallhold's lamps are out of sight behind them."),
+      N("The road forks at the bottom of the hill. It always did.")
+    ]
+  },
   post_ending_vengeance: {
     id: "post_ending_vengeance",
     title: "The Emptied List",

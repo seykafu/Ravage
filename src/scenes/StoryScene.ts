@@ -449,6 +449,11 @@ export class StoryScene extends Phaser.Scene {
       this.scene.start("RomanceScene");
       return;
     }
+    if (next === "another_path") {
+      // Post-credits: Khione's offer to walk a road not taken.
+      this.scene.start("AnotherPathScene");
+      return;
+    }
     if (next === "ending") {
       // Per-path campaign ending — post_path_final ends here and the
       // saved war path picks the coda. Defensive credits fall-through if

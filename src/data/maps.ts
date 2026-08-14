@@ -1596,3 +1596,49 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 14, y: 6 }, // flank east
   ]
 });
+
+// ============== Battle 29 — The Smallhold Road (post-credits epilogue) =======
+// 14×10 harvest-season farm road: orchard trees at the verges, hay in the
+// fields, a fenced kitchen garden. Deliberately small and open after the
+// endgame's huge arenas — this is the warm one, a morning's work on a road
+// that finally belongs to the people who live on it.
+const Eg = t("grass");
+const Eh = t("grass", "hay");
+const Ef = t("grass", "fence");
+const Et = t("grass", "tree");
+const Ed = t("dirt");
+const Ew = t("dirt", "wagon");
+
+const smallholdRows = [
+  [Eg, Eg, Eg, Et, Eg, Eg, Eg, Eg, Eg, Et, Eg, Eg, Eg, Eg],
+  [Eg, Eg, Eg, Eg, Eg, Eg, Eh, Eg, Eg, Eg, Eg, Eg, Et, Eg],
+  [Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ew, Ed, Ed],
+  [Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed, Ed],
+  [Eg, Eg, Eh, Eg, Eg, Eg, Ef, Ef, Eg, Eg, Eg, Eh, Eg, Eg],
+  [Eg, Eg, Eg, Eg, Eg, Eg, Ef, Ef, Eg, Eg, Eg, Eg, Eg, Eg],
+  [Eg, Et, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Et, Eg, Eg],
+  [Eg, Eg, Eg, Eg, Eh, Eg, Eg, Eg, Eg, Eh, Eg, Eg, Eg, Eg],
+  [Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg],
+  [Eg, Eg, Et, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Eg, Et, Eg, Eg]
+] as const;
+
+export const smallholdMap: MapDef = buildMap("smallhold", "The Smallhold Road", smallholdRows, {
+  // The squad comes up the road from the west, unhurried.
+  player: [
+    { x: 1, y: 3 }, // Amar
+    { x: 1, y: 2 }, // the spouse (or the first friend, walking alone)
+    { x: 0, y: 3 },
+    { x: 0, y: 2 },
+    { x: 1, y: 4 },
+    { x: 2, y: 5 }
+  ],
+  // Bandits between the squad and the smallhold, east.
+  enemy: [
+    { x: 12, y: 2 },
+    { x: 12, y: 3 },
+    { x: 11, y: 5 },
+    { x: 13, y: 4 },
+    { x: 10, y: 1 },
+    { x: 10, y: 6 }
+  ]
+});

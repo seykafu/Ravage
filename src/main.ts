@@ -21,6 +21,7 @@ import { CampScene } from "./scenes/CampScene";
 import { GameOverScene } from "./scenes/GameOverScene";
 import { ChoiceScene } from "./scenes/ChoiceScene";
 import { RomanceScene } from "./scenes/RomanceScene";
+import { AnotherPathScene } from "./scenes/AnotherPathScene";
 import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 import { installRenderScale } from "./util/renderScale";
@@ -84,6 +85,7 @@ const config: Phaser.Types.Core.GameConfig = {
     GameOverScene,
     ChoiceScene,
     RomanceScene,
+    AnotherPathScene,
     CreditsScene,
     // Overlay scenes — register last so they render ON TOP of any
     // active page scene. Each is launched via scene.run() while the

@@ -261,6 +261,85 @@ export const resetSaveSlot = (): SaveState => {
   return fresh;
 };
 
+// ---- Campaign completion + the another-path rewind -------------------------
+//
+// Set the moment a war path's campaign is finished (the post-credits
+// epilogue victory). Permanent: it survives the rewind below, so a
+// player who walks a second road never loses the record that they
+// finished the first one.
+export const CAMPAIGN_COMPLETE_FLAG = "campaign.completed";
+
+export const markCampaignComplete = (s: SaveState, path: SevenPath | null): SaveState => {
+  const prior = String(s.flags[CAMPAIGN_COMPLETE_FLAG] ?? "");
+  const walked = prior.split(",").filter(Boolean);
+  if (path && !walked.includes(path)) walked.push(path);
+  return { ...s, flags: { ...s.flags, [CAMPAIGN_COMPLETE_FLAG]: walked.join(",") } };
+};
+
+export const pathsWalked = (s: SaveState): SevenPath[] =>
+  String(s.flags[CAMPAIGN_COMPLETE_FLAG] ?? "")
+    .split(",")
+    .filter((p): p is SevenPath => SEVEN_PATHS.has(p));
+
+// Rewind a finished campaign to the Seven Paths fork (post-B18), so the
+// player can walk a different road. Progression is DELIBERATELY kept —
+// levels, promotions, inventory — because the point of a second run is
+// the story you didn't see, not re-earning a curve you already beat.
+//
+// Pure: returns a new SaveState. Callers decide which SLOT it lands in
+// (see findEmptySlot) — the finished run is never overwritten in place.
+const REWIND_KEEP_THROUGH = 18;
+export const rewindToPathChoice = (s: SaveState): SaveState => {
+  // Everything up to and including B18 stays completed; B19+ (the path
+  // openers, the war arc, the fleet arc, the epilogue) is un-walked.
+  // Battle ids are `b<NN>_slug`, so the chapter number is the key —
+  // read it explicitly rather than relying on string ordering.
+  const keep = (id: string): boolean => {
+    const n = Number.parseInt(id.slice(1, 3), 10);
+    return Number.isFinite(n) && n <= REWIND_KEEP_THROUGH;
+  };
+  const completed = s.completedBattles.filter(keep);
+  const unlocked = s.unlockedBattles.filter(keep);
+  const flags = { ...s.flags };
+  delete flags[SEVEN_PATHS_FLAG];
+  delete flags[ROMANCE_FLAG_KEY];
+  return {
+    ...s,
+    completedBattles: completed,
+    unlockedBattles: unlocked.length > 0 ? unlocked : ["b01_palace_coup"],
+    lastBattleResult: null,
+    flags,
+    assignedInventory: {}
+  };
+};
+
+// Duplicated literal rather than an import: src/data/romance.ts imports
+// contentIds which imports nothing from here, and pulling romance into
+// save.ts would create a content->save->content cycle.
+const ROMANCE_FLAG_KEY = "romance.partner";
+// Re-exported for tests, which assert the rewind clears it.
+export const ROMANCE_FLAG_TEST_KEY = ROMANCE_FLAG_KEY;
+
+// First slot with no saved game, or null when all three are occupied.
+export const findEmptySlot = (): SlotIndex | null => {
+  for (const slot of [1, 2, 3] as SlotIndex[]) {
+    try {
+      if (!localStorage.getItem(slotLocalKey(slot))) return slot;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+// Write a state into a specific slot and make it active. Used by the
+// another-path flow so the second run starts in its own slot with the
+// finished run left untouched.
+export const writeSaveToSlot = (slot: SlotIndex, s: SaveState): void => {
+  setCurrentSlot(slot);
+  writeSave(s);
+};
+
 // ---- Inventory helpers ----------------------------------------------------
 //
 // Pure (return new SaveStates) so callers can compose without worrying

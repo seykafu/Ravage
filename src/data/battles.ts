@@ -1,6 +1,8 @@
 import type { ItemKind, MapDef, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
-import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap } from "./maps";
+import { loadSave } from "../util/save";
+import { ROMANCE_FLAG } from "./romance";
+import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap, smallholdMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId, SevenPath } from "./contentIds";
 import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
@@ -3610,6 +3612,69 @@ export const BATTLES: BattleNode[] = [
         ]
       }
     }
+  },
+  // ============== Battle 29 — The Smallhold Road (post-credits) ==============
+  // Reached only after the credits of a finished war path. A morning's
+  // work on a quiet road: the couple the player chose (or the squad
+  // alone, if they chose no one) clearing a bandit crew off a smallhold.
+  // Low stakes on purpose — this is what the war bought.
+  {
+    id: "b29_epilogue",
+    index: 29,
+    title: "One Last Morning",
+    subtitle: "The Smallhold Road",
+    intro: "A year on, and the worst thing on this road is a bandit crew that hasn't heard the war ended. The smallhold at the end of it sent word to the only people they could think to ask. It is, by every measure that used to matter, a very small job. Nobody in the squad would trade it for anything.",
+    outro: "The road is clear by mid-morning. The smallholders bring out bread and more thanks than the job was worth, and nobody says the word 'war' once.",
+    music: MUSIC.everydayLife,
+    prepMusic: MUSIC.battlePrep,
+    backdropKey: "bg_farmland",
+    playable: true,
+    map: smallholdMap,
+    // Partner-aware roster: Amar, the person he married (when they're a
+    // fielded character — Ndara runs supply from a chair and doesn't take
+    // the road), then friends to fill the line. Reads the save directly;
+    // loadSave() is fully guarded, so headless tests get the no-marriage
+    // roster instead of throwing.
+    buildPlayers: () => {
+      const partner = String(loadSave().flags[ROMANCE_FLAG] ?? "none");
+      const roster: string[] = ["amar"];
+      if (partner !== "none" && partner !== "ndara" && partner in PLAYERS) roster.push(partner);
+      for (const id of ["ning", "leo", "ranatoli", "maya", "selene"]) {
+        if (roster.length >= 5) break;
+        if (!roster.includes(id)) roster.push(id);
+      }
+      return roster.map((id) => PLAYERS[id as keyof typeof PLAYERS]());
+    },
+    buildEnemies: () => [
+      ENEMIES.banditSwordsman("ep_b1", 2901, 16),
+      ENEMIES.banditSwordsman("ep_b2", 2902, 16),
+      ENEMIES.banditSpearton("ep_b3", 2903, 16),
+      ENEMIES.banditArcher("ep_b4", 2904, 15),
+      ENEMIES.banditArcher("ep_b5", 2905, 15),
+      ENEMIES.banditSwordsman("ep_b6", 2906, 15)
+    ],
+    difficultyLabel: "Epilogue",
+    victory: routEnemies,
+    unlocks: null,
+    rewards: ["potion", "potion"],
+    dialogues: [
+      {
+        id: "b29_small_job",
+        trigger: { kind: "round_start", round: 1 },
+        beats: [
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "Six of them, and they picked a smallhold with a bell. (He draws, almost lazily.) Somebody explain to them that the bell works." }
+        ]
+      },
+      {
+        id: "b29_after",
+        trigger: { kind: "before_victory" },
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." }
+        ]
+      }
+    ]
   },
   {
     id: "b30_epilogue",

@@ -79,6 +79,7 @@ export type BattleId =
   // climax encounters). B29 shared cleanup. B30 = path-flavoured
   // epilogue (text + portraits; not a fight in most paths).
   | "b28_path_final"
+  | "b29_epilogue"
   | "b30_epilogue";
 
 // ---- Story arcs -----------------------------------------------------------
@@ -173,6 +174,9 @@ export type ArcId =
   | "post_coastal_hold"
   | "post_orbital_descent"
   | "post_path_final"
+  // Post-credits epilogue (B29): the small job, and the road after it.
+  | "before_epilogue"
+  | "post_epilogue"
   // Campaign endings: after B29 (The Aftermath), one coda per
   // war-facing path. Exile and forgetting ended at their B19 epilogues.
   | "post_ending_vengeance"
@@ -241,6 +245,10 @@ export type RouteRef =
   // war path into its post_ending_* coda. Static next fields can't
   // branch, so the one arc every war path shares routes dynamically.
   | "ending"
+  // Post-credits: Khione's invitation to walk one of the roads not
+  // taken. AnotherPathScene rewinds a copy of the finished save to the
+  // B18 fork and starts it in a fresh slot. See src/scenes/AnotherPathScene.ts.
+  | "another_path"
   // The marriage question. War-path ending codas (post_ending_*) hand off
   // to RomanceScene, which offers the path's two partners (one woman, one
   // man — see src/data/romance.ts) or walking on alone, then routes into

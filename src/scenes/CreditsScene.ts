@@ -4,7 +4,7 @@ import { Button } from "../ui/Button";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
-import { defaultSave, loadSave, writeSave } from "../util/save";
+import { getSevenPath, loadSave } from "../util/save";
 import { BATTLES } from "../data/battles";
 
 interface CreditLine {
@@ -220,10 +220,20 @@ export class CreditsScene extends Phaser.Scene {
     if (this.finished) return;
     this.finished = true;
     sfxConfirm();
-    // Fresh save: completing the slice is its own reward; allow replay from title.
-    // (We don't wipe progress automatically — leave it alone.)
-    void loadSave; void writeSave; void defaultSave;
+    // Post-credits stinger. A player who just finished a WAR path (the
+    // five that run to B28) gets one more morning: the smallhold job,
+    // and Khione's offer on the road after it. Everyone else — the exile
+    // and forgetting endings, or a replay of the epilogue itself —
+    // returns to the title. Progress is never wiped here.
+    const save = loadSave();
+    const path = getSevenPath(save);
+    const warPath = path !== null && path !== "exile" && path !== "forgetting";
+    const alreadyPlayed = save.completedBattles.includes("b29_epilogue");
+    const next = warPath && !alreadyPlayed ? "epilogue" : "title";
     this.cameras.main.fadeOut(700, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("TitleScene"));
+    this.cameras.main.once("camerafadeoutcomplete", () => {
+      if (next === "epilogue") this.scene.start("StoryScene", { arcId: "before_epilogue" });
+      else this.scene.start("TitleScene");
+    });
   }
 }
