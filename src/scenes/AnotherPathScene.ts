@@ -86,8 +86,10 @@ export class AnotherPathScene extends Phaser.Scene {
         `The story rewinds to the night in the hold, three days before landfall, and you choose again.\n\n` +
         `This finished run stays exactly where it is. The new road begins in save slot ${slot}.`
       : "Khione keeps a ship — but every save slot is full, and she will not sail over " +
-        "a life someone already finished.\n\nFree a slot from the title screen's save menu " +
-        "and her offer stands. Your completed campaign is recorded either way.";
+        "a life someone already finished.\n\n" +
+        "To take her up on it: Play → pick a slot → Delete, then come back with " +
+        "\"Another Road\" on the title screen. The offer keeps.\n\n" +
+        "Your completed campaign is recorded either way.";
 
     this.add.text(panelX + 30, panelY + 26, body, {
       fontFamily: FAMILY_BODY, fontSize: "16px", color: "#e6e0d0",
@@ -115,7 +117,7 @@ export class AnotherPathScene extends Phaser.Scene {
 
     new Button(this, {
       x: GAME_WIDTH / 2 + gap / 2, y: btnY, w: btnW, h: 52,
-      label: "Rest here",
+      label: slot ? "Rest here" : "Back to the title",
       primary: false, fontSize: 17,
       onClick: () => {
         sfxClick();

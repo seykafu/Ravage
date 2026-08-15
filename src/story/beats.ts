@@ -1569,9 +1569,16 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "prep:b29_epilogue",
     beats: [
       N("A year is a long time in a country that has stopped burning. The roads got repaired in the order people needed them, which is to say badly and immediately. The squad is scattered across three provinces and reassembles for weddings, harvests, and — twice now — arguments about a bridge."),
-      N("The letter comes from a smallhold two days east: a bandit crew, six or so, camped across their road. They are sorry to ask. They did not know who else to write to."),
+      N("Ning is rebuilding the rivet press at Thuling and writes letters full of measurements. Leo and Ash fly the coast for weeks at a stretch and come back sunburnt. Ranatoli has found four separate towns willing to feed a man for a story. Nobody is a soldier this year. Everybody still comes when a letter goes round."),
+      N("The letter comes from a smallhold two days east: a bandit crew, six or so, camped across their road. They have been living on the last of the stores for eleven days. They are sorry to ask. They did not know who else to write to."),
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
-        body: "(He reads it twice, mostly for the pleasure of it.) They apologized. In writing. For asking soldiers to deal with bandits. (He folds it.) Saddle up. We're going to go be extremely useful for one morning." }
+        body: "(He reads it twice, mostly for the pleasure of it.) They apologized. In writing. For asking soldiers to deal with bandits. (He folds it.) Saddle up. We're going to go be extremely useful for one morning." },
+      N("They ride out at first light and take the whole day over a road that would have taken them half of one, two years ago. Nobody says why. There is no column behind them and nothing on the horizon, and after a while even the habit of scanning it goes quiet."),
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+        body: "Six bandits and a farm road. (He settles the shield across his back like a man putting on a coat he likes.) Do you know what I'd have given, in the cell, to be told this was the worst thing left?" },
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "They've got a bell at the gate — I can see it from here. (She's already counting the approach.) Fence line, open ground, six of them, and every one with their back to a field they don't know. Amar, this is going to take about ten minutes." },
+      N("The smallhold comes up out of the fields in the last of the morning mist: a bell, a barn, a fenced kitchen garden, and six men who have not yet understood what has come up the road to meet them.")
     ]
   },
   post_epilogue: {

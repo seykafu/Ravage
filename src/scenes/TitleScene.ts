@@ -5,7 +5,7 @@ import { FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/co
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
-import { getCurrentSlot } from "../util/save";
+import { getCurrentSlot, loadSave, pathsWalked } from "../util/save";
 import { isAuthEnabled } from "../auth/session";
 
 export class TitleScene extends Phaser.Scene {
@@ -106,6 +106,33 @@ export class TitleScene extends Phaser.Scene {
         );
       }
     });
+
+    // "Another Road" — the standing offer, once a campaign has been
+    // finished. AnotherPathScene used to be reachable ONLY from the
+    // post-epilogue scene, so a player who left it to free a save slot
+    // (its own instruction, when all three were full) had no way back
+    // to it short of replaying the epilogue battle. This is the way back.
+    const walked = pathsWalked(loadSave());
+    if (walked.length > 0) {
+      const anotherBtn = new Button(this, {
+        x: GAME_WIDTH / 2 - btnW / 2,
+        y: startY + 2 * (btnH + gap),
+        w: btnW,
+        h: 44,
+        label: "Another Road ▸",
+        primary: false,
+        fontSize: 16,
+        onClick: () => {
+          sfxConfirm();
+          unlockAudio();
+          this.cameras.main.fadeOut(450, 0, 0, 0);
+          this.cameras.main.once("camerafadeoutcomplete", () =>
+            this.scene.start("AnotherPathScene")
+          );
+        }
+      });
+      void anotherBtn;
+    }
 
     // Tap-to-start hint
     const hint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 36, "click anywhere — and the world begins to listen", {
