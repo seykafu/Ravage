@@ -69,6 +69,16 @@ export interface SaveState {
   // pipeline — a battle interrupted on one machine resumes on another.
   // Optional for back-compat with pre-suspend saves.
   suspendedBattle?: SuspendedBattle | null;
+  // Progression as it stood at the Seven Paths fork (written when B18 is
+  // completed). The another-path rewind restores THIS, so a second road
+  // starts with the squad the player actually had at the fork — the
+  // levels they'd earned and the items they were carrying — rather than
+  // the level-20 veterans who finished the campaign.
+  pathForkSnapshot?: {
+    characters: Record<string, CharacterRecord>;
+    squadInventory: Item[];
+    takenAt: string;
+  };
   // Bookkeeping (optional — only set when loaded from a remote slot).
   updatedAt?: string;
 }
@@ -269,6 +279,20 @@ export const resetSaveSlot = (): SaveState => {
 // finished the first one.
 export const CAMPAIGN_COMPLETE_FLAG = "campaign.completed";
 
+// The battle whose completion is the Seven Paths fork.
+export const PATH_FORK_BATTLE = "b18_path_chosen";
+
+// Freeze progression at the fork. Called when B18 resolves; idempotent,
+// so replaying B18 refreshes the snapshot rather than stacking one.
+export const capturePathForkSnapshot = (s: SaveState): SaveState => ({
+  ...s,
+  pathForkSnapshot: {
+    characters: JSON.parse(JSON.stringify(s.characters ?? {})) as Record<string, CharacterRecord>,
+    squadInventory: JSON.parse(JSON.stringify(s.squadInventory ?? [])) as Item[],
+    takenAt: new Date().toISOString()
+  }
+});
+
 export const markCampaignComplete = (s: SaveState, path: SevenPath | null): SaveState => {
   const prior = String(s.flags[CAMPAIGN_COMPLETE_FLAG] ?? "");
   const walked = prior.split(",").filter(Boolean);
@@ -303,13 +327,20 @@ export const rewindToPathChoice = (s: SaveState): SaveState => {
   const flags = { ...s.flags };
   delete flags[SEVEN_PATHS_FLAG];
   delete flags[ROMANCE_FLAG_KEY];
+  const snap = s.pathForkSnapshot;
   return {
     ...s,
     completedBattles: completed,
     unlockedBattles: unlocked.length > 0 ? unlocked : ["b01_palace_coup"],
     lastBattleResult: null,
     flags,
-    assignedInventory: {}
+    assignedInventory: {},
+    suspendedBattle: null,
+    // Roll progression back to the fork when we have it. Saves made
+    // before snapshots existed keep what they have — losing the run
+    // would be worse than starting the second road over-levelled.
+    characters: snap ? JSON.parse(JSON.stringify(snap.characters)) as Record<string, CharacterRecord> : s.characters,
+    squadInventory: snap ? JSON.parse(JSON.stringify(snap.squadInventory)) as Item[] : s.squadInventory
   };
 };
 
@@ -319,6 +350,27 @@ export const rewindToPathChoice = (s: SaveState): SaveState => {
 const ROMANCE_FLAG_KEY = "romance.partner";
 // Re-exported for tests, which assert the rewind clears it.
 export const ROMANCE_FLAG_TEST_KEY = ROMANCE_FLAG_KEY;
+
+// Every occupied slot, read straight from the local cache. Synchronous
+// on purpose: the title screen decides whether to offer "Another Road"
+// during create(), and an async round-trip would flash the button in.
+export const listLocalSlots = (): Array<{ slot: SlotIndex; save: SaveState }> => {
+  const out: Array<{ slot: SlotIndex; save: SaveState }> = [];
+  for (const slot of [1, 2, 3] as SlotIndex[]) {
+    try {
+      const raw = localStorage.getItem(slotLocalKey(slot));
+      if (!raw) continue;
+      out.push({ slot, save: { ...defaultSave(), ...(JSON.parse(raw) as Partial<SaveState>) } });
+    } catch {
+      // Unreadable slot — skip it rather than blocking the menu.
+    }
+  }
+  return out;
+};
+
+// Saves that have passed the fork, and can therefore walk another road.
+export const slotsPastThePathFork = (): Array<{ slot: SlotIndex; save: SaveState }> =>
+  listLocalSlots().filter((s) => s.save.completedBattles.includes(PATH_FORK_BATTLE));
 
 // First slot with no saved game, or null when all three are occupied.
 export const findEmptySlot = (): SlotIndex | null => {

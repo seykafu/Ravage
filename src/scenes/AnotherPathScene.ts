@@ -5,30 +5,35 @@ import { drawPanel } from "../ui/Panel";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { sfxClick, sfxConfirm } from "../audio/Sfx";
 import {
-  findEmptySlot,
   getSevenPath,
   loadSave,
   markCampaignComplete,
   pathsWalked,
   rewindToPathChoice,
+  slotsPastThePathFork,
   writeSave,
-  writeSaveToSlot
+  writeSaveToSlot,
+  type SaveState,
+  type SlotIndex
 } from "../util/save";
 
 // ─────────────────────────────────────────────────────────────────────────
 // AnotherPathScene — Khione's offer, made mechanical.
 //
-// Reached from post_epilogue (the road after the post-credits skirmish).
-// The player may walk one of the roads they didn't take: the campaign
-// rewinds to the B18 fork with progression intact (levels, promotions,
-// squad inventory) and restarts at ChoiceScene.
+// Reached two ways: from post_epilogue (the road after the post-credits
+// skirmish) and from the title screen's standing "Another Road" entry.
 //
-// THE FINISHED RUN IS NEVER DESTROYED. The completed save is stamped
-// with its path in CAMPAIGN_COMPLETE_FLAG and left exactly where it is;
-// the rewound copy is written into an EMPTY slot and made active. If all
-// three slots are full, the offer is shown as unavailable with the
-// reason spelled out, rather than silently overwriting a 28-battle
-// campaign to make room for itself.
+// The player picks WHICH SAVE walks the new road. Any save that has
+// passed the Seven Paths fork (B18) qualifies; the chosen one rewinds to
+// the fork and restarts at ChoiceScene. Progression is restored from
+// that save's own fork snapshot, so the second road begins with the
+// squad the player actually had at B18 — their levels then, their items
+// then — not the level-20 veterans who finished the campaign.
+//
+// The rewind REPLACES the chosen save's post-fork progress, so it asks
+// first. The campaign-completion record is stamped before anything
+// moves and survives the rewind, so a finished run is never erased from
+// the record even when its slot is reused.
 // ─────────────────────────────────────────────────────────────────────────
 
 const PATH_LABEL: Record<string, string> = {
@@ -45,92 +50,132 @@ export class AnotherPathScene extends Phaser.Scene {
   constructor() { super("AnotherPathScene"); }
 
   create(): void {
-    // Stamp the completion FIRST — before any rewind can be offered, the
-    // finished run is on the record.
-    const finished = loadSave();
-    const walkedPath = getSevenPath(finished);
-    const stamped = markCampaignComplete(finished, walkedPath);
-    writeSave(stamped);
+    // Stamp completion on the ACTIVE save first, if it finished a road —
+    // before any rewind can touch anything.
+    const active = loadSave();
+    if (active.completedBattles.includes("b29_epilogue")) {
+      writeSave(markCampaignComplete(active, getSevenPath(active)));
+    }
 
     const bgKey = ensureBackdropForKey(this, "bg_farmland");
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey)
-      .setDisplaySize(GAME_WIDTH, GAME_HEIGHT).setAlpha(0.32);
+      .setDisplaySize(GAME_WIDTH, GAME_HEIGHT).setAlpha(0.30);
     const v = this.add.graphics();
-    v.fillStyle(0x05060a, 0.68);
+    v.fillStyle(0x05060a, 0.70);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    this.add.text(GAME_WIDTH / 2, 74, "The Road Forks", {
+    this.add.text(GAME_WIDTH / 2, 56, "The Road Forks", {
       fontFamily: FAMILY_HEADING, fontSize: "34px", color: "#f4e4b0",
       stroke: "#1a0e04", strokeThickness: 4
     }).setOrigin(0.5);
 
-    const walked = pathsWalked(stamped);
-    const walkedLine = walked.length > 0
-      ? `Roads walked: ${walked.map((p) => PATH_LABEL[p] ?? p).join(" · ")}`
-      : "";
-    this.add.text(GAME_WIDTH / 2, 116, walkedLine, {
-      fontFamily: FAMILY_BODY, fontSize: "15px", color: "#c9b07a"
+    const eligible = slotsPastThePathFork();
+
+    this.add.text(GAME_WIDTH / 2, 98,
+      eligible.length > 0
+        ? "Khione knows the water to every road you didn't take. Which life should she sail back?"
+        : "No save has reached the fork yet — there is no road to sail back to.", {
+      fontFamily: FAMILY_BODY, fontSize: "16px", color: "#c9b07a",
+      fontStyle: "italic", align: "center", wordWrap: { width: 900 }
     }).setOrigin(0.5);
 
-    const panelW = 760;
-    const panelH = 210;
-    const panelX = (GAME_WIDTH - panelW) / 2;
-    const panelY = 158;
-    const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
+    if (eligible.length === 0) {
+      this.addExit("Back to the title");
+      this.cameras.main.fadeIn(600, 0, 0, 0);
+      return;
+    }
 
-    const slot = findEmptySlot();
-    const body = slot
-      ? "Khione keeps a ship, and she knows the water to every road you didn't take.\n\n" +
-        "Your squad keeps everything it earned — levels, promotions, the whole armoury. " +
-        `The story rewinds to the night in the hold, three days before landfall, and you choose again.\n\n` +
-        `This finished run stays exactly where it is. The new road begins in save slot ${slot}.`
-      : "Khione keeps a ship — but every save slot is full, and she will not sail over " +
-        "a life someone already finished.\n\n" +
-        "To take her up on it: Play → pick a slot → Delete, then come back with " +
-        "\"Another Road\" on the title screen. The offer keeps.\n\n" +
-        "Your completed campaign is recorded either way.";
-
-    this.add.text(panelX + 30, panelY + 26, body, {
-      fontFamily: FAMILY_BODY, fontSize: "16px", color: "#e6e0d0",
-      wordWrap: { width: panelW - 60 }, lineSpacing: 6
+    // One card per eligible save.
+    const cardW = 300;
+    const cardH = 250;
+    const gap = 26;
+    const totalW = eligible.length * cardW + (eligible.length - 1) * gap;
+    const startX = (GAME_WIDTH - totalW) / 2;
+    eligible.forEach((entry, i) => {
+      this.buildSlotCard(entry.slot, entry.save, startX + i * (cardW + gap), 150, cardW, cardH);
     });
 
-    const btnY = GAME_HEIGHT - 150;
-    const btnW = 300;
-    const gap = 28;
+    this.addExit("Rest here");
+    this.cameras.main.fadeIn(600, 0, 0, 0);
+  }
 
-    new Button(this, {
-      x: GAME_WIDTH / 2 - btnW - gap / 2, y: btnY, w: btnW, h: 52,
-      label: slot ? "Walk another road" : "Walk another road (no free slot)",
-      primary: true, enabled: !!slot, fontSize: 17,
-      onClick: () => {
-        if (!slot) return;
-        sfxConfirm();
-        // The rewind lands in the EMPTY slot; the finished save (already
-        // stamped above) is untouched in its own.
-        writeSaveToSlot(slot, rewindToPathChoice(stamped));
-        this.cameras.main.fadeOut(600, 0, 0, 0);
-        this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("ChoiceScene"));
-      }
+  private buildSlotCard(slot: SlotIndex, save: SaveState, x: number, y: number, w: number, h: number): void {
+    const g = this.add.graphics();
+    drawPanel(g, x, y, w, h);
+
+    const path = getSevenPath(save);
+    const walked = pathsWalked(save);
+    const finished = save.completedBattles.includes("b29_epilogue");
+    const snap = save.pathForkSnapshot;
+    const chapters = save.completedBattles.length;
+
+    this.add.text(x + w / 2, y + 16, `Save Slot ${slot}`, {
+      fontFamily: FAMILY_HEADING, fontSize: "20px", color: "#f4d999",
+      stroke: "#1a0e04", strokeThickness: 3
+    }).setOrigin(0.5, 0);
+
+    const lines: string[] = [];
+    lines.push(path ? `Road walked: ${PATH_LABEL[path] ?? path}` : "At the fork, undecided");
+    lines.push(finished ? "Campaign finished" : `${chapters} battles behind them`);
+    if (walked.length > 0) lines.push(`Recorded: ${walked.map((p) => PATH_LABEL[p] ?? p).join(", ")}`);
+    lines.push("");
+    if (snap) {
+      const roster = Object.entries(snap.characters);
+      const avg = roster.length
+        ? Math.round(roster.reduce((n, [, r]) => n + r.level, 0) / roster.length)
+        : 0;
+      lines.push(`Restores the squad as it stood at the fork:`);
+      lines.push(`${roster.length} character${roster.length === 1 ? "" : "s"}, around level ${avg}`);
+      lines.push(`${snap.squadInventory.length} item${snap.squadInventory.length === 1 ? "" : "s"} in the pack`);
+    } else {
+      lines.push("No fork snapshot on this save — it predates them.");
+      lines.push("The squad keeps the levels and items it has now.");
+    }
+
+    this.add.text(x + 18, y + 52, lines.join("\n"), {
+      fontFamily: FAMILY_BODY, fontSize: "13px", color: "#c8c2b2",
+      wordWrap: { width: w - 36 }, lineSpacing: 4
     });
 
     new Button(this, {
-      x: GAME_WIDTH / 2 + gap / 2, y: btnY, w: btnW, h: 52,
-      label: slot ? "Rest here" : "Back to the title",
-      primary: false, fontSize: 17,
+      x: x + 20, y: y + h - 54, w: w - 40, h: 40,
+      label: "Walk another road", primary: true, fontSize: 15,
+      onClick: () => this.commit(slot, save)
+    });
+  }
+
+  private commit(slot: SlotIndex, save: SaveState): void {
+    sfxConfirm();
+    const finished = save.completedBattles.includes("b29_epilogue");
+    const ok = window.confirm(
+      `Slot ${slot} rewinds to the Seven Paths choice.\n\n` +
+      `The squad returns to the levels and items it had at that point, and everything ` +
+      `after the fork is replaced by the new road.` +
+      (finished ? `\n\nThis save's finished campaign stays on the record.` : "") +
+      `\n\nContinue?`
+    );
+    if (!ok) return;
+    // The completion record is stamped onto the rewound state itself, so
+    // reusing a finished slot never erases the fact that it was finished.
+    const stamped = finished ? markCampaignComplete(save, getSevenPath(save)) : save;
+    writeSaveToSlot(slot, rewindToPathChoice(stamped));
+    this.cameras.main.fadeOut(600, 0, 0, 0);
+    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("ChoiceScene"));
+  }
+
+  private addExit(label: string): void {
+    new Button(this, {
+      x: GAME_WIDTH / 2 - 130, y: GAME_HEIGHT - 78, w: 260, h: 46,
+      label, primary: false, fontSize: 16,
       onClick: () => {
         sfxClick();
-        this.cameras.main.fadeOut(600, 0, 0, 0);
+        this.cameras.main.fadeOut(500, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("TitleScene"));
       }
     });
-
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 62,
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 26,
       "Either answer is a real one. The war is over in both.", {
-      fontFamily: FAMILY_BODY, fontSize: "14px", color: "#7a7165", fontStyle: "italic"
+      fontFamily: FAMILY_BODY, fontSize: "13px", color: "#7a7165", fontStyle: "italic"
     }).setOrigin(0.5);
-
-    this.cameras.main.fadeIn(700, 0, 0, 0);
   }
 }

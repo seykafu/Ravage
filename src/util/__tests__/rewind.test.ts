@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 import {
   CAMPAIGN_COMPLETE_FLAG,
+  capturePathForkSnapshot,
   defaultSave,
   markCampaignComplete,
   pathsWalked,
@@ -75,5 +76,44 @@ describe("another-path rewind", () => {
     const bare = rewindToPathChoice({ ...defaultSave(), completedBattles: [], unlockedBattles: [] });
     expect(bare.unlockedBattles).toEqual(["b01_palace_coup"]);
     expect(bare.flags[CAMPAIGN_COMPLETE_FLAG]).toBeUndefined();
+  });
+});
+
+describe("the fork snapshot", () => {
+  it("restores the squad as it stood at B18, not as it finished", () => {
+    const atFork = capturePathForkSnapshot({
+      ...defaultSave(),
+      characters: { amar: { level: 12, xp: 10, stats: { hp: 40, power: 13, armor: 8, speed: 10, movement: 4, ap: 2 } } },
+      squadInventory: [createItem("potion"), createItem("potion")]
+    });
+    // ...then the player finishes the campaign, out-levelling the fork.
+    const finished: SaveState = {
+      ...atFork,
+      completedBattles: ["b01_palace_coup", "b18_path_chosen", "b28_path_final"],
+      characters: { amar: { level: 20, xp: 0, stats: { hp: 60, power: 20, armor: 12, speed: 14, movement: 4, ap: 3 } } },
+      squadInventory: [createItem("elixir"), createItem("elixir"), createItem("elixir")]
+    };
+    const rewound = rewindToPathChoice(finished);
+    expect(rewound.characters?.amar?.level, "levels must roll back to the fork").toBe(12);
+    expect(rewound.characters?.amar?.stats.hp).toBe(40);
+    expect(rewound.squadInventory?.length, "the pack is the fork's pack").toBe(2);
+    expect(rewound.squadInventory?.every((i) => i.kind === "potion")).toBe(true);
+    // The snapshot itself survives, so a third road starts from the fork too.
+    expect(rewound.pathForkSnapshot?.characters.amar?.level).toBe(12);
+  });
+
+  it("falls back to current progression when a save predates snapshots", () => {
+    const legacy: SaveState = {
+      ...defaultSave(),
+      completedBattles: ["b18_path_chosen", "b28_path_final"],
+      characters: { amar: { level: 20, xp: 0, stats: { hp: 60, power: 20, armor: 12, speed: 14, movement: 4, ap: 3 } } }
+    };
+    const rewound = rewindToPathChoice(legacy);
+    expect(rewound.characters?.amar?.level, "losing the run would be worse than over-levelling").toBe(20);
+  });
+
+  it("clears any suspended battle so the new road can't resume the old one's fight", () => {
+    const mid = { ...defaultSave(), completedBattles: ["b18_path_chosen"], suspendedBattle: { battleId: "b26_coastal_hold" } } as unknown as SaveState;
+    expect(rewindToPathChoice(mid).suspendedBattle).toBeNull();
   });
 });

@@ -75,6 +75,8 @@ import {
   getSquadInventory,
   hasExceededDeathLimit,
   loadSave,
+  capturePathForkSnapshot,
+  PATH_FORK_BATTLE,
   recordSquadDeaths,
   setCharacterRecord,
   setSquadInventory,
@@ -205,6 +207,7 @@ export class BattleScene extends Phaser.Scene {
   // populate the goal label in the top-left HUD.
   private victory!: VictoryCondition;
   private goalText!: Phaser.GameObjects.Text;
+  private panHintText!: Phaser.GameObjects.Text;
   private initiative!: Initiative;
   private originX = 0;
   private originY = 0;
@@ -803,6 +806,11 @@ export class BattleScene extends Phaser.Scene {
     // Goal label sits under the round counter so the player always knows what
     // the battle wants from them (rout, survive, escape, kill the boss…).
     // Populated from this.victory.label, set once per battle in create().
+    this.panHintText = this.add.text(16, 64, "drag · WASD · arrows to pan", {
+      fontFamily: FAMILY_BODY,
+      fontSize: "11px",
+      color: "#5f6472"
+    });
     this.goalText = this.add.text(16, 46, `Goal: ${this.victory.label}`, {
       fontFamily: FAMILY_BODY,
       fontSize: "12px",
@@ -1740,7 +1748,9 @@ export class BattleScene extends Phaser.Scene {
   private setupCameraDragPan(): void {
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       // A press that BEGINS while the battle is active arms the click
-      // pipeline — see pressBegunInScene.
+      // pipeline — see pressBegunInScene. A press on the side panel or
+      // top bar is the UI's, so it neither arms the board nor pans.
+      if (this.isOverUi(p)) { this.pressBegunInScene = false; return; }
       this.pressBegunInScene = true;
       // Record the press origin for every button. Whether this becomes
       // a pan is decided in pointermove once the pointer has actually
@@ -2230,6 +2240,9 @@ export class BattleScene extends Phaser.Scene {
       : 0;
     if (v === "player") {
       save = completeBattle(save, this.battleId);
+      // Freeze progression at the Seven Paths fork so a future
+      // another-path run can start with the squad as it was here.
+      if (this.battleId === PATH_FORK_BATTLE) save = capturePathForkSnapshot(save);
       // Unlock what this battle unlocks. node.unlocks: undefined → the
       // next battle in the array (linear spine); BattleId → explicit
       // target (path structure — the seven B19 variants are array-
@@ -2952,7 +2965,26 @@ export class BattleScene extends Phaser.Scene {
 
   // ---- Pointer handlers ----
   // Resolves on pointer-UP so a left-drag camera pan never commits an action.
+  // True when a pointer is over the side panel or the top bar rather than
+  // the playfield. Pointer coords are BUFFER pixels; design space is
+  // buffer / RENDER_SCALE (same conversion the camera-pan code uses).
+  //
+  // Without this, every click on a UI button ALSO ran through the board
+  // pipeline, because handlePointerUp turned any screen position into a
+  // tile. That was invisible while maps were small and centred — the
+  // panel sat over empty space. Once the endgame maps grew wide enough
+  // to run underneath the panel, and reinforcements began spawning along
+  // the east edge, clicking "Item" both opened the picker AND selected
+  // the enemy standing under the panel.
+  private isOverUi(p: Phaser.Input.Pointer): boolean {
+    const x = p.x / RENDER_SCALE;
+    const y = p.y / RENDER_SCALE;
+    return x >= GAME_WIDTH - PANEL_W - 12 || y <= TOP_BAR_HEIGHT;
+  }
+
   private handlePointerUp(p: Phaser.Input.Pointer): void {
+    // Clicks that land on the UI belong to the UI alone.
+    if (this.isOverUi(p)) { this.pressBegunInScene = false; return; }
     // Phantom release: the press happened while a dialogue (or other
     // overlay) had the scene paused. Swallow it — acting on it would
     // move/attack from a click the player aimed at the overlay.
