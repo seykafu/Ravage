@@ -109,6 +109,18 @@ export class ChoiceScene extends Phaser.Scene {
   constructor() { super("ChoiceScene"); }
 
   create(): void {
+    // Phaser REUSES scene instances, so every field below outlives a
+    // scene.start(). `committed` in particular is a one-way latch that
+    // guards against double-commits — and it survived into the next
+    // visit, making commit() return instantly. A player who reached this
+    // screen a second time in one session (a replay, or Another Road
+    // after finishing a campaign) could select a path, press Commit, and
+    // watch nothing happen, forever. Reset the whole selection state on
+    // entry so each visit starts clean.
+    this.selected = null;
+    this.committed = false;
+    this.cardHighlights.clear();
+    this.commitBtn = undefined;
     // Open-water backdrop — the squad is on Khione's ship after the B17
     // escape. bg_grude reads as the harbour they're leaving behind.
     const bgKey = ensureBackdropForKey(this, "bg_grude");
@@ -180,6 +192,10 @@ export class ChoiceScene extends Phaser.Scene {
         // Keep the frame lit only for the committed selection.
         hl.setVisible(this.selected?.path === p.path);
       });
+      // Both events: pointerdown so the pick registers immediately, and
+      // pointerup so a press that began off-card still lands. selectPath
+      // is idempotent, so the pair never double-applies.
+      zone.on("pointerdown", () => this.selectPath(p));
       zone.on("pointerup", () => this.selectPath(p));
     });
 
@@ -202,7 +218,7 @@ export class ChoiceScene extends Phaser.Scene {
     // ---- Commit button (disabled until a path is selected) ----
     this.commitBtn = new Button(this, {
       x: detX + detW - 240, y: GAME_HEIGHT - 64, w: 240, h: 46,
-      label: "Commit ▸", primary: true, fontSize: 18,
+      label: "Select a path first", primary: true, fontSize: 18,
       enabled: false,
       onClick: () => this.commit()
     });
@@ -221,6 +237,7 @@ export class ChoiceScene extends Phaser.Scene {
     this.detailText.setText(
       `${p.name.toUpperCase()}  —  ${p.honors}\n\n${p.full}\n\nCommit to this path?`
     );
+    this.commitBtn?.setLabel(`Commit to ${p.name} ▸`);
     this.commitBtn?.setEnabled(true);
   }
 
