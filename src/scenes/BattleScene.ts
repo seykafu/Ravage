@@ -2243,9 +2243,6 @@ export class BattleScene extends Phaser.Scene {
       : 0;
     if (v === "player") {
       save = completeBattle(save, this.battleId);
-      // Freeze progression at the Seven Paths fork so a future
-      // another-path run can start with the squad as it was here.
-      if (this.battleId === PATH_FORK_BATTLE) save = capturePathForkSnapshot(save);
       // Unlock what this battle unlocks. node.unlocks: undefined → the
       // next battle in the array (linear spine); BattleId → explicit
       // target (path structure — the seven B19 variants are array-
@@ -2283,6 +2280,12 @@ export class BattleScene extends Phaser.Scene {
         ...(u.abilities ? { abilities: [...u.abilities] } : {}),
         ...(u.spriteClassOverride ? { spriteClassOverride: u.spriteClassOverride } : {})
       });
+    }
+    // Freeze progression at the Seven Paths fork — AFTER the loop above,
+    // so the snapshot holds the squad as it stood LEAVING B18 rather than
+    // entering it. An another-path run restores exactly this.
+    if (v === "player" && this.battleId === PATH_FORK_BATTLE) {
+      save = capturePathForkSnapshot(save);
     }
     writeSave(save);
     // Battle rewards (victory only). Mint each ItemKind in the node's

@@ -16,6 +16,7 @@ import {
   type SaveState,
   type SlotIndex
 } from "../util/save";
+import { forkLevel, synthesizeForkSnapshot } from "../data/forkFallback";
 
 // ─────────────────────────────────────────────────────────────────────────
 // AnotherPathScene — Khione's offer, made mechanical.
@@ -128,8 +129,9 @@ export class AnotherPathScene extends Phaser.Scene {
       lines.push(`${roster.length} character${roster.length === 1 ? "" : "s"}, around level ${avg}`);
       lines.push(`${snap.squadInventory.length} item${snap.squadInventory.length === 1 ? "" : "s"} in the pack`);
     } else {
-      lines.push("No fork snapshot on this save — it predates them.");
-      lines.push("The squad keeps the levels and items it has now.");
+      lines.push("Saved before fork snapshots existed, so the squad is");
+      lines.push(`rebuilt to the fork's intended level ${forkLevel()}.`);
+      lines.push("Promotions kept; the item pack carries over as-is.");
     }
 
     this.add.text(x + 18, y + 52, lines.join("\n"), {
@@ -157,7 +159,13 @@ export class AnotherPathScene extends Phaser.Scene {
     if (!ok) return;
     // The completion record is stamped onto the rewound state itself, so
     // reusing a finished slot never erases the fact that it was finished.
-    const stamped = finished ? markCampaignComplete(save, getSevenPath(save)) : save;
+    let stamped = finished ? markCampaignComplete(save, getSevenPath(save)) : save;
+    // Legacy saves carry no fork snapshot; give them a reconstructed one
+    // so the rewind rolls the squad back instead of handing chapter 19 a
+    // set of level-20 veterans.
+    if (!stamped.pathForkSnapshot) {
+      stamped = { ...stamped, pathForkSnapshot: synthesizeForkSnapshot(stamped) };
+    }
     writeSaveToSlot(slot, rewindToPathChoice(stamped));
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("ChoiceScene"));
