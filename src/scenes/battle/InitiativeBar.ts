@@ -47,7 +47,11 @@ export class InitiativeBar {
     private initiative: Initiative,
     private getUnits: () => Unit[],
     private roundText: Phaser.GameObjects.Text,
-    private pin: PinFn
+    private pin: PinFn,
+    // Click a portrait to put the camera on that unit. Threaded in as a
+    // callback for the same reason pin() is — no circular import on
+    // BattleScene. Optional so existing callers keep compiling.
+    private onFocusUnit?: (u: Unit) => void
   ) {
     this.bar = scene.add.container(INITIATIVE_BAR_X, INITIATIVE_BAR_Y);
   }
@@ -150,7 +154,36 @@ export class InitiativeBar {
       wordWrap: { width: INITIATIVE_BOX_W - 4, useAdvancedWrap: true }
     }).setOrigin(0.5, 0);
 
-    return [bg, portrait, name];
+    // Click-to-find. On the endgame's wide maps a lone survivor can sit
+    // well outside the viewport, and hunting it by dragging is miserable;
+    // the bar already knows exactly who is left, so let it aim the camera.
+    // The zone is a child of the bar container, so hit testing follows the
+    // bar's pinned screen position.
+    const hit = this.scene.add.zone(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H)
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true });
+    hit.on("pointerover", () => {
+      bg.clear();
+      bg.fillStyle(fill, 1);
+      bg.fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H);
+      bg.lineStyle(1, COLORS.goldBright, 1);
+      bg.strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1);
+    });
+    hit.on("pointerout", () => {
+      bg.clear();
+      bg.fillStyle(fill, 0.85);
+      bg.fillRect(offsetX, offsetY, INITIATIVE_BOX_W, INITIATIVE_BOX_H);
+      bg.lineStyle(1, isActive ? COLORS.goldBright : COLORS.gold, isActive ? 1 : 0.5);
+      bg.strokeRect(offsetX + 0.5, offsetY + 0.5, INITIATIVE_BOX_W - 1, INITIATIVE_BOX_H - 1);
+    });
+    hit.on("pointerdown", () => {
+      // Focusing from the overflow list closes it — the player asked to
+      // look at the board, not keep a panel over it.
+      if (this.dropdownOpen) this.closeDropdown();
+      this.onFocusUnit?.(u);
+    });
+
+    return [bg, portrait, name, hit];
   }
 
   // Builds the expander cell at the right end of the bar. Visually styled

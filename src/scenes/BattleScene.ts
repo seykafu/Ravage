@@ -565,7 +565,17 @@ export class BattleScene extends Phaser.Scene {
     //     map plus margins, camera scrolls within that range.
     // Right-click drag pans the camera; arrow keys nudge it. UI is pinned
     // (setScrollFactor(0)) so it stays put when the world moves.
-    const boundsW = Math.max(GAME_WIDTH, this.originX + mapPxW + 40);
+    // The side panel is an OVERLAY on top of a full-width camera, not a
+    // narrower viewport — so the rightmost ~292px of the screen is
+    // covered even though the camera still renders world there. A map
+    // wide enough to reach under the panel therefore had columns that
+    // could never be seen OR clicked, because bounds == viewport left
+    // the camera no slack to scroll them clear. That is how a last
+    // enemy became unfindable on the widened endgame maps.
+    //
+    // Adding the panel's width to the right margin gives the camera
+    // exactly enough room to pull the map's east edge out from under it.
+    const boundsW = Math.max(GAME_WIDTH, this.originX + mapPxW + 40 + PANEL_W + 12);
     const boundsH = Math.max(GAME_HEIGHT, this.originY + mapPxH + 40);
     this.cameras.main.setBounds(0, 0, boundsW, boundsH);
     // Disable the browser's right-click context menu so right-click drag
@@ -806,7 +816,7 @@ export class BattleScene extends Phaser.Scene {
     // Goal label sits under the round counter so the player always knows what
     // the battle wants from them (rout, survive, escape, kill the boss…).
     // Populated from this.victory.label, set once per battle in create().
-    this.panHintText = this.add.text(16, 64, "drag · WASD · arrows to pan", {
+    this.panHintText = this.add.text(16, 64, "drag · WASD · arrows to pan  ·  click a portrait above to find a unit", {
       fontFamily: FAMILY_BODY,
       fontSize: "11px",
       color: "#5f6472"
@@ -825,7 +835,8 @@ export class BattleScene extends Phaser.Scene {
       this.initiative,
       () => this.state.units,
       this.roundText,
-      (o) => this.pin(o)
+      (o) => this.pin(o),
+      (u) => this.focusUnit(u)
     );
 
     // Right panel
@@ -2988,6 +2999,58 @@ export class BattleScene extends Phaser.Scene {
     const x = p.x / RENDER_SCALE;
     const y = p.y / RENDER_SCALE;
     return x >= GAME_WIDTH - PANEL_W - 12 || y <= TOP_BAR_HEIGHT;
+  }
+
+  // Put the camera on a unit and mark where it landed. Called when the
+  // player clicks a portrait in the initiative bar — the fastest way to
+  // find the last enemy standing on a map wider than the viewport.
+  //
+  // Camera.pan centers on a world point and clamps itself to the camera
+  // bounds, so a unit near an edge scrolls as far as the board allows
+  // rather than pushing the view off the map.
+  private focusUnit(u: Unit): void {
+    if (!isAlive(u)) return;
+    sfxHover();
+    const cam = this.cameras.main;
+    const wp = this.projection.tileToWorld(u.state.position);
+
+    // Centre on the VISIBLE playfield, not the whole viewport: the side
+    // panel covers the right ~292px, so centring on the screen would park
+    // the unit behind it. Camera.pan() is deliberately not used — its
+    // centring math doesn't survive the native-resolution zoom patch
+    // (installRenderScale), so it starts an effect that never moves. A
+    // plain tween over setScroll is what the drag pan already does.
+    const viewW = cam.width / cam.zoom;
+    const viewH = cam.height / cam.zoom;
+    const playfieldCentreX = (GAME_WIDTH - PANEL_W - 12) / 2;
+    const playfieldCentreY = MAP_TOP_OFFSET + (GAME_HEIGHT - MAP_TOP_OFFSET) / 2;
+    const maxX = Math.max(0, cam.getBounds().width - viewW);
+    const maxY = Math.max(0, cam.getBounds().height - viewH);
+    const targetX = Phaser.Math.Clamp(wp.x - playfieldCentreX, 0, maxX);
+    const targetY = Phaser.Math.Clamp(wp.y - playfieldCentreY, 0, maxY);
+
+    this.tweens.add({
+      targets: { x: cam.scrollX, y: cam.scrollY },
+      x: targetX,
+      y: targetY,
+      duration: 320,
+      ease: "Sine.easeInOut",
+      onUpdate: (_tw, tgt: { x: number; y: number }) => cam.setScroll(tgt.x, tgt.y)
+    });
+
+    // A ring that expands and fades — its own object so it can't fight
+    // the breathing/idle tweens already running on the unit sprite.
+    const ring = this.addWorld(
+      this.add.circle(wp.x, wp.y, 24).setStrokeStyle(3, 0xffd45a, 0.95).setDepth(31)
+    );
+    this.tweens.add({
+      targets: ring,
+      scale: 1.9,
+      alpha: 0,
+      duration: 650,
+      ease: "Sine.easeOut",
+      onComplete: () => ring.destroy()
+    });
   }
 
   private handlePointerUp(p: Phaser.Input.Pointer): void {
