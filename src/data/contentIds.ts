@@ -195,7 +195,12 @@ export type ArcId =
   | "wed_ndara"
   | "wed_leo"
   | "wed_corin"
-  | "end_alone";
+  | "end_alone"
+  // Shared closing arc. Every wedding coda AND end_alone route here
+  // before the credits: the wedding closes Amar's story, this closes
+  // everyone else's. Deliberately written partner-agnostically — each
+  // companion's road has to read true whether or not Amar married them.
+  | "where_they_went";
 
 // ---- Backdrops ------------------------------------------------------------
 // `bg_<label>` selector strings used by BattleNode.backdropKey. The mapping

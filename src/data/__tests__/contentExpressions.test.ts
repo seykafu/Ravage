@@ -28,6 +28,12 @@
 
 import { describe, it, expect } from "vitest";
 import { BATTLES } from "../battles";
+import type { SevenPath } from "../contentIds";
+
+// Every road, so the audit reaches pathOverrides on the climax battles.
+const ALL_PATHS: SevenPath[] = [
+  "vengeance", "restoration", "revolution", "duty", "exile", "mercy", "forgetting"
+];
 import { ARCS } from "../../story/beats";
 import { PORTRAIT_EXPRESSIONS, DEFAULT_VARIANT_FOR } from "../../assets/expressions";
 import type { DialogBeat } from "../../story/beats";
@@ -43,6 +49,21 @@ const collectBeats = (): { where: string; beat: DialogBeat }[] => {
     for (const dlg of node.dialogues ?? []) {
       for (const [i, beat] of dlg.beats.entries()) {
         out.push({ where: `battle ${node.id} dialogue ${dlg.id} beat[${i}]`, beat });
+      }
+    }
+    // Path-divergent climaxes (B23 / B24 / B28) keep their scripts in
+    // pathOverrides, which this audit used to walk straight past — so
+    // every per-road beat in the endgame went unchecked for years.
+    for (const path of ALL_PATHS) {
+      for (const dlg of node.pathOverrides?.[path]?.dialogues ?? []) {
+        for (const [i, beat] of dlg.beats.entries()) {
+          out.push({ where: `battle ${node.id}:${path} dialogue ${dlg.id} beat[${i}]`, beat });
+        }
+      }
+      for (const dlg of node.pathOverrides?.[path]?.extraDialogues ?? []) {
+        for (const [i, beat] of dlg.beats.entries()) {
+          out.push({ where: `battle ${node.id}:${path} extra ${dlg.id} beat[${i}]`, beat });
+        }
       }
     }
   }

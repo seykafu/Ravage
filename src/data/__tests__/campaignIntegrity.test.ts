@@ -288,6 +288,50 @@ describe("survive-battle reinforcement waves", () => {
   });
 });
 
+describe("story arcs terminate", () => {
+  // Caught a real self-loop: where_they_went was authored with
+  // next: "story:where_they_went" by a careless bulk rewrite, which
+  // traps the player in the ending forever with no way to the credits.
+  // Any arc-to-arc chain has to reach a non-arc destination.
+  it("no arc chain loops — every story: route reaches credits or gameplay", () => {
+    for (const start of Object.values(ARCS)) {
+      const seen: string[] = [start.id];
+      let cur = start;
+      while (typeof cur.next === "string" && cur.next.startsWith("story:")) {
+        const nextId = cur.next.slice("story:".length) as keyof typeof ARCS;
+        const next = ARCS[nextId];
+        expect(next, `${cur.id} -> ${nextId}: arc does not exist`).toBeTruthy();
+        expect(
+          seen.includes(nextId),
+          `arc cycle: ${[...seen, nextId].join(" -> ")}`
+        ).toBe(false);
+        seen.push(nextId);
+        cur = next;
+      }
+    }
+  });
+
+  it("every wedding coda and end_alone close through the shared farewell", () => {
+    // The wedding closes Amar's story; where_they_went closes everyone
+    // else's. A coda wired straight to the credits would silently skip
+    // the entire cast farewell for that partner.
+    const codas = Object.values(ARCS).filter((a) => a.id.startsWith("wed_"));
+    expect(codas.length, "expected one coda per romance option").toBe(7);
+    for (const a of [...codas, ARCS.end_alone]) {
+      expect(a.next, `${a.id} must route through the farewell`).toBe("story:where_they_went");
+    }
+    expect(ARCS.where_they_went.next, "the farewell ends the game").toBe("credits");
+  });
+
+  it("the walk-away endings do NOT route through the squad farewell", () => {
+    // Exile and forgetting end at B19: Amar leaves before the squad
+    // exists as the thing where_they_went says goodbye to.
+    for (const id of ["post_path_opener_exile", "post_path_opener_forgetting"] as const) {
+      expect(ARCS[id].next, `${id} should go straight to credits`).toBe("credits");
+    }
+  });
+});
+
 describe("reinforcement wave schema", () => {
   // Applies to EVERY battle and every path variant, not just the
   // survive-the-clock ones. A wave with neither trigger never lands; a

@@ -1548,10 +1548,26 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "They ran the numbers and walked away from the deal. (She's quiet a moment.) Twenty years of being somebody's asset. The first appraisal I'm proud of says unprofitable." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
         body: "My shore burned because it was cheap. Yours held because you made it dear. Every bell. Every barricade. Every name chalked on a door. (Beat.) Teach your children the difference. I never had the chance." },
+      N("Nobody has moved off the marble. The squad stands in the lifting light in the shape the last hour left them in — a rough half-circle, weapons still up, eight people waiting for the next thing to come down the processional at them."),
+      N("Nothing comes. That is the part that takes the longest to believe."),
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "(She has not lowered the bow.) There's more. There's always more, there's another wave, there's — (She stops. She makes herself look at the empty road. Her arm comes down very slowly.) ...Oh. Oh, that's it. That's actually it." },
+      { speaker: "Ranatoli", portraitId: "ranatoli",
+        body: "(He sits down on the marble, all at once, the shield across his knees.) Forgive me. My legs have just now understood something the rest of me is still arguing about." },
+      { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "(He brings Ash down the processional at a walk and doesn't dismount, because he's not sure he can yet.) Sky's empty. I've been checking it every eleven seconds for two years and it's — there's nothing in it. Just sky. (His voice cracks on the last word and he pretends it didn't.)" },
+      { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
+        body: "(He unpins the silver rose and holds it, and for a long moment he cannot do anything else.) She was fourth up the gangway at Othren. She would have wanted to see the sky do that. (He pins it back on.) That is the whole of it. That is all I have ever wanted to be able to say about her." },
+      { speaker: "Selene", portraitId: "selene",
+        body: "(She has come to stand at Amar's shoulder, the way she has since he was nineteen and it was her job.) I have watched a door at your back for eleven years. (A breath.) There is no door. Amar, I don't know what to do with my hands." },
       { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
         body: "Two empires dropped their armies when they fell. Remnants, deserters, strays. (Beat.) None of it is a war anymore, Captain. It's work for garrisons and grain carts, and the west has both again. Stand the squad down." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "(He looks down the line — all eight of them still standing in the lifting light, nobody quite ready to move.) Then that's it. That's all of it. (Quietly.) Let's go home." },
+      N("He says the word home and hears it land wrong, and everybody hears it land wrong, because not one of them has had one since Thuling and none of them are sure the word still has an address attached."),
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "(He tries it again, and this time he says it to them instead of to the road.) I don't know where that is yet. I know who it's got in it. (A breath.) That'll do. That's more than the seven of them ever offered me." },
+      N("There is a place in the line where Lucian is not standing. There has been for a long time now. Amar looks at it the way you look at a step that isn't there, and does not say anything, and every single one of them knows exactly what he is not saying."),
       N("Nobody moves for a while. Then Ranatoli laughs — the big laugh, the one from before the cells — and someone else joins, and the war is over.")
     ]
   },
@@ -1620,6 +1636,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Every name crossed off, and the anger outlived the list anyway. Selene warned me about that part too, in her way. She just never said what to do with what's left over." },
       { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
         body: "You put it down. Same as a sword. (She burns the list at last; the wind takes it.) There. Done is allowed to just be done, Amar. Come home." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He watches the last of the paper go over the rim.) I thought there'd be a moment. One clean second where it was finally paid and I felt it. (Beat.) There wasn't one. It just stopped costing, some morning, and I didn't notice which morning." },
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "That IS the moment. (She takes his arm.) You wanted a receipt. Nobody gets a receipt. You get a morning you forgot to be angry in, and then another one, and eventually you have a life made out of them." },
       N("The kings are gone, the fleet is gone, and the man who did the arithmetic fishes with Leo on the coast most summers, and sleeps, on the whole, well enough."),
       N("Vengeance, paid in full, turns out to buy the same thing as every other path: an ordinary life, and the right to find it enough. He does. Most mornings, he does.")
     ]
@@ -1638,6 +1658,8 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "The Thuling road's open the whole way through. First grain caravan ran it last week with no escort. (He can't stop grinning.) No escort! Nobody even thought about it until afterward. That's the part I keep laughing at." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "(He weighs a grain sack the way Lucian used to, and sets it down gently.) He'd have walked this road forever, Leo. (A breath.) So we will." },
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Eleven years ago seven men decided I was the shape a country should be poured into. (He hands the sack down the line, and somebody takes it, and it goes on down.) Turns out a country is just this. Somebody handing somebody else a sack, all the way to the end of the road, for years, with nobody watching." },
       N("There is no coronation. There is a school in the forge's old building, and a woman teaching letters in it, and a bell that rings for lessons now."),
       N("Restoration is the longest road and the least heroic, and it is the only one where the last page is a beginning. The free state of Anthros raises its first flag in spring. Nobody important is on the platform. That was the point.")
     ]
@@ -1656,6 +1678,9 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "She asked me to make it worth the whole cruel sum. (He sets no stone.) Stones turn into shrines. Shrines turn into thrones. So — no kings. Not even dead ones. Not even her." },
       { speaker: "Maya", portraitId: "maya", expression: "tearful",
         body: "The councils are holding. Grude, Anthros, the coast towns. They argue about everything and nobody kneels. (A breath.) It's ugly, it's loud, and it works. She'd have hated how well it works." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He stays at the grave after the others have gone, longer than is sensible.) She was right about the vacuum. She was right about all of it except the one thing. (Very quietly.) You didn't have to be the answer, mother. You just couldn't stand not being asked." },
+      N("He comes down off the marble at dusk and does not talk about it, that year or any year after, except once — to the person who waits at the bottom of the steps for as long as it takes."),
       N("The revolution's monument is a habit, not a statue: the empty place at the top of every hall where a high seat used to be, kept empty on purpose, forever."),
       N("Grass takes the processional within three summers. Children play on the marble. None of them can name a king. Maya, who planned it since before she met him, calls that the only victory she ever wanted whole.")
     ]
@@ -1674,6 +1699,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Khonu's whole doctrine was one line: read the list before you sign it. (He signs one; declines another; files the reasons.) Nobody teaches the part about the reasons." },
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
         body: "Your fourth batch of lieutenants graduates tomorrow, captain. They all quote you. Badly. (She grins.) 'The report and the truth should be the same document.' They think you made it up under fire. I never correct them." },
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "(He looks at the stack, and then at the window, and the honest thing comes out before he can dress it up.) Some mornings I'd hand the whole thing over for one week of not being the person the list goes through. (He pulls the next one toward him anyway.) Then I remember what it cost when the person it went through didn't read it." },
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "So say that part to the lieutenants too. (She puts a cup down on his blotter, on purpose, on the paperwork.) 'It is heavy and I do it anyway' is a better doctrine than any of the neat ones, captain. Also, drink that. You're no use to the order dead." },
       N("The army he serves is imperfect, bends him a little every year, and burns no towns, because the officer who reads is always exactly where the order lands."),
       N("Duty, walked to the end, is the quietest of the five wars: it never ends, it just gets read, one list at a time, by someone who signs his own name to it. He pays its costs honestly. It bends him less than he feared.")
     ]
@@ -1692,6 +1721,9 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "My father grows vegetables at the coast fort. Under guard. Badly. He writes me letters about soil. (A breath.) I answer them. Nobody warned me about the letters." },
       { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
         body: "The surrendered sword hangs over the ward door, hilt out, where every wounded soldier from both armies can see it on the way in. Nobody has taken it down in four years, Amar. Nobody's even touched it." },
+      { speaker: "Amar", portraitId: "amar", expression: "guarded",
+        body: "People ask me if I forgave him. (He watches the ward, not the sword.) I didn't. I don't think I ever will, and I've stopped waiting to. (A breath.) I just decided the world shouldn't have to pay for what he did to me. Those turned out to be different questions." },
+      N("It is the sentence that ends up carved over the ward door, years later, by people who were not there and did not ask his permission. He complains about it every time he visits and has never once had it taken down."),
       N("The wards empty slowly, the way wars actually end. Imperial sergeants teach rebel farmhands to set bone. Somebody complains about the porridge in two accents at once."),
       N("Mercy, held all the way to the end, is the only path whose monument keeps working after the story stops: a door people walk through, a sword nobody needs, a war that is genuinely, boringly, mercifully over.")
     ]
@@ -1709,7 +1741,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A headland over the sea, the war a year quiet",
     music: "emotionalLife",
     backdrop: "cliffs",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("A headland over cold water, a year after the last blade dropped. Selene watches the horizon out of habit. There is nothing left out there that is hunting either of them. Neither of them has fully believed it yet."),
       { speaker: "Selene", portraitId: "selene",
@@ -1731,7 +1763,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The cavalry camp at first frost",
     music: "emotionalLife",
     backdrop: "field_night_camp",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("First frost. The cavalry camp keeps its rotation out of love rather than need now: feed, tack, watch, sleep. Corin stands the last watch himself, the way he has since the quay. Amar has taken to standing it with him."),
       { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
@@ -1753,7 +1785,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The rebuilt forge at Thuling, festival night",
     music: "emotionalLife",
     backdrop: "farmland",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("The forge runs again. Ning rebuilt the rivet press herself, first machine in the new Thuling, and shot the ribbon off the doorway at thirty paces rather than cut it, because some things about a person do not change."),
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
@@ -1775,7 +1807,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "A cliff runway at sunrise, Ash saddled for two",
     music: "emotionalLife",
     backdrop: "cliffs",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("When it ended, Leo said he and Ash were going to fly the coast. He has been postponing it for a year, one excuse at a time, all of the excuses shaped like Amar."),
       { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
@@ -1797,7 +1829,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The marble, one year into the republic",
     music: "emotionalLife",
     backdrop: "finalBoss",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("One year into the republic. The marble where Dawn meant to be crowned holds her grave and no throne, and the two people who decided that stand beside it with the first year's ledger balanced and nothing left to burn."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
@@ -1819,7 +1851,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The workshop with the good bench, after the war",
     music: "emotionalLife",
     backdrop: "study",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("A workshop with a proper bench at last. Veya grinds lenses for lighthouses now — instruments that only ever help things be seen coming. On the good bench, under a cloth, something small she has machined and re-machined nine times, which for Veya means nerves."),
       { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
@@ -1841,7 +1873,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The war office, the last ledger closed",
     music: "emotionalLife",
     backdrop: "field_night_camp",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("She ran the war's spine from a chair, as promised: supply, signals, the rear lines that never broke. Tonight the last ledger closes. Ndara squares it on the desk, and then, uncharacteristically, does not stand to leave."),
       { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
@@ -1863,13 +1895,81 @@ export const ARCS: Record<ArcId, StoryArc> = {
     subtitle: "The long table, set for everyone",
     music: "emotionalLife",
     backdrop: "thuling",
-    next: "credits",
+    next: "story:where_they_went",
     beats: [
       N("No ring. It is not that kind of ending, and it is not a lesser one. The house Amar keeps has a long table, and the squad has worn grooves in the road to it — Ning's chair, Leo's chair, the one nobody sits in that was always Lucian's."),
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
         body: "Seven people decided what I was for, once. The people at this table un-decided it, one battle at a time. (He fills the empty chair's cup anyway, out of habit.) I didn't marry. I was also never alone. Turns out those are different things." },
       N("The fire pops twice, the way it always did at camp. Somebody laughs in the kitchen. The war is a story now, told slightly differently by everyone who was there, and the teller he loves best is all of them."),
       N("Of the seven names, one. Of the world that was, this table. Of Amar — everything, kept.")
+    ]
+  },
+
+  // ═══════════ The closing arc ═══════════
+  // Every wedding coda and end_alone route here before the credits. The
+  // wedding closes Amar's story; this closes everyone else's.
+  //
+  // Written partner-agnostically ON PURPOSE: StoryArc.beats is static
+  // data with no access to the save, and more importantly every road
+  // below has to read true whether or not Amar married that person —
+  // Ning rebuilds the press either way. The squad's fates are also the
+  // only ones stable across all five war paths; Dawn and Archbold end
+  // differently depending on the road, so neither is named here.
+  where_they_went: {
+    id: "where_they_went",
+    title: "Where They Went",
+    subtitle: "The years after, one road at a time",
+    music: "emotionalLife",
+    backdrop: "farmland",
+    next: "credits",
+    beats: [
+      N("Wars end twice. Once on the day the fighting stops, and once — much later, and much more quietly — on the morning everyone finally goes somewhere that is not the front."),
+      N("They put it off for a season. Then the roads dried out, and the letters began arriving from places that needed hands more than they needed soldiers, and one at a time the squad went."),
+
+      { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "I am taking the press back. (She says it like a dare. Nobody takes her up on it.) Not the forge — the forge can burn. The PRESS. My father set the rivets on that thing before I was born and I want to hear it run once before I am old." },
+      N("She had it rebuilt in fourteen months and running in fifteen. Thuling has a forge again, and an apprentice list two years long, and a foreman who will explain rivet tolerance to anybody who slows down near her. She writes letters full of measurements. Amar answers every one, badly, in the wrong units, on purpose."),
+
+      { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "Coast survey. Me and Ash and four hundred miles nobody has mapped since the colony. (He is already looking at the sky.) They are calling it work. I would have paid THEM." },
+      N("He flies the coast for weeks at a stretch and comes back sunburnt and insufferable, with charts nobody asked for and stories nobody believes until the charts turn out to be right. Ash grows fat and dignified. Neither of them will admit to being the older one."),
+
+      { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+        body: "No plans. (He says it with enormous satisfaction, the way a man says a word he was not allowed for six years.) I have been told where to stand every day since I was nineteen. I intend to stand wherever there is soup." },
+      N("He walks, mostly. Four provinces know his laugh before they know his name. He tells the war badly and on purpose — the parts where he was frightened get longer every year and the parts where he was brave get shorter — and children like him enormously for it."),
+
+      { speaker: "Veya", portraitId: "veya",
+        body: "There were nine of us who could cut a lens. (She holds one up to the window, and the light does the thing the light does.) There are two. So I am going to teach, and I am going to be bad at it for about a decade, and then there will be nine again." },
+      N("The lens school opens in Grude with four students and no roof, and the roof arrives before the fifth student does. She is a difficult teacher and an honest one. Every glass that leaves the workshop is signed on the rim, because she says a thing that focuses light ought to have somebody's name on it."),
+
+      { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
+        body: "(He unpins the silver rose, looks at it a while, and puts it back on.) I keep meaning to stop wearing it. Then I think — she would have been insufferable about surviving a war. Somebody ought to be insufferable on her behalf." },
+      N("He takes the western roads, the ones the bandits used to own, and rides them until they are boring. That is the whole of his ambition and he achieves it completely. There are stretches of that country where the rose came through still means the trouble is over."),
+
+      { speaker: "Selene", portraitId: "selene",
+        body: "I spent ten years watching doors. (A long breath.) I would like, at some point, to sit with my back to one." },
+      N("It takes her three years to manage it. The first time she does — a kitchen in the west, afternoon, the door behind her and nothing in the world coming through it — she says nothing about it to anyone, and Amar, watching from across the room, has the sense to say nothing either."),
+
+      { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "Garrisons and grain carts, Captain. (She is already annotating something.) It is the least interesting work in the world and it is the only reason the rest of it holds. Somebody competent has to want the boring half." },
+      N("She wants it. Under her the west gets granaries before monuments and roads before flags, and a standing order in her own hand, posted at every depot: no garrison may requisition from a town that has not eaten."),
+
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "I keep starting ledgers and stopping. (She laughs at herself, which she could not do at all, once.) Twenty years of counting what things cost. Turns out I have no idea how to count what they are worth. I will have to learn it slowly, like a language." },
+      N("She learns it slowly, like a language. She is fluent by the time it matters."),
+
+      N("And there is a chair at the long table that nobody sits in."),
+      { speaker: "Amar", portraitId: "amar", expression: "wounded",
+        body: "Lucian went into the ground before any of it was decided. Before the paths, before the fleet, before there was one single thing to show him. (Quietly.) Every good order I ever gave was me asking what he would have said and getting an answer back. That does not stop. Nobody warned me it does not stop." },
+      N("So they keep his chair and they fill his cup, and once a year somebody says the thing he used to say about grain sacks and everybody groans — which is exactly the memorial he would have chosen and precisely the one he would have complained about."),
+
+      { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
+        body: "(At the door, one last time, with the sea somewhere behind her.) I have ferried a great many people to the end of their war. Very few of them go anywhere afterward. (She inclines her head.) You all went somewhere. I intend to remember that one." },
+
+      N("The squad scatters across three provinces and reassembles for weddings, harvests, and — twice now — arguments about a bridge. The road between them wears down from nothing but visiting, which is the best thing that can happen to a road."),
+      { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Seven men in a ship's hold decided what I was for. (He looks down the table, at all of it, at every one of them.) I have spent every year since finding out I was for this. It took a war to learn. I would not have believed it any other way." },
+      N("The war is a story now. It is told slightly differently by everybody who was there, and every version is true, and not one of them ends with a throne.")
     ]
   }
 };

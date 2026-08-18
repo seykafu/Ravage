@@ -33,23 +33,23 @@ describe("romance design", () => {
     expect(new Set(offered).size).toBe(WAR_PATHS.length);
   });
 
-  it("every offered partner has a wedding arc that rolls credits under the ending suite", () => {
+  it("every offered partner has a wedding arc that closes through the farewell under the ending suite", () => {
     const partners = new Set(
       WAR_PATHS.flatMap((p) => [PATH_ROMANCES[p]!.woman.id, PATH_ROMANCES[p]!.man.id])
     );
     for (const id of partners) {
       const arc = ARCS[weddingArcFor(id)];
       expect(arc, `missing wedding arc for ${id}`).toBeTruthy();
-      expect(arc.next).toBe("credits");
+      expect(arc.next).toBe("story:where_they_went");
       expect(arc.music).toBe("emotionalLife");
       expect(arc.beats.length).toBeGreaterThanOrEqual(3);
     }
   });
 
-  it("the walking-on-alone coda exists and rolls credits", () => {
+  it("the walking-on-alone coda exists and closes through the farewell", () => {
     const arc = ARCS.end_alone;
     expect(arc).toBeTruthy();
-    expect(arc.next).toBe("credits");
+    expect(arc.next).toBe("story:where_they_went");
     expect(arc.music).toBe("emotionalLife");
   });
 

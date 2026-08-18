@@ -3539,6 +3539,26 @@ export const BATTLES: BattleNode[] = [
         ]
       },
       {
+        id: "b28_base_last",
+        trigger: { kind: "round_start", round: 3 },
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "(He sets the shield and does not look away from the line.) Six years in a cell, I built this. Not the getting out — this. Standing somewhere that matters with people who came back for me. (A breath.) Whatever happens on this marble, lad, I already got the part I wanted." },
+          { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+            body: "Don't you dare do a speech, old man. (Her voice is not entirely steady and she is furious about it.) Nobody does a speech. We do the last one the same as the first one and then we all go home and I make you carry the bags." }
+        ]
+      },
+      {
+        id: "b28_base_close",
+        trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "ravage_commander" },
+        beats: [
+          { speaker: "The Ravage Commander", portraitId: "reaver",
+            body: "You are eight. (It parries, and the parry costs it something for the first time.) We are a fleet. Explain the arithmetic to me, mender of ledgers, because I have run it four hundred times on four hundred shores and it has never once come out this way." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "You counted us. You never counted what we're standing in front of. (He does not give ground.) That's the whole error. It's been the whole error since the first shore. You price the wall and you never price the town." }
+        ]
+      },
+      {
         id: "b28_base_phase2",
         trigger: { kind: "second_wind", unitId: "ravage_commander" },
         beats: [
@@ -3613,6 +3633,16 @@ export const BATTLES: BattleNode[] = [
                 body: "I am the only thing that ever frightened your mother. Kill me and you inherit the fright. That is the whole estate, boy. That is all any of us ever owned." },
               { speaker: "Amar", portraitId: "amar", expression: "resolute",
                 body: "Then I'll bury the estate with you. (A breath, level.) For Selene. For the coast you sold. For the boy in the hospital bed who didn't know his own name because of you. Last name on the list." }
+            ]
+          },
+          {
+            id: "b28_v_last",
+            trigger: { kind: "round_start", round: 3 },
+            beats: [
+              { speaker: "Selene", portraitId: "selene",
+                body: "(She has fought her way to his shoulder and she stays there.) I bled on a palace floor eleven years ago and you have been paying for it ever since. Every name. Every mile. (Quietly.) Amar. I never asked you to. I have never once asked you to." },
+              { speaker: "Amar", portraitId: "amar", expression: "wounded",
+                body: "I know. (He does not stop moving; his voice does.) You didn't ask and I did it anyway, and I'd do it again, and I think that's the part Maya's been trying to tell me is a wound. (A breath.) One more name. Then I put the whole thing down and find out who I am without it." }
             ]
           },
           {
@@ -3693,12 +3723,22 @@ export const BATTLES: BattleNode[] = [
             ]
           },
           {
+            id: "b28_r_last",
+            trigger: { kind: "round_start", round: 3 },
+            beats: [
+              { speaker: "Maya", portraitId: "maya",
+                body: "(She has been watching him, not the field.) You have not looked at her once. Not since the first exchange. (Flat, and gentle underneath it.) Amar. Look at her. If you kill your mother without looking at her, you will spend the rest of your life doing it again every night." },
+              { speaker: "Amar", portraitId: "amar", expression: "wounded",
+                body: "(He looks. It costs him a step.) She taught me to read. Did you know that? Not tutors — her, on the crossing, with a ledger on her knees. (His guard comes back up.) All right. Eyes open. I owe her that much and it's the last thing I'll ever be able to give her." }
+            ]
+          },
+          {
             id: "b28_r_phase2",
             trigger: { kind: "second_wind", unitId: "dawn_boss" },
             beats: [
               { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
                 body: "(She goes down, and on the way down her hand finds the case at her belt, and what comes out of it is thirty years old and has never once been used.) I costed this too. (The harness closes over her like a decision being made.) Thirty years I carried it and did not spend it. Not for Grude. Not for your father. (Quietly.) For the day my son made me." },
-              { speaker: "Amar", portraitId: "amar", expression: "quiet_grief",
+              { speaker: "Amar", portraitId: "amar", expression: "wounded",
                 body: "You kept it for me. (His voice doesn't hold, and he doesn't let that stop him.) Squad — half of everything we land on her, and she answers anything that goes inside her reach. Wear her down. Slowly. She'll make us earn every step of it, because she always does." }
             ]
           },
@@ -3730,6 +3770,16 @@ export const BATTLES: BattleNode[] = [
                 body: "The order is hold. Not win — hold. The commander stays on this marble until the batteries range that ship. I signed the order myself; nobody else carries it. Anyone who wants to fall back, fall back now. No report will ever know." },
               { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
                 body: "(stringing her bow without looking at him) Khonu would already be in position, captain. (A beat.) So are we. Read us the order again when it's over. Every name present." }
+            ]
+          },
+          {
+            id: "b28_d_last",
+            trigger: { kind: "round_start", round: 3 },
+            beats: [
+              { speaker: "Corin", portraitId: "corin",
+                body: "(Wheeling back into the line, breathing hard.) Captain. The order you signed has our names on it. All eight. (He resets his lance.) My sister died off a list somebody else wrote and never showed her. Whatever else this costs today — we all read ours. That is not nothing. That is very nearly everything." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "It's the only part I got right. (He calls it down the line, loud enough to carry.) Every name on this marble is here because they read it and stayed! Nobody spent you! When the report gets written it will say exactly that, and it will be TRUE!" }
             ]
           },
           {
@@ -3807,6 +3857,16 @@ export const BATTLES: BattleNode[] = [
                 body: "(breathing hard) You fight like her. You spare like no one I have ever met. What are you, boy? Whose victory is this supposed to be?" },
               { speaker: "Amar", portraitId: "amar", expression: "guarded",
                 body: "A surgeon taught me you can stop a man without ending him. She never asked which side the wound was on. (Steel level.) Yield, father. Live long enough to be sorry." }
+            ]
+          },
+          {
+            id: "b28_m_last",
+            trigger: { kind: "round_start", round: 3 },
+            beats: [
+              { speaker: "Leo", portraitId: "leo",
+                body: "(Coming out of a pass, and for once there is nothing cocky in it at all.) Amar — I can end this. Right now, from above, one run. (A beat.) I'm asking because I'll do it if you say. And I'm asking because I think you're about to tell me no, and I want to hear you say why one more time." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "Because a surgeon in a swamp put her hands inside a stranger and never once asked whose army he came from. (Steel level, voice level.) He goes down. He does not go down dead. That's not softness, Leo — it's the only thing we've built that outlives us. Hold the run." }
             ]
           },
           {
