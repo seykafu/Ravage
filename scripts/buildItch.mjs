@@ -58,7 +58,11 @@ const PRUNE = [
   "video/gameplay.mp4",
   "video/gameplay_poster.jpg"
 ];
+// Whole directories the GAME never loads (landing-page art lives in
+// public/ so Vercel serves it, but it has no business in the download).
+const PRUNE_DIRS = ["assets/key"];
 for (const rel of PRUNE) rmSync(join(out, rel), { force: true });
+for (const rel of PRUNE_DIRS) rmSync(join(out, rel), { recursive: true, force: true });
 
 console.log("[itch] zipping…");
 const releaseDir = join(root, "release");
