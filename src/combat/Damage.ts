@@ -159,7 +159,12 @@ export const previewAttack = (
   const baseDamage =
     attacker.stats.power * weaponMod * terrainMod * stanceMod * abilityMod * ravageAtkMod * classMod -
     armor;
-  const damage = Math.max(1, Math.round(baseDamage));
+  // Boss phase two (UnitDef.secondWind) halves what lands. Applied
+  // AFTER the armor subtraction so it scales the damage that actually
+  // gets through — the whole point of expressing "2x defense" this way.
+  // Inside previewAttack, so the player's damage preview, the AI's
+  // threat scoring, and the real swing can never disagree.
+  const damage = Math.max(1, Math.round(baseDamage * defender.state.damageTakenMult));
 
   // Equipment bonuses — Royal Lens (+15% hit per copy) and Fang (+10%
   // crit per copy) stack additively. Read the attacker's inventory once.

@@ -88,7 +88,9 @@ export class DialogueDirector {
       }
       case "ally_attacks":
       case "ally_killed_target":
-        // Both fire inline via checkAttack / checkKill, never here.
+      case "second_wind":
+        // All three fire inline (checkAttack / checkKill /
+        // checkSecondWind), never off the per-turn scan.
         return false;
       case "before_victory":
         // Fired explicitly via findBeforeVictory() in checkEnd.
@@ -154,6 +156,21 @@ export class DialogueDirector {
         return;
       }
     }
+  }
+
+  // Called the instant a boss spends its second wind. Returns true if a
+  // beat fired, so BattleScene knows whether the scene is now paused
+  // behind a dialogue overlay and can order the reserve wave after it.
+  checkSecondWind(unitId: string): boolean {
+    for (const dlg of this.dialogues) {
+      if (this.fired.has(dlg.id)) continue;
+      const t = dlg.trigger;
+      if (t.kind === "second_wind" && t.unitId === unitId) {
+        this.fire(dlg);
+        return true;
+      }
+    }
+    return false;
   }
 
   // Called from applyAttackEffects after every resolved attack

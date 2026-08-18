@@ -80,7 +80,16 @@ counter via Ready. Dactyl is range 1, mounted, no triangle bonus or penalty.
 - **Speed counter** (passive): defender retaliates without consuming
   stance if their speed exceeds attacker's by `SPEED_COUNTER_THRESHOLD`.
   Base damage, no kicker.
+- **Relentless counter** (boss phase two): a unit with
+  `state.alwaysCounters` retaliates against ANY attacker inside its
+  weapon reach — no stance to spend, no speed gate. Granted only by a
+  second wind (§3.12). Checked LAST in the counter chain, so a Ready
+  counter still wins the slot (it costs AP and hits harder). The
+  threat-zone overlay renders these tiles permanently, so the player can
+  see the reach before walking into it.
 - Bow attackers cannot trigger Ready counter (the defender swings empty).
+- Reach is the one rule all three kinds share: a bow still cannot
+  retaliate at melee distance, phase two or not.
 
 ### 3.5 Special Abilities (max 2 per unit)
 
@@ -193,7 +202,7 @@ fight needs to add something. Surfaces in EndScene's outro panel as
 FE-style support conversations that fire during combat. Authored
 per-`BattleNode` in `src/data/battles.ts` via the `dialogues?: BattleDialogue[]`
 field; rendered by `BattleDialogueScene` (a paused-overlay variant of
-StoryScene). The `BattleDialogueTrigger` union defines all five trigger
+StoryScene). The `BattleDialogueTrigger` union defines all six trigger
 kinds. Each dialogue has a stable `id` for **once-per-battle dedup** —
 re-entering an already-fired trigger is a no-op (`firedDialogues` set
 on BattleScene, reset in `init()`).
@@ -204,6 +213,7 @@ on BattleScene, reset in `init()`).
 | `adjacent_eot` | `{ unitA: string; unitB: string }` | Both named units are alive AND in melee-adjacent tiles when the next unit's turn begins. Either being dead suppresses the trigger. | `checkDialogueTriggers()` at top of `startTurn` |
 | `ally_attacks` | `{ allyId: string }` | Named ally completes any attack — hit, miss, or kill, outcome doesn't matter. | `checkAttackDialogue(attacker)` inline in `applyAttackEffects` |
 | `ally_killed_target` | `{ allyId: string; targetId: string }` | Named ally lands the killing blow on the named enemy specifically. | `checkKillDialogue(attacker, defender)` inline in `applyAttackEffects`, after the XP award |
+| `second_wind` | `{ unitId: string }` | Named unit spends its second wind (§3.12) — fired the instant `damageUnit` refuses the killing blow, before the reserve wave lands. | `checkSecondWind(unitId)` inline from `stageSecondWinds()` |
 | `before_victory` | (no args) | Victory condition resolves to `"player"` but BEFORE the EndScene transition. Dialogue plays as a paused overlay; on close, EndScene transition resumes. | `findBeforeVictoryDialogue()` in `checkEnd` before camera fade |
 
 **Choosing the right trigger:**
@@ -212,6 +222,7 @@ on BattleScene, reset in `init()`).
 - **Two characters happening to stand close** → `adjacent_eot`. Lucian buffering Kian off Amar's flank; Maya & Amar within one tile for a quiet line.
 - **Reactions to a character's combat** → `ally_attacks`. Kian noticing Amar's "rehearsed" technique the first time he swings.
 - **Payoff for a specific kill** → `ally_killed_target`. Amar drops the captain spearton → Lucian flags the body for the ledger search.
+- **A boss standing back up** → `second_wind`. B28's finale, where each path's opponent refuses the first killing blow.
 - **Post-victory narrative beats** → `before_victory`. B1's capture sequence (squad mechanically wins, gets pounced).
 
 **Authoring example** (from `b04_swamp`):
@@ -322,6 +333,51 @@ guards could automatically interpose for protected bosses (passive
 ability `Bodyguard`) — same data path, no modal because no decision.
 
 ---
+
+
+### 3.12 Second Wind (boss phase two)
+
+`UnitDef.secondWind` — the B28 finale's structure. The first time a
+carrier's HP would reach 0 it does **not** fall: it returns at
+`hpFraction` of max HP, takes `damageTaken` × damage for the rest of the
+fight, and gains `state.alwaysCounters`. Once only; empty the bar again
+and it dies normally.
+
+Intercepted inside `damageUnit` (`combat/Unit.ts`) rather than at the
+attack layer, deliberately: that function is the single chokepoint every
+damage source funnels through, so melee, counters, lens fire and
+Destruct all route through the phase change. It also means a
+`defeatUnit` victory condition **cannot** fire early — the boss is still
+alive, so nothing special is needed in `Victory.ts`.
+
+**Why toughness is a damage multiplier and not doubled armor.** Armor in
+this game is subtractive (`power × mods − armor`, floored at 1).
+Measured against the real pipeline at B28: doubling the boss's armor
+dropped six of the eight squad members to exactly 1 damage per swing
+while Amar and Veya barely noticed — a finale where most of the party is
+a spectator. Halving incoming damage instead scales every character
+identically, so the boss really is twice as tough *for everyone*.
+`combat/__tests__/secondWind.test.ts` guards both properties (nobody at
+chip damage; phase two between 2 and 14 strike-core swings).
+
+Presentation and consequences live in `BattleScene.stageSecondWinds()`,
+scanned after every resolved attack (and again from `checkEnd`, for any
+damage path that skips `applyAttackEffects`) and deduped by
+`stagedSecondWinds`: log line, shockwave + shake, a `second_wind`
+dialogue beat (§3.7), and the reserve wave keyed to it.
+
+**Reserve waves.** `BattleWave.onSecondWindOf` lands a wave the moment
+its boss stands up, instead of on a round. This is why the B28 reserve
+can't be out-raced by a fast kill the way a round-scheduled wave can.
+Waves dedup by `waveKey(w)` (id, else `sw:<bossId>`, else `r<round>`).
+
+**Resume.** `secondWindUsed` / `alwaysCounters` / `damageTakenMult` all
+live on `UnitState`, so they ride the suspend snapshot for free. On
+resume, `create()` reconstructs both `stagedSecondWinds` (from units
+already phased) and `spawnedWaves` (an event wave has landed iff its
+boss is already phased) — otherwise a save-and-quit mid-finale would
+hand the player a replayed cutscene, a duplicated reserve, and a boss
+with a third phase.
 
 ## 4. Progression System
 
@@ -842,6 +898,7 @@ when revisiting tradeoffs months later.
 | 2026-04 | Save persistence hardening — `pickFresher` race protection | Player reported B1 completion not surviving a Title → SaveSlotScene round-trip. Root cause: `writeSave`'s Supabase push is fire-and-forget, so a fast-clicking player could reach SaveSlotScene before the push completed; `fetchSlotPreviews` then unconditionally overwrote the fresh local cache with the stale remote row, demoting the slot card to "empty." Fix: every `writeSave` now stamps a client-side `updatedAt`, and `fetchSlotPreviews` + `activateSlot` resolve via a new `pickFresher(a, b)` helper that prefers the state with more `completedBattles` (ties → newer timestamp). Also added an active-mirror rescue: if `currentSlot` is set, `GAME_STATE_KEY` is folded in as a third source so a dropped slot-cache write doesn't lose progress. `writeSave` no longer swallows errors silently — quota / serialization failures now `console.error`. DEV-only warning when `writeSave` is called with no `currentSlot`. Net: progress can never go backwards once it's been written to *any* of remote / slot cache / active mirror. |
 | 2026-05 | Ravage State + Interpose — combat differentiators | The mechanical + narrative signatures that distinguish Ravage from FE. **Ravage State** (§3.10): unit takes ≥50% max HP between turns → next turn they get +50% damage / half armor / +1 MOV with a crimson aura + RAVAGED! announcement. Symmetric (works on enemies too); rewards full-commit takedowns over chip-and-run. New UnitState fields (`damageTakenSinceLastTurn`, `ravagedNextTurn`, `ravagedActive`); promoted at `beginUnitTurn`, cleared at `endUnitTurn`; modifiers in `Damage.ts` + MOV bonus in `Actions.ts`. **Interpose** (§3.11): enemy attack would deal lethal damage to a player unit + adjacent ally available → InterposeScene modal pauses the battle, player picks an interposer (or declines). Damage redirects at full force (no armor recalc — they caught the literal blade), counter is suppressed, Destruct still fires on the interposer if they die. Required splitting `performAttack` into `rollAttackOnly` + `applyAttackOutcome` so the player-defended path can pause between roll and damage. New `interposeCandidates(state, defender, attacker)` finds eligible neighbors. New `InterposeScene` is a paused-overlay modal with portrait + HP cards (HP coloured red/amber/gold by surviveability). |
 | 2026-05 | Inventory overhaul — squad pool + per-character distribution + trading post | Inventory was 1-item (potion), 3-per-character-per-battle, no persistence. Now: 6 item kinds (potion, elixir, mask, fang, royal_lens, dactyl_food) split into consumables (`uses > 0`) and equipment (`uses === 0`, passive bonuses while carried). Squad pool persisted in `SaveState.squadInventory`; per-character pre-battle assignments staged in `SaveState.assignedInventory` (so a refresh between BattlePrep + BattleScene doesn't lose distribution). New `InventoryScene` modal launched from BattlePrepScene: 3-panel layout (squad pool / per-character bags / trading post), click-to-assign / click-to-unassign, atomic trade execution. New `TRADE_RECIPES` in `src/data/trades.ts` with 8 trades — 5 forward (Potion → others), 2 lateral upgrades (Fang/Mask → Royal Lens), 1 emergency downgrade (Elixir → Potions). Equipment effects wire through `equipmentBonuses(unit)` in `src/combat/items.ts`, applied in Damage.ts (crit/hit/armor) + Actions.ts (movement) + Unit.ts (AP). Equipment STACKS — five Fangs = +50% crit, capped only by 5-slot inventory. Heal action auto-picks smallest item that covers missing HP so Elixirs aren't wasted. Items consumed in battle are gone permanently; survivors return to pool via `returnInventoriesToPool` at battle end. No currency — trading IS the economy, tonally fits the exiled-survivor squad framing. |
+| 2026-08 | B28 finale gets a second phase + a surprise reserve | The path finale ended the way every other battle ends: the boss's bar empties and the war is over. Now every road's final opponent (Ravage Commander / Archbold / Madame Dawn) refuses the first killing blow — back at 55%, taking half damage, retaliating against anything inside its reach — and its reserve lands as a pincer BEHIND the squad on the flanking stone, the one direction the whole battle trains the player to treat as safe. New `UnitDef.secondWind` (§3.12), a third counter kind (§3.4), a `second_wind` dialogue trigger (§3.7), and event-triggered `BattleWave.onSecondWindOf`. Authored per road, so Archbold's two paths get different words for the same man refusing to fall — on mercy he is refusing to be spared, which is the whole argument of that road. Balance measured, not guessed: the first draft doubled armor, which the sim showed floors six of eight characters at 1 damage; expressing "2x defense" as halved incoming damage keeps the squad's damage spread intact. Phase two costs the strike core ~5 swings on top of phase one's ~4.5, so the finale is roughly twice the fight it was. |
 | 2026-08 | Accounts removed — the game is local-only | Ravage shipped with an optional Supabase back end: an AuthScene sign-in/sign-up screen, a `saves` table pushed fire-and-forget from `writeSave`, and a fallback "offline mode" when the env vars were absent. For a free single-player campaign that buys nothing a player wants: an account gate is friction on the front door, a cloud row is a privacy surface and a hosting bill, and the whole sync race (§10.3) existed only to defend against it. Deleted `src/auth/*`, `AuthScene`, the now-orphaned `TextInput` widget, `supabase/schema.sql`, `.env.example`, the `VITE_SUPABASE_*` env declarations, and the `@supabase/supabase-js` dependency. `fetchSlotPreviews` / `activateSlot` / `deleteSlot` are now purely local (still `async` — SaveSlotScene awaits them, and the signature churn wasn't worth it). Title and the intro video route straight to the slot picker; the slot screen reads "Saved on this device". `pickFresher` survives, now reconciling slot cache vs. active mirror rather than local vs. remote. |
 | 2026-05 | Chapter expansion 21 → 30 + Seven Paths structure | Per design intent, the slice grows to 30 chapters with the Seven Paths divergence anchored at B18 (after Grude arrival arc). Existing B18-B21 placeholders replaced with the new chain: B18 (Seven Paths divergence), B19 × 7 (path-specific openers — only chosen path's plays), B20-B22 (shared mid-finale), B23-B24 (path-specific climax pair, branched internally), B25-B27 (shared penultimate / Ravage fleet arrives), B28 (path-specific final battle), B29 (shared aftermath), B30 (path-flavoured epilogue). Total 30 chapters; single playthrough sees ~22-24 (skipping unchosen B19 openers + path-overrides). New `SevenPath` type in contentIds.ts (`vengeance` / `restoration` / `revolution` / `duty` / `exile` / `mercy` / `forgetting`). All new chapters scaffolded with `playable: false`; full authoring + path-routing in OverworldScene + B18 path-pick UI deferred to follow-up passes. See §16 for the full structural design. |
 | 2026-05 | Battle rewards + in-battle inventory display | Closes the inventory loop. Without rewards the squad pool only shrinks (consumables get burned in battle, trading just shuffles existing items). New `BattleNode.rewards: ItemKind[]` field; minted into the squad pool in `BattleScene.checkEnd` on victory before `returnInventoriesToPool`. Each playable battle (B1-B9) authors a thematic reward set tied to the chapter — B5 Mountain drops Ndari's war-trophy Mask, B6 Caravan drops the bandit captain's royal-issue Lens (ties to the ledger reveal), B9 Ravine drops a Dawn-issue Fang from the lieutenant (early hint not all enemies were royal). EndScene shows a "Spoils:" line with kind-aware tallying. Side panel `INV` row now shows glyphs + stack counts (`🧪×3 🎭`) instead of comma-separated names; new `EQ` row sums active equipment passives (`+2 MOV, +10% CRIT`); attack preview tooltip adds `Eq` line + RAVAGED badges so the player understands why their numbers shift. |

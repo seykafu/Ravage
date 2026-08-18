@@ -15,7 +15,7 @@ import { SettingsButton } from "../ui/SettingsButton";
 import { FastForwardButton } from "../ui/FastForwardButton";
 import { IconToggleButton } from "../ui/IconToggleButton";
 import { allEnemyDanger } from "../combat/Danger";
-import { battleById, resolveBattleForPath, type BattleNode } from "../data/battles";
+import { battleById, resolveBattleForPath, waveKey, type BattleNode, type BattleWave } from "../data/battles";
 import { PROMOTIONS } from "../data/promotions";
 import {
   BattleState,
@@ -34,6 +34,7 @@ import { routEnemies, type VictoryCondition } from "../combat/Victory";
 import { previewAttack } from "../combat/Damage";
 import {
   canTriggerReadyCounter,
+  canTriggerRelentlessCounter,
   canTriggerSpeedCounter,
   counterZoneTiles,
   hasDefensiveStance,
@@ -59,6 +60,7 @@ import {
   sfxClick,
   sfxConfirm,
   sfxCrit,
+  sfxRavage,
   sfxDeath,
   sfxDefeat,
   sfxHover,
@@ -222,7 +224,14 @@ export class BattleScene extends Phaser.Scene {
   // The set is rebuilt on resume from the restored round counter, so it
   // needs no serialization of its own.
   private reinforcements: NonNullable<BattleNode["reinforcements"]> = [];
-  private spawnedWaveRounds = new Set<number>();
+  // Reinforcement waves already landed, keyed by wave id (which
+  // defaults to the round number for round-scheduled waves). A Set of
+  // ids rather than rounds because event waves have no round.
+  private spawnedWaves = new Set<string>();
+  // Boss second winds already staged (log line, VFX, dialogue, reserve
+  // wave). Guards the per-action scan from re-staging the same phase
+  // change on every subsequent attack.
+  private stagedSecondWinds = new Set<string>();
   private overlayG!: Phaser.GameObjects.Graphics;
   // Region-contour pass for the movement range — drawn separately from
   // overlayG so its "alive" alpha pulse doesn't throb the attack marks.
@@ -514,10 +523,24 @@ export class BattleScene extends Phaser.Scene {
     // resume, waves for rounds the battle already reached are treated as
     // spawned — their survivors (or corpses) are in the unit snapshot.
     this.reinforcements = node.reinforcements ?? [];
-    this.spawnedWaveRounds = new Set();
+    this.spawnedWaves = new Set();
+    this.stagedSecondWinds = new Set();
     if (resumeSnap) {
       for (const w of this.reinforcements) {
-        if (w.round <= this.initiative.round) this.spawnedWaveRounds.add(w.round);
+        if (w.round !== undefined && w.round <= this.initiative.round) {
+          this.spawnedWaves.add(waveKey(w));
+        }
+        // An event wave already landed iff its boss already stood back
+        // up — that fact rides UnitState through the suspend snapshot.
+        if (w.onSecondWindOf) {
+          const boss = units.find((u) => u.id === w.onSecondWindOf);
+          if (boss?.state.secondWindUsed) this.spawnedWaves.add(waveKey(w));
+        }
+      }
+      // Likewise: don't replay the phase-two staging for a boss that
+      // was already in phase two when the player saved and quit.
+      for (const u of units) {
+        if (u.state.secondWindUsed) this.stagedSecondWinds.add(u.id);
       }
     }
 
@@ -1155,10 +1178,57 @@ export class BattleScene extends Phaser.Scene {
   // enlarged order simply restarts the fresh round.
   private spawnReinforcements(): void {
     const round = this.initiative.round;
+    this.landWaves((w) => w.round === round);
+  }
+
+  // Boss phase two. Scanned after every resolved attack rather than
+  // hooked into one damage path, so however the killing blow arrived —
+  // melee, counter, lens beam, Destruct — the moment stages exactly
+  // once. By the time we get here damageUnit has already refused the
+  // death, restored the HP and multiplied the armor; everything below
+  // is presentation plus the consequences the rest of the fight hangs
+  // off.
+  private stageSecondWinds(): void {
+    for (const u of this.state.units) {
+      if (!u.state.secondWindUsed || this.stagedSecondWinds.has(u.id)) continue;
+      this.stagedSecondWinds.add(u.id);
+      if (u.secondWind) this.pushLog(u.secondWind.announce);
+      sfxRavage();
+      this.cameras.main.shake(320, 0.016);
+      const view = this.unitViews.get(u.id);
+      if (view) {
+        // Two shockwaves off the boss, the second a beat behind, so it
+        // reads as something coming online rather than as another hit.
+        for (const delay of [0, 150]) {
+          const ring = this.addWorld(
+            this.add.circle(view.sprite.x, view.sprite.y, 18)
+              .setStrokeStyle(3, 0xff6a3c, 0.9)
+              .setDepth(46)
+          );
+          this.tweens.add({
+            targets: ring, scale: 3.6, alpha: 0, delay, duration: 640, ease: "Sine.easeOut",
+            onComplete: () => ring.destroy()
+          });
+        }
+      }
+      // HP bar and the side panel are both stale — damageUnit rewrote
+      // the HP and the armor stat underneath them.
+      this.refreshAllUnits();
+      // Reserve lands BEFORE the dialogue opens, so when the player
+      // closes the overlay the new board is already in front of them.
+      this.landWaves((w) => w.onSecondWindOf === u.id);
+      this.dialogue.checkSecondWind(u.id);
+    }
+  }
+
+  // Land every wave matching `pick` that hasn't landed yet. Shared by the
+  // round-scheduled path and the second-wind event path so arrivals look
+  // identical however they were summoned.
+  private landWaves(pick: (w: BattleWave) => boolean): void {
     let landed = false;
     for (const wave of this.reinforcements) {
-      if (wave.round !== round || this.spawnedWaveRounds.has(wave.round)) continue;
-      this.spawnedWaveRounds.add(wave.round);
+      if (!pick(wave) || this.spawnedWaves.has(waveKey(wave))) continue;
+      this.spawnedWaves.add(waveKey(wave));
       landed = true;
       wave.units().forEach((def, i) => {
         const want = wave.at[i] ?? wave.at[wave.at.length - 1] ?? { x: 0, y: 0 };
@@ -2238,6 +2308,10 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private checkEnd(): boolean {
+    // Catch a second wind triggered by any damage path that doesn't run
+    // through applyAttackEffects. Idempotent, so the common case (the
+    // scan already ran there) costs one Set lookup per unit.
+    this.stageSecondWinds();
     const v = this.victory.evaluate({ state: this.state, round: this.initiative.round });
     if (!v) return false;
     this.fsm.send({ tag: "BATTLE_END" });
@@ -2973,7 +3047,10 @@ export class BattleScene extends Phaser.Scene {
       if (!isAlive(u) || u.faction === "player") continue;
       // hasReadyStance, not === "ready" — an enemy in the combined
       // "both" stance still counters, so its threat zone must render.
-      if (!hasReadyStance(u)) continue;
+      // alwaysCounters (boss second wind) threatens the same tiles
+      // permanently, and the player deserves to see that before they
+      // walk into it.
+      if (!hasReadyStance(u) && !u.state.alwaysCounters) continue;
       for (const z of counterZoneTiles(u)) {
         if (z.x < 0 || z.y < 0 || z.x >= this.state.grid.width || z.y >= this.state.grid.height) continue;
         const px = this.projection.tileToWorld(z);
@@ -3841,6 +3918,9 @@ export class BattleScene extends Phaser.Scene {
     // attack, not just lethal ones. Used for character beats keyed on
     // a unit swinging for the first time in this battle.
     this.dialogue.checkAttack(attacker);
+    // Phase-two check runs last: the defender may have just refused to
+    // die, and the staging pauses the scene behind a dialogue overlay.
+    this.stageSecondWinds();
   }
 
   // Surface an XP gain to the player: brief two-note "ding" + a small
@@ -4021,6 +4101,20 @@ export class BattleScene extends Phaser.Scene {
         counterFired = true;
       }
       if (!counterFired && canTriggerSpeedCounter(actualDefender, u)) {
+        await this.delay(260);
+        await this.lunge(actualDefender, u);
+        const counterRoll = rollAttackOnly(this.state, actualDefender, u, true);
+        const counterRes = applyAttackOutcome(actualDefender, u, counterRoll);
+        result.counterTriggered = true;
+        result.counterResult = counterRes;
+        this.applyAttackEffects(actualDefender, u, counterRes);
+        if (counterRes.crit) await this.delay(90);
+        counterFired = true;
+      }
+      // Boss phase two — retaliates unconditionally inside weapon reach.
+      // Checked last so a Ready counter (which costs AP and hits harder)
+      // still wins the slot. Mirrors performAttack in Actions.ts.
+      if (!counterFired && canTriggerRelentlessCounter(actualDefender, u)) {
         await this.delay(260);
         await this.lunge(actualDefender, u);
         const counterRoll = rollAttackOnly(this.state, actualDefender, u, true);

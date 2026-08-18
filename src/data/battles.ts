@@ -1,4 +1,4 @@
-import type { ItemKind, MapDef, UnitDef } from "../combat/types";
+import type { ItemKind, MapDef, SecondWind, UnitDef } from "../combat/types";
 import { ENEMIES, PLAYERS } from "./units";
 import { loadSave } from "../util/save";
 import { ROMANCE_FLAG } from "./romance";
@@ -29,6 +29,10 @@ import type { DialogBeat } from "../story/beats";
 //     technique the first time he picks up a sword in this battle."
 //   - "ally_killed_target" (specific ally lands the killing blow on a
 //     specific enemy) — payoff, fires inline in the kill resolution path.
+//   - "second_wind" (named unit spends its second wind) — the boss
+//     phase-two beat, fired inline the moment damageUnit refuses the
+//     killing blow. Plays before the reserve wave lands, so the line
+//     lands as the reason for what's about to walk onto the board.
 //   - "before_victory" — fires after the victory condition resolves to
 //     "player" but BEFORE the EndScene transition. The dialogue plays
 //     out while the field is frozen; once the player advances past the
@@ -47,7 +51,30 @@ export type BattleDialogueTrigger =
   | { kind: "adjacent_eot"; unitA: string; unitB: string }
   | { kind: "ally_attacks"; allyId: string }
   | { kind: "ally_killed_target"; allyId: string; targetId: string }
+  // Fires the instant `unitId` spends its second wind (UnitDef.secondWind)
+  // — the boss gets back up, and gets a line about it.
+  | { kind: "second_wind"; unitId: string }
   | { kind: "before_victory" };
+
+// One scripted arrival of enemies mid-battle.
+export interface BattleWave {
+  // Stable dedup key. Defaults to the round (or the boss id, for event
+  // waves) when omitted — which is why two round-waves can't share a
+  // round unless you name them.
+  id?: string;
+  // Land as this round begins. Mutually exclusive with onSecondWindOf.
+  round?: number;
+  // Land the instant this unit spends its second wind.
+  onSecondWindOf?: string;
+  at: Array<{ x: number; y: number }>;
+  announce?: string;
+  units: () => UnitDef[];
+}
+
+// The key BattleScene dedups landings by. Keep this the single
+// definition — a wave that lands twice is a very bad bug to debug.
+export const waveKey = (w: BattleWave): string =>
+  w.id ?? (w.onSecondWindOf ? `sw:${w.onSecondWindOf}` : `r${w.round}`);
 
 export interface BattleDialogue {
   // Stable identifier within this battle's dialogues array. Used as the
@@ -87,12 +114,12 @@ export interface BattleNode {
   // squad routs the opening roster and spends the rest of a
   // surviveRounds battle ending turns at an empty field — the B26
   // empty-beach bug.
-  reinforcements?: Array<{
-    round: number;
-    at: Array<{ x: number; y: number }>;
-    announce?: string;
-    units: () => UnitDef[];
-  }>;
+  // A wave lands EITHER on a round (`round`) or on a boss's second wind
+  // (`onSecondWindOf`, the unit id). Exactly one must be set — the
+  // campaign-integrity suite enforces it. Event waves exist so the B28
+  // finale's reserve arrives at the moment the boss stands back up
+  // rather than on a clock the player could out-race.
+  reinforcements?: BattleWave[];
   difficultyLabel: string;
   unlockNote?: string;
   // Ambient particle weather override. When absent, the biome default
@@ -140,6 +167,40 @@ export interface BattleNode {
   // (farmland, mountain pass, harbor) render normally.
   darkBattle?: boolean;
 }
+
+// ---- B28 phase two ---------------------------------------------------
+//
+// Every path's final opponent refuses the first killing blow. They come
+// back at 55% of the bar taking HALF damage for the rest of the fight,
+// they retaliate against anything that closes inside their weapon reach,
+// and their reserve lands on both flanks BEHIND the squad the moment
+// they stand back up.
+//
+// "Twice as tough" is expressed as a damage multiplier rather than
+// doubled armor on purpose — see the note on SecondWind.damageTaken.
+// Measured against the real damage pipeline in
+// combat/__tests__/secondWind.test.ts: phase two costs the strike core
+// about as many swings as the entire boss did before, so the finale is
+// roughly twice the fight, for every character rather than for two.
+const bossPhaseTwo = (announce: string): SecondWind => ({
+  hpFraction: 0.55,
+  damageTaken: 0.5,
+  announce
+});
+
+// Attached at the roster rather than baked into the ENEMIES factory:
+// Archbold anchors BOTH vengeance and mercy, and the two roads deserve
+// different words for the same man refusing to fall. It also keeps the
+// factories reusable for any earlier battle that fields the same unit
+// without a second phase.
+const withSecondWind = (def: UnitDef, sw: SecondWind): UnitDef => ({ ...def, secondWind: sw });
+
+// The reserve arrives as a pincer on the flanking stone, level with and
+// behind the squad's own line (players deploy at y=12-13) — the one
+// direction the whole battle has trained the player to treat as safe.
+const B28_RESERVE_TILES = [
+  { x: 3, y: 11 }, { x: 15, y: 11 }, { x: 3, y: 13 }, { x: 15, y: 13 }
+];
 
 export const BATTLES: BattleNode[] = [
   {
@@ -3434,7 +3495,9 @@ export const BATTLES: BattleNode[] = [
       PLAYERS.ranatoli()
     ],
     buildEnemies: () => [
-      ENEMIES.ravageCommander(20),
+      withSecondWind(ENEMIES.ravageCommander(20), bossPhaseTwo(
+        "The Ravage Commander re-seats its plating. Damage against it counts HALF from here, and it answers every blade that comes inside its reach."
+      )),
       ENEMIES.ravageTrooper("pf_t5", 2810, 20),
       ENEMIES.ravageTrooper("pf_t1", 2801, 19),
       ENEMIES.ravageTrooper("pf_t2", 2802, 19),
@@ -3445,6 +3508,21 @@ export const BATTLES: BattleNode[] = [
       ENEMIES.ravageLancer("pf_l3", 2807, 20),
       ENEMIES.ravageMarksman("pf_m1", 2808, 20),
       ENEMIES.ravageMarksman("pf_m2", 2809, 19)
+    ],
+    // The reserve the Commander was always holding — it lands behind the
+    // squad the instant the thing stands back up.
+    reinforcements: [
+      {
+        onSecondWindOf: "ravage_commander",
+        at: B28_RESERVE_TILES,
+        announce: "The ramp opens a second time. A reserve comes down behind you.",
+        units: () => [
+          ENEMIES.ravageTrooper("pf_res1", 2851, 20),
+          ENEMIES.ravageTrooper("pf_res2", 2852, 20),
+          ENEMIES.ravageLancer("pf_res3", 2853, 20),
+          ENEMIES.ravageMarksman("pf_res4", 2854, 19)
+        ]
+      }
     ],
     difficultyLabel: "Final Boss",
     victory: defeatUnit("ravage_commander", { label: "Break the Ravage Commander" }),
@@ -3458,6 +3536,16 @@ export const BATTLES: BattleNode[] = [
             body: "The Herald priced you. I came to pay. (It descends the ramp alone, then its guard follows.) One question first, mender of ledgers. When we are gone, will this world still be worth what you cost us?" },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "Ask the villages behind me in a hundred years. That's the only answer either of us would believe. (Draws.) Squad: everything we have. This is the door the whole war knocks on." }
+        ]
+      },
+      {
+        id: "b28_base_phase2",
+        trigger: { kind: "second_wind", unitId: "ravage_commander" },
+        beats: [
+          { speaker: "The Ravage Commander", portraitId: "reaver",
+            body: "(It goes down on the marble, and the marble is not where it stops. Something under the plate re-seats itself with a sound like a ledger being reopened, and it stands, and behind it the ramp opens a second time.) The first body was the bid, mender of ledgers. This one is the price. We do not arrive at a number twice." },
+          { speaker: "Amar", portraitId: "amar", expression: "resolute",
+            body: "Then we pay it. (He doesn't step back, and nobody steps back with him.) Squad — everything we land on it counts half now, and it answers every blade that goes inside its reach. Two on one, always. Veya, keep the light on it." }
         ]
       },
       {
@@ -3479,7 +3567,9 @@ export const BATTLES: BattleNode[] = [
         outro: "The list ends on the marble where the kings of Grude were crowned. Maya takes the signet ring, not as a trophy: as a receipt. The fleet, its bargain dead, rises without a second glance at the world it almost bought.",
         victory: defeatUnit("archbold", { label: "The last name" }),
         buildEnemies: () => [
-          ENEMIES.archbold(20),
+          withSecondWind(ENEMIES.archbold(20), bossPhaseTwo(
+            "Archbold takes up the coronation plate. Damage against him counts HALF from here, and he answers every blade that comes inside his reach."
+          )),
           ENEMIES.royalGuard("pf_v9", 2819, 20),
           ENEMIES.royalGuard("pf_v1", 2811, 18),
           ENEMIES.royalGuard("pf_v2", 2812, 18),
@@ -3490,6 +3580,19 @@ export const BATTLES: BattleNode[] = [
           ENEMIES.ravageTrooper("pf_v3", 2813, 19),
           ENEMIES.ravageTrooper("pf_v4", 2814, 19),
           ENEMIES.ravageLancer("pf_v10", 2820, 20)
+        ],
+        reinforcements: [
+          {
+            onSecondWindOf: "archbold",
+            at: B28_RESERVE_TILES,
+            announce: "The household guard comes up the processional behind you.",
+            units: () => [
+              ENEMIES.royalGuard("pf_vres1", 2861, 20),
+              ENEMIES.royalGuard("pf_vres2", 2862, 20),
+              ENEMIES.royalArcher("pf_vres3", 2863, 19),
+              ENEMIES.ravageTrooper("pf_vres4", 2864, 20)
+            ]
+          }
         ],
         dialogues: [
           {
@@ -3513,6 +3616,16 @@ export const BATTLES: BattleNode[] = [
             ]
           },
           {
+            id: "b28_v_phase2",
+            trigger: { kind: "second_wind", unitId: "archbold" },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold",
+                body: "(He goes down on one knee. He comes back up inside the old coronation plate, and what is left of his household comes up the processional behind him at a walk.) Kings do not die the first time, boy. That is the entire trick of us. (The visor comes down.) Your mother learned it standing about where you are standing." },
+              { speaker: "Maya", portraitId: "maya",
+                body: "(not looking up from the line she is holding) Then I'll write his name twice and cross it out twice. (Flat.) Amar — half of everything we land on him now, and he hits back at anything that steps in close. Nobody trades with him alone. Not even you." }
+            ]
+          },
+          {
             id: "b28_v_bv",
             trigger: { kind: "before_victory" },
             beats: [
@@ -3531,7 +3644,9 @@ export const BATTLES: BattleNode[] = [
         outro: "No thrones. It cost the revolution its heart to mean it, and on the marble where every crown in the west was ever set, nothing is set. The wind moves across the processional. It is enough.",
         victory: defeatUnit("dawn_boss", { label: "No thrones" }),
         buildEnemies: () => [
-          ENEMIES.dawnBoss(20),
+          withSecondWind(ENEMIES.dawnBoss(20), bossPhaseTwo(
+            "Madame Dawn brings up the harness she costed thirty years ago. Damage against her counts HALF from here, and she answers every blade that comes inside her reach."
+          )),
           ENEMIES.dawnLoyalist(18),
           ENEMIES.banditSwordsman("pf_r1", 2821, 17),
           ENEMIES.banditSwordsman("pf_r4", 2825, 19),
@@ -3542,6 +3657,19 @@ export const BATTLES: BattleNode[] = [
           ENEMIES.royalGuard("pf_r7", 2828, 19),
           ENEMIES.royalArcher("pf_r8", 2829, 19),
           ENEMIES.ravageTrooper("pf_r9", 2830, 19)
+        ],
+        reinforcements: [
+          {
+            onSecondWindOf: "dawn_boss",
+            at: B28_RESERVE_TILES,
+            announce: "Green cloaks come out of the colonnade behind you. She costed them too.",
+            units: () => [
+              ENEMIES.banditSwordsman("pf_rres1", 2871, 19),
+              ENEMIES.banditSwordsman("pf_rres2", 2872, 19),
+              ENEMIES.banditArcher("pf_rres3", 2873, 19),
+              ENEMIES.royalGuard("pf_rres4", 2874, 19)
+            ]
+          }
         ],
         dialogues: [
           {
@@ -3562,6 +3690,16 @@ export const BATTLES: BattleNode[] = [
                 body: "I carried you eleven months, and I have carried the world for thirty years, and neither of you has ever once weighed what that costs. (Her guard falters, once, for the first time in the whole war.) Yield, my son. I cannot spend you. I proved that at the quay." },
               { speaker: "Amar", portraitId: "amar", expression: "wounded",
                 body: "And I can't spend a world to keep you warm. That's the difference, and it's the only one. (Quietly.) I love you entirely. Put it down, mother. Please. Put it down and live." }
+            ]
+          },
+          {
+            id: "b28_r_phase2",
+            trigger: { kind: "second_wind", unitId: "dawn_boss" },
+            beats: [
+              { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
+                body: "(She goes down, and on the way down her hand finds the case at her belt, and what comes out of it is thirty years old and has never once been used.) I costed this too. (The harness closes over her like a decision being made.) Thirty years I carried it and did not spend it. Not for Grude. Not for your father. (Quietly.) For the day my son made me." },
+              { speaker: "Amar", portraitId: "amar", expression: "quiet_grief",
+                body: "You kept it for me. (His voice doesn't hold, and he doesn't let that stop him.) Squad — half of everything we land on her, and she answers anything that goes inside her reach. Wear her down. Slowly. She'll make us earn every step of it, because she always does." }
             ]
           },
           {
@@ -3595,6 +3733,16 @@ export const BATTLES: BattleNode[] = [
             ]
           },
           {
+            id: "b28_d_phase2",
+            trigger: { kind: "second_wind", unitId: "ravage_commander" },
+            beats: [
+              { speaker: "The Ravage Commander", portraitId: "reaver",
+                body: "(It rises out of its own wreckage, and the reserve comes down the ramp behind it at the pace of something that has all night.) Your order said hold. (The visor finds him and stays there.) Hold longer, captain." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "The order never said once. (He sets his feet exactly where they already were.) Line holds — it takes half of everything now and it answers anything inside its reach, so nobody goes in alone and nobody chases. Ning, both flanks are yours. Hold." }
+            ]
+          },
+          {
             id: "b28_d_bv",
             trigger: { kind: "before_victory" },
             beats: [
@@ -3613,7 +3761,9 @@ export const BATTLES: BattleNode[] = [
         outro: "On the marble where his ancestors were crowned, Archbold surrenders his sword to the son he tried to unmake, and lives. The fourth surrender was a captain. The last one is a king. The war ends with the sound of steel set down, not driven in.",
         victory: defeatUnit("archbold", { label: "Break the King" }),
         buildEnemies: () => [
-          ENEMIES.archbold(20),
+          withSecondWind(ENEMIES.archbold(20), bossPhaseTwo(
+            "Archbold refuses the ground and takes up the coronation plate. Damage against him counts HALF from here, and he answers every blade that comes inside his reach."
+          )),
           ENEMIES.royalGuard("pf_m8", 2838, 20),
           ENEMIES.royalGuard("pf_m1", 2831, 18),
           ENEMIES.royalGuard("pf_m2", 2832, 18),
@@ -3624,6 +3774,19 @@ export const BATTLES: BattleNode[] = [
           ENEMIES.royalArcher("pf_m7", 2837, 19),
           ENEMIES.ravageTrooper("pf_m9", 2839, 19),
           ENEMIES.ravageLancer("pf_m10", 2840, 19)
+        ],
+        reinforcements: [
+          {
+            onSecondWindOf: "archbold",
+            at: B28_RESERVE_TILES,
+            announce: "The last of the household comes up the road behind you.",
+            units: () => [
+              ENEMIES.royalGuard("pf_mres1", 2881, 20),
+              ENEMIES.royalGuard("pf_mres2", 2882, 19),
+              ENEMIES.royalArcher("pf_mres3", 2883, 19),
+              ENEMIES.ravageLancer("pf_mres4", 2884, 20)
+            ]
+          }
         ],
         dialogues: [
           {
@@ -3644,6 +3807,16 @@ export const BATTLES: BattleNode[] = [
                 body: "(breathing hard) You fight like her. You spare like no one I have ever met. What are you, boy? Whose victory is this supposed to be?" },
               { speaker: "Amar", portraitId: "amar", expression: "guarded",
                 body: "A surgeon taught me you can stop a man without ending him. She never asked which side the wound was on. (Steel level.) Yield, father. Live long enough to be sorry." }
+            ]
+          },
+          {
+            id: "b28_m_phase2",
+            trigger: { kind: "second_wind", unitId: "archbold" },
+            beats: [
+              { speaker: "King Archbold", portraitId: "archbold",
+                body: "(He should be finished. He is not finished. The old plate comes down over him and the last of his household comes up the road behind it.) You will NOT give me this, boy. (Breathing like a bellows.) A man who is spared is a man who was beaten and then pitied for it. I will have the other thing. I will have it from YOU." },
+              { speaker: "Amar", portraitId: "amar", expression: "resolute",
+                body: "You'll have what I decide to give you, and I decided a long way back. (Level.) Squad — half of everything lands on him now, and he answers anything that steps inside his reach. Wear him down. Nobody finishes him. That order hasn't changed and it isn't going to." }
             ]
           },
           {
@@ -3744,6 +3917,9 @@ export interface PathOverride {
   // Per-path battle score. B28 splits its final-battle music by the
   // chosen path's temperament (Sad vs Attack) through this.
   music?: MusicKey;
+  // Per-path reserve waves. B28 needs these because each road fights a
+  // different opponent, so each road's reserve is a different army.
+  reinforcements?: BattleWave[];
   // Full replacement of the battle's dialogue set (the climax battles
   // B23/B24/B28 use this — each path fights a genuinely different scene).
   dialogues?: BattleDialogue[];

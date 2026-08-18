@@ -288,6 +288,104 @@ describe("survive-battle reinforcement waves", () => {
   });
 });
 
+describe("reinforcement wave schema", () => {
+  // Applies to EVERY battle and every path variant, not just the
+  // survive-the-clock ones. A wave with neither trigger never lands; a
+  // wave with both is ambiguous; a wave keyed to a boss with no second
+  // wind is a reserve that can never arrive. All three fail silently in
+  // play — the battle just quietly lacks the fight it was authored to
+  // have — so they get caught here instead.
+  const PATHS: SevenPath[] = ["vengeance", "restoration", "revolution", "duty", "mercy"];
+  const variants: Array<[string, BattleNode]> = [];
+  for (const node of BATTLES) {
+    variants.push([node.id, node]);
+    for (const path of PATHS) {
+      const r = resolveBattleForPath(node, path);
+      if (r !== node) variants.push([`${node.id}:${path}`, r]);
+    }
+  }
+
+  it("every wave lands on exactly one trigger, on valid tiles, with unique ids", () => {
+    for (const [label, node] of variants) {
+      const waves = node.reinforcements ?? [];
+      if (waves.length === 0) continue;
+      const grid = node.map ? new Grid(node.map) : null;
+      const roster = node.buildEnemies ? node.buildEnemies() : [];
+      const ids = new Set(roster.map((u) => u.id));
+      const keys = new Set<string>();
+      for (const w of waves) {
+        const hasRound = w.round !== undefined;
+        const hasEvent = w.onSecondWindOf !== undefined;
+        expect(hasRound !== hasEvent, `${label}: wave must set exactly one of round / onSecondWindOf`).toBe(true);
+
+        if (hasEvent) {
+          const boss = roster.find((u) => u.id === w.onSecondWindOf);
+          expect(boss, `${label}: reserve keyed to absent unit ${w.onSecondWindOf}`).toBeDefined();
+          expect(
+            boss!.secondWind,
+            `${label}: reserve keyed to ${w.onSecondWindOf}, which has no second wind — it could never land`
+          ).toBeDefined();
+        }
+
+        const key = w.id ?? (w.onSecondWindOf ? `sw:${w.onSecondWindOf}` : `r${w.round}`);
+        expect(keys.has(key), `${label}: two waves share the dedup key ${key} — one would never land`).toBe(false);
+        keys.add(key);
+
+        const defs = w.units();
+        expect(defs.length, `${label}: empty wave`).toBeGreaterThan(0);
+        expect(w.at.length, `${label}: fewer entry tiles than units`).toBeGreaterThanOrEqual(defs.length);
+        if (grid) {
+          for (const pos of w.at) {
+            expect(grid.inBounds(pos), `${label}: entry (${pos.x},${pos.y}) out of bounds`).toBe(true);
+            expect(grid.tileAt(pos).blocksMovement, `${label}: entry (${pos.x},${pos.y}) impassable`).toBe(false);
+          }
+        }
+        for (const d of defs) {
+          expect(d.faction, `${label}: wave unit ${d.id} is not enemy faction`).toBe("enemy");
+          expect(ids.has(d.id), `${label}: duplicate unit id ${d.id} would corrupt views/serialization`).toBe(false);
+          ids.add(d.id);
+        }
+      }
+    }
+  });
+
+  it("every second_wind dialogue names a unit in its own roster that actually has one", () => {
+    // A trigger pointed at a unit this variant does not field (or fields
+    // without a phase two) is a beat the player can never see. Easy to
+    // introduce: the path overrides swap the boss, and B28's Archbold
+    // roads and Dawn road each need their own line.
+    for (const [label, node] of variants) {
+      const roster = node.buildEnemies ? node.buildEnemies() : [];
+      for (const dlg of node.dialogues ?? []) {
+        // Bound to a local so the narrowing survives into the closure
+        // below — re-reading dlg.trigger widens back to the union.
+        const trig = dlg.trigger;
+        if (trig.kind !== "second_wind") continue;
+        const target = roster.find((u) => u.id === trig.unitId);
+        expect(target, `${label}/${dlg.id}: second_wind names ${trig.unitId}, absent from this roster`).toBeDefined();
+        expect(
+          target!.secondWind,
+          `${label}/${dlg.id}: ${trig.unitId} has no second wind, so this beat can never fire`
+        ).toBeDefined();
+      }
+    }
+  });
+
+  it("every boss with a second wind has a beat and a reserve on every road that fields it", () => {
+    for (const [label, node] of variants) {
+      const roster = node.buildEnemies ? node.buildEnemies() : [];
+      for (const boss of roster.filter((u) => u.secondWind)) {
+        const hasBeat = (node.dialogues ?? []).some(
+          (d) => d.trigger.kind === "second_wind" && d.trigger.unitId === boss.id
+        );
+        expect(hasBeat, `${label}: ${boss.id} stands back up with nothing to say`).toBe(true);
+        const hasReserve = (node.reinforcements ?? []).some((w) => w.onSecondWindOf === boss.id);
+        expect(hasReserve, `${label}: ${boss.id} stands back up with no reserve`).toBe(true);
+      }
+    }
+  });
+});
+
 describe("battle dialogue portraits", () => {
   it("every speaking beat carries a portraitId — no faceless dialogue panels", () => {
     // A beat with a speaker but no portraitId renders an empty space next
@@ -366,7 +464,12 @@ describe("hold battles end when the field is cleared", () => {
       const { players, enemies } = buildRoster(node);
       const grid = new Grid(node.map!);
       const state = { units: [...players, ...enemies], grid, rng: new Rng(3) };
-      const lastWave = Math.max(...(node.reinforcements ?? []).map((w) => w.round), 0);
+      // Round-scheduled waves only — an event wave (onSecondWindOf)
+      // has no round and can't be part of a clock argument.
+      const lastWave = Math.max(
+        ...(node.reinforcements ?? []).map((w) => w.round ?? 0),
+        0
+      );
       for (const e of enemies) { e.state.hp = 0; e.state.alive = false; }
       // Before the last wave, an empty field proves nothing — the waves
       // are still coming, and skipping them would skip the battle.

@@ -1,6 +1,6 @@
 import { Grid } from "./Grid";
 import { previewAttack } from "./Damage";
-import { canTriggerReadyCounter, canTriggerSpeedCounter, spendReady } from "./Stances";
+import { canTriggerReadyCounter, canTriggerRelentlessCounter, canTriggerSpeedCounter, spendReady } from "./Stances";
 import { beginUnitTurn, damageUnit, hasAbility, isAlive } from "./Unit";
 import { equipmentBonuses } from "./items";
 import type { AttackResult, Stance, Tile, TilePos, Unit } from "./types";
@@ -170,6 +170,11 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
       result.counterTriggered = true;
       result.counterResult = counter;
     } else if (canTriggerSpeedCounter(defender, attacker)) {
+      const counter = rollAttack(state, defender, attacker, true);
+      result.counterTriggered = true;
+      result.counterResult = counter;
+    } else if (canTriggerRelentlessCounter(defender, attacker)) {
+      // Boss phase two: retaliates unconditionally, base damage.
       const counter = rollAttack(state, defender, attacker, true);
       result.counterTriggered = true;
       result.counterResult = counter;

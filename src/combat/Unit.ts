@@ -27,7 +27,10 @@ export const createUnit = (def: UnitDef, position: TilePos): Unit => {
     roamUsedThisTurn: false,
     damageTakenSinceLastTurn: 0,
     ravagedNextTurn: false,
-    ravagedActive: false
+    ravagedActive: false,
+    secondWindUsed: false,
+    alwaysCounters: false,
+    damageTakenMult: 1
   };
   return { ...def, state };
 };
@@ -77,9 +80,34 @@ export const effectiveMaxAp = (u: Unit): number =>
 
 export const isAlive = (u: Unit): boolean => u.state.alive && u.state.hp > 0;
 
-export const damageUnit = (u: Unit, amount: number): void => {
+// Bring a unit back from a killing blow, once. Called only from
+// damageUnit, which is the single chokepoint every damage source in the
+// game funnels through — so the phase change can't be skipped by an
+// ability or a counter that takes an unusual route to the HP bar.
+const applySecondWind = (u: Unit): void => {
+  const sw = u.secondWind;
+  if (!sw) return;
+  u.state.secondWindUsed = true;
+  u.state.alwaysCounters = true;
+  u.state.alive = true;
+  u.state.hp = Math.max(1, Math.round(u.stats.hp * sw.hpFraction));
+  u.state.damageTakenMult = sw.damageTaken;
+  // Whatever just came online absorbs the shock — measure Ravage from a
+  // clean baseline instead of letting the blow that "killed" them carry
+  // over and ravage the boss on its first turn back.
+  u.state.damageTakenSinceLastTurn = 0;
+  u.state.ravagedNextTurn = false;
+};
+
+// Returns true when this damage triggered a second wind, so the caller
+// can stage the moment (log line, VFX, dialogue, reinforcements).
+export const damageUnit = (u: Unit, amount: number): boolean => {
   u.state.hp -= amount;
   if (u.state.hp <= 0) {
+    if (u.secondWind && !u.state.secondWindUsed) {
+      applySecondWind(u);
+      return true;
+    }
     u.state.hp = 0;
     u.state.alive = false;
   }
@@ -92,6 +120,7 @@ export const damageUnit = (u: Unit, amount: number): void => {
   if (u.state.alive && u.state.damageTakenSinceLastTurn >= u.stats.hp * RAVAGE_THRESHOLD_PCT) {
     u.state.ravagedNextTurn = true;
   }
+  return false;
 };
 
 export const healUnit = (u: Unit, amount: number): number => {

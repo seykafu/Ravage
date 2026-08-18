@@ -45,7 +45,12 @@ const PROMO_LEVEL = 12;
 // Project a player def to the battle's intended level: base stats plus
 // expected growth gains (growth% x levels), plus the promotion boost
 // once the campaign is past the promotion era.
-const projectPlayer = (def: UnitDef, level: number): Unit => {
+//
+// Exported so balance-sensitive tests outside this file (the B28
+// second-wind guards) model a squad the same way the campaign curve
+// does — two different notions of "what a player looks like at L20"
+// would let one of them drift and quietly stop guarding anything.
+export const projectPlayer = (def: UnitDef, level: number): Unit => {
   const gained = Math.max(0, level - def.level);
   const g = def.growths ?? { hp: 0, power: 0, armor: 0, speed: 0, movement: 0 };
   const promoted = level >= PROMO_LEVEL;

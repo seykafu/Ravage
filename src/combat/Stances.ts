@@ -67,6 +67,17 @@ export const canTriggerSpeedCounter = (defender: Unit, attacker: Unit): boolean 
   return inCounterRange(defender, attacker);
 };
 
+// Unconditional retaliation, granted by a boss second wind (see
+// UnitDef.secondWind). No stance to spend and no speed gate — the only
+// remaining question is weapon reach, so closing to melee on a boss in
+// phase two always costs you a hit back. Deliberately checked LAST in
+// performAttack: a Ready counter still takes priority, because Ready
+// carries the +25% damage kicker and the unit paid AP for it.
+export const canTriggerRelentlessCounter = (defender: Unit, attacker: Unit): boolean => {
+  if (!defender.state.alwaysCounters) return false;
+  return inCounterRange(defender, attacker);
+};
+
 // Tiles from which `defender` can counter. Used to render the threat-zone
 // overlay so the player can see where Ready enemies will retaliate.
 export const counterZoneTiles = (defender: Unit): { x: number; y: number }[] => {

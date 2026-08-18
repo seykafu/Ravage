@@ -147,6 +147,22 @@ export interface GrowthTable {
 export const LEVEL_CAP = 20;
 export const XP_PER_LEVEL = 100;
 
+export interface SecondWind {
+  // Fraction of MAX hp the unit returns at (0.55 = comes back at 55%).
+  hpFraction: number;
+  // Incoming damage is multiplied by this for the rest of the fight.
+  // 0.5 IS the "twice as hard to kill" beat, and it is deliberately a
+  // damage multiplier rather than a doubled armor stat: armor is
+  // SUBTRACTIVE in this game (power x mods - armor), so doubling it
+  // floors every attacker under the armor value at 1 damage and turns
+  // most of the squad into spectators, while the two heaviest hitters
+  // barely notice. Halving damage scales every character identically —
+  // the boss really is twice as tough, for everyone.
+  damageTaken: number;
+  // Battle-log line the moment it fires.
+  announce: string;
+}
+
 export interface UnitDef {
   id: string;
   name: string;
@@ -197,6 +213,16 @@ export interface UnitDef {
   // growths table simply don't roll new stats on level up (used for
   // single-encounter bosses and the like).
   growths?: GrowthTable;
+  // Boss second phase. When this unit's HP would first reach 0, it does
+  // NOT fall: it comes back at `hpFraction` of max HP with its armor
+  // multiplied and retaliation made unconditional. Fires exactly once —
+  // empty the bar a second time and the unit dies normally.
+  //
+  // Deliberately intercepted inside damageUnit (Unit.ts) rather than at
+  // the attack layer, so EVERY damage source routes through it: melee,
+  // counters, lens fire, Destruct. A victory condition built on
+  // defeatUnit therefore can't fire early — the boss is still alive.
+  secondWind?: SecondWind;
   // The level this def's authored STATS were tuned for. The difficulty
   // layer scales stats for levels above this reference, so a Royal Guard
   // fielded at L16 fights like a L16 soldier instead of the L6 statline
@@ -236,6 +262,21 @@ export interface UnitState {
   // damaging a unit AFTER they cross the threshold but before their next
   // turn doesn't double-apply.
   ravagedNextTurn: boolean;
+  // Second-wind bookkeeping. Flips true the first time this unit's HP
+  // would hit 0 while UnitDef.secondWind is unspent — see damageUnit.
+  // Persisted through the suspend snapshot (it rides UnitState), so a
+  // boss that has already used its phase two doesn't get another one
+  // when the player resumes a saved fight.
+  secondWindUsed: boolean;
+  // Unconditional retaliation: this unit counters ANY attacker inside
+  // its weapon reach, with no Ready stance and no speed requirement.
+  // Granted by a second wind; nothing else sets it today.
+  alwaysCounters: boolean;
+  // Multiplier on all incoming damage. 1 for everyone until a second
+  // wind sets it (see SecondWind.damageTaken). Lives on state rather
+  // than being read off the def so the damage pipeline stays a pure
+  // state read, and so it rides the suspend snapshot for free.
+  damageTakenMult: number;
   // True for the duration of a unit's turn when they entered it Ravaged.
   // Read by Damage.ts (attackerRavageModifier / defenderRavageModifier)
   // and Actions.ts (effectiveMovement adds +1). Cleared at endUnitTurn.

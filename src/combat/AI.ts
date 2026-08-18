@@ -21,7 +21,10 @@ interface PlannedAction {
 }
 
 const isInReadyZoneOf = (state: BattleState, p: TilePos, defender: Unit): boolean => {
-  if (!hasReadyStance(defender)) return false;
+  // alwaysCounters (boss second wind) threatens the same tiles a Ready
+  // stance does, and permanently — the AI should read it as a threat
+  // zone too rather than walking into free retaliation.
+  if (!hasReadyStance(defender) && !defender.state.alwaysCounters) return false;
   for (const z of counterZoneTiles(defender)) if (z.x === p.x && z.y === p.y) return true;
   return false;
 };
