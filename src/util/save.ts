@@ -227,6 +227,14 @@ export const recordSquadDeaths = (s: SaveState, count: number): SaveState => {
   return { ...s, squadDeaths: getSquadDeaths(s) + count };
 };
 
+// Set the tally outright. recordSquadDeaths only ever ADDS; restarting a
+// chapter has to give losses BACK, refunding the failed attempt so the
+// player retries with the budget they entered the chapter holding.
+export const setSquadDeaths = (s: SaveState, count: number): SaveState => ({
+  ...s,
+  squadDeaths: Math.max(0, Math.floor(count))
+});
+
 // True when the campaign has burned through its death budget. Consumed
 // by BattleScene.checkEnd post-victory to choose between EndScene and
 // GameOverScene.

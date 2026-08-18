@@ -1821,6 +1821,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private lastActorFaction: Unit["faction"] | null = null;
+  // Player units lost in THIS battle — passed to GameOverScene so a
+  // chapter restart can refund them.
+  private lastBattleDeaths = 0;
 
   // Couple the global tween + timer scale to the fast-forward toggle. Only
   // boosts during enemy turns so the player's own animations stay at the
@@ -2258,6 +2261,8 @@ export class BattleScene extends Phaser.Scene {
         }
       }
       save = recordSquadDeaths(save, playerDeathsThisBattle);
+      // Remembered for GameOverScene's chapter restart, which refunds them.
+      this.lastBattleDeaths = playerDeathsThisBattle;
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "victory" } };
     } else {
       save = { ...save, lastBattleResult: { id: this.battleId, outcome: "defeat" } };
@@ -2397,7 +2402,7 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       if (v === "player" && hasExceededDeathLimit(loadSave())) {
-        this.scene.start("GameOverScene", { battleId: this.battleId });
+        this.scene.start("GameOverScene", { battleId: this.battleId, deathsThisBattle: this.lastBattleDeaths });
         return;
       }
       this.scene.start("EndScene", { battleId: this.battleId, outcome: v });

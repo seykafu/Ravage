@@ -6,24 +6,31 @@ import { battleById } from "../data/battles";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getMusic, MUSIC } from "../audio/Music";
 import { sfxConfirm, sfxDefeat } from "../audio/Sfx";
-import { loadSave, MAX_PERMITTED_DEATHS, resetSaveSlot } from "../util/save";
+import { clearSuspendedBattle, loadSave, MAX_PERMITTED_DEATHS, resetSaveSlot, setSquadDeaths, writeSave } from "../util/save";
 import { SettingsButton } from "../ui/SettingsButton";
 import type { BattleId } from "../data/contentIds";
 
 interface GameOverArgs {
   battleId: BattleId;
+  // Player units lost in the battle that ended the run. Restarting the
+  // chapter refunds exactly these, so the retry begins with the budget
+  // the player carried INTO the chapter — otherwise the refunded run
+  // would game-over again the moment anyone fell.
+  deathsThisBattle?: number;
 }
 
 // Terminal scene shown when the campaign-wide death budget is exceeded.
 // Reachable only from BattleScene.transitionToEndScene when the just-
 // completed battle pushes squadDeaths past MAX_PERMITTED_DEATHS.
 //
-// Two affordances:
-//   * "Restart slot" — wipes the save back to a fresh slot and routes to
-//     SaveSlotScene so the player can re-enter B1 from a clean state.
-//   * "Title" — bows out to TitleScene without modifying the save (a
-//     curious player can poke at the broken run via DevJump if they
-//     want, but the campaign itself won't let them progress).
+// Two ways back in, because losing a campaign twenty chapters deep to a
+// death budget should not mean losing the campaign:
+//   * "Restart Chapter" — refunds the losses this battle cost, clears
+//     any suspend, and drops the player back into that chapter's prep.
+//     The run continues; only the failed attempt is undone.
+//   * "Restart Entire Game" — wipes the slot back to a fresh save after
+//     confirming, and routes to SaveSlotScene for a clean B1.
+// A small Title exit remains so the screen is never a trap.
 //
 // The scene reuses EndScene's defeat treatment (heavy vignette, danger
 // music) on top of a unique "the line broke for good" copy block so the
@@ -31,11 +38,13 @@ interface GameOverArgs {
 // retry.
 export class GameOverScene extends Phaser.Scene {
   private battleId!: BattleId;
+  private deathsThisBattle = 0;
 
   constructor() { super("GameOverScene"); }
 
   init(data: GameOverArgs): void {
     this.battleId = data.battleId;
+    this.deathsThisBattle = data.deathsThisBattle ?? 0;
   }
 
   create(): void {
@@ -82,12 +91,21 @@ export class GameOverScene extends Phaser.Scene {
 
     const save = loadSave();
     const deaths = save.squadDeaths ?? 0;
+    const refunded = Math.max(0, deaths - this.deathsThisBattle);
+    const chapterName = node ? `${node.title} — ${node.subtitle}` : "this chapter";
     const body =
-      `Four bodies in the dirt. The squad can absorb a hard fight or two — but a campaign can't ` +
-      `bury more than ${MAX_PERMITTED_DEATHS}. Madame Dawn's people will keep moving without you. ` +
-      `Amar's name will fade.\n\n` +
-      `Total losses: ${deaths} of ${MAX_PERMITTED_DEATHS} permitted.\n\n` +
-      `Restart the slot to take another run at it, or step back to the title.`;
+      `The squad can absorb a hard fight or two — but a campaign can't bury more than ` +
+      `${MAX_PERMITTED_DEATHS}. Madame Dawn's people will keep moving without you.
+
+` +
+      `Total losses: ${deaths} of ${MAX_PERMITTED_DEATHS} permitted` +
+      (this.deathsThisBattle > 0 ? `  ·  ${this.deathsThisBattle} of them in ${chapterName}` : "") +
+      `.
+
+` +
+      `Take the chapter again and those ${this.deathsThisBattle > 0 ? this.deathsThisBattle : "recent"} ` +
+      `losses are struck from the ledger — you'd go back in at ${refunded} of ${MAX_PERMITTED_DEATHS}. ` +
+      `Or start the whole road over from the palace.`;
 
     this.add.text(panelX + 28, panelY + 22, body, {
       fontFamily: FAMILY_BODY,
@@ -98,39 +116,67 @@ export class GameOverScene extends Phaser.Scene {
     });
 
     // Buttons row.
-    const btnY = GAME_HEIGHT - 80;
+    const btnY = GAME_HEIGHT - 108;
     const btnH = 48;
     const btnW = 220;
     const gap = 24;
 
-    const restartBtn = new Button(this, {
+    const chapterBtn = new Button(this, {
       x: GAME_WIDTH / 2 - btnW - gap / 2,
       y: btnY,
       w: btnW,
       h: btnH,
-      label: "Restart Slot",
+      label: "Restart Chapter",
       primary: true,
       fontSize: 18,
       onClick: () => {
         sfxConfirm();
-        // Wipe the save first so the player can't dodge by hitting
-        // back/forward — squadDeaths goes back to 0, completed/unlocked
-        // resets, character records cleared. Then route to SaveSlotScene
-        // (which is the canonical "pick a slot to play" entry).
+        // Refund this chapter's losses and drop any mid-battle snapshot,
+        // then hand the player back to its prep screen. Everything else
+        // about the run — levels, items, unlocks — is untouched.
+        const s = loadSave();
+        writeSave(setSquadDeaths(s, (s.squadDeaths ?? 0) - this.deathsThisBattle));
+        clearSuspendedBattle();
+        this.cameras.main.fadeOut(450, 0, 0, 0);
+        this.cameras.main.once("camerafadeoutcomplete", () =>
+          this.scene.start("BattlePrepScene", { battleId: this.battleId })
+        );
+      }
+    });
+
+    const restartBtn = new Button(this, {
+      x: GAME_WIDTH / 2 + gap / 2,
+      y: btnY,
+      w: btnW,
+      h: btnH,
+      label: "Restart Entire Game",
+      primary: false,
+      fontSize: 16,
+      onClick: () => {
+        sfxConfirm();
+        // Destructive and previously unguarded — one click used to erase
+        // a whole campaign.
+        const ok = window.confirm(
+          "Restart the entire game?\n\nThis erases this slot completely — every chapter, " +
+          "level, and item — and begins again at the palace.\n\nRestarting just the chapter " +
+          "keeps your run."
+        );
+        if (!ok) return;
         resetSaveSlot();
         this.cameras.main.fadeOut(450, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("SaveSlotScene"));
       }
     });
 
+    // Small exit so the screen is never a dead end.
     const titleBtn = new Button(this, {
-      x: GAME_WIDTH / 2 + gap / 2,
-      y: btnY,
-      w: btnW,
-      h: btnH,
+      x: GAME_WIDTH / 2 - 70,
+      y: btnY + btnH + 10,
+      w: 140,
+      h: 30,
       label: "Title",
       primary: false,
-      fontSize: 16,
+      fontSize: 13,
       onClick: () => {
         sfxConfirm();
         this.cameras.main.fadeOut(450, 0, 0, 0);
@@ -138,7 +184,7 @@ export class GameOverScene extends Phaser.Scene {
       }
     });
 
-    void restartBtn; void titleBtn;
+    void chapterBtn; void restartBtn; void titleBtn;
 
     sfxDefeat();
     getMusic(this).play(MUSIC.danger, { fadeMs: 1000 });
