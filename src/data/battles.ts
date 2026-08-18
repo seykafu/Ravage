@@ -5,7 +5,7 @@ import { ROMANCE_FLAG } from "./romance";
 import { bridgeMap, caravanMap, cliffsMap, cottageCoveMap, courtyardMap, dawnBanditsMap, dawnRebellionMap, dutyBridgeMap, exilePassMap, farmlandMap, fortMap, granaryMap, kingsRoadMap, leavingThulingMap, monasteryMap, mountainMap, originMap, orinhalMap, palaceMap, quayMap, ravageMap, ravineMap, shipDeckMap, swampMap, upperDistrictMap, warFieldMap, narrowsMap, bellCourtMap, landingFieldMap, descentFieldMap, coastHoldMap, pathFinalMap, smallholdMap } from "./maps";
 import { MUSIC, type MusicKey } from "../audio/musicKeys";
 import type { BackdropKey, BattleId, SevenPath } from "./contentIds";
-import { anyOf, defeatUnit, escapeToTile, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
+import { anyOf, defeatUnit, escapeToTile, routAfterReinforcements, routEnemies, surviveRounds, type VictoryCondition } from "../combat/Victory";
 import type { AtmosphereKind } from "../scenes/battle/Atmosphere";
 import type { DialogBeat } from "../story/beats";
 
@@ -2185,7 +2185,7 @@ export const BATTLES: BattleNode[] = [
     rewards: ["royal_lens", "mask", "potion", "potion"],
     // Victory: survive the assault. Killing the column isn't the order —
     // holding the bridge is. Six rounds until the relief column arrives.
-    victory: surviveRounds(6),
+    victory: anyOf(surviveRounds(6), routAfterReinforcements(4)),
     dialogues: [
       {
         id: "b19d_the_order",
@@ -2583,7 +2583,7 @@ export const BATTLES: BattleNode[] = [
     difficultyLabel: "Climactic",
     // Victory: pure delay. The vanguard outnumbers everything the squad
     // can put on the road — the win is the clock, not the rout.
-    victory: surviveRounds(6),
+    victory: anyOf(surviveRounds(6), routAfterReinforcements(4)),
     // Spoils: siege prep — 2 potions + 1 mask + 1 fang. A mixed
     // haul because the engagement was a probing skirmish, not a
     // decisive battle; the squad collects what they can carry.
@@ -3288,7 +3288,7 @@ export const BATTLES: BattleNode[] = [
       }
     ],
     difficultyLabel: "Climactic",
-    victory: surviveRounds(6),
+    victory: anyOf(surviveRounds(6), routAfterReinforcements(4)),
     rewards: ["elixir", "elixir", "elixir", "mask"],
     dialogues: [
       {

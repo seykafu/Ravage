@@ -354,3 +354,43 @@ describe("unlock reconciliation", () => {
     }
   });
 });
+
+describe("hold battles end when the field is cleared", () => {
+  // Reported: B21 kept going after every wave was dead, forcing the
+  // player to End Turn through empty rounds until the clock ran out.
+  const HOLD_BATTLES: BattleId[] = ["b19_path_opener_duty", "b21_archbold_advances", "b26_coastal_hold"];
+
+  it("clearing every enemy wins once the last wave has landed", () => {
+    for (const id of HOLD_BATTLES) {
+      const node = battleById(id)!;
+      const { players, enemies } = buildRoster(node);
+      const grid = new Grid(node.map!);
+      const state = { units: [...players, ...enemies], grid, rng: new Rng(3) };
+      const lastWave = Math.max(...(node.reinforcements ?? []).map((w) => w.round), 0);
+      for (const e of enemies) { e.state.hp = 0; e.state.alive = false; }
+      // Before the last wave, an empty field proves nothing — the waves
+      // are still coming, and skipping them would skip the battle.
+      expect(
+        node.victory!.evaluate({ state, round: lastWave - 1 }),
+        `${id}: cleared field before the last wave must NOT win`
+      ).toBeNull();
+      // From the last wave onward, everything that will ever spawn has.
+      expect(
+        node.victory!.evaluate({ state, round: lastWave }),
+        `${id}: cleared field after the last wave must win immediately`
+      ).toBe("player");
+    }
+  });
+
+  it("still wins on the clock with enemies alive, and still loses on a wipe", () => {
+    for (const id of HOLD_BATTLES) {
+      const node = battleById(id)!;
+      const { players, enemies } = buildRoster(node);
+      const grid = new Grid(node.map!);
+      const state = { units: [...players, ...enemies], grid, rng: new Rng(3) };
+      expect(node.victory!.evaluate({ state, round: 99 }), `${id}: the clock must still win it`).toBe("player");
+      for (const p of players) { p.state.hp = 0; p.state.alive = false; }
+      expect(node.victory!.evaluate({ state, round: 2 }), `${id}: a wipe must still lose`).toBe("enemy");
+    }
+  });
+});

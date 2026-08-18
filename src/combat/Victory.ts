@@ -92,6 +92,28 @@ export const surviveRounds = (n: number): VictoryCondition => ({
   }
 });
 
+// Rout, but only once the scripted reinforcements have arrived.
+//
+// A pure surviveRounds(N) hold does NOT end when the field is cleared —
+// the clock is the win condition, so a squad that wiped every wave by
+// round 3 still had to click End Turn through empty rounds 4, 5 and 6.
+// That reads as a broken battle, which is exactly how it was reported.
+//
+// Pairing this with surviveRounds gives "hold the line until the clock
+// runs out, OR break every last one of them" — while `afterRound` keeps
+// the early rounds honest, so clearing the opening roster before the
+// waves land can't skip the fight they were written for.
+export const routAfterReinforcements = (afterRound: number): VictoryCondition => ({
+  label: "break them all",
+  evaluate: ({ state, round }) => {
+    if (allPlayersDead(state)) return "enemy";
+    // Waves still to come — the field being empty means nothing yet.
+    if (round < afterRound) return null;
+    const enemiesAlive = state.units.some((u) => u.faction === "enemy" && isAlive(u));
+    return enemiesAlive ? null : "player";
+  }
+});
+
 // Get a player unit onto a target tile. By default any living player unit
 // counts; pass `unitId` to require a specific character (e.g., the escort).
 //
