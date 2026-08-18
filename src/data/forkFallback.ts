@@ -51,7 +51,18 @@ export const synthesizeForkSnapshot = (s: SaveState): NonNullable<SaveState["pat
   }
   return {
     characters: out,
-    squadInventory: JSON.parse(JSON.stringify(s.squadInventory ?? [])),
+    // Bags fold into the pool, same as a real capture — the rewind
+    // clears assignedInventory, so anything left only in a character's
+    // bag would be destroyed.
+    squadInventory: JSON.parse(JSON.stringify([
+      ...(s.squadInventory ?? []),
+      ...Object.values(s.assignedInventory ?? {}).flat()
+    ])),
+    // A legacy save records no fork-era death count and there is no way
+    // to recover one — deaths are a running total with no per-chapter
+    // history. 0 is the generous reading and much closer to the truth
+    // at chapter 18 than the finished run's total would be.
+    squadDeaths: 0,
     takenAt: "reconstructed"
   };
 };

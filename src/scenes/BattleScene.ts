@@ -2366,12 +2366,6 @@ export class BattleScene extends Phaser.Scene {
         ...(u.spriteClassOverride ? { spriteClassOverride: u.spriteClassOverride } : {})
       });
     }
-    // Freeze progression at the Seven Paths fork — AFTER the loop above,
-    // so the snapshot holds the squad as it stood LEAVING B18 rather than
-    // entering it. An another-path run restores exactly this.
-    if (v === "player" && this.battleId === PATH_FORK_BATTLE) {
-      save = capturePathForkSnapshot(save);
-    }
     writeSave(save);
     // Battle rewards (victory only). Mint each ItemKind in the node's
     // rewards array as a fresh Item and drop it directly into the
@@ -2400,6 +2394,16 @@ export class BattleScene extends Phaser.Scene {
     // salvages off the body). Runs on BOTH victory and defeat. Full
     // behavior + edge cases documented at reconcilePostBattleInventory.
     reconcilePostBattleInventory(this.state.units);
+    // Freeze progression at the Seven Paths fork. Deliberately the LAST
+    // thing that touches the save on B18: the character-record loop
+    // above has run (so levels are the ones leaving B18, not entering
+    // it), B18's rewards have been minted into the pool, and
+    // reconcilePostBattleInventory has settled every bag. Capturing any
+    // earlier — as this used to — snapshotted a squad that had not yet
+    // been paid its spoils. An another-path run restores exactly this.
+    if (v === "player" && this.battleId === PATH_FORK_BATTLE) {
+      writeSave(capturePathForkSnapshot(loadSave()));
+    }
     // Analytics — capture outcome + duration so we can see pacing issues
     // (e.g., a battle averaging 12+ rounds is probably overlong).
     trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);

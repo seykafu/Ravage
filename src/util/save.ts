@@ -75,7 +75,17 @@ export interface SaveState {
   // the level-20 veterans who finished the campaign.
   pathForkSnapshot?: {
     characters: Record<string, CharacterRecord>;
+    // EVERYTHING the squad owned at the fork, flattened into one pool:
+    // the squad stash PLUS whatever was still sitting in each
+    // character's bag. The rewind clears assignedInventory (the new
+    // road re-distributes at BattlePrep), so anything left only in a
+    // bag would otherwise be destroyed.
     squadInventory: Item[];
+    // Lives spent at the fork. Optional because snapshots taken before
+    // this field existed don't have it; rewindToPathChoice treats a
+    // missing value as 0 rather than carrying the finished run's total
+    // into a fresh road.
+    squadDeaths?: number;
     takenAt: string;
   };
   // Bookkeeping — stamped by every writeSave. Used by pickFresher to
@@ -291,14 +301,25 @@ export const PATH_FORK_BATTLE = "b18_path_chosen";
 
 // Freeze progression at the fork. Called when B18 resolves; idempotent,
 // so replaying B18 refreshes the snapshot rather than stacking one.
-export const capturePathForkSnapshot = (s: SaveState): SaveState => ({
-  ...s,
-  pathForkSnapshot: {
-    characters: JSON.parse(JSON.stringify(s.characters ?? {})) as Record<string, CharacterRecord>,
-    squadInventory: JSON.parse(JSON.stringify(s.squadInventory ?? [])) as Item[],
-    takenAt: new Date().toISOString()
-  }
-});
+export const capturePathForkSnapshot = (s: SaveState): SaveState => {
+  // Fold the per-character bags into the snapshot pool. At the fork the
+  // squad's gear is split across squadInventory and assignedInventory,
+  // and the rewind wipes the latter — so a snapshot of the pool alone
+  // silently destroyed every item the squad was actually carrying.
+  const pool: Item[] = [
+    ...(s.squadInventory ?? []),
+    ...Object.values(s.assignedInventory ?? {}).flat()
+  ];
+  return {
+    ...s,
+    pathForkSnapshot: {
+      characters: JSON.parse(JSON.stringify(s.characters ?? {})) as Record<string, CharacterRecord>,
+      squadInventory: JSON.parse(JSON.stringify(pool)) as Item[],
+      squadDeaths: getSquadDeaths(s),
+      takenAt: new Date().toISOString()
+    }
+  };
+};
 
 export const markCampaignComplete = (s: SaveState, path: SevenPath | null): SaveState => {
   const prior = String(s.flags[CAMPAIGN_COMPLETE_FLAG] ?? "");
@@ -347,7 +368,15 @@ export const rewindToPathChoice = (s: SaveState): SaveState => {
     // before snapshots existed keep what they have — losing the run
     // would be worse than starting the second road over-levelled.
     characters: snap ? JSON.parse(JSON.stringify(snap.characters)) as Record<string, CharacterRecord> : s.characters,
-    squadInventory: snap ? JSON.parse(JSON.stringify(snap.squadInventory)) as Item[] : s.squadInventory
+    squadInventory: snap ? JSON.parse(JSON.stringify(snap.squadInventory)) as Item[] : s.squadInventory,
+    // Lives roll back with everything else. Without this the second road
+    // inherited the FINISHED run's death count — a player who lost six
+    // units across twenty-eight chapters started a fresh ten-chapter
+    // road one casualty from Game Over. A snapshot with no recorded
+    // value (taken before the field existed) reads as 0: a clean budget
+    // is the generous reading, and it is certainly closer to the truth
+    // at the fork than the end-of-campaign total.
+    squadDeaths: snap ? (snap.squadDeaths ?? 0) : (s.squadDeaths ?? 0)
   };
 };
 

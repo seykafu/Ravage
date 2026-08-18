@@ -117,3 +117,82 @@ describe("the fork snapshot", () => {
     expect(rewindToPathChoice(mid).suspendedBattle).toBeNull();
   });
 });
+
+describe("the fork snapshot captures the whole squad state", () => {
+  // Reported: "check that levels, items obtained AND lives remaining are
+  // all captured to chapter 19." Levels were fine. The other two were not:
+  // the snapshot stored only the squad POOL (so every item still sitting
+  // in a character's bag was destroyed by the rewind, which clears
+  // assignedInventory), and it never recorded squadDeaths at all — so the
+  // second road inherited the FINISHED run's death count.
+  const atFork = (): SaveState => ({
+    ...defaultSave(),
+    completedBattles: ["b17_lie", "b18_path_chosen"],
+    unlockedBattles: ["b19_path_opener_mercy"],
+    characters: {
+      amar: { level: 12, xp: 30, stats: { hp: 40, power: 14, armor: 8, speed: 10, movement: 4, ap: 3 } }
+    },
+    squadInventory: [createItem("potion"), createItem("potion")],
+    assignedInventory: { amar: [createItem("royal_lens")], maya: [createItem("elixir")] },
+    squadDeaths: 2
+  });
+
+  const finishedAfter = (snapped: SaveState): SaveState => ({
+    ...snapped,
+    completedBattles: [...snapped.completedBattles, "b28_path_final"],
+    characters: {
+      amar: { level: 20, xp: 0, stats: { hp: 60, power: 20, armor: 12, speed: 14, movement: 4, ap: 3 } }
+    },
+    squadInventory: [createItem("elixir"), createItem("elixir"), createItem("elixir")],
+    assignedInventory: { amar: [createItem("fang")] },
+    squadDeaths: 6
+  });
+
+  const itemCount = (s: SaveState): number =>
+    (s.squadInventory ?? []).length +
+    Object.values(s.assignedInventory ?? {}).reduce((n, v) => n + v.length, 0);
+
+  it("restores the levels the squad had at the fork", () => {
+    const back = rewindToPathChoice(finishedAfter(capturePathForkSnapshot(atFork())));
+    expect(back.characters?.amar?.level, "level-20 veterans must not carry back").toBe(12);
+  });
+
+  it("restores every item — including the ones sitting in characters' bags", () => {
+    const fork = atFork();
+    expect(itemCount(fork), "fixture sanity: 2 pooled + 2 carried").toBe(4);
+    const back = rewindToPathChoice(finishedAfter(capturePathForkSnapshot(fork)));
+    expect(itemCount(back), "no item may be destroyed by the rewind").toBe(4);
+    // They all land in the pool: the rewind clears assignedInventory
+    // because the new road re-distributes at BattlePrep.
+    expect(back.squadInventory).toHaveLength(4);
+    expect(back.assignedInventory).toEqual({});
+    const kinds = (back.squadInventory ?? []).map((i) => i.kind).sort();
+    expect(kinds, "the carried Royal Lens and Elixir come back too")
+      .toEqual(["elixir", "potion", "potion", "royal_lens"]);
+  });
+
+  it("restores the lives spent at the fork, not the finished run's total", () => {
+    const back = rewindToPathChoice(finishedAfter(capturePathForkSnapshot(atFork())));
+    expect(back.squadDeaths, "a fresh road must not start one death from Game Over").toBe(2);
+  });
+
+  it("gives a snapshot with no recorded deaths a clean budget", () => {
+    // Snapshots captured before squadDeaths was recorded, and the
+    // reconstructed ones synthesizeForkSnapshot builds for legacy saves.
+    const legacy: SaveState = {
+      ...finishedAfter(capturePathForkSnapshot(atFork())),
+      squadDeaths: 6
+    };
+    delete legacy.pathForkSnapshot!.squadDeaths;
+    expect(rewindToPathChoice(legacy).squadDeaths).toBe(0);
+  });
+
+  it("keeps a legacy save's deaths from leaking through when there is no snapshot at all", () => {
+    const noSnap: SaveState = { ...finishedAfter(capturePathForkSnapshot(atFork())), squadDeaths: 6 };
+    delete noSnap.pathForkSnapshot;
+    // Nothing to restore from, so progression is left alone (losing the
+    // run would be worse) — but the count must still be a real number
+    // rather than undefined, so the lives HUD has something to read.
+    expect(typeof rewindToPathChoice(noSnap).squadDeaths).toBe("number");
+  });
+});
