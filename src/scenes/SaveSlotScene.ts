@@ -14,7 +14,6 @@ import {
 } from "../util/save";
 import { battleById } from "../data/battles";
 import type { BattleId } from "../data/contentIds";
-import { isAuthEnabled, currentUser, signOut } from "../auth/session";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
 import { trackNewGameStarted } from "../util/analytics";
 
@@ -75,31 +74,10 @@ export class SaveSlotScene extends Phaser.Scene {
       }
     });
 
-    // Sign-out button (only if authenticated)
-    if (isAuthEnabled()) {
-      const u = await currentUser();
-      if (u) {
-        this.accountText.setText(`Signed in: ${u.email ?? "(unknown)"}`);
-        new Button(this, {
-          x: GAME_WIDTH - 144,
-          y: GAME_HEIGHT - 56,
-          w: 120,
-          h: 36,
-          label: "Sign Out",
-          primary: false,
-          fontSize: 13,
-          onClick: async () => {
-            sfxClick();
-            await signOut();
-            this.scene.start("AuthScene");
-          }
-        });
-      } else {
-        this.accountText.setText("Offline — saves on this device only");
-      }
-    } else {
-      this.accountText.setText("Offline — saves on this device only");
-    }
+    // Ravage has no accounts. Saves live in this browser's storage on this
+    // machine — say so plainly so a player knows where their run lives (and
+    // that clearing site data will take it with them).
+    this.accountText.setText("Saved on this device");
 
     this.previews = await fetchSlotPreviews();
     this.statusText.setText("");
@@ -187,12 +165,13 @@ export class SaveSlotScene extends Phaser.Scene {
 
   // Kick off the camera fade-out and resolve when it completes. The
   // listener is registered BEFORE the fade starts, which is the entire
-  // point: continueSlot/startNew used to call fadeOut(), then AWAIT the
-  // (network-bound) activateSlot, then register the once-listener. When
-  // the Supabase round-trip took longer than the fade — always true for
-  // signed-in cloud saves — camerafadeoutcomplete fired during the await
-  // with nobody listening, the transition never ran, and the player was
-  // stranded on a fully-faded (black) but still-interactive slot screen.
+  // point: continueSlot/startNew used to call fadeOut(), then AWAIT
+  // activateSlot, then register the once-listener. If that await
+  // outlasted the fade, camerafadeoutcomplete fired with nobody
+  // listening, the transition never ran, and the player was stranded on
+  // a fully-faded (black) but still-interactive slot screen. (Slot
+  // activation is local and near-instant now, but the ordering stays —
+  // it costs nothing and the failure mode was ugly.)
   // The delayedCall fallback mirrors ChoiceScene: a camera fade can, in
   // rare states, fail to emit its complete event; never strand the player.
   private fadeOutDone(ms: number): Promise<void> {

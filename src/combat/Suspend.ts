@@ -5,7 +5,7 @@ import type { Unit } from "./types";
 //
 // BattleScene captures a SuspendedBattle at every turn boundary
 // (beginCurrentTurn) and stashes it in the SaveState, which already
-// mirrors to localStorage, the per-slot cache, and Supabase. The
+// mirrors to localStorage and the per-slot cache. The
 // snapshot is cleared the moment the battle resolves
 // (transitionToEndScene) or the player marches in fresh from
 // BattlePrep. Resuming rebuilds the exact board: units (stats AND

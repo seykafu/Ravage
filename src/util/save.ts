@@ -1,5 +1,4 @@
 import { GAME_STATE_KEY } from "./constants";
-import { getSupabase } from "../auth/supabase";
 import type { Ability, ClassKind, Item, ItemKind, UnitStats } from "../combat/types";
 import type { SuspendedBattle } from "../combat/Suspend";
 import { createItem } from "../combat/items";
@@ -64,9 +63,9 @@ export interface SaveState {
   squadDeaths?: number;
   // Mid-battle suspend snapshot. Written by BattleScene at every turn
   // boundary, cleared when the battle resolves or the player marches in
-  // fresh from BattlePrep. Riding inside SaveState means it syncs to
-  // localStorage + slot cache + Supabase through the existing writeSave
-  // pipeline — a battle interrupted on one machine resumes on another.
+  // fresh from BattlePrep. Riding inside SaveState means it persists to
+  // localStorage + slot cache through the existing writeSave pipeline —
+  // a battle interrupted by closing the tab resumes on reopening.
   // Optional for back-compat with pre-suspend saves.
   suspendedBattle?: SuspendedBattle | null;
   // Progression as it stood at the Seven Paths fork (written when B18 is
@@ -79,7 +78,8 @@ export interface SaveState {
     squadInventory: Item[];
     takenAt: string;
   };
-  // Bookkeeping (optional — only set when loaded from a remote slot).
+  // Bookkeeping — stamped by every writeSave. Used by pickFresher to
+  // break ties between the slot cache and the active mirror.
   updatedAt?: string;
 }
 
@@ -143,8 +143,9 @@ export const setCurrentSlot = (slot: SlotIndex | null): void => {
 
 // --- Sync localStorage API (the gameplay code uses these) --------------------
 //
-// loadSave / writeSave operate on the active mirror at GAME_STATE_KEY.
-// Every writeSave fires a background push to Supabase if a slot is active.
+// loadSave / writeSave operate on the active mirror at GAME_STATE_KEY,
+// and mirror into the active slot's cache. There is no remote: Ravage
+// keeps every save on the player's own machine.
 
 export const loadSave = (): SaveState => {
   try {
@@ -158,9 +159,8 @@ export const loadSave = (): SaveState => {
 };
 
 export const writeSave = (s: SaveState): void => {
-  // Stamp every write with a client-side timestamp. fetchSlotPreviews uses
-  // this to decide between a fresh local cache and an in-flight remote
-  // (Supabase push is async and can finish AFTER the user navigates).
+  // Stamp every write with a client-side timestamp — slot previews use it
+  // to break ties between the per-slot cache and the active mirror.
   const stamped: SaveState = { ...s, updatedAt: new Date().toISOString() };
   try {
     localStorage.setItem(GAME_STATE_KEY, JSON.stringify(stamped));
@@ -172,8 +172,8 @@ export const writeSave = (s: SaveState): void => {
     return;
   }
   // Mirror into the per-slot localStorage cache so slot previews stay
-  // accurate even if the remote push fails. Wrapped in its own try/catch
-  // so a slot-cache failure doesn't lose the active mirror write.
+  // accurate. Wrapped in its own try/catch so a slot-cache failure
+  // doesn't lose the active mirror write.
   const slot = getCurrentSlot();
   if (slot) {
     try {
@@ -182,7 +182,6 @@ export const writeSave = (s: SaveState): void => {
        
       console.error(`[save] failed to write slot ${slot} cache:`, err);
     }
-    void pushSlotRemote(slot, stamped); // fire-and-forget
   } else if (import.meta.env.DEV) {
     // Defensive: if there's no active slot at write time, the slot cache
     // never updates and SaveSlotScene later shows the slot as empty.
@@ -529,67 +528,34 @@ const pickFresher = (a: SaveState | null, b: SaveState | null): SaveState | null
   return bt > at ? b : a;
 };
 
-// Fetch all three slot previews. Tries Supabase first, falls back to local
-// per-slot caches. Critically, NEVER lets a stale Supabase row clobber a
-// fresher local cache (writeSave's remote push is async + fire-and-forget,
-// so a fast-clicking player can land here before the push completes), and
-// uses the active mirror (GAME_STATE_KEY) as a final rescue if the slot
-// cache is somehow missing the latest progress.
+// Fetch all three slot previews. Ravage is a LOCAL game: saves live in
+// this browser's localStorage and nowhere else, so this reads the
+// per-slot caches and uses the active mirror as a rescue when a slot
+// cache is missing the latest progress.
+//
+// Kept async because SaveSlotScene awaits it; there is simply nothing
+// to await anymore.
 export const fetchSlotPreviews = async (): Promise<SlotPreview[]> => {
-  const sb = getSupabase();
   const slots: SlotIndex[] = [1, 2, 3];
-
-  // Resolve the per-slot state by merging remote (if any) with local cache,
-  // then with the active mirror as a last-resort rescue.
   const resolved: Record<SlotIndex, SaveState | null> = { 1: null, 2: null, 3: null };
 
-  // Phase 1: pull from Supabase if configured + signed in.
-  if (sb) {
-    const { data: userData } = await sb.auth.getUser();
-    const user = userData.user;
-    if (user) {
-      const { data, error } = await sb
-        .from("saves")
-        .select("slot, data, updated_at")
-        .eq("user_id", user.id);
-      if (!error && data) {
-        for (const row of data) {
-          const s = row.slot as SlotIndex;
-          if (s !== 1 && s !== 2 && s !== 3) continue;
-          resolved[s] = { ...(row.data as SaveState), updatedAt: row.updated_at as string };
-        }
-      }
-    }
-  }
+  for (const s of slots) resolved[s] = readSlotLocal(s);
 
-  // Phase 2: fold in local caches. pickFresher ensures we never downgrade
-  // progress — if the local cache has more completed battles than the
-  // remote (because writeSave's push is still in flight), the local one
-  // wins and we'll repush it on the next write.
-  for (const s of slots) {
-    const local = readSlotLocal(s);
-    resolved[s] = pickFresher(resolved[s], local);
-  }
-
-  // Phase 3: rescue. If CURRENT_SLOT_KEY identifies a slot, the active
-  // mirror at GAME_STATE_KEY is the latest authoritative state for that
-  // slot. Use it if it beats both local + remote (catches the case where
-  // writeSave stamped GAME_STATE_KEY but the slot cache write was dropped
-  // for any reason).
+  // Rescue: if CURRENT_SLOT_KEY names a slot, the active mirror is that
+  // slot's latest state — use it when it beats the cache (covers a slot
+  // cache write that was dropped, e.g. a quota hiccup).
   const activeSlot = getCurrentSlot();
   if (activeSlot) {
     try {
       const raw = localStorage.getItem(GAME_STATE_KEY);
       if (raw) {
         const active = JSON.parse(raw) as SaveState;
-        const fresher = pickFresher(resolved[activeSlot], active);
-        resolved[activeSlot] = fresher;
+        resolved[activeSlot] = pickFresher(resolved[activeSlot], active);
       }
     } catch { /* ignore */ }
   }
 
-  // Phase 4: persist whatever we resolved back to local cache so the next
-  // session reads the canonical state directly without needing to re-merge.
+  // Persist whatever we resolved so the next session reads it directly.
   for (const s of slots) {
     if (resolved[s]) writeSlotLocal(s, resolved[s]);
   }
@@ -597,43 +563,16 @@ export const fetchSlotPreviews = async (): Promise<SlotPreview[]> => {
   return slots.map((s) => previewFromState(s, resolved[s]));
 };
 
-// Load a specific slot into the active mirror so the rest of the game can
-// read it via loadSave(). Merges remote + local cache + active mirror via
-// pickFresher so an in-flight Supabase push never demotes the player's
-// progress, mirroring the defensive logic in fetchSlotPreviews.
+// Load a slot into the active mirror so the rest of the game can read it
+// via loadSave(). Folds in the active mirror when it's the same slot, in
+// case the last write hadn't reached the slot cache.
 export const activateSlot = async (slot: SlotIndex): Promise<SaveState> => {
-  const sb = getSupabase();
-  let remote: SaveState | null = null;
+  let state = readSlotLocal(slot);
 
-  if (sb) {
-    const { data: userData } = await sb.auth.getUser();
-    const user = userData.user;
-    if (user) {
-      const { data, error } = await sb
-        .from("saves")
-        .select("data, updated_at")
-        .eq("user_id", user.id)
-        .eq("slot", slot)
-        .maybeSingle();
-      if (!error && data) {
-        remote = { ...(data.data as SaveState), updatedAt: data.updated_at as string };
-      }
-    }
-  }
-
-  const local = readSlotLocal(slot);
-  let state = pickFresher(remote, local);
-
-  // If the same slot is currently active, the active mirror may be even
-  // fresher than the slot cache (last write hadn't flushed). Fold it in.
-  const currentActive = getCurrentSlot();
-  if (currentActive === slot) {
+  if (getCurrentSlot() === slot) {
     try {
       const raw = localStorage.getItem(GAME_STATE_KEY);
-      if (raw) {
-        const active = JSON.parse(raw) as SaveState;
-        state = pickFresher(state, active);
-      }
+      if (raw) state = pickFresher(state, JSON.parse(raw) as SaveState);
     } catch { /* ignore */ }
   }
 
@@ -645,41 +584,16 @@ export const activateSlot = async (slot: SlotIndex): Promise<SaveState> => {
   return state;
 };
 
-// Wipe a slot (both local cache and remote row).
+// Wipe a slot.
 export const deleteSlot = async (slot: SlotIndex): Promise<void> => {
   writeSlotLocal(slot, null);
   if (getCurrentSlot() === slot) setCurrentSlot(null);
-  const sb = getSupabase();
-  if (!sb) return;
-  const { data: userData } = await sb.auth.getUser();
-  const user = userData.user;
-  if (!user) return;
-  await sb.from("saves").delete().eq("user_id", user.id).eq("slot", slot);
-};
-
-// Background push of a save state to its slot row. Used by writeSave().
-const pushSlotRemote = async (slot: SlotIndex, s: SaveState): Promise<void> => {
-  const sb = getSupabase();
-  if (!sb) return;
-  try {
-    const { data: userData } = await sb.auth.getUser();
-    const user = userData.user;
-    if (!user) return;
-    const payload = {
-      user_id: user.id,
-      slot,
-      data: { ...s, updatedAt: undefined } // server stamps its own time
-    };
-    await sb.from("saves").upsert(payload, { onConflict: "user_id,slot" });
-  } catch {
-    // Never throw from a background sync — gameplay code expects writeSave to be silent.
-  }
 };
 
 // ---- Mid-battle suspend ------------------------------------------------------
 
 // Stash the turn-boundary battle snapshot. Rides the normal writeSave
-// pipeline (local mirror + slot cache + Supabase push).
+// pipeline (active mirror + slot cache).
 export const writeSuspendedBattle = (snap: SuspendedBattle): void => {
   const s = loadSave();
   s.suspendedBattle = snap;

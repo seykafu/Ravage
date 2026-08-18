@@ -721,36 +721,40 @@ interface CharacterRecord {
 
 ### 10.2 Storage layout
 
-Three keys per slot in `localStorage`, plus an active mirror:
+Ravage is a **fully local game**: no account, no sign-in, no backend.
+Everything lives in the player's own `localStorage`, three keys per
+slot plus an active mirror:
 
 - `ravage:save:v1` — **active mirror**. Read by `loadSave()`, written
   by `writeSave()`. Always reflects the in-progress session.
 - `ravage:save:v1:slot{1,2,3}` — **per-slot caches**. Mirrored from
   `writeSave()` so SaveSlotScene can preview every slot without
-  loading them. Source of truth when no Supabase row is fresher.
+  loading them. Source of truth for the slot picker.
 - `ravage:current_slot:v1` — which slot the active mirror belongs to.
-- Supabase `saves` table (optional) — remote backup, keyed
-  `(user_id, slot)`. Pushed fire-and-forget from `writeSave`.
 
-### 10.3 Race protection — `pickFresher`
+Consequence worth stating plainly: clearing site data for the origin,
+or switching browser / profile / private window, starts the player
+fresh. The slot picker labels itself "Saved on this device" so nobody
+is surprised.
 
-`writeSave`'s remote push is async/fire-and-forget. A fast-clicking
-player can leave the BattleScene, return to Title, and click into
-SaveSlotScene **before** the Supabase push completes. Without
-protection, fetchSlotPreviews would pull the stale remote row and
-overwrite the fresher local cache, demoting the player's progress.
+### 10.3 Reconciliation — `pickFresher`
+
+Two local sources can disagree about a slot: its per-slot cache and
+the active mirror (when `currentSlot` names that slot). They diverge
+if a cache write was dropped — a storage quota error, or a code path
+that wrote before setting the slot.
 
 `pickFresher(a, b)` resolves: more `completedBattles` wins; ties
-break by `updatedAt` timestamp. Used in:
+break by the `updatedAt` timestamp every `writeSave` stamps. Used in:
 
-- `fetchSlotPreviews` — folds remote → local cache → active mirror
-  (if `currentSlot` matches), then writes the resolved state back
-  to the slot cache.
+- `fetchSlotPreviews` — folds slot cache → active mirror (if
+  `currentSlot` matches), then writes the resolved state back to the
+  slot cache.
 - `activateSlot` — same merge, applied at the moment a slot becomes
   active so the in-game session starts from the freshest known state.
 
 This guarantees **progress can never go backwards** so long as it's
-been written to *any* of remote / slot cache / active mirror.
+been written to *either* the slot cache or the active mirror.
 
 ### 10.4 What's NOT in the save slot
 
@@ -838,6 +842,7 @@ when revisiting tradeoffs months later.
 | 2026-04 | Save persistence hardening — `pickFresher` race protection | Player reported B1 completion not surviving a Title → SaveSlotScene round-trip. Root cause: `writeSave`'s Supabase push is fire-and-forget, so a fast-clicking player could reach SaveSlotScene before the push completed; `fetchSlotPreviews` then unconditionally overwrote the fresh local cache with the stale remote row, demoting the slot card to "empty." Fix: every `writeSave` now stamps a client-side `updatedAt`, and `fetchSlotPreviews` + `activateSlot` resolve via a new `pickFresher(a, b)` helper that prefers the state with more `completedBattles` (ties → newer timestamp). Also added an active-mirror rescue: if `currentSlot` is set, `GAME_STATE_KEY` is folded in as a third source so a dropped slot-cache write doesn't lose progress. `writeSave` no longer swallows errors silently — quota / serialization failures now `console.error`. DEV-only warning when `writeSave` is called with no `currentSlot`. Net: progress can never go backwards once it's been written to *any* of remote / slot cache / active mirror. |
 | 2026-05 | Ravage State + Interpose — combat differentiators | The mechanical + narrative signatures that distinguish Ravage from FE. **Ravage State** (§3.10): unit takes ≥50% max HP between turns → next turn they get +50% damage / half armor / +1 MOV with a crimson aura + RAVAGED! announcement. Symmetric (works on enemies too); rewards full-commit takedowns over chip-and-run. New UnitState fields (`damageTakenSinceLastTurn`, `ravagedNextTurn`, `ravagedActive`); promoted at `beginUnitTurn`, cleared at `endUnitTurn`; modifiers in `Damage.ts` + MOV bonus in `Actions.ts`. **Interpose** (§3.11): enemy attack would deal lethal damage to a player unit + adjacent ally available → InterposeScene modal pauses the battle, player picks an interposer (or declines). Damage redirects at full force (no armor recalc — they caught the literal blade), counter is suppressed, Destruct still fires on the interposer if they die. Required splitting `performAttack` into `rollAttackOnly` + `applyAttackOutcome` so the player-defended path can pause between roll and damage. New `interposeCandidates(state, defender, attacker)` finds eligible neighbors. New `InterposeScene` is a paused-overlay modal with portrait + HP cards (HP coloured red/amber/gold by surviveability). |
 | 2026-05 | Inventory overhaul — squad pool + per-character distribution + trading post | Inventory was 1-item (potion), 3-per-character-per-battle, no persistence. Now: 6 item kinds (potion, elixir, mask, fang, royal_lens, dactyl_food) split into consumables (`uses > 0`) and equipment (`uses === 0`, passive bonuses while carried). Squad pool persisted in `SaveState.squadInventory`; per-character pre-battle assignments staged in `SaveState.assignedInventory` (so a refresh between BattlePrep + BattleScene doesn't lose distribution). New `InventoryScene` modal launched from BattlePrepScene: 3-panel layout (squad pool / per-character bags / trading post), click-to-assign / click-to-unassign, atomic trade execution. New `TRADE_RECIPES` in `src/data/trades.ts` with 8 trades — 5 forward (Potion → others), 2 lateral upgrades (Fang/Mask → Royal Lens), 1 emergency downgrade (Elixir → Potions). Equipment effects wire through `equipmentBonuses(unit)` in `src/combat/items.ts`, applied in Damage.ts (crit/hit/armor) + Actions.ts (movement) + Unit.ts (AP). Equipment STACKS — five Fangs = +50% crit, capped only by 5-slot inventory. Heal action auto-picks smallest item that covers missing HP so Elixirs aren't wasted. Items consumed in battle are gone permanently; survivors return to pool via `returnInventoriesToPool` at battle end. No currency — trading IS the economy, tonally fits the exiled-survivor squad framing. |
+| 2026-08 | Accounts removed — the game is local-only | Ravage shipped with an optional Supabase back end: an AuthScene sign-in/sign-up screen, a `saves` table pushed fire-and-forget from `writeSave`, and a fallback "offline mode" when the env vars were absent. For a free single-player campaign that buys nothing a player wants: an account gate is friction on the front door, a cloud row is a privacy surface and a hosting bill, and the whole sync race (§10.3) existed only to defend against it. Deleted `src/auth/*`, `AuthScene`, the now-orphaned `TextInput` widget, `supabase/schema.sql`, `.env.example`, the `VITE_SUPABASE_*` env declarations, and the `@supabase/supabase-js` dependency. `fetchSlotPreviews` / `activateSlot` / `deleteSlot` are now purely local (still `async` — SaveSlotScene awaits them, and the signature churn wasn't worth it). Title and the intro video route straight to the slot picker; the slot screen reads "Saved on this device". `pickFresher` survives, now reconciling slot cache vs. active mirror rather than local vs. remote. |
 | 2026-05 | Chapter expansion 21 → 30 + Seven Paths structure | Per design intent, the slice grows to 30 chapters with the Seven Paths divergence anchored at B18 (after Grude arrival arc). Existing B18-B21 placeholders replaced with the new chain: B18 (Seven Paths divergence), B19 × 7 (path-specific openers — only chosen path's plays), B20-B22 (shared mid-finale), B23-B24 (path-specific climax pair, branched internally), B25-B27 (shared penultimate / Ravage fleet arrives), B28 (path-specific final battle), B29 (shared aftermath), B30 (path-flavoured epilogue). Total 30 chapters; single playthrough sees ~22-24 (skipping unchosen B19 openers + path-overrides). New `SevenPath` type in contentIds.ts (`vengeance` / `restoration` / `revolution` / `duty` / `exile` / `mercy` / `forgetting`). All new chapters scaffolded with `playable: false`; full authoring + path-routing in OverworldScene + B18 path-pick UI deferred to follow-up passes. See §16 for the full structural design. |
 | 2026-05 | Battle rewards + in-battle inventory display | Closes the inventory loop. Without rewards the squad pool only shrinks (consumables get burned in battle, trading just shuffles existing items). New `BattleNode.rewards: ItemKind[]` field; minted into the squad pool in `BattleScene.checkEnd` on victory before `returnInventoriesToPool`. Each playable battle (B1-B9) authors a thematic reward set tied to the chapter — B5 Mountain drops Ndari's war-trophy Mask, B6 Caravan drops the bandit captain's royal-issue Lens (ties to the ledger reveal), B9 Ravine drops a Dawn-issue Fang from the lieutenant (early hint not all enemies were royal). EndScene shows a "Spoils:" line with kind-aware tallying. Side panel `INV` row now shows glyphs + stack counts (`🧪×3 🎭`) instead of comma-separated names; new `EQ` row sums active equipment passives (`+2 MOV, +10% CRIT`); attack preview tooltip adds `Eq` line + RAVAGED badges so the player understands why their numbers shift. |
 | 2026-05 | B10 (Leaving Thuling) + B11 (The Cliffs) authored — first half closes | Two playable battles closing out the first half of the campaign. **B10 — Leaving Thuling**: 16×11 cobblestone street, Kian's blockade outside Lucian's house. New `ENEMIES.kian` factory (mirrors `ENEMIES.selene` pattern: distinct id `kian_enemy`, shared portrait, boss tag, `holdPositionUntil { allyCount: 2 }`). Victory is `escapeToTile` to the west edge OR full rout — playable to either resolution. Three mid-battle dialogues (`b10_kian_blockade` round 1, `b10_kian_amar_first_words` adjacent_eot, `b10_kian_promise` before_victory). Rewards: 2 elixirs + 1 royal lens. **B11 — The Cliffs**: 12×15 vertical cliff-face map with stone staircase down to Madame Dawn's ship (camera scrolls vertically). `defeatUnit("kian_enemy")` victory. Round 1 dialogue is the colony-truth reveal — Anthros is a colony of Grude, the empire across the sea, the worldbuilding pivot of the first half. Two more dialogues (`b11_kian_amar_face` adjacent_eot, `b11_kian_falls` before_victory). Rewards: 3 elixirs + 1 fang + 1 royal lens + 1 mask (large haul to outfit the squad for the long Grude crossing). Four new arcs (`before_leaving_thuling`, `post_leaving_thuling`, `before_cliffs`, `post_cliffs`); post_ravine.next rerouted from `credits` to `story:before_leaving_thuling`. Lucian's death lands in `post_cliffs` as a quiet cabin scene + sea burial — mechanically he survives B11 (no in-battle character permadeath plumbing required); narratively he dies in the post arc. New slice end is post_cliffs; `EndScene.isFinalPlayable` gate moved from `b09_ravine` to `b11_cliffs`. RosterScene's ACTIVE_ROSTER updated: B10 drops Kian (he's the boss), B11 drops Lucian (post-cliffs the squad is four — Amar, Ning, Maya, Leo — until the Grude rejoinings begin). README + index.html copy bumped from "9 battles, 21-chapter story" to "11 battles, 30-chapter story." |

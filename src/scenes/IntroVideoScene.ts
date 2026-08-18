@@ -26,7 +26,7 @@ const VIDEO_SOURCES: ReadonlyArray<{ src: string; type: string }> = [
 // overlaid on the Phaser canvas so HD footage renders with the browser's smooth
 // scaler (Phaser is in pixelArt mode and would chunk down a 1080p video).
 export class IntroVideoScene extends Phaser.Scene {
-  private nextScene = "AuthScene";
+  private nextScene = "SaveSlotScene";
   private finished = false;
   private videoEl?: HTMLVideoElement;
   private skipWrap?: HTMLDivElement;

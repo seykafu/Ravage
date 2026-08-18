@@ -16,7 +16,6 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.104.0",
     "phaser": "^3.80.1"
   },
   "devDependencies": {

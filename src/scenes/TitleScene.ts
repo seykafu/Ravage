@@ -6,7 +6,6 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getCurrentSlot, slotsPastThePathFork } from "../util/save";
-import { isAuthEnabled } from "../auth/session";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -52,7 +51,7 @@ export class TitleScene extends Phaser.Scene {
       ease: "Sine.easeInOut"
     });
 
-    // CTA buttons. The actual save-slot picking and (optional) auth happens
+    // CTA buttons. The save-slot picking happens
     // in the next scenes — Title is just a single "Play" button now.
     const hasActiveSlot = getCurrentSlot() !== null;
     const cy = 470;
@@ -76,9 +75,9 @@ export class TitleScene extends Phaser.Scene {
         // black frame the intro video opens on.
         this.cameras.main.fadeOut(700, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
-          // Title → Intro Video → Menu (auth or save slot picker).
-          const next = isAuthEnabled() ? "AuthScene" : "SaveSlotScene";
-          this.scene.start("IntroVideoScene", { next });
+          // Title → Intro Video → save slot picker. Saves are local to
+          // this browser; there is no account to sign into.
+          this.scene.start("IntroVideoScene", { next: "SaveSlotScene" });
         });
       }
     });

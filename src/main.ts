@@ -9,7 +9,6 @@ import { BattlePrepScene } from "./scenes/BattlePrepScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { EndScene } from "./scenes/EndScene";
 import { CreditsScene } from "./scenes/CreditsScene";
-import { AuthScene } from "./scenes/AuthScene";
 import { SaveSlotScene } from "./scenes/SaveSlotScene";
 import { SettingsScene } from "./scenes/SettingsScene";
 import { PromotionScene } from "./scenes/PromotionScene";
@@ -74,7 +73,6 @@ const config: Phaser.Types.Core.GameConfig = {
     AssetStreamScene,
     TitleScene,
     IntroVideoScene,
-    AuthScene,
     SaveSlotScene,
     StoryScene,
     OverworldScene,

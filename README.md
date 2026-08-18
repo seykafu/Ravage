@@ -115,35 +115,21 @@ src/
   audio/                  Music manager (crossfade) + WebAudio sfx
   story/                  dialog beats + arc graph
   ui/                     Button, Panel
-  util/                   constants, save (localStorage), Rng, math
+  util/                   constants, save (local slots), Rng, math
 ```
 
 ## Save data
 
-The game has **three save slots per account**, with cloud sync via Supabase.
+Ravage is a **fully local game**. There is no account, no sign-in, and no
+server: everything the player earns lives in their own browser's
+`localStorage`, on their own machine.
 
-- **Authenticated:** slots live in a Supabase `saves` table (one row per `user_id × slot`). Row-Level Security ensures each user only sees their own.
-- **Offline:** if no Supabase env vars are set, the game runs entirely on `localStorage` — three slots, but tied to the device.
+- **Three save slots**, all on the device. Slot caches live at
+  `ravage:save:v1:slot{1,2,3}`.
+- `localStorage["ravage:save:v1"]` is the active mirror of the currently
+  selected slot — the gameplay code reads and writes this one.
+- `ravage:current_slot:v1` records which slot is active.
 
-`localStorage["ravage:save:v1"]` is the active mirror of the currently selected slot. Per-slot caches at `ravage:save:v1:slot{1,2,3}` keep the slot picker accurate when offline.
-
-## Supabase setup
-
-1. **Create a project** at https://supabase.com/dashboard.
-2. **Run the schema.** Open the SQL editor and paste in [supabase/schema.sql](supabase/schema.sql), then Run.
-3. **Get your keys** from *Project Settings → API*:
-   - Project URL
-   - `anon` public key (NOT `service_role` — never put that in the client)
-4. **Local dev:** copy `.env.example` to `.env.local` and fill in the keys:
-   ```bash
-   cp .env.example .env.local
-   ```
-5. **Vercel deploy:** in the Vercel project dashboard, go to *Settings → Environment Variables* and add:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-
-   Add them for **Production**, **Preview**, and **Development** environments. Redeploy after adding.
-
-6. **Email confirmations:** by default Supabase sends a confirmation email on signup. To skip that during dev, go to *Authentication → Providers → Email* and disable "Confirm email". For production you probably want it on.
-
-If env vars are missing the game still runs — it falls back to localStorage-only, single-device saves. The Auth screen short-circuits to the slot picker.
+Because saves are browser storage, clearing site data for the origin (or
+playing in a different browser / private window) starts a player fresh.
+The slot picker says as much on screen.
