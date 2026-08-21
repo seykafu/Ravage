@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint:fix": "eslint src --fix",
+    "capture": "node scripts/capture/record.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.1"
@@ -22,6 +23,7 @@
     "@eslint/js": "^9.39.4",
     "@types/node": "^25.9.5",
     "eslint": "^9.39.4",
+    "playwright": "^1.62.1",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.60.1",
     "vite": "^5.4.2",
