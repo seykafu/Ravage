@@ -674,53 +674,6 @@
         }
       })();
     </script>
-
-    <!-- ============== KEY ART ============== -->
-    <!-- Full-bleed band directly under the hero. The art carries its own
-         logo, so no text sits on top of it — the only job here is to let
-         it be big. Sized down for narrow screens via <picture>; lazy so
-         it never competes with the hero for first paint. -->
-    <style>
-      .keyart {
-        margin: 0;
-        padding: 0;
-        position: relative;
-        line-height: 0;
-        background: #05060a;
-        border-top: 1px solid rgba(201, 176, 122, 0.25);
-        border-bottom: 1px solid rgba(201, 176, 122, 0.25);
-      }
-      .keyart img { display: block; width: 100%; height: auto; }
-      /* Feather the top and bottom edges into the page so the band reads
-         as part of the site rather than a pasted-in rectangle. */
-      .keyart::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-          linear-gradient(to bottom, rgba(5,6,10,0.85) 0%, rgba(5,6,10,0) 14%,
-                          rgba(5,6,10,0) 86%, rgba(5,6,10,0.85) 100%);
-      }
-      .keyart figcaption {
-        line-height: 1.5;
-        text-align: center;
-        color: #7a7165;
-        font-size: 13px;
-        letter-spacing: 0.05em;
-        padding: 14px 20px 0;
-        background: transparent;
-      }
-    </style>
-    <figure class="keyart">
-      <picture>
-        <source media="(max-width: 1100px)" srcset="/assets/key/keyart_1100.webp" />
-        <img src="/assets/key/keyart.webp" width="1672" height="941" loading="lazy" decoding="async"
-             alt="Ravage key art — Amar and Selene stand back to back with blades drawn in a burning Anthros street at sunset" />
-      </picture>
-    </figure>
-    <div class="container"><p class="keyart-caption" style="text-align:center;color:#7a7165;font-size:13px;letter-spacing:0.05em;margin:14px 0 0">Amar and Selene — the night the war stopped being someone else's.</p></div>
-
     <!-- ============== GAMEPLAY, LIVE ============== -->
     <!-- First thing under the fold: real captured gameplay. The video
          carries no sources until it scrolls into view (IntersectionObserver
@@ -1053,6 +1006,54 @@
         </div>
       </div>
     </section>
+
+    <!-- ============== KEY ART ============== -->
+    <!-- Full-bleed band closing the page, immediately above the footer.
+         The art carries its own logo, so no text sits on top of it — the
+         only job here is to let it be big. Sized down for narrow screens
+         via <picture>, and lazy, which matters more down here than it did
+         under the hero: most visitors never scroll this far, and the ones
+         who do have already been served everything above it. -->
+    <style>
+      .keyart {
+        margin: 0;
+        padding: 0;
+        position: relative;
+        line-height: 0;
+        background: #05060a;
+        border-top: 1px solid rgba(201, 176, 122, 0.25);
+        border-bottom: 1px solid rgba(201, 176, 122, 0.25);
+      }
+      .keyart img { display: block; width: 100%; height: auto; }
+      /* Feather the top and bottom edges into the page so the band reads
+         as part of the site rather than a pasted-in rectangle. */
+      .keyart::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(to bottom, rgba(5,6,10,0.85) 0%, rgba(5,6,10,0) 14%,
+                          rgba(5,6,10,0) 86%, rgba(5,6,10,0.85) 100%);
+      }
+      .keyart figcaption {
+        line-height: 1.5;
+        text-align: center;
+        color: #7a7165;
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        padding: 14px 20px 0;
+        background: transparent;
+      }
+    </style>
+    <figure class="keyart">
+      <picture>
+        <source media="(max-width: 1100px)" srcset="/assets/key/keyart_1100.webp" />
+        <img src="/assets/key/keyart.webp" width="1672" height="941" loading="lazy" decoding="async"
+             alt="Ravage key art — Amar and Selene stand back to back with blades drawn in a burning Anthros street at sunset" />
+      </picture>
+    </figure>
+    <div class="container"><p class="keyart-caption" style="text-align:center;color:#7a7165;font-size:13px;letter-spacing:0.05em;margin:14px 0 0">Amar and Selene — the night the war stopped being someone else's.</p></div>
 
     <!-- ============== FOOTER ============== -->
     <footer>
