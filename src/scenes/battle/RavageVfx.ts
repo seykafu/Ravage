@@ -54,24 +54,48 @@ export const ensureRavageAuraTexture = (scene: Phaser.Scene): string => {
   return key;
 };
 
-// Lazily build or reposition the per-unit aura. Idempotent — calling it
-// repeatedly on the same Ravaged unit just keeps the aura tracking the
-// sprite as it moves. Takes the BattleScene's Projection so tile→world
-// placement goes through the one coordinate seam (no duplicated math).
+// How far below the sprite's centre the aura sits, so it pools at the
+// unit's feet rather than haloing their head. Sprites are placed at
+// tileY - 4 and the aura used to be placed at tileY + 4; this preserves
+// that 8px relationship while expressing it against the SPRITE.
+const AURA_FOOT_OFFSET = 8;
+
+// Park the aura on its sprite. Called every frame by BattleScene.update()
+// so the glow tracks the character through walks, attack lunges and the
+// idle bob — anything that moves the sprite.
+//
+// It must follow the SPRITE, not the tile. moveUnit() writes the
+// destination into u.state.position before the walk tween starts, so a
+// tile-derived aura teleports to the destination and sits there burning
+// on empty ground while the character is still walking toward it —
+// measured at 192-218px adrift mid-move, which is what a player sees as
+// "the glow isn't on them, it's over there."
+//
+// Deliberately typed against the minimum shape it touches so it stays
+// unit-testable without a live Phaser scene.
+export const syncRavageAura = (view: {
+  ravageAura?: { setPosition: (x: number, y: number) => unknown };
+  sprite: { x: number; y: number };
+}): void => {
+  view.ravageAura?.setPosition(view.sprite.x, view.sprite.y + AURA_FOOT_OFFSET);
+};
+
+// Lazily build or tear down the per-unit aura in step with UnitState.
+// Placement is the sprite's business (see syncRavageAura) — this only
+// decides whether an aura should exist at all.
 export const refreshRavageAura = (
   scene: Phaser.Scene,
   view: RavageViewState & { sprite: Phaser.GameObjects.Sprite },
   u: Unit,
-  projection: Projection
+  _projection: Projection
 ): void => {
   if (!u.state.ravagedActive || !isAlive(u)) {
     clearRavageAura(view);
     return;
   }
-  const px = projection.tileToWorld(u.state.position);
   if (!view.ravageAura) {
     const key = ensureRavageAuraTexture(scene);
-    const aura = scene.add.image(px.x, px.y + 4, key)
+    const aura = scene.add.image(view.sprite.x, view.sprite.y + AURA_FOOT_OFFSET, key)
       .setOrigin(0.5)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(view.sprite.depth - 1);
@@ -86,7 +110,7 @@ export const refreshRavageAura = (
       ease: "Sine.easeInOut"
     });
   } else {
-    view.ravageAura.setPosition(px.x, px.y + 4);
+    syncRavageAura(view);
   }
 };
 

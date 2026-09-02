@@ -91,7 +91,7 @@ import { deserializeUnit, serializeUnit } from "../combat/Suspend";
 import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
-import { announceRavaged, clearRavageAura, refreshRavageAura } from "./battle/RavageVfx";
+import { announceRavaged, clearRavageAura, refreshRavageAura, syncRavageAura } from "./battle/RavageVfx";
 import { critShockwave, fireArrow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
@@ -1565,6 +1565,12 @@ export class BattleScene extends Phaser.Scene {
   // continuous render-loop work this scene does.
   update(): void {
     if (this.darknessRT) this.refreshSpotlight();
+    // Keep every Ravage aura pinned to its sprite. Cheap (a handful of
+    // ravaged units at most, and a no-op for views with no aura) and it
+    // has to be per-frame: the sprite moves under tween control during
+    // walks and attack lunges, while the aura is a separate object with
+    // nothing but this to follow it.
+    for (const v of this.unitViews.values()) syncRavageAura(v);
   }
 
   private refreshAllUnits(): void {
