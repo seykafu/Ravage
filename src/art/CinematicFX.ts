@@ -26,6 +26,7 @@
 // by the lines below — Phaser's built-in pipelines are already bundled.
 
 import Phaser from "phaser";
+import { BLOOM_PIPELINE, BloomPipeline, ensureBloomPipeline } from "../render/BloomPipeline";
 
 export interface CinematicFXOptions {
   // 0 = no bloom, 1 = default subtle, >1 = increasingly cinematic.
@@ -84,9 +85,18 @@ export const applyCinematicFX = (
     // strengths we run, two steps is visually indistinguishable and
     // halves that bill. Measured target: integrated-GPU laptops holding
     // 60fps mid-battle.
-    const blurStrength = 0.5 + cfg.bloomIntensity * 0.5;  // 0.5 → 1.0
-    const strength = cfg.bloomIntensity;
-    cam.postFX.addBloom(cfg.bloomColor, 1, 1, blurStrength, strength, 2);
+    //
+    // NOT Phaser's addBloom any more — see render/BloomPipeline.ts. Its
+    // final step mixed the frame 50/50 with a dimmed blurred copy, which
+    // left every battle ~25% darker and half-blurred, and dropped an opaque
+    // board's alpha to ~0.75 (see-through over the ¾ board's backdrop).
+    // bloomIntensity now scales how much highlight glow is added back.
+    if (ensureBloomPipeline(scene.game)) {
+      cam.setPostPipeline(BLOOM_PIPELINE);
+      const pp = cam.getPostPipeline(BLOOM_PIPELINE);
+      const bloom = (Array.isArray(pp) ? pp[0] : pp) as BloomPipeline | undefined;
+      if (bloom) bloom.strength = cfg.bloomIntensity * 0.85;
+    }
   }
 
   if (cfg.saturation !== 0 || cfg.brightness !== 1) {

@@ -304,7 +304,9 @@ export const reel = [
 
 // ---------------------------------------------------------------------
 // BASELINE — one still per biome, native zoom, for before/after review
-// of the 2.5D uplift. Six frames each; the last one is the keeper.
+// of the 2.5D uplift. One second each (30 frames); the last one is the
+// keeper. The battle camera fades in over 450ms once the opening
+// dialogue closes, so anything shorter catches most boards mid-fade.
 // ---------------------------------------------------------------------
 const BASELINE_BATTLES = [
   "b01_palace_coup", "b04_swamp", "b05_mountain_ndari", "b07_monastery",
@@ -313,7 +315,7 @@ const BASELINE_BATTLES = [
 ];
 export const baseline = BASELINE_BATTLES.map((id) => ({
   name: id,
-  seconds: 0.2,
+  seconds: 1,
   settleFrames: 110,
   setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
   each: fn(`closeDialogue();`)
@@ -339,7 +341,19 @@ export const probe = [{
     ${process.env.CAP_NOFOG ? `cap.battles.battleById("${PROBE_ID}").darkBattle = false;` : ""}
     cap.goto("BattleScene", { battleId: "${PROBE_ID}" });`),
   each: fn(`closeDialogue();
-    ${process.env.CAP_NOFOG ? "battle()?.darknessRT?.setVisible(false);" : ""}`)
+    ${process.env.CAP_NOFOG ? "battle()?.darknessRT?.setVisible(false);" : ""}
+    ${process.env.CAP_MAGENTA ? `{ const bs = S("BattleBackdropScene");
+        if (bs) { bs.children.list.forEach((o) => o.setVisible(false));
+                  bs.cameras.main.setBackgroundColor(0xff00ff); } }` : ""}
+    ${(process.env.CAP_STRIP ?? "").split(",").filter(Boolean).map((k) => ({
+      fx: "battle().cameras.main.postFX.clear();",
+      keystone: "battle().cameras.main.removePostPipeline('RavagePerspective');",
+      clouds: "battle().children.list.filter((o) => o.depth === 1.5).forEach((o) => o.setVisible(false));",
+      atmo: "battle().atmosphere?.setVisible?.(false);",
+      bloomonly: "battle().cameras.main.removePostPipeline('14');",
+      gradeonly: "battle().cameras.main.removePostPipeline('13');",
+      listfx: "window.__fxlist = battle().cameras.main.postFX.list.map((e) => e.constructor?.name + ':' + e.type);"
+    })[k] ?? "").join(" ")}`)
 }];
 
 export const SHOTLISTS = { proof, reel, baseline, quick, probe };
