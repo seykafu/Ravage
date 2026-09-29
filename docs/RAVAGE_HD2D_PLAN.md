@@ -5,7 +5,10 @@ A scoped plan for moving Ravage's battle presentation toward an Octopath-style
 lighting, depth-of-field, bloom) — grounded in the actual codebase, with a
 de-risking spike defined before any commitment.
 
-> Status: **planning only**. No engine changes are made by this document.
+> Status: **Approach C shipped** on the `graphics-uplift` branch (September
+> 2026). Battles are a tilted ¾ diorama in Phaser; see **§10** for what was
+> built, the invariants the tests hold it to, and what is left for art.
+> Approach B remains unbuilt and unnecessary for now.
 
 ---
 
@@ -231,3 +234,73 @@ which delivers most of the look without the second renderer.
   bottleneck, not code.)
 - Is "HD-2D feel" (Approach C) acceptable, or is true 3D ground a hard
   requirement? — this single answer decides B vs C.
+
+---
+
+## 10. What shipped — Approach C, the ¾ diorama
+
+Chosen over B for the reasons in §4: all of the look that matters, one
+renderer, no raycast picking. `?flat=1` renders the old flat board through
+the same code path, so the flat look survives as a fallback rather than a
+second renderer.
+
+### The board
+- **Projection seam** (`render/Projection.ts`, `render/ObliqueProjection.ts`):
+  48×36 foreshortened tile tops, 14px per elevation level, front faces where
+  a tile stands above the one in front, a 30px slab under the last row.
+  `worldToTile` resolves front-to-back over tops and faces.
+- **Elevation is presentation only** (`render/elevation.ts`). Walls stand
+  +2, water sinks −1; maps opt in per alias (`t(terrain, obstacle, elev)`)
+  or per cell (`buildMap`'s `elevation(x, y, cell)`). Mountain parapet,
+  palace gallery and dais, the cliff staircase, the ravine high ground and
+  the final processional are authored. Combat never reads it.
+- **Playability invariants, tested on every battle map:** a tile never
+  rises more than one level above standable ground behind it (the
+  clearance clamp), every standable tile and every deployment tile is
+  clickable at its centre, and `ELEV_STEP < TILE_H / 2`.
+- **Keystone perspective** (`render/keystone.ts` + `PerspectivePipeline`):
+  a post pass narrows the far edge (k = 0.12). Picking runs the exact
+  inverse before `worldToTile`.
+- **Depth contract** (`render/depth.ts`): named bands from backdrop to
+  floaters; actors y-sort every frame by their feet; terrain overlays
+  (shimmer, foam, AO, grid) sort per row so raised tiles in front hide them.
+
+### Light and atmosphere
+- **Bloom** (`render/BloomPipeline.ts`) replaces Phaser's, whose 50/50
+  mix left every battle ~25% dark, half-blurred and see-through. It keys on
+  luminance AND saturation, so flames glow and marble or snow don't blow out.
+- **Sun shadows** (`render/sun.ts`): in daylight every unit and prop casts
+  its silhouette up the board from a low south-west sun. On dark battles
+  torches cast them instead, away from the flame, above the light pool.
+- Raised tops are lit on west and front edges and shaded on the east;
+  ambient occlusion under taller neighbours; stone caps on raised walls.
+- Water sits deeper and cooler, with foam along every bank.
+- **Depth of field:** the backdrop, in its own scene under the battle
+  (`BattleBackdropScene`, parallax 0.14), is blurred once at load.
+
+### Animation
+- Units are 48×60 billboards (a clean 3× of the 32×40 sheets), anchored
+  at the feet.
+- Walks hop per stride and climb visibly; footfall dust sorts with actors.
+- Melee is a step with lift, plant (dust) and recovery. Arrows cast a
+  ground streak that shows the arc as height. Crits kick up heel dust.
+- Deaths topple about the feet away from the blow, land with dust, lie a
+  beat and fade. (They had never been visible: the defender was refreshed,
+  and so hidden, before the death played.)
+- Reinforcements stride in from the nearest board edge.
+
+### Capture harness (`npm run capture <list> [out]`)
+`Date.now` follows the virtual clock (Phaser tweens run on it, and ran
+~12× fast in every capture before). Lists: `baseline` (one still per
+biome), `quick` (`CAP_IDS=a,b`), `anim` (melee kill, arrow, torch walk,
+arrival), `scenes`, `probe` (`CAP_MAGENTA`, `CAP_NOFOG`, `CAP_STRIP`).
+
+### Left for art
+- Only **idle** sheets exist; walk / attack / hit / death are declared in
+  the manifest and 404 at load. Real frames would replace the procedural
+  lean-and-hop with animation.
+- Trees read as bushes and pillars as posts next to 48×60 figures; taller
+  prop art would suit the diorama.
+- Front faces reuse the top texture's material; purpose-painted side
+  textures (strata, masonry, root-bound earth) would sharpen elevation.
+
