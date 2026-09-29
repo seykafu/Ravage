@@ -72,6 +72,16 @@ await page.waitForFunction(() => {
 }, null, { timeout: 60_000 });
 console.log("[cap] game up");
 
+// Wait for the background asset streamer to finish. The painted tiles,
+// unit sheets and props stream in AFTER the game is interactive; a shot
+// taken before then captures the procedural placeholders instead (the
+// first 2.5D capture did exactly that — grey stone and pixel dolls).
+await page.waitForFunction(() => {
+  const s = window.__RAVAGE_GAME__?.scene.getScene("AssetStreamScene");
+  return !!s && s.load.totalComplete > 0 && !s.load.isLoading();
+}, null, { timeout: 180_000 });
+console.log("[cap] assets streamed");
+
 // Install the capture control surface in the page. Module handles come
 // through dynamic import so shots can seed saves and drive combat with
 // the game's own code rather than re-implementing any of it.
@@ -87,6 +97,16 @@ await page.evaluate(async (fps) => {
   // Own the clock.
   g.loop.stop();
   g.loop.smoothStep = false;
+  // ...ALL of it. Phaser's TweenManager keeps its own clock on Date.now()
+  // rather than the game loop's time, so while we stepped the loop 1/30s
+  // per frame, every tween advanced by however long the frame took to
+  // capture (~400ms, just under its 500ms lag cap) — tweens ran ~12×
+  // fast against timers and the camera. A death animation of 1.4s was
+  // over in six frames. Date.now follows the virtual clock from here;
+  // the +1s start keeps it ahead of the tween managers' last real reading.
+  const wallBase = Date.now() + 1000;
+  const perfBase = performance.now();
+  Date.now = () => Math.round(wallBase + (window.__cap ? window.__cap.t - perfBase : 0));
   // Silence music — frames carry no audio, and the reel is scored in
   // ffmpeg from the real mp3s afterward.
   const silent = new Proxy({}, { get: () => () => {} });

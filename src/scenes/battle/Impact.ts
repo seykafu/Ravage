@@ -108,6 +108,43 @@ export const ashBurst = (
   }
 };
 
+// A ring of dust kicked out along the GROUND — a footfall, a body
+// hitting the floor, a crit shoving someone back. The ring is squashed to
+// the board's foreshortening (`squash` = tile depth / tile width), so it
+// lies on the tilted ground instead of standing up like a wreath. Depth
+// comes from the caller (sorted with the actors at that foot position) so
+// a puff behind someone is hidden by them.
+export const groundDust = (
+  scene: Phaser.Scene,
+  world: WorldTag,
+  x: number,
+  y: number,
+  opts: { depth: number; count?: number; spread?: number; squash?: number; color?: number; dirX?: number }
+): void => {
+  const count = opts.count ?? 6;
+  const spread = opts.spread ?? 14;
+  const squash = opts.squash ?? 0.5;
+  const color = opts.color ?? 0xc9b07a;
+  for (let i = 0; i < count; i++) {
+    // Even ring with jitter; a directional kick (dirX) biases puffs one way.
+    let a = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+    if (opts.dirX) a = (opts.dirX > 0 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.8;
+    const dist = spread * (0.6 + Math.random() * 0.5);
+    const puff = world(scene.add.circle(x, y, 2 + Math.random() * 2, color, 0.5));
+    puff.setDepth(opts.depth);
+    scene.tweens.add({
+      targets: puff,
+      x: x + Math.cos(a) * dist,
+      y: y + Math.sin(a) * dist * squash - 3 - Math.random() * 3,
+      alpha: 0,
+      scale: 1.9,
+      duration: 380 + Math.random() * 160,
+      ease: "Cubic.easeOut",
+      onComplete: () => puff.destroy()
+    });
+  }
+};
+
 // One soft light rising off the fallen — needs the shared soft-dot
 // texture (same one Atmosphere generates); caller passes its key so
 // this module doesn't duplicate the canvas-texture builder.

@@ -922,8 +922,8 @@ when revisiting tradeoffs months later.
 - **Bond/counter activation rules** — adjacency check timing, magnitude tuning, UI cue when a bond/counter is in effect
 - **Difficulty multipliers** — Normal/Hard/Extreme exact `level` deltas; whether to also tweak XP rewards
 - **Marriage UI at endgame** — character picker, bond-compatibility filter, ending CG variants
-- **Sprite assets for Tier 2 classes** — currently no swordmaster/khan/etc. sprite folders; promotion will fall back to procedural with a DEV warning until they ship
-- **Sprite assets for `knight` class** — Kian's `spriteClassOverride: "swordmaster"` is a temporary stand-in
+- ~~**Sprite assets for Tier 2 classes**~~ — shipped (September 2026): every Tier 2 class has its own idle, walk, attack, hit and death sheets, drawn as the character who promotes into it (Lucian, Ning, Maya, Leo, Ranatoli, Veya, Corin). The `spriteClassOverride`s remain only as load-failure fallbacks. See art_sources/README.md.
+- ~~**Sprite assets for `knight` class**~~ — shipped (the knight folder, and all four animation states)
 - **Pivotal elimination audit** — beyond the script-mandated deaths, do any other battles (B7? B19?) deserve scripted deaths or special elimination rules?
 - **Madame Dawn faction visual differentiation** — currently uses base bandit palette; consider a `dawn_raider` palette + name override
 - **Selene / Ranatoli rejoin beats** — when exactly does Ranatoli rejoin? Doc references him at B21 but earlier rejoin would help the squad

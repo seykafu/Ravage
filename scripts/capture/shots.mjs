@@ -302,4 +302,192 @@ export const reel = [
   }
 ];
 
-export const SHOTLISTS = { proof, reel };
+// ---------------------------------------------------------------------
+// BASELINE — one still per biome, native zoom, for before/after review
+// of the 2.5D uplift. One second each (30 frames); the last one is the
+// keeper. The battle camera fades in over 450ms once the opening
+// dialogue closes, so anything shorter catches most boards mid-fade.
+// ---------------------------------------------------------------------
+const BASELINE_BATTLES = [
+  "b01_palace_coup", "b04_swamp", "b05_mountain_ndari", "b07_monastery",
+  "b11_cliffs", "b17_lie", "b22_grude_burns", "b26_coastal_hold",
+  "b28_path_final", "b29_epilogue"
+];
+export const baseline = BASELINE_BATTLES.map((id) => ({
+  name: id,
+  seconds: 1,
+  settleFrames: 110,
+  setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
+  each: fn(`closeDialogue();`)
+}));
+
+// QUICK — two stills for fast iteration on the board's look.
+export const quick = (process.env.CAP_IDS ?? "b05_mountain_ndari,b01_palace_coup").split(",").map((id) => ({
+  name: id,
+  seconds: 1,
+  settleFrames: 110,
+  setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
+  each: fn(`closeDialogue();`)
+}));
+
+// PROBE — one battle, settled, dialogue and title card cleared.
+const PROBE_ID = process.env.CAP_BATTLE ?? "b11_cliffs";
+export const probe = [{
+  name: PROBE_ID,
+  seconds: 0.1,
+  settleFrames: 240,
+  // CAP_NOFOG=1 flips darkBattle off for the probe — isolates the fog.
+  setup: fn(`seedRun();
+    ${process.env.CAP_NOFOG ? `cap.battles.battleById("${PROBE_ID}").darkBattle = false;` : ""}
+    cap.goto("BattleScene", { battleId: "${PROBE_ID}" });`),
+  each: fn(`closeDialogue();
+    ${process.env.CAP_NOFOG ? "battle()?.darknessRT?.setVisible(false);" : ""}
+    ${process.env.CAP_MAGENTA ? `{ const bs = S("BattleBackdropScene");
+        if (bs) { bs.children.list.forEach((o) => o.setVisible(false));
+                  bs.cameras.main.setBackgroundColor(0xff00ff); } }` : ""}
+    ${(process.env.CAP_STRIP ?? "").split(",").filter(Boolean).map((k) => ({
+      fx: "battle().cameras.main.postFX.clear();",
+      keystone: "battle().cameras.main.removePostPipeline('RavagePerspective');",
+      clouds: "battle().children.list.filter((o) => o.depth === 1.5).forEach((o) => o.setVisible(false));",
+      atmo: "battle().atmosphere?.setVisible?.(false);",
+      // Camera post-FX live in cam.postPipelines by name ("14" = Phaser's
+      // ColorMatrix); cam.postFX.list stays empty for cameras.
+      bloomonly: "battle().cameras.main.removePostPipeline('14');",
+      gradeonly: "battle().cameras.main.removePostPipeline('RavageBloom');"
+    })[k] ?? "").join(" ")}`)
+}];
+
+// ANIM — the combat animation pass, staged for frame-by-frame review:
+// a melee kill (step-in, footfall, topple onto the floor), an arrow with
+// its ground shadow, and a reinforcement wave walking in off the edge.
+export const anim = [
+  {
+    name: "melee-kill",
+    seconds: 2.0,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b29_epilogue" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "melee-kill-go",
+    seconds: 2.2,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = unit("amar") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) { closeWith(u, foe); softenTarget(foe); zoomTo(1.8); frameOn(u, foe); void b.animateAttack(u, foe); }
+    `)
+  },
+  {
+    name: "arrow",
+    seconds: 1.4,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = side("player").find((p) => p.weapon === "bow"); const foe = u && nearestFoe(u);
+      if (u && foe) {
+        const g = b.state.grid;
+        const occ = (p) => b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
+        for (const d of [{x:-3,y:0},{x:3,y:0},{x:0,y:3},{x:0,y:-3},{x:-2,y:1},{x:2,y:-1}]) {
+          const p = { x: foe.state.position.x + d.x, y: foe.state.position.y + d.y };
+          if (g.inBounds(p) && !g.tileAt(p).blocksMovement && !occ(p)) { u.state.position = p; b.refreshAllUnits(); break; }
+        }
+        foe.state.hp = foe.stats.hp; foe.stats = { ...foe.stats, speed: 1 };
+        zoomTo(1.8); frameOn(u, foe); void b.animateAttack(u, foe);
+      }
+    `)
+  },
+  {
+    name: "torch",
+    seconds: 1.8,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b17_lie" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "torch-walk",
+    seconds: 2.6,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); closeDialogue();
+      const g = b.state.grid; let torch = null;
+      for (let y = 0; y < g.height && !torch; y++) for (let x = 0; x < g.width; x++)
+        if (g.tileAt({ x, y }).obstacle === "torch") { torch = { x, y }; break; }
+      const u = side("player")[0];
+      const ok = (p) => g.inBounds(p) && !g.tileAt(p).blocksMovement;
+      if (torch && u && ok({ x: torch.x - 1, y: torch.y }) && ok({ x: torch.x + 1, y: torch.y })) {
+        u.state.position = { x: torch.x - 1, y: torch.y }; b.refreshAllUnits();
+        zoomTo(2.2); frameOn(u);
+        b.enterMoveMode(u); void b.animateMove(u, { x: torch.x + 1, y: torch.y });
+      }
+    `)
+  },
+  {
+    name: "arrival",
+    seconds: 2.2,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b26_coastal_hold" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "arrival-go",
+    seconds: 1.6,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); closeDialogue();
+      const w = b.reinforcements[0];
+      if (w) { b.landWaves((x) => x === w); const nu = b.state.units[b.state.units.length - 1];
+        zoomTo(1.5); frameOn(nu); }
+    `)
+  }
+];
+
+// SCENES — one still of each non-battle screen that shows the world.
+export const scenes = [
+  { name: "overworld", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("OverworldScene");`) },
+  { name: "camp", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("CampScene");`) },
+  { name: "prep", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("BattlePrepScene", { battleId: "b18_path_chosen" });`) }
+];
+
+// PROMOTED — every Tier 2 class in battle. The live units are promoted in
+// place (classKind swapped, views rebuilt), so no save surgery is needed.
+const PROMOTE = `
+  const T2 = { lucian: "spearton_lord", ning: "robinhelm", maya: "shinobi_master", leo: "dactyl_king",
+               ranatoli: "guardian", veya: "prismarch", corin: "khan" };
+  const b = battle();
+  for (const u of b.state.units) {
+    const to = T2[u.id]; if (!to || u.classKind === to) continue;
+    u.classKind = to; u.spriteClassOverride = undefined;
+    const v = b.unitViews.get(u.id);
+    if (v) { [v.sprite, v.shadow, v.hpBg, v.hpBar, v.stanceIcon, v.castShadow].forEach((o) => o && o.destroy());
+             b.unitViews.delete(u.id); }
+    b.buildUnitView(u);
+  }
+  b.refreshAllUnits();
+`;
+export const promoted = [
+  { name: "coast", seconds: 1, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b26_coastal_hold" });`),
+    each: fn(`closeDialogue(); if (!window.__promoted1) { window.__promoted1 = true; ${PROMOTE} }`) },
+  { name: "guardian-kill", seconds: 2.2, settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = unit("ranatoli") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) { closeWith(u, foe); softenTarget(foe); zoomTo(2); frameOn(u, foe); void b.animateAttack(u, foe); }
+    `) },
+  { name: "robinhelm-shot", seconds: 1.6, settleFrames: 20,
+    setup: fn(`
+      const b = battle(); const u = unit("ning"); const foe = u && nearestFoe(u);
+      if (u && foe) {
+        const g = b.state.grid;
+        const occ = (p) => b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
+        for (const d of [{x:-3,y:0},{x:3,y:0},{x:0,y:3},{x:0,y:-3}]) {
+          const p = { x: foe.state.position.x + d.x, y: foe.state.position.y + d.y };
+          if (g.inBounds(p) && !g.tileAt(p).blocksMovement && !occ(p)) { u.state.position = p; b.refreshAllUnits(); break; }
+        }
+        foe.state.hp = foe.stats.hp; zoomTo(2); frameOn(u, foe); void b.animateAttack(u, foe);
+      }
+    `) },
+  { name: "mountain", seconds: 1, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b05_mountain_ndari" });`),
+    each: fn(`closeDialogue(); if (!window.__promoted2) { window.__promoted2 = true; ${PROMOTE} }`) }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted };

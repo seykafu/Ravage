@@ -356,6 +356,11 @@ export interface MapDef {
   tiles: ReadonlyArray<{
     terrain: TerrainKind;
     obstacle?: ObstacleKind;
+    // PRESENTATION-ONLY height in levels for the ¾ diorama view. Combat
+    // never reads it — Grid builds tiles from terrain + obstacle alone —
+    // so raising a plateau can't change a single rule. Omitted → the
+    // terrain's default (see scenes/battle/Diorama.ts elevationFor).
+    elev?: number;
   }>;
   ambientPalette?: { sky: number; ground: number; tint: number };
   startPositions: { player: TilePos[]; enemy: TilePos[]; ally?: TilePos[] };

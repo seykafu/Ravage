@@ -50,13 +50,20 @@ const ensureArrowTexture = (scene: Phaser.Scene): string => {
 // Fly an arrow from (fromX, fromY) to (toX, toY) with a shallow arc.
 // Resolves when it lands. Flight time scales with distance so close
 // shots snap and long shots visibly travel.
+//
+// `ground` (optional): the world y of the ground under the archer and
+// under the target. With it, a small shadow runs along the floor beneath
+// the arrow — straight, while the arrow arcs above it — and tightens as
+// the arrow comes down. On the ¾ board that gap between arrow and shadow
+// is what shows the arc as HEIGHT rather than a wobble in the path.
 export const fireArrow = (
   scene: Phaser.Scene,
   world: WorldTag,
   fromX: number,
   fromY: number,
   toX: number,
-  toY: number
+  toY: number,
+  ground?: { fromY: number; toY: number; depth: number }
 ): Promise<void> => {
   const key = ensureArrowTexture(scene);
   const dist = Math.hypot(toX - fromX, toY - fromY);
@@ -64,6 +71,15 @@ export const fireArrow = (
   const arcPeak = Math.min(26, dist * 0.16);
   const arrow = world(scene.add.image(fromX, fromY, key));
   arrow.setDepth(DEPTH_ARROW);
+  // A thin streak lying along the flight line ON the ground: rotated to
+  // the direction the shadow travels (which, on the tilted board, is not
+  // the arrow's screen direction when the shot crosses rows).
+  const shade = ground
+    ? world(scene.add.ellipse(fromX, ground.fromY, 18, 4, 0x000000, 1))
+      .setDepth(ground.depth)
+      .setRotation(Math.atan2(ground.toY - ground.fromY, toX - fromX))
+      .setAlpha(0)
+    : undefined;
   return new Promise((res) => {
     let lastX = fromX;
     let lastY = fromY;
@@ -76,8 +92,17 @@ export const fireArrow = (
         const f = tw.getValue() ?? 0;
         const x = fromX + (toX - fromX) * f;
         // Parabolic arc: peaks mid-flight, lands back on the target line.
-        const y = fromY + (toY - fromY) * f - arcPeak * 4 * f * (1 - f);
+        const lift = arcPeak * 4 * f * (1 - f);
+        const y = fromY + (toY - fromY) * f - lift;
         arrow.setPosition(x, y);
+        if (shade && ground) {
+          // Height above the floor = release height, fading to the hit
+          // height, plus the arc. Higher → smaller, fainter shadow.
+          const h = (ground.fromY - fromY) * (1 - f) + (ground.toY - toY) * f + lift;
+          const k = Phaser.Math.Clamp(1 - h / 100, 0.5, 1);
+          shade.setPosition(x, ground.fromY + (ground.toY - ground.fromY) * f);
+          shade.setScale(0.7 + 0.3 * k).setAlpha(0.55 * k);
+        }
         // Rotation follows actual velocity so the arc reads in the arrow
         // itself, not just the path.
         if (x !== lastX || y !== lastY) {
@@ -88,6 +113,7 @@ export const fireArrow = (
       },
       onComplete: () => {
         arrow.destroy();
+        shade?.destroy();
         res();
       }
     });

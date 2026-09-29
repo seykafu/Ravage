@@ -2,9 +2,22 @@ import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_HEADING, FAMILY_MONO, GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE, TILE_SIZE } from "../util/constants";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import type { BattleId } from "../data/contentIds";
-import { ensureObstacleTexture, ensureTileTexture } from "../art/TileArt";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { OrthographicProjection, type Projection } from "../render/Projection";
+import { ObliqueProjection } from "../render/ObliqueProjection";
+import { elevationFor } from "../render/elevation";
+import {
+  DIORAMA_ELEV_STEP, DIORAMA_FOOT_DY, DIORAMA_SLAB_DEPTH, DIORAMA_TILE_H, DIORAMA_TILE_W,
+  UNIT_DIORAMA_H, UNIT_DIORAMA_W, UNIT_FLAT_H, UNIT_FLAT_W
+} from "../render/dioramaConfig";
+import { DEPTH, actorDepth } from "../render/depth";
+import { SUN, UNIT_FOOT_ORIGIN, castFrom, torchShadow, type Sun } from "../render/sun";
+import { DIORAMA_PERSPECTIVE_K } from "../render/dioramaConfig";
+import { screenToSource, type KeystoneParams } from "../render/keystone";
+import { PERSPECTIVE_PIPELINE, PerspectivePipeline } from "../render/PerspectivePipeline";
+import { attachPostPipeline } from "../render/postPipelines";
+import type { BattleBackdropScene } from "./BattleBackdropScene";
+import { buildDiorama } from "./battle/Diorama";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
 import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
@@ -111,14 +124,13 @@ const HEAL_AMOUNT_FOR_KIND: Record<ItemKind, number> = {
   royal_lens: 0,
   dactyl_food: 0
 };
-import { playUnitState } from "../assets/unitAnim";
+import { playUnitState, hasUnitState } from "../assets/unitAnim";
 import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
-import { addTorchGlow } from "./battle/Lighting";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
-import { ashBurst, hitStop, soulWisp, timeDilate } from "./battle/Impact";
+import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 import { TutorialDirector } from "./battle/Tutorial";
 
 interface BattleArgs {
@@ -143,6 +155,10 @@ interface UnitView {
   // explicit move/lunge tween (which also targets sprite.y) and restarted
   // afterward to avoid two tweens fighting over the same property.
   breathTween?: Phaser.Tweens.Tween;
+  // The figure's silhouette thrown across the ground by the sun (render/
+  // sun). Absent on dark battles and the flat board. Synced to the
+  // sprite's frame, facing and fade every frame in update().
+  castShadow?: Phaser.GameObjects.Image;
   // Crimson glow rendered behind the sprite while the unit is in their
   // Ravaged turn (UnitState.ravagedActive === true). Created lazily by
   // refreshRavageAura(); pulses via a yoyo tween, removed when the turn
@@ -156,9 +172,25 @@ interface UnitView {
   // actually cost" read. Healing snaps it up instantly.
   hpShown?: number;
   hpGhostTween?: Phaser.Tweens.Tween;
+  // Set while an animation owns the sprite outright — position, facing,
+  // alpha, visibility — so refreshes leave it alone:
+  //   "dying"    the fall and fade. The unit is already dead in state, and
+  //              a refresh hides dead units — which, since attack
+  //              resolution refreshes the defender BEFORE the death plays,
+  //              meant no death animation had ever been seen.
+  //   "arriving" a reinforcement striding in off the board edge. The turn
+  //              start that follows a wave refreshes every unit, which
+  //              turned arrivals round to walk in backwards.
+  animLock?: "dying" | "arriving";
+  // Ends an arrival early, on its tile at full alpha, when anything else
+  // needs the sprite: a move, a lunge, a flinch, a death (stopBreathing).
+  finishArrival?: () => void;
 }
 
 const PANEL_W = 280;
+// Where a unit's HP bar sits, down from its sprite's centre — just above
+// the feet, as it always was relative to the sprite.
+const HP_BAR_DY = 20;
 
 // Tooltip copy. Weapon entries cover the triangle math + base hit so a player
 // hovering "WPN sword" can see why their numbers shift against a shield-user.
@@ -192,15 +224,6 @@ const ABILITY_INFO: Record<string, { title: string; body: string }> = {
 const TOP_BAR_HEIGHT = 80;
 const MAP_TOP_OFFSET = 92;
 
-// Terrains with no authored direction — safe to rotate in 90° steps for
-// per-cell variety. Directional surfaces (plank grain, carpet weave,
-// wall/door architecture, water/lava flow highlights) only mirror, so
-// their grain stays continuous across the board.
-const ISOTROPIC_TERRAINS: ReadonlySet<string> = new Set([
-  "grass", "stone", "dirt", "snow", "mud", "marble", "sand", "forest",
-  "rubble", "cobblestone", "cracked_earth", "ice", "moss_stone"
-]);
-
 export class BattleScene extends Phaser.Scene {
   private battleId!: BattleId;
   private state!: BattleState;
@@ -219,6 +242,34 @@ export class BattleScene extends Phaser.Scene {
   // screenToTile. Swapping a 2.5D/3D projection in later is a one-line change
   // here, not a 14-site edit. See src/render/Projection.ts.
   private projection!: Projection;
+  // The ¾ diorama board is the default; `?flat=1` restores the original
+  // flat board (a real fallback — same code path, flat projection).
+  private diorama = true;
+  // Presentation-only tile height in levels (see render/elevation.ts).
+  private elevAt: (x: number, y: number) => number = () => 0;
+  // Offset from a tile's top-face centre to a unit sprite's CENTRE. The
+  // flat board used -4. On the diorama the feet go on the front half of
+  // the tile and the body rises over the rows behind it.
+  private unitLift = -4;
+  // The sun for this battle's cast shadows (render/sun), or none.
+  private sun?: Sun;
+  // No sun, but flames: figures near a torch throw shadows away from it.
+  private torchShadows = false;
+  // Unit billboard size for this board (see dioramaConfig).
+  private unitW = UNIT_FLAT_W;
+  private unitH = UNIT_FLAT_H;
+  // Flames on the board, for the darkness overlay on night battles.
+  private boardLights: { x: number; y: number; radius: number }[] = [];
+  // Standing props that fade while a unit is behind them (Diorama).
+  private occluders: { img: Phaser.GameObjects.Image; footY: number; x0: number; x1: number; y0: number }[] = [];
+  // Reusable brush for punching light into the darkness overlay.
+  private lightBrush?: Phaser.GameObjects.Image;
+  // Camera perspective on the diorama board (null = none: the flat board,
+  // or a renderer without WebGL post-processing). Input picking runs
+  // pointers back through the same keystone math the shader uses.
+  private keystone: KeystoneParams | null = null;
+  // The painted distance, rendered by its own scene underneath this one.
+  private backdropScene?: BattleBackdropScene;
   private unitViews = new Map<string, UnitView>();
   // Scripted enemy waves (survive battles) + which rounds already fired.
   // The set is rebuilt on resume from the restored round counter, so it
@@ -399,16 +450,43 @@ export class BattleScene extends Phaser.Scene {
 
     // Backdrop — see ensureBackdropForKey in BackdropArt.ts. The BackdropKey
     // union and the spec lookup are co-located so a typo'd key fails to compile.
-    const bgKey = ensureBackdropForKey(this, node.backdropKey);
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    // On the ¾ diorama the backdrop is a separate scene underneath this
+    // one (see BattleBackdropScene for why), parallaxed at a fraction of
+    // the board's scroll — one of the strongest depth cues there is. The
+    // flat board keeps it in-world, as it always was, but parallaxed too:
+    // at 1:1 it used to scroll clean off-screen on the big maps.
+    const useBackdropScene = !new URLSearchParams(window.location.search).has("flat");
+    if (useBackdropScene) {
+      // Night battles darken the distance too — the fog lives in this
+      // scene's world camera and never reaches the backdrop scene.
+      this.scene.launch("BattleBackdropScene", { backdropKey: node.backdropKey, night: !!node.darkBattle });
+      this.backdropScene = this.scene.get("BattleBackdropScene") as BattleBackdropScene;
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scene.stop("BattleBackdropScene"));
+      // The battle's fade-outs must take the distance with them, or the
+      // board would fade to black over a still-lit sky.
+      this.cameras.main.on(Phaser.Cameras.Scene2D.Events.FADE_OUT_START,
+        (_c: unknown, _e: unknown, duration: number, r: number, g: number, b: number) => {
+          this.backdropScene?.cameras.main?.fadeOut(duration, r, g, b);
+        });
+    } else {
+      const bgKey = ensureBackdropForKey(this, node.backdropKey);
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey)
+        .setDisplaySize(GAME_WIDTH * 1.32, GAME_HEIGHT * 1.32)
+        .setScrollFactor(0.14)
+        .setDepth(DEPTH.BACKDROP);
+    }
     // Backdrop dim gradient — keeps the playfield reading above the
     // backdrop without washing it out. Lightened from the old 0.45→0.78
     // (which stacked on the backdrop's own edge vignette and made daytime
     // battles look like dusk); now a gentle top-to-bottom 0.22→0.42 so the
     // scene stays legible and bright while the grid still pops forward.
-    const v = this.add.graphics();
-    v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.22, 0.22, 0.42, 0.42);
-    v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    if (!useBackdropScene) {
+      const v = this.add.graphics();
+      v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.22, 0.22, 0.42, 0.42);
+      v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+      // Pinned to the screen (it used to scroll away with the world).
+      v.setScrollFactor(0).setDepth(DEPTH.BACKDROP_DIM);
+    }
 
     // Ambient atmosphere (Tier 1 HD-2D-lite) — biome-driven particle layer
     // (snow / embers / dust / motes). Created here, BEFORE the UI-pin
@@ -563,23 +641,40 @@ export class BattleScene extends Phaser.Scene {
     // of the viewport and the camera scrolls to reveal the rest.
     const playW = GAME_WIDTH - PANEL_W - 40;
     const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
-    const mapPxW = map.width * TILE_SIZE;
-    const mapPxH = map.height * TILE_SIZE;
+    // ¾ diorama (default) or the original flat board (`?flat=1`).
+    this.diorama = !new URLSearchParams(window.location.search).has("flat");
+    this.elevAt = this.diorama ? elevationFor(map) : () => 0;
+    const buildProjection = (ox: number, oy: number): Projection => this.diorama
+      ? new ObliqueProjection({
+          originX: ox, originY: oy,
+          tileW: DIORAMA_TILE_W, tileH: DIORAMA_TILE_H,
+          elevStep: DIORAMA_ELEV_STEP, slabDepth: DIORAMA_SLAB_DEPTH,
+          gridWidth: map.width, gridHeight: map.height,
+          elevationAt: this.elevAt
+        })
+      : new OrthographicProjection({
+          originX: ox, originY: oy, tileSize: TILE_SIZE, gridWidth: map.width, gridHeight: map.height
+        });
+    // Measure the board with its origin at zero, then centre what we
+    // measured. On the diorama the board is shorter than width*48 (tiles
+    // are foreshortened) but gains a slab under the front row, and raised
+    // terrain can poke ABOVE row 0 — probe.y is that overhang (<= 0),
+    // which the origin absorbs so no terrain is drawn under the top bar.
+    const probe = buildProjection(0, 0).bounds();
+    const mapPxW = probe.w;
+    const mapPxH = probe.h;
     // Math.max(0, ...) keeps the origin from going negative (which would
     // place the map's top-left off-screen). For oversized maps we anchor
     // at a small left/top margin and let the camera handle the rest.
     this.originX = 20 + Math.max(0, Math.floor((playW - mapPxW) / 2));
-    this.originY = MAP_TOP_OFFSET + Math.max(0, Math.floor((playH - mapPxH) / 2));
+    this.originY = MAP_TOP_OFFSET - probe.y + Math.max(0, Math.floor((playH - mapPxH) / 2));
 
     // Build the coordinate projection now that the grid origin is fixed.
     // Everything tile↔world goes through this from here on.
-    this.projection = new OrthographicProjection({
-      originX: this.originX,
-      originY: this.originY,
-      tileSize: TILE_SIZE,
-      gridWidth: map.width,
-      gridHeight: map.height
-    });
+    this.projection = buildProjection(this.originX, this.originY);
+    this.unitW = this.diorama ? UNIT_DIORAMA_W : UNIT_FLAT_W;
+    this.unitH = this.diorama ? UNIT_DIORAMA_H : UNIT_FLAT_H;
+    this.unitLift = this.diorama ? DIORAMA_FOOT_DY - this.unitH / 2 : -4;
 
     // Camera scrolling. Bounds are MAX(viewport, map+margins) so:
     //   - Maps that fit inside the viewport: bounds == viewport, camera
@@ -598,8 +693,9 @@ export class BattleScene extends Phaser.Scene {
     //
     // Adding the panel's width to the right margin gives the camera
     // exactly enough room to pull the map's east edge out from under it.
-    const boundsW = Math.max(GAME_WIDTH, this.originX + mapPxW + 40 + PANEL_W + 12);
-    const boundsH = Math.max(GAME_HEIGHT, this.originY + mapPxH + 40);
+    const boardRect = this.projection.bounds();
+    const boundsW = Math.max(GAME_WIDTH, boardRect.x + boardRect.w + 40 + PANEL_W + 12);
+    const boundsH = Math.max(GAME_HEIGHT, boardRect.y + boardRect.h + 40);
     this.cameras.main.setBounds(0, 0, boundsW, boundsH);
     // Disable the browser's right-click context menu so right-click drag
     // doesn't trigger a system menu mid-pan.
@@ -690,55 +786,23 @@ export class BattleScene extends Phaser.Scene {
       this.flushSuspend();
     });
 
-    // Tiles
-    const tileSeed = map.id.length * 31 + 7;
-    for (let y = 0; y < map.height; y++) {
-      for (let x = 0; x < map.width; x++) {
-        const tile = grid.tileAt({ x, y });
-        const px = this.projection.tileToWorld({ x, y });
-        // Two-layer rendering: terrain sprite first, obstacle sprite on
-        // top. Earlier the two were composited into a single canvas
-        // texture with imageSmoothing — that path softened the obstacle's
-        // alpha edges into the underlying tile, blurring out the painted
-        // tile detail around obstacles. Splitting into separate sprites
-        // lets each layer keep its native LINEAR-filtered quality and
-        // the alpha blend happens at the GPU level instead of being
-        // baked into the bitmap.
-        const tileKey = ensureTileTexture(this, tile.terrain, tileSeed + (x * 73 + y * 131));
-        const img = this.add.image(px.x, px.y, tileKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
-        // De-repetition: every terrain used to stamp the SAME texture on
-        // every cell, so a field of grass read as wallpaper. A cheap
-        // seeded hash per cell picks a flip (and, for direction-free
-        // terrains, a 90° rotation step) plus a ±4% brightness jitter —
-        // same texture memory, but no two neighbouring cells identical.
-        const cellHash = ((x * 73856093) ^ (y * 19349663) ^ (tileSeed * 83492791)) >>> 0;
-        img.setFlipX((cellHash & 1) === 1);
-        if (ISOTROPIC_TERRAINS.has(tile.terrain)) {
-          img.setFlipY((cellHash & 2) === 2);
-          img.setRotation(((cellHash >> 2) & 3) * Math.PI / 2);
-        }
-        const lum = 0xf2 + ((cellHash >> 4) % 14); // 0xf2..0xff per channel
-        img.setTint((lum << 16) | (lum << 8) | lum);
-        const obsKey = ensureObstacleTexture(this, tile.obstacle);
-        if (obsKey) {
-          // Contact shadow first so the obstacle sits IN the world
-          // instead of floating on the tile like a sticker.
-          this.add.ellipse(px.x, px.y + TILE_SIZE * 0.3, TILE_SIZE * 0.72, TILE_SIZE * 0.2, 0x000000, 0.28);
-          const obs = this.add.image(px.x, px.y, obsKey).setDisplaySize(TILE_SIZE, TILE_SIZE);
-          // Seeded mirror + a hair of scale wobble — a row of trees or
-          // rocks stops reading as copy-paste. Torches keep their facing
-          // (the flame highlight is authored) and thrones stay regal.
-          if (tile.obstacle !== "torch" && tile.obstacle !== "throne") {
-            obs.setFlipX((cellHash & 4) === 4);
-            const wobble = 0.96 + ((cellHash >> 6) % 9) / 100; // 0.96..1.04
-            obs.setDisplaySize(TILE_SIZE * wobble, TILE_SIZE * wobble);
-          }
-          // Dynamic lighting (Tier 1) — warm flickering pool at each torch.
-          // Added here (pre UI-pin) so it pools under units on the world camera.
-          if (tile.obstacle === "torch") addTorchGlow(this, px.x, px.y);
-        }
-      }
-    }
+    // The board itself — tile tops, the walls height exposes, occlusion,
+    // water, props standing on the ground, torch light. See
+    // scenes/battle/Diorama.ts. Everything it creates is a world object
+    // made during this setup sweep, so the UI camera never double-draws it.
+    // A sun on the diorama in daylight; dark battles are lit by torches.
+    this.sun = this.diorama && !node?.darkBattle ? SUN : undefined;
+    this.torchShadows = this.diorama && !!node?.darkBattle;
+    const board = buildDiorama(this, grid, this.projection, {
+      footDY: this.diorama ? DIORAMA_FOOT_DY : TILE_SIZE * 0.3,
+      seed: map.id.length * 31 + 7,
+      elevationAt: this.elevAt,
+      elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0,
+      sun: this.sun,
+      torchShadows: this.torchShadows
+    });
+    this.boardLights = board.lights;
+    this.occluders = board.occluders;
 
     // Cloud shadows — outdoor maps get two huge, soft, near-black blobs
     // drifting slowly across the board. Added after the tiles and before
@@ -749,17 +813,20 @@ export class BattleScene extends Phaser.Scene {
     // smoke columns don't cast drifting cumulus.
     const atmoKind = node.atmosphere ?? atmosphereForBackdrop(node.backdropKey);
     if (atmoKind === "snow" || atmoKind === "dust" || atmoKind === "motes") {
-      const worldW = map.width * TILE_SIZE;
-      const worldH = map.height * TILE_SIZE;
+      const cb = this.projection.bounds();
+      const worldW = cb.w;
+      const worldH = cb.h;
       const dotKey = ensureDotTexture(this);
       for (let c = 0; c < 2; c++) {
         const cloud = this.add.image(
           this.originX - 420 - c * (worldW * 0.6 + 500),
-          this.originY + worldH * (c === 0 ? 0.3 : 0.72),
+          cb.y + worldH * (c === 0 ? 0.3 : 0.72),
           dotKey
         );
         cloud.setTint(0x000000);
         cloud.setAlpha(0.10);
+        // Shadows fall on the ground, never on the pieces standing on it.
+        cloud.setDepth(DEPTH.CLOUD_SHADOW);
         cloud.setDisplaySize(560 + c * 180, 320 + c * 90);
         this.tweens.add({
           targets: cloud,
@@ -772,22 +839,20 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    this.overlayG = this.add.graphics();
-    this.contourG = this.add.graphics();
-    // Danger overlay UNDER the threat layer so a Ready enemy's active
-    // counter zone still reads distinctly on top of the passive range wash.
-    this.dangerG = this.add.graphics();
-    this.threatG = this.add.graphics();
-    // Cursor + active-marker depths sit ABOVE unit sprites (default 0)
-    // and ABOVE the fog-of-war darkness (depth 25), so the tactical
-    // overlays the player needs to read at a glance are never
-    // occluded by whoever happens to be standing on the same tile.
-    // Below tooltips (40+) so info popups still composite on top.
-    this.activeRing = this.add.graphics().setDepth(29);
-    this.cursorG = this.add.graphics().setDepth(28);
-    // Path preview sits above the fog (25) and atmosphere (23) but below
-    // the cursor so the hovered-tile frame stays the topmost read.
-    this.pathG = this.add.graphics().setDepth(27);
+    // Tactical washes lie ON the ground: above terrain and light, below
+    // every prop and unit standing on it (see render/depth.ts). The
+    // relative order is unchanged from the flat board — move wash, its
+    // contour, then danger, then a Ready enemy's threat zone on top.
+    this.overlayG = this.add.graphics().setDepth(DEPTH.GROUND_OVERLAY);
+    this.contourG = this.add.graphics().setDepth(DEPTH.GROUND_OVERLAY + 0.1);
+    this.dangerG = this.add.graphics().setDepth(DEPTH.GROUND_OVERLAY + 0.2);
+    this.threatG = this.add.graphics().setDepth(DEPTH.GROUND_OVERLAY + 0.3);
+    // Path preview, hover cursor and the active ring are marks on the
+    // ground too. On night battles they're lifted above the darkness
+    // (see the darkBattle block) so they stay readable in the fog.
+    this.pathG = this.add.graphics().setDepth(DEPTH.GROUND_MARK);
+    this.cursorG = this.add.graphics().setDepth(DEPTH.GROUND_MARK + 0.1);
+    this.activeRing = this.add.graphics().setDepth(DEPTH.GROUND_MARK + 0.2);
     // Gentle breathing on the movement contour — makes the region read as
     // a live selection instead of static tile paint. One tween for the
     // scene's lifetime; pulsing an empty Graphics between turns is free.
@@ -805,7 +870,7 @@ export class BattleScene extends Phaser.Scene {
       color: "#ffd45a",
       stroke: "#000",
       strokeThickness: 3
-    }).setOrigin(0.5, 1).setVisible(false).setDepth(30);
+    }).setOrigin(0.5, 1).setVisible(false).setDepth(DEPTH.ACTIVE_ARROW);
 
     // Units
     for (const u of units) {
@@ -1123,6 +1188,21 @@ export class BattleScene extends Phaser.Scene {
     // "surrounded by darkness". Dropping it also saves a full-screen
     // shader pass per frame at the native-res buffer size.
     applyCinematicFX(this);
+    const pipe = this.diorama
+      ? attachPostPipeline(this.cameras.main, this.game, PERSPECTIVE_PIPELINE, PerspectivePipeline)
+      : undefined;
+    if (pipe) {
+      const params: KeystoneParams = {
+        k: DIORAMA_PERSPECTIVE_K,
+        // Optical axis on the playfield, not the screen: the side panel
+        // covers the right of the frame, so the board's visual centre is
+        // left of the screen's.
+        centerX: ((GAME_WIDTH - PANEL_W - 12) / 2) / GAME_WIDTH
+      };
+      pipe.k = params.k;
+      pipe.centerX = params.centerX;
+      this.keystone = params;
+    }
     this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
     // Bulk-ignore all pinned UI on the world camera (post-FX cam).
     this.cameras.main.ignore(this.uiObjects);
@@ -1140,6 +1220,14 @@ export class BattleScene extends Phaser.Scene {
     const worldObjects = allChildren.filter((o) => !uiSet.has(o));
     if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
 
+    // The hover damage preview points at a WORLD tile, but it was created
+    // in the UI section and bulk-pinned, so only the UI camera drew it —
+    // and the UI camera never scrolls, so on any panned map the box sat
+    // off its enemy by exactly the pan. Hand it to the world camera.
+    this.hoverPreview.cameraFilter = 0;
+    for (const c of this.hoverPreview.list) (c as Phaser.GameObjects.GameObject).cameraFilter = 0;
+    this.uiCamera.ignore(this.hoverPreview);
+
     // Fog-of-war spotlight overlay — opt-in per battle via
     // node.darkBattle. Curated to SEVEN nocturnal/interior battles:
     // B4 swamp murk, B7 monastery corridors, B11 cliffs at night,
@@ -1148,6 +1236,12 @@ export class BattleScene extends Phaser.Scene {
     // battles render normally.
     if (node.darkBattle) {
       this.setupSpotlightOverlay(boundsW, boundsH);
+      // The fog covers the ground; the marks the player reads at a glance
+      // must not go under it with the terrain.
+      this.pathG.setDepth(DEPTH.OVER_DARK);
+      this.cursorG.setDepth(DEPTH.OVER_DARK + 0.1);
+      this.activeRing.setDepth(DEPTH.OVER_DARK + 0.2);
+      this.activeArrow.setDepth(DEPTH.OVER_DARK + 0.3);
     }
 
     this.beginCurrentTurn();
@@ -1166,8 +1260,49 @@ export class BattleScene extends Phaser.Scene {
     //      reduces to the old `px + scrollX` math.
     //   2. WORLD→TILE is the projection's job (bounds-checked there).
     // Composing them here keeps Projection free of any Phaser dependency.
-    const wp = this.cameras.main.getWorldPoint(px, py);
-    return this.projection.worldToTile(wp.x, wp.y);
+    //   0. (Diorama) the world camera's image is tilted by the keystone
+    //      pass, so first find which pixel of the UN-tilted image is under
+    //      the pointer — the exact inverse of the shader.
+    const cam = this.cameras.main;
+    let sx = px, sy = py;
+    if (this.keystone) {
+      const src = screenToSource(px, py, cam.width, cam.height, this.keystone);
+      if (!src) return null; // pointer is over sky the tilt uncovered
+      sx = src.x;
+      sy = src.y;
+    }
+    const wp = cam.getWorldPoint(sx, sy);
+    const tile = this.projection.worldToTile(wp.x, wp.y);
+    // A standing unit's body rises over the rows BEHIND its tile, so on
+    // the diorama the ground under the pointer is often not the ground
+    // the player means. If the pointer is on a unit's sprite, that unit's
+    // tile wins — unless the ground tile is itself a live move destination
+    // with nobody on it, which keeps "walk behind that soldier" possible.
+    const body = this.unitUnderPoint(wp.x, wp.y);
+    if (!body || (tile && tile.x === body.x && tile.y === body.y)) return tile;
+    if (tile && !unitAt(this.state, tile)) {
+      const s = this.fsm.current();
+      const isDest = (s.tag === "move" || s.tag === "roam")
+        && s.tiles.some((d) => d.x === tile.x && d.y === tile.y);
+      if (isDest) return tile;
+    }
+    return body;
+  }
+
+  // Front-most living unit whose sprite covers a world point. Tested
+  // against a slightly inset box so the transparent margin around a
+  // billboard doesn't steal clicks from the ground beside it.
+  private unitUnderPoint(wx: number, wy: number): TilePos | null {
+    let best: { pos: TilePos; depth: number } | null = null;
+    for (const v of this.unitViews.values()) {
+      if (!isAlive(v.unit) || !v.sprite.visible) continue;
+      const hw = v.sprite.displayWidth / 2 - 8;
+      const hh = v.sprite.displayHeight / 2;
+      if (wx < v.sprite.x - hw || wx > v.sprite.x + hw) continue;
+      if (wy < v.sprite.y - hh + 6 || wy > v.sprite.y + hh) continue;
+      if (!best || v.sprite.depth > best.depth) best = { pos: v.unit.state.position, depth: v.sprite.depth };
+    }
+    return best ? { ...best.pos } : null;
   }
 
   // Land any reinforcement wave scheduled for the current round. Called
@@ -1226,6 +1361,7 @@ export class BattleScene extends Phaser.Scene {
   // identical however they were summoned.
   private landWaves(pick: (w: BattleWave) => boolean): void {
     let landed = false;
+    const arrivals: UnitView[] = [];
     for (const wave of this.reinforcements) {
       if (!pick(wave) || this.spawnedWaves.has(waveKey(wave))) continue;
       this.spawnedWaves.add(waveKey(wave));
@@ -1236,13 +1372,7 @@ export class BattleScene extends Phaser.Scene {
         this.state.units.push(unit);
         this.buildUnitView(unit);
         const view = this.unitViews.get(unit.id);
-        if (view) {
-          // Wade-in: fade up from nothing so arrivals read as arrivals,
-          // not as pop-in.
-          view.sprite.setAlpha(0);
-          view.shadow.setAlpha(0);
-          this.tweens.add({ targets: [view.sprite, view.shadow], alpha: 1, duration: 500, ease: "Sine.easeOut" });
-        }
+        if (view) arrivals.push(view);
       });
       if (wave.announce) this.pushLog(wave.announce);
     }
@@ -1250,6 +1380,78 @@ export class BattleScene extends Phaser.Scene {
       this.initiative.reseed(this.state.units);
       this.refreshAllUnits();
     }
+    // After the refresh, which snaps every sprite to its tile at full
+    // alpha — started before it, an arrival showed on its tile for a
+    // frame before stepping in from the edge.
+    arrivals.forEach((v, i) => this.playArrival(v, i * 140));
+  }
+
+  // Reinforcements arrive: they come in over the nearest edge of the
+  // board — two strides from half a tile out, fading up as they come —
+  // and plant with a puff of dust. Staggered per unit so a wave reads as
+  // a column arriving, not a block appearing.
+  private playArrival(view: UnitView, delay: number): void {
+    const u = view.unit;
+    const p = u.state.position;
+    const g = this.state.grid;
+    // Nearest edge: which way is "outside" from here.
+    const edges = [
+      { d: p.x, dx: -1, dy: 0 },
+      { d: g.width - 1 - p.x, dx: 1, dy: 0 },
+      { d: p.y, dx: 0, dy: -1 },
+      { d: g.height - 1 - p.y, dx: 0, dy: 1 }
+    ].sort((a, b) => a.d - b.d);
+    const e = edges[0]!;
+    const here = this.projection.tileToWorld(p);
+    const from = this.projection.tileToWorld({ x: p.x + e.dx, y: p.y + e.dy });
+    const ox = (from.x - here.x) * 0.6, oy = (from.y - here.y) * 0.6;
+    this.stopBreathing(view);
+    const s = view.sprite, sh = view.shadow;
+    const bx = s.x, by = s.y, shx = sh.x, shy = sh.y;
+    if (e.dx !== 0) s.setFlipX(e.dx > 0);
+    s.setAlpha(0);
+    sh.setAlpha(0);
+    const place = (f: number) => {
+      // f: 0 = half a tile out, 1 = on the tile. Two strides.
+      const k = 1 - f;
+      const hop = Math.abs(Math.sin(f * Math.PI * 2)) * 3;
+      s.setPosition(bx + ox * k, by + oy * k - hop);
+      sh.setPosition(shx + ox * k, shy + oy * k);
+      // The HUD rides the sprite (update()), so it has to fade with it —
+      // otherwise an HP bar hangs in the air off the edge of the board.
+      const a = Math.min(1, f * 1.8);
+      for (const o of [s, sh, view.hpBg, view.hpBar, view.stanceIcon]) o.setAlpha(a);
+    };
+    place(0);
+    // One counter spanning the stagger AND the walk, so the unit is held
+    // off-tile and invisible while it waits its turn (a tween `delay`
+    // leaves it wherever the last refresh put it: on the tile, visible).
+    const WALK = 520;
+    view.animLock = "arriving";
+    // Land: on the tile, at full alpha, then hand back to the refresh
+    // (facing, spent tint) — early if something else needs the unit.
+    const land = () => {
+      tween.stop();
+      view.animLock = undefined;
+      view.finishArrival = undefined;
+      place(1);
+      this.refreshUnitView(u);
+    };
+    const tween = this.tweens.addCounter({
+      from: 0,
+      to: delay + WALK,
+      duration: delay + WALK,
+      onUpdate: (tw) => {
+        const ms = tw.getValue() ?? 0;
+        place(Phaser.Math.Easing.Sine.Out(Math.max(0, (ms - delay) / WALK)));
+      },
+      onComplete: () => {
+        land();
+        this.spawnDust(bx, shy);
+        this.startBreathing(view);
+      }
+    });
+    view.finishArrival = land;
   }
 
   // Nearest free walkable tile to the wave's requested entry point —
@@ -1280,24 +1482,35 @@ export class BattleScene extends Phaser.Scene {
   private buildUnitView(u: Unit): void {
     const tex = ensureUnitTexture(this, u);
     const px = this.projection.tileToWorld(u.state.position);
-    const baseY = px.y - 4;
+    const baseY = px.y + this.unitLift;
     // Cast-shadow first so the sprite is drawn on top of it. addWorld()
     // no-ops during create() (uiCamera doesn't exist yet; the bulk
     // ignore pass covers setup objects) and keeps mid-battle
     // reinforcement spawns off the UI camera so they don't ghost-render.
-    const shadow = this.addWorld(this.add.ellipse(px.x, baseY + 24, 33, 10, 0x000000, 0.42));
-    const sprite = this.addWorld(this.add.sprite(px.x, baseY, tex).setDisplaySize(44, 55));
+    const shadow = this.addWorld(this.add.ellipse(
+      px.x, baseY + 24, this.diorama ? 30 : 33, this.diorama ? 8 : 10, 0x000000, 0.42
+    ).setDepth(DEPTH.SHADOW));
+    const sprite = this.addWorld(this.add.sprite(px.x, baseY, tex).setDisplaySize(this.unitW, this.unitH)
+      .setDepth(actorDepth(baseY + this.unitH / 2)));
     if (u.faction === "enemy") sprite.setFlipX(true);
-    const hpBg = this.addWorld(this.add.graphics());
-    const hpBar = this.addWorld(this.add.graphics());
+    const castShadow = this.sun || (this.torchShadows && this.boardLights.length > 0)
+      ? this.addWorld(this.add.image(px.x, baseY + 24, tex)
+        .setOrigin(0.5, UNIT_FOOT_ORIGIN)
+        .setTintFill(0x000000)
+        .setDepth(DEPTH.SHADOW - 0.05))
+      : undefined;
+    // HP bars and stance glyphs sit above every actor so a soldier in the
+    // row in front never hides the bar of the one behind him.
+    const hpBg = this.addWorld(this.add.graphics().setDepth(DEPTH.UNIT_HUD));
+    const hpBar = this.addWorld(this.add.graphics().setDepth(DEPTH.UNIT_HUD + 0.01));
     const stanceIcon = this.addWorld(this.add.text(px.x, px.y - TILE_SIZE / 2 + 2, "", {
       fontFamily: FAMILY_HEADING,
       fontSize: "12px",
       color: "#ffd45a",
       stroke: "#000",
       strokeThickness: 2
-    }).setOrigin(0.5, 0));
-    const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon };
+    }).setOrigin(0.5, 0).setDepth(DEPTH.UNIT_HUD + 0.02));
+    const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon, castShadow };
     this.unitViews.set(u.id, view);
     this.refreshUnitView(u);
     playUnitState(this, sprite, u, "idle");
@@ -1307,22 +1520,36 @@ export class BattleScene extends Phaser.Scene {
     if (!isAlive(u)) {
       sprite.setVisible(false);
       shadow.setVisible(false);
+      castShadow?.setVisible(false);
     }
   }
 
   private refreshUnitView(u: Unit): void {
     const v = this.unitViews.get(u.id);
     if (!v) return;
+    // Mid-fall: the death animation owns the sprite until it has faded.
+    if (v.animLock === "dying" && !isAlive(u)) {
+      v.hpBg.clear();
+      v.hpBar.clear();
+      v.stanceIcon.setText("");
+      this.clearRavageAura(v);
+      return;
+    }
     const px = this.projection.tileToWorld(u.state.position);
     // Keep the breathing anchor AND the shadow in lock-step with the
     // sprite snap. This function used to reposition only the sprite —
     // any state-only reposition then left baseY stale (the next
     // breathing reset floated the unit at the old tile's height) and
     // the shadow marooned on the old tile.
-    v.baseY = px.y - 4;
-    v.sprite.setPosition(px.x, v.baseY);
-    v.sprite.setVisible(isAlive(u));
-    v.sprite.setFlipX(u.state.facingX === -1);
+    v.baseY = px.y + this.unitLift;
+    // Mid-arrival the walk-in owns where the sprite is, which way it faces
+    // and how visible it is; the bars and glyphs below still refresh.
+    const arriving = v.animLock === "arriving";
+    if (!arriving) {
+      v.sprite.setPosition(px.x, v.baseY);
+      v.sprite.setVisible(isAlive(u));
+      v.sprite.setFlipX(u.state.facingX === -1);
+    }
     v.hpBg.clear();
     v.hpBar.clear();
     if (!isAlive(u)) {
@@ -1330,7 +1557,7 @@ export class BattleScene extends Phaser.Scene {
       this.clearRavageAura(v);
       return;
     }
-    v.shadow.setPosition(px.x, v.baseY + 24);
+    if (!arriving) v.shadow.setPosition(px.x, v.baseY + 24);
     // Spent state — dim + desaturate units that have already taken their
     // turn this round (player or enemy). Without this the player can't
     // tell at a glance whose turn it is — they see a spent character
@@ -1342,7 +1569,7 @@ export class BattleScene extends Phaser.Scene {
     // (everyone else who's done this round). Cleared the moment the
     // round wraps because Initiative.advance resets hasActedThisRound on
     // every unit when it bumps the round counter.
-    this.applySpentTint(v.sprite, u);
+    if (!arriving) this.applySpentTint(v.sprite, u);
     // HP bar with damage-lag ghost. On a hit the pale segment holds at
     // the pre-hit ratio for a beat and then drains — the cost of the hit
     // stays readable for half a second instead of vanishing in a frame.
@@ -1375,8 +1602,7 @@ export class BattleScene extends Phaser.Scene {
       });
     }
     this.drawHpBar(v, u);
-    const by = px.y + TILE_SIZE / 2 - 8;
-    v.stanceIcon.setPosition(px.x, by - 14);
+    v.stanceIcon.setPosition(px.x, v.baseY + 6);
     // Predicates, not equality — the combined "both" stance (Ready +
     // Defend in the same turn) must show BOTH glyphs, not fall through
     // to blank.
@@ -1398,11 +1624,12 @@ export class BattleScene extends Phaser.Scene {
     v.hpBg.clear();
     v.hpBar.clear();
     if (!isAlive(u)) return;
-    const px = this.projection.tileToWorld(u.state.position);
     const barW = 36;
     const barH = 4;
-    const bx = px.x - barW / 2;
-    const by = px.y + TILE_SIZE / 2 - 8;
+    const bx = -barW / 2;
+    const by = 0;
+    v.hpBg.setPosition(v.sprite.x, v.baseY + HP_BAR_DY);
+    v.hpBar.setPosition(v.sprite.x, v.baseY + HP_BAR_DY);
     v.hpBg.fillStyle(0x000000, 0.7);
     v.hpBg.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
     const ratio = Math.max(0, u.state.hp / u.stats.hp);
@@ -1423,7 +1650,10 @@ export class BattleScene extends Phaser.Scene {
   // keep the original method signatures so the rest of BattleScene
   // doesn't have to know the implementation moved.
   private refreshRavageAura(v: UnitView, u: Unit): void {
-    refreshRavageAura(this, v, u, this.projection);
+    refreshRavageAura(this, v, u, this.projection, {
+      adopt: (o) => this.addWorld(o),
+      squash: this.groundSquash()
+    });
   }
   private clearRavageAura(v: UnitView): void {
     clearRavageAura(v);
@@ -1484,7 +1714,7 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // 5. The floater, camera shake, riser, and log line.
-    announceRavaged(this, view.sprite, unit, (msg) => this.pushLog(msg));
+    announceRavaged(this, view.sprite, unit, (msg) => this.pushLog(msg), (o) => this.addWorld(o));
   }
 
   // ---- Fog-of-war spotlight ----
@@ -1535,7 +1765,15 @@ export class BattleScene extends Phaser.Scene {
     this.ensureLightBrushTexture();
     const rt = this.add.renderTexture(0, 0, width, height)
       .setOrigin(0, 0)
-      .setDepth(25); // above tiles + units, below floaters + tooltips
+      .setDepth(DEPTH.DARKNESS) // above terrain + actors, below floaters + tooltips
+      // MULTIPLY, not NORMAL. The RT blends as straight alpha, and a
+      // straight-alpha draw over an opaque pixel LOWERS that pixel's alpha
+      // (0.82² + 0.18 ≈ 0.85). Invisible while nothing sat under the world
+      // camera; with the backdrop in its own scene underneath, every night
+      // battle's board turned see-through. MULTIPLY with black darkens the
+      // colour by exactly (1 − alpha) and leaves the destination alpha
+      // untouched.
+      .setBlendMode(Phaser.BlendModes.MULTIPLY);
     // World-space (not screen-pinned) so it scrolls with the camera.
     rt.setScrollFactor(1);
     this.darknessRT = rt;
@@ -1550,13 +1788,31 @@ export class BattleScene extends Phaser.Scene {
     if (!this.darknessRT) return;
     this.darknessRT.clear();
     this.darknessRT.fill(0x000511, BattleScene.SPOTLIGHT_DARK_ALPHA);
-    const key = BattleScene.SPOTLIGHT_BRUSH_KEY;
-    const offset = BattleScene.SPOTLIGHT_BRUSH_SIZE / 2;
+    if (!this.lightBrush) {
+      this.lightBrush = this.make.image({ key: BattleScene.SPOTLIGHT_BRUSH_KEY, add: false });
+    }
+    const brush = this.lightBrush;
+    // Light lands on foreshortened ground, so the pool is an ellipse on
+    // the diorama and a circle on the flat board.
+    const squash = this.groundSquash();
     for (const u of this.state.units) {
       if (u.faction !== "player") continue;
       if (!isAlive(u)) continue;
-      const px = this.projection.tileToWorld(u.state.position);
-      this.darknessRT.erase(key, px.x - offset, px.y - offset);
+      // From the SPRITE, so the light walks with the unit instead of
+      // jumping to the destination tile the moment a move is committed.
+      const view = this.unitViews.get(u.id);
+      const at = view
+        ? { x: view.sprite.x, y: view.sprite.y + this.unitH / 2 - 6 }
+        : this.projection.tileToWorld(u.state.position);
+      brush.setPosition(at.x, at.y).setScale(1, squash);
+      this.darknessRT.erase(brush);
+    }
+    // Torches and braziers light the night too — they used to be warm
+    // specks the fog painted straight over.
+    for (const l of this.boardLights) {
+      const s = l.radius / BattleScene.SPOTLIGHT_BRUSH_OUTER;
+      brush.setPosition(l.x, l.y).setScale(s, s * squash);
+      this.darknessRT.erase(brush);
     }
   }
 
@@ -1565,12 +1821,78 @@ export class BattleScene extends Phaser.Scene {
   // continuous render-loop work this scene does.
   update(): void {
     if (this.darknessRT) this.refreshSpotlight();
+    this.fadeOccluders();
+    if (this.backdropScene?.scene.isActive()) {
+      this.backdropScene.follow(this.cameras.main.scrollX, this.cameras.main.scrollY);
+    }
     // Keep every Ravage aura pinned to its sprite. Cheap (a handful of
     // ravaged units at most, and a no-op for views with no aura) and it
     // has to be per-frame: the sprite moves under tween control during
     // walks and attack lunges, while the aura is a separate object with
     // nothing but this to follow it.
-    for (const v of this.unitViews.values()) syncRavageAura(v);
+    for (const v of this.unitViews.values()) {
+      syncRavageAura(v);
+      // Y-sort: whoever's feet are nearer the camera draws in front. Has
+      // to be per-frame — walks, lunges and flinches move sprites under
+      // tween control, and a unit crossing a row mid-walk must pass in
+      // front of or behind its neighbours at the right moment.
+      // A corpse keeps the depth of the spot it fell on: the topple moves
+      // the sprite's centre down toward the floor, which would otherwise
+      // sort the body in front of whoever stands in the next row.
+      const sortY = isAlive(v.unit) ? v.sprite.y : v.baseY;
+      v.sprite.setDepth(actorDepth(sortY + this.unitH / 2));
+      this.syncCastShadow(v);
+      // HUD rides the sprite, not the tile (see drawHpBar).
+      v.hpBg.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
+      v.hpBar.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
+      v.stanceIcon.setPosition(v.sprite.x, v.sprite.y + 6);
+    }
+  }
+
+  // The sun-shadow lies where the contact shadow is — on the ground, so a
+  // hop or a lunge lifts the figure off its shadow — and wears the sprite's
+  // current frame and facing. Gone the moment a unit starts to fall: a
+  // shadow standing upright under a toppling body reads as a second body.
+  private syncCastShadow(v: UnitView): void {
+    const cs = v.castShadow;
+    if (!cs) return;
+    const s = v.sprite;
+    // By day the sun; by night whichever flame the figure stands nearest,
+    // recomputed as they walk — a soldier crossing a torch-lit square has
+    // his shadow swing round him.
+    const light = this.sun ?? torchShadow(v.shadow.x, v.shadow.y, this.boardLights);
+    const show = !!light && s.visible && v.animLock !== "dying" && v.shadow.visible;
+    cs.setVisible(show);
+    if (!show || !light) return;
+    if (cs.texture !== s.texture || cs.frame.name !== s.frame.name) cs.setTexture(s.texture.key, s.frame.name);
+    cs.setPosition(v.shadow.x, v.shadow.y);
+    cs.setDepth(this.sun ? DEPTH.SHADOW - 0.05 : DEPTH.TORCH_SHADOW);
+    castFrom(cs, s, light);
+    cs.setAlpha(light.alpha * s.alpha * v.shadow.alpha);
+  }
+
+  // A tree or a column in front of a unit fades to a ghost while anyone
+  // stands behind it — on the tilted board a prop taller than a figure
+  // covers the rows behind it, and a tactics board can't hide who's where.
+  private fadeOccluders(): void {
+    if (this.occluders.length === 0) return;
+    const halfW = this.unitW / 2, halfH = this.unitH / 2;
+    for (const o of this.occluders) {
+      let behind = false;
+      for (const v of this.unitViews.values()) {
+        const s = v.sprite;
+        if (!s.visible || s.alpha < 0.05) continue;
+        const feet = s.y + halfH;
+        if (feet >= o.footY - 2) continue;
+        if (s.x + halfW * 0.6 < o.x0 || s.x - halfW * 0.6 > o.x1) continue;
+        if (feet < o.y0 + 4) continue;
+        behind = true;
+        break;
+      }
+      const target = behind ? 0.42 : 1;
+      const a = o.img.alpha;
+      if (Math.abs(a - target) > 0.01) o.img.setAlpha(a + (target - a) * 0.22);
+    }
   }
 
   private refreshAllUnits(): void {
@@ -2005,11 +2327,11 @@ export class BattleScene extends Phaser.Scene {
       ease: "Sine.easeInOut"
     });
     this.activeArrow.setColor(u.faction === "player" ? "#ffd45a" : "#ff8a8a");
-    this.activeArrow.setPosition(px, py - 28);
+    this.activeArrow.setPosition(px, py - this.unitH / 2 - 1);
     this.activeArrow.setVisible(true);
     this.activeArrowTween = this.tweens.add({
       targets: this.activeArrow,
-      y: py - 22,
+      y: py - this.unitH / 2 + 5,
       duration: 480,
       yoyo: true,
       repeat: -1,
@@ -2945,7 +3267,8 @@ export class BattleScene extends Phaser.Scene {
     }
     const end = pts[pts.length - 1]!;
     this.pathG.lineStyle(1.5, COLORS.hover, 0.9);
-    this.pathG.strokeCircle(end.x, end.y, 10);
+    // Lying on the destination tile, foreshortened like the ground.
+    this.pathG.strokeEllipse(end.x, end.y, 20, 20 * this.groundSquash());
 
     const view = this.unitViews.get(u.id);
     if (!view) return;
@@ -2953,14 +3276,28 @@ export class BattleScene extends Phaser.Scene {
       // Dynamic world object → addWorld() keeps it off the UI camera (the
       // double-render rule for anything spawned after the create() sweep).
       this.moveGhost = this.addWorld(this.add.sprite(0, 0, view.sprite.texture.key));
-      this.moveGhost.setDisplaySize(44, 55);
+      this.moveGhost.setDisplaySize(this.unitW, this.unitH);
       this.moveGhost.setAlpha(0.35);
     }
     this.moveGhost.setTexture(view.sprite.texture.key);
-    this.moveGhost.setDisplaySize(44, 55);
+    this.moveGhost.setDisplaySize(this.unitW, this.unitH);
     this.moveGhost.setFlipX(view.sprite.flipX);
-    this.moveGhost.setPosition(end.x, end.y - 4);
+    this.moveGhost.setPosition(end.x, end.y + this.unitLift);
+    this.moveGhost.setDepth(actorDepth(end.y + this.unitLift + this.unitH / 2));
     this.moveGhost.setVisible(true);
+  }
+
+  // A tile's visible top face as edges. Square on the flat board;
+  // foreshortened and lifted by elevation on the diorama. Every
+  // tile-shaped overlay goes through this — none may assume a 48px square.
+  private tileQuad(t: TilePos): { L: number; R: number; T: number; B: number } {
+    const f = this.projection.topFace(t);
+    return { L: f.x, R: f.x + f.w, T: f.y, B: f.y + f.h };
+  }
+
+  private fillTile(g: Phaser.GameObjects.Graphics, t: TilePos): void {
+    const f = this.projection.topFace(t);
+    g.fillRect(f.x, f.y, f.w, f.h);
   }
 
   // Trace the outline of a tile region: for every tile, any edge whose
@@ -2971,9 +3308,7 @@ export class BattleScene extends Phaser.Scene {
     const inRegion = new Set(tiles.map((t) => `${t.x},${t.y}`));
     const edges: [number, number, number, number][] = [];
     for (const t of tiles) {
-      const px = this.projection.tileToWorld(t);
-      const L = px.x - TILE_SIZE / 2, R = px.x + TILE_SIZE / 2;
-      const T = px.y - TILE_SIZE / 2, B = px.y + TILE_SIZE / 2;
+      const { L, R, T, B } = this.tileQuad(t);
       if (!inRegion.has(`${t.x},${t.y - 1}`)) edges.push([L, T, R, T]);
       if (!inRegion.has(`${t.x},${t.y + 1}`)) edges.push([L, B, R, B]);
       if (!inRegion.has(`${t.x - 1},${t.y}`)) edges.push([L, T, L, B]);
@@ -2988,10 +3323,10 @@ export class BattleScene extends Phaser.Scene {
   // Target-lock corner brackets on a tile — reads as "acquire", not as a
   // painted attack tile. Four short L-shapes, one per corner.
   private strokeTargetBrackets(g: Phaser.GameObjects.Graphics, tile: TilePos, color: number): void {
-    const px = this.projection.tileToWorld(tile);
-    const L = px.x - TILE_SIZE / 2 + 3, R = px.x + TILE_SIZE / 2 - 3;
-    const T = px.y - TILE_SIZE / 2 + 3, B = px.y + TILE_SIZE / 2 - 3;
-    const a = 9; // arm length
+    const q = this.tileQuad(tile);
+    const L = q.L + 3, R = q.R - 3;
+    const T = q.T + 3, B = q.B - 3;
+    const a = Math.min(9, (B - T) * 0.35); // arm length
     g.lineStyle(2, color, 0.95);
     g.lineBetween(L, T, L + a, T); g.lineBetween(L, T, L, T + a);
     g.lineBetween(R, T, R - a, T); g.lineBetween(R, T, R, T + a);
@@ -3009,10 +3344,7 @@ export class BattleScene extends Phaser.Scene {
     // so it always reflects the live board.
     if (this.dangerVisible) {
       this.dangerG.fillStyle(0xd05a4a, 0.13);
-      for (const t of allEnemyDanger(this.state)) {
-        const px = this.projection.tileToWorld(t);
-        this.dangerG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
-      }
+      for (const t of allEnemyDanger(this.state)) this.fillTile(this.dangerG, t);
     }
     const state = this.fsm.current();
     if (state.tag === "move" || state.tag === "roam") {
@@ -3021,10 +3353,7 @@ export class BattleScene extends Phaser.Scene {
       // per-tile grid strokes were the old look's tell; the region now
       // reads as one shape bounded by the breathing contour.
       this.overlayG.fillStyle(tint, state.tag === "roam" ? 0.14 : 0.10);
-      for (const t of state.tiles) {
-        const px = this.projection.tileToWorld(t);
-        this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
-      }
+      for (const t of state.tiles) this.fillTile(this.overlayG, t);
       this.strokeRegionContour(this.contourG, state.tiles, tint);
       // Seamless attack: while a unit is selected (move mode, NOT roam —
       // roam is move-only), also mark any in-range enemy so the player can
@@ -3036,8 +3365,7 @@ export class BattleScene extends Phaser.Scene {
           const targets = targetsForUnit(this.state, u);
           this.overlayG.fillStyle(COLORS.attackTile, 0.14);
           for (const t of targets) {
-            const px = this.projection.tileToWorld(t.state.position);
-            this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+            this.fillTile(this.overlayG, t.state.position);
             this.strokeTargetBrackets(this.overlayG, t.state.position, COLORS.attackTile);
           }
         }
@@ -3045,8 +3373,7 @@ export class BattleScene extends Phaser.Scene {
     } else if (state.tag === "attack") {
       this.overlayG.fillStyle(COLORS.attackTile, 0.14);
       for (const t of state.targets) {
-        const px = this.projection.tileToWorld(t.state.position);
-        this.overlayG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+        this.fillTile(this.overlayG, t.state.position);
         this.strokeTargetBrackets(this.overlayG, t.state.position, COLORS.attackTile);
       }
     }
@@ -3063,8 +3390,7 @@ export class BattleScene extends Phaser.Scene {
       if (!hasReadyStance(u) && !u.state.alwaysCounters) continue;
       for (const z of counterZoneTiles(u)) {
         if (z.x < 0 || z.y < 0 || z.x >= this.state.grid.width || z.y >= this.state.grid.height) continue;
-        const px = this.projection.tileToWorld(z);
-        this.threatG.fillRect(px.x - TILE_SIZE / 2, px.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+        this.fillTile(this.threatG, z);
       }
     }
   }
@@ -3126,13 +3452,20 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // A ring that expands and fades — its own object so it can't fight
-    // the breathing/idle tweens already running on the unit sprite.
+    // the breathing/idle tweens already running on the unit sprite. It lies
+    // on the ground at the unit's feet, squashed to the board's tilt, and
+    // under the actors: a ping on the floor, not a hoop in the air.
+    const sq = this.groundSquash();
     const ring = this.addWorld(
-      this.add.circle(wp.x, wp.y, 24).setStrokeStyle(3, 0xffd45a, 0.95).setDepth(31)
+      this.add.circle(wp.x, wp.y + (this.diorama ? DIORAMA_FOOT_DY : 0), 24)
+        .setStrokeStyle(3, 0xffd45a, 0.95)
+        .setScale(1, sq)
+        .setDepth(this.darknessRT ? DEPTH.OVER_DARK : DEPTH.GROUND_MARK + 0.5)
     );
     this.tweens.add({
       targets: ring,
-      scale: 1.9,
+      scaleX: 1.9,
+      scaleY: 1.9 * sq,
       alpha: 0,
       duration: 650,
       ease: "Sine.easeOut",
@@ -3258,7 +3591,8 @@ export class BattleScene extends Phaser.Scene {
     this.cursorG.clear();
     const px = this.projection.tileToWorld(tile);
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
-    this.cursorG.strokeRect(px.x - TILE_SIZE / 2 + 0.5, px.y - TILE_SIZE / 2 + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    const cq = this.tileQuad(tile);
+    this.cursorG.strokeRect(cq.L + 0.5, cq.T + 0.5, cq.R - cq.L - 1, cq.B - cq.T - 1);
 
     // Path preview: hovering a reachable tile in move/roam mode shows the
     // dotted walking route + a translucent ghost of the unit at the
@@ -3356,8 +3690,10 @@ export class BattleScene extends Phaser.Scene {
     view.breathTween?.stop();
     // Never bob a corpse — death poses (alpha + 90° tilt) must persist.
     if (!isAlive(view.unit)) return;
+    // An arrival starts the breath itself when it lands.
+    if (view.animLock === "arriving") return;
     const px = this.projection.tileToWorld(view.unit.state.position);
-    view.baseY = px.y - 4;
+    view.baseY = px.y + this.unitLift;
     view.sprite.setPosition(px.x, view.baseY);
     view.shadow.setPosition(px.x, view.baseY + 24);
     view.breathTween = this.tweens.add({
@@ -3371,6 +3707,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private stopBreathing(view: UnitView): void {
+    // Every animation that takes a sprite over starts here — so this is
+    // where an arrival still walking in gets out of its way.
+    if (view.animLock === "arriving") view.finishArrival?.();
     view.breathTween?.stop();
     view.breathTween = undefined;
     view.sprite.y = view.baseY;
@@ -3378,11 +3717,16 @@ export class BattleScene extends Phaser.Scene {
 
   // Three small puffs at the unit's foot — fan upward + outward, fade out.
   // Sells the push-off without spamming particles per step.
+  //
+  // Sorted with the actors at that foot position. These were created at
+  // depth 0 — under every terrain tile past the first row, so on most of
+  // the board the footfalls were never actually seen.
   private spawnDust(x: number, y: number): void {
     for (let i = 0; i < 3; i++) {
       const dir = (i - 1) * 0.7; // -0.7, 0, +0.7 radians of horizontal spread
       const dist = 10 + Math.random() * 6;
-      const puff = this.addWorld(this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55));
+      const puff = this.addWorld(this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55)
+        .setDepth(this.dustDepth(y)));
       this.tweens.add({
         targets: puff,
         x: x + Math.sin(dir) * dist,
@@ -3443,7 +3787,8 @@ export class BattleScene extends Phaser.Scene {
     // across all legs gives one acceleration, a constant cruise, and one
     // deceleration; facing flips and footstep SFX fire at leg boundaries
     // exactly as before.
-    const pts = [startTile, ...path].map((t) => this.projection.tileToWorld(t));
+    const legTiles = [startTile, ...path];
+    const pts = legTiles.map((t) => this.projection.tileToWorld(t));
     const legs = pts.length - 1;
     const MS_PER_TILE = 95;
     const isActive = this.initiative.current() === u;
@@ -3472,22 +3817,27 @@ export class BattleScene extends Phaser.Scene {
             sfxStep();
             // Kick a small puff at each stride boundary (not just the
             // push-off) so a long run leaves a readable dust trail.
-            if (i > 0) this.spawnDust(a.x, a.y + 18);
+            if (i > 0) this.spawnDust(a.x, a.y + this.unitLift + 22);
           }
           const x = a.x + (b.x - a.x) * f;
-          const y = a.y + (b.y - a.y) * f - 4;
+          // A small lift through each stride so a walk reads as steps,
+          // not a glide — and a real hop when the stride changes height.
+          const ta = legTiles[i]!, tb = legTiles[i + 1]!;
+          const climb = Math.abs(this.elevAt(tb.x, tb.y) - this.elevAt(ta.x, ta.y));
+          const hop = Math.sin(f * Math.PI) * (2.5 + climb * 7);
+          const y = a.y + (b.y - a.y) * f + this.unitLift - hop;
           view.sprite.setPosition(x, y);
-          // Shadow stays planted at foot height rather than chest level.
-          view.shadow.setPosition(x, y + 22);
+          // Shadow stays planted on the ground under the hop.
+          view.shadow.setPosition(x, y + hop + 22);
           if (isActive) this.followActiveMarker(u);
         },
         onComplete: () => res()
       });
     });
     const end = pts[legs]!;
-    view.sprite.setPosition(end.x, end.y - 4);
-    view.shadow.setPosition(end.x, end.y - 4 + 22);
-    view.baseY = end.y - 4;
+    view.sprite.setPosition(end.x, end.y + this.unitLift);
+    view.shadow.setPosition(end.x, end.y + this.unitLift + 22);
+    view.baseY = end.y + this.unitLift;
     playUnitState(this, view.sprite, u, "idle");
     // Landing weight: a fast, tiny squash-and-recover on arrival. Scale
     // only — never y (baseY/breathing own that), so the anti-float
@@ -3504,7 +3854,7 @@ export class BattleScene extends Phaser.Scene {
       ease: "Sine.easeOut",
       onComplete: () => view.sprite.setScale(sx0, sy0)
     });
-    this.spawnDust(end.x, end.y + 18);
+    this.spawnDust(end.x, end.y + this.unitLift + 22);
     this.startBreathing(view);
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} moves.`);
@@ -3590,32 +3940,140 @@ export class BattleScene extends Phaser.Scene {
   // fade: grey-out, a squash-and-topple, dark ash kicked off the body,
   // and one soft light rising away. Shared by every death site (normal
   // kills, Destruct mutual kills, counter deaths).
-  private playDeathDissolve(view: UnitView, u: Unit): void {
+  //
+  // The fall pivots at the FEET (where the shadow sits), away from the
+  // blow, so the body comes down onto the tile it stood on. The old tilt
+  // turned the sprite about its centre: the feet swung out into the air
+  // and the body lay half a figure above the ground — invisible on the
+  // flat board, obvious on the tilted one where the floor is a plane.
+  private playDeathDissolve(view: UnitView, u: Unit, fromX?: number): void {
     playUnitState(this, view.sprite, u, "death");
     this.stopBreathing(view);
-    view.sprite.setTint(0x6a6a72);
-    this.tweens.add({
-      targets: view.sprite,
-      alpha: 0.15,
-      angle: 90,
-      scaleY: view.sprite.scaleY * 0.8,
-      duration: 460,
-      ease: "Cubic.easeIn"
+    const s = view.sprite;
+    view.animLock = "dying";
+    s.setVisible(true);
+    // A killing blow flashed the sprite white a moment ago; flashSprite
+    // hands it the death grey when the flash ends. Greying it here would
+    // swallow the flash, the one "got hit" read the kill has.
+    if (!s.tintFill) s.setTint(0x6a6a72);
+    const x0 = s.x;
+    const footY = view.shadow.y;
+    const arm = footY - s.y; // feet → centre
+    const away = fromX === undefined || Math.abs(fromX - x0) < 2
+      ? (u.state.facingX === -1 ? 1 : -1)
+      : Math.sign(x0 - fromX);
+    const fallDeg = 82 * away;
+    const sy0 = s.scaleY;
+    const pose = (deg: number, squash: number) => {
+      const th = Phaser.Math.DegToRad(deg);
+      s.setAngle(deg);
+      s.setPosition(x0 + arm * Math.sin(th), footY - arm * Math.cos(th));
+      s.scaleY = sy0 * squash;
+    };
+    const world = <T extends Phaser.GameObjects.GameObject>(o: T) => this.addWorld(o);
+    // Real death frames fall on their own — stagger, knees, collapse, lying
+    // still — so they only need the landing and the fade. Toppling them as
+    // well would fall the body twice.
+    if (hasUnitState(this, u, "death")) {
+      const FALL_MS = 4 * 1000 / 6; // four frames at the death sheet's 6fps
+      this.tweens.add({
+        targets: view.shadow, scaleX: 1.5, duration: FALL_MS, ease: "Quad.easeIn",
+        onComplete: () => this.tweens.add({ targets: view.shadow, alpha: 0, duration: 500, delay: 200 })
+      });
+      this.time.delayedCall(FALL_MS * 0.75, () => {
+        groundDust(this, world, x0, footY, {
+          depth: this.dustDepth(footY), count: 7, spread: 16, squash: this.groundSquash()
+        });
+      });
+      this.tweens.add({
+        targets: s, alpha: 0, duration: 600, delay: FALL_MS + 420, ease: "Sine.easeIn",
+        onComplete: () => {
+          view.animLock = undefined;
+          s.setVisible(false);
+        }
+      });
+      ashBurst(this, world, x0, footY - 6);
+      soulWisp(this, world, x0, footY - arm, ensureDotTexture(this));
+      return;
+    }
+    const squash = this.diorama ? 0.86 : 0.9;
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: 400,
+      ease: "Quad.easeIn",
+      onUpdate: (tw) => {
+        const f = tw.getValue() ?? 0;
+        pose(fallDeg * f, 1 - (1 - squash) * f);
+      },
+      onComplete: () => {
+        // Landing: dust where the shoulders hit, a small rebound, then
+        // the body settles and fades.
+        const headX = x0 + arm * 1.6 * away;
+        groundDust(this, world, headX, footY, {
+          depth: this.dustDepth(footY), count: 7, spread: 16, squash: this.groundSquash()
+        });
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: 150,
+          ease: "Sine.easeOut",
+          onUpdate: (tw) => pose(fallDeg - 7 * away * Math.sin(Math.PI * (tw.getValue() ?? 0)), squash)
+        });
+        // Lie still a beat, then go. Hidden at the end, exactly as every
+        // refresh leaves a dead unit.
+        this.tweens.add({
+          targets: s, alpha: 0, duration: 600, delay: 420, ease: "Sine.easeIn",
+          onComplete: () => {
+            view.animLock = undefined;
+            s.setVisible(false);
+          }
+        });
+      }
     });
+    // The shadow stretches along the falling body, then goes with it.
     this.tweens.add({
       targets: view.shadow,
-      alpha: 0,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      duration: 460
+      x: x0 + arm * 0.8 * away,
+      scaleX: 1.7,
+      duration: 400,
+      ease: "Quad.easeIn",
+      onComplete: () => {
+        this.tweens.add({ targets: view.shadow, alpha: 0, duration: 500, delay: 200 });
+      }
     });
-    ashBurst(this, (o) => this.addWorld(o), view.sprite.x, view.baseY + 18);
-    soulWisp(this, (o) => this.addWorld(o), view.sprite.x, view.sprite.y, ensureDotTexture(this));
+    ashBurst(this, world, x0, footY - 6);
+    soulWisp(this, world, x0, footY - arm, ensureDotTexture(this));
+  }
+
+  /**
+   * Vertical squash of anything lying on the floor: tile depth ÷ tile width
+   * on the tilted board, 1 (a circle stays a circle) on the flat one.
+   */
+  private groundSquash(): number {
+    return this.diorama ? DIORAMA_TILE_H / DIORAMA_TILE_W : 1;
+  }
+
+  /**
+   * Depth for dust kicked up at ground y: just in front of whoever stands
+   * there. Actors sort by their sprite's bottom edge, which sits a few px
+   * below the feet (and the contact shadow), so dust sorted AT the feet
+   * went behind the legs that raised it.
+   */
+  private dustDepth(groundY: number): number {
+    return actorDepth(groundY + 10);
   }
 
   private flashSprite(s: Phaser.GameObjects.Sprite, color: number, u?: Unit): void {
     s.setTintFill(color);
     this.time.delayedCall(120, () => {
+      // A killing blow: the death animation has taken the sprite over
+      // (grey, falling, fading) — hand it back the death grey, not the
+      // living unit's tint and full alpha.
+      if (u && !isAlive(u)) {
+        s.setTint(0x6a6a72);
+        return;
+      }
       s.clearTint();
       if (u) this.applySpentTint(s, u);
     });
@@ -3634,6 +4092,8 @@ export class BattleScene extends Phaser.Scene {
     // big landed.
     const fontSize = crit ? "26px" : "18px";
     const strokeThickness = crit ? 5 : 3;
+    // Depth set explicitly: this sat at 0 before, UNDER the atmosphere
+    // (23) and the darkness (25) — invisible on every night battle.
     const t = this.addWorld(this.add.text(x, y - 12, text, {
       fontFamily: FAMILY_HEADING,
       fontSize,
@@ -3643,7 +4103,7 @@ export class BattleScene extends Phaser.Scene {
       shadow: crit
         ? { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true, stroke: true }
         : { offsetX: 0, offsetY: 2, color: "#000", blur: 4, fill: true }
-    }).setOrigin(0.5));
+    }).setOrigin(0.5).setDepth(DEPTH.FLOATER));
     // Pop-in: scale punches up then settles. Crit overshoots harder.
     const peak = crit ? 1.45 : 1.2;
     t.setScale(0.5);
@@ -3702,8 +4162,14 @@ export class BattleScene extends Phaser.Scene {
         ease: "Cubic.easeOut",
         yoyo: true
       });
-      await this.delay(70); // release at the top of the draw
-      await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2);
+      // Release at the top of the draw: the impact frame of a real attack
+      // sheet (see ANIM_SPECS.attack), or a beat into the recoil without one.
+      await this.delay(hasUnitState(this, attacker, "attack") ? 185 : 70);
+      await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2, {
+        fromY: av.shadow.y,
+        toY: tv.shadow.y,
+        depth: DEPTH.SHADOW + 0.5
+      });
       playUnitState(this, av.sprite, attacker, "idle");
       this.startBreathing(av);
       return;
@@ -3721,6 +4187,7 @@ export class BattleScene extends Phaser.Scene {
         ease: "Sine.easeOut",
         yoyo: true
       });
+      if (hasUnitState(this, attacker, "attack")) await this.delay(110);
       sfxLensBeam();
       await lensBeam(this, (o) => this.addWorld(o), sx + dirX * 8, sy - 8, tx, ty);
       playUnitState(this, av.sprite, attacker, "idle");
@@ -3749,24 +4216,34 @@ export class BattleScene extends Phaser.Scene {
         }
       });
     });
-    // Shadow only follows the horizontal lunge — the body leans in but feet
-    // stay on the same tile.
-    this.tweens.add({
-      targets: av.shadow,
-      x: sx + (tx - sx) * 0.32,
-      duration: 130,
-      ease: "Cubic.easeOut",
-      yoyo: true
+    // The strike is a STEP: the body lifts off the back foot, drives a
+    // third of the way in and plants — dust at the front foot — then
+    // recovers. The shadow is the feet: it steps half as far, and the gap
+    // between it and the rising body is what reads as weight leaving the
+    // ground on the tilted board.
+    const reach = 0.32;
+    const sh0x = av.shadow.x, sh0y = av.shadow.y;
+    const hop = this.diorama ? 4 : 2.5;
+    const place = (f: number) => {
+      av.sprite.setPosition(sx + (tx - sx) * reach * f, sy + (ty - sy) * reach * f - hop * Math.sin(Math.PI * f));
+      av.shadow.setPosition(sh0x + (tx - sx) * reach * 0.55 * f, sh0y + (ty - sy) * reach * 0.55 * f);
+    };
+    await new Promise<void>((res) => {
+      this.tweens.addCounter({
+        from: 0, to: 1, duration: 130, ease: "Cubic.easeOut",
+        onUpdate: (tw) => place(tw.getValue() ?? 0),
+        onComplete: () => res()
+      });
+    });
+    groundDust(this, (o) => this.addWorld(o), av.shadow.x + dirX * 6, av.shadow.y, {
+      depth: this.dustDepth(av.shadow.y), count: 4, spread: 9, squash: this.groundSquash(), dirX
     });
     return new Promise((res) => {
-      this.tweens.add({
-        targets: av.sprite,
-        x: sx + (tx - sx) * 0.32,
-        y: sy + (ty - sy) * 0.32,
-        duration: 130,
-        ease: "Cubic.easeOut",
-        yoyo: true,
+      this.tweens.addCounter({
+        from: 1, to: 0, duration: 150, ease: "Sine.easeInOut",
+        onUpdate: (tw) => place(tw.getValue() ?? 0),
         onComplete: () => {
+          av.shadow.setPosition(sh0x, sh0y);
           playUnitState(this, av.sprite, attacker, "idle");
           this.startBreathing(av);
           res();
@@ -3793,14 +4270,16 @@ export class BattleScene extends Phaser.Scene {
     if (opts?.interposedFrom) {
       const ov = this.unitViews.get(opts.interposedFrom.id);
       if (ov) {
-        const banner = this.add.text(ov.sprite.x, ov.sprite.y - TILE_SIZE / 2 - 10, "INTERPOSED!", {
+        // addWorld: created after the setup sweep, so without it the UI
+        // camera (which never scrolls) drew a second copy offset by the pan.
+        const banner = this.addWorld(this.add.text(ov.sprite.x, ov.sprite.y - TILE_SIZE / 2 - 10, "INTERPOSED!", {
           fontFamily: FAMILY_HEADING,
           fontSize: "14px",
           color: "#fff7c4",
           stroke: "#1a0e04",
           strokeThickness: 4,
           shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 6, fill: true }
-        }).setOrigin(0.5, 1).setDepth(45);
+        }).setOrigin(0.5, 1).setDepth(45));
         this.tweens.add({
           targets: banner,
           y: banner.y - 22,
@@ -3855,7 +4334,14 @@ export class BattleScene extends Phaser.Scene {
       }
       hitSpark(this, (o) => this.addWorld(o), tx, ty, result.crit);
       // Crits own the moment: a gold ring snaps outward from the impact.
-      if (result.crit) critShockwave(this, (o) => this.addWorld(o), tx, ty);
+      if (result.crit) {
+        critShockwave(this, (o) => this.addWorld(o), tx, ty);
+        // Driven back a step: dust off the heels, on the far side.
+        groundDust(this, (o) => this.addWorld(o), tv.shadow.x, tv.shadow.y, {
+          depth: this.dustDepth(tv.shadow.y), count: 5, spread: 14,
+          squash: this.groundSquash(), dirX: Math.cos(impactAngle) >= 0 ? 1 : -1
+        });
+      }
       // Crisp white impact flash — reads instantly as "got hit", regardless
       // of unit palette. Red tint blended in with enemy reds before.
       this.flashSprite(tv.sprite, 0xffffff, defender);
@@ -3879,7 +4365,7 @@ export class BattleScene extends Phaser.Scene {
     if (result.defenderKilled) {
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
-      this.playDeathDissolve(tv, defender);
+      this.playDeathDissolve(tv, defender, av.sprite.x);
       // XP award: only player kills of enemies count. Allied kills (friendly
       // fire, AI vs AI) and enemy kills of players don't award anything.
       // The reward is computed from base-by-class × level-diff modifier; a
@@ -4017,7 +4503,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          this.playDeathDissolve(av, u);
+          this.playDeathDissolve(av, u, this.unitViews.get(target.id)?.sprite.x);
         }
         this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
       }
@@ -4078,7 +4564,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          this.playDeathDissolve(av, u);
+          this.playDeathDissolve(av, u, this.unitViews.get(actualDefender.id)?.sprite.x);
         }
         this.pushLog(`${actualDefender.name}'s last act drags ${u.name} down.`);
       }

@@ -20,6 +20,7 @@
 
 import Phaser from "phaser";
 import { FAMILY_HEADING, TILE_SIZE } from "../../util/constants";
+import { DEPTH } from "../../render/depth";
 import type { Projection } from "../../render/Projection";
 import { isAlive } from "../../combat/Unit";
 import { sfxRavage } from "../../audio/Sfx";
@@ -80,6 +81,21 @@ export const syncRavageAura = (view: {
   view.ravageAura?.setPosition(view.sprite.x, view.sprite.y + AURA_FOOT_OFFSET);
 };
 
+export interface RavageAuraOptions {
+  /**
+   * Register a world object created mid-battle with the host scene
+   * (BattleScene.addWorld). REQUIRED in practice: without it the UI camera
+   * — which never scrolls — also draws the aura, at unscrolled
+   * coordinates. That second copy was the red glow players saw sitting
+   * "near the unit, or far away": it was offset by exactly how far the
+   * board had been panned. The real copy was at depth -1, under the
+   * floor, and never seen at all.
+   */
+  adopt?: <T extends Phaser.GameObjects.GameObject>(o: T) => T;
+  /** Vertical squash for a pool on foreshortened ground (1 = circle). */
+  squash?: number;
+}
+
 // Lazily build or tear down the per-unit aura in step with UnitState.
 // Placement is the sprite's business (see syncRavageAura) — this only
 // decides whether an aura should exist at all.
@@ -87,7 +103,8 @@ export const refreshRavageAura = (
   scene: Phaser.Scene,
   view: RavageViewState & { sprite: Phaser.GameObjects.Sprite },
   u: Unit,
-  _projection: Projection
+  _projection: Projection,
+  opts: RavageAuraOptions = {}
 ): void => {
   if (!u.state.ravagedActive || !isAlive(u)) {
     clearRavageAura(view);
@@ -95,15 +112,23 @@ export const refreshRavageAura = (
   }
   if (!view.ravageAura) {
     const key = ensureRavageAuraTexture(scene);
-    const aura = scene.add.image(view.sprite.x, view.sprite.y + AURA_FOOT_OFFSET, key)
+    const sy = opts.squash ?? 1;
+    const img = scene.add.image(view.sprite.x, view.sprite.y + AURA_FOOT_OFFSET, key)
       .setOrigin(0.5)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(view.sprite.depth - 1);
+      .setScale(1.25, 1.25 * sy)
+      // On the ground under the unit, with the other light: above the
+      // terrain it pools on, below the sprite standing in it.
+      .setDepth(DEPTH.LIGHT + 0.5);
+    const aura = opts.adopt ? opts.adopt(img) : img;
     view.ravageAura = aura;
     view.ravageAuraTween = scene.tweens.add({
       targets: aura,
       alpha: { from: 0.55, to: 0.95 },
-      scale: { from: 0.95, to: 1.1 },
+      // scaleX/Y around a base, not `scale` — tweening `scale` would snap
+      // a foreshortened pool back into a circle on the first frame.
+      scaleX: { from: 1.25 * 0.95, to: 1.25 * 1.1 },
+      scaleY: { from: 1.25 * sy * 0.95, to: 1.25 * sy * 1.1 },
       yoyo: true,
       repeat: -1,
       duration: 600,
@@ -136,11 +161,13 @@ export const announceRavaged = (
   scene: Phaser.Scene,
   sprite: Phaser.GameObjects.Sprite,
   unit: Unit,
-  pushLog: (msg: string) => void
+  pushLog: (msg: string) => void,
+  adopt: <T extends Phaser.GameObjects.GameObject>(o: T) => T = (o) => o
 ): void => {
   sfxRavage(); // dedicated berserk-trigger riser — no longer borrows the crit sting
   scene.cameras.main.shake(220, 0.014);
-  const floater = scene.add.text(
+  // adopt(): same double-render hazard as the aura — see RavageAuraOptions.
+  const floater = adopt(scene.add.text(
     sprite.x, sprite.y - TILE_SIZE / 2 - 12, "RAVAGED!",
     {
       fontFamily: FAMILY_HEADING,
@@ -150,7 +177,7 @@ export const announceRavaged = (
       strokeThickness: 5,
       shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 10, fill: true }
     }
-  ).setOrigin(0.5, 1).setDepth(45).setScale(0.4);
+  ).setOrigin(0.5, 1).setDepth(45).setScale(0.4));
   scene.tweens.add({
     targets: floater,
     scale: { from: 0.4, to: 1.2 },

@@ -7,6 +7,7 @@ import { StoryScene } from "./scenes/StoryScene";
 import { OverworldScene } from "./scenes/OverworldScene";
 import { BattlePrepScene } from "./scenes/BattlePrepScene";
 import { BattleScene } from "./scenes/BattleScene";
+import { BattleBackdropScene } from "./scenes/BattleBackdropScene";
 import { EndScene } from "./scenes/EndScene";
 import { CreditsScene } from "./scenes/CreditsScene";
 import { SaveSlotScene } from "./scenes/SaveSlotScene";
@@ -78,6 +79,9 @@ const config: Phaser.Types.Core.GameConfig = {
     OverworldScene,
     CampScene,
     BattlePrepScene,
+    // Directly BEFORE BattleScene so it renders underneath it — the
+    // painted distance the tilted battle board composites over.
+    BattleBackdropScene,
     BattleScene,
     EndScene,
     GameOverScene,

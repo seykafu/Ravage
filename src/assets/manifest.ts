@@ -136,10 +136,9 @@ const portraitEntries: ManifestEntry[] = [...baseEntries, ...expressionEntries];
 const CLASSES: ClassKind[] = [
   "swordsman", "spearton", "knight", "archer",
   "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss",
-  // Classes still rendering through spriteClassOverride stand-ins.
-  // Registered so the moment art lands in public/assets/sprites/<class>/
-  // it loads on boot and resolveSpriteClass upgrades every unit of that
-  // class automatically — no code change. Missing folders 404 harmlessly.
+  // The lenscaster, then the Tier 2 (promotion) classes. resolveSpriteClass
+  // upgrades a unit to its class's art whenever that class's idle loaded;
+  // a missing folder 404s harmlessly and the unit keeps its stand-in.
   "lenscaster", "khan", "prismarch", "spearton_lord",
   "robinhelm", "dactyl_king", "shinobi_master", "guardian"
 ];
@@ -199,6 +198,18 @@ const obstacleEntries: ManifestEntry[] = OBSTACLE_IDS.map((id) => ({
   kind: "image"
 }));
 
+// Standing versions of the props the ¾ board stands up as billboards. The
+// art above is painted for the flat board — a tree there is a canopy seen
+// from above — so on the tilted board it read as a bush. Drawn at the unit
+// sprites' pixel density (see Diorama's TALL_PROP_SCALE).
+export const TALL_OBSTACLE_IDS = ["tree", "pillar"] as const;
+
+const tallObstacleEntries: ManifestEntry[] = TALL_OBSTACLE_IDS.map((id) => ({
+  id: `obstacle_tall:${id}`,
+  path: `assets/obstacles/tall/${id}.png`,
+  kind: "image"
+}));
+
 // VFX
 const vfxEntries: ManifestEntry[] = [
   { id: "vfx:slash",    path: "assets/vfx/slash.png",     kind: "spritesheet", frame: ASSET_SPEC.vfx.slash },
@@ -251,6 +262,7 @@ export const MANIFEST: ManifestEntry[] = [
   ...backdropEntries,
   ...tileEntries,
   ...obstacleEntries,
+  ...tallObstacleEntries,
   ...vfxEntries,
   ...uiEntries,
   ...campEntries

@@ -300,6 +300,17 @@ export const ensureObstacleTexture = (
   return procKey;
 };
 
+// The standing version of a prop for the ¾ board, when one has shipped
+// and loaded (public/assets/obstacles/tall/). Null otherwise: the caller
+// uses the flat board's art.
+export const tallObstacleTexture = (
+  scene: Phaser.Scene,
+  obstacle: ObstacleKind
+): string | null => {
+  const key = `obstacle_tall:${obstacle}`;
+  return scene.textures.exists(key) ? key : null;
+};
+
 // A tinted overlay tile — for highlights (move/attack/threat).
 export const ensureTintTile = (scene: Phaser.Scene, color: number, alpha: number): string => {
   const key = `tint-${color.toString(16)}-${Math.round(alpha * 100)}`;

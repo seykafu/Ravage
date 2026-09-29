@@ -62,3 +62,22 @@ that goes *outside* the 48 × 48 box is clipped by the next tile, so:
   alpha 0. Hard pixel edges everywhere else.
 - No animation frames — the engine doesn't tween obstacle textures.
 - No grid lines, gradients, or anti-aliased outlines.
+
+## Standing props — `tall/`
+
+The ¾ diorama board stands props up as billboards, and a canopy painted
+from above reads as a bush there. `tall/<id>.png` is the standing version
+of a prop, used on the diorama whenever it exists (the flat `?flat=1`
+board keeps the art above). Drawn at the unit sprites' pixel density: the
+engine shows each art pixel at 1.5 world px, exactly as it does the 32×40
+unit sheets, so a tree's pixels and a soldier's match. Base on the bottom
+edge, centred. Tall props fade while a unit stands behind them.
+
+| File | Size |
+|---|---|
+| `tall/tree.png` | 40 × 56 |
+| `tall/pillar.png` | 20 × 60 |
+
+Any size works; the loader keys them as `obstacle_tall:<id>` and the list
+lives in `TALL_OBSTACLE_IDS` in `src/assets/manifest.ts`.
+

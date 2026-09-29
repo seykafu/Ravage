@@ -5,9 +5,9 @@
 // art and the "moody cinematic 2D" feel without porting off Phaser. The
 // shader pass adds three subtle but compounding effects:
 //
-//   * Bloom: bright pixels bleed light around themselves. Sells the
-//     impression that the scene is lit (vs. just colored). Tuned warm
-//     by default so torch / sunset palettes feel right.
+//   * Bloom: bright, coloured pixels bleed light around themselves —
+//     flames, auras, crit gold. Sells the impression that the scene is
+//     lit (vs. just colored). render/BloomPipeline.ts, not Phaser's.
 //   * Color matrix: small saturation lift + slight contrast bump. Pulls
 //     the procedurally-rendered tile palettes out of the "flat" zone
 //     they default to.
@@ -20,20 +20,17 @@
 // overrides exist so a sunset camp can lean warmer than a snow-pass
 // fight without re-tuning the helper.
 //
-// Cost: ~3 fragment shader passes per frame on the main camera (one for
-// bloom, one for the color matrix, optional one for the vignette).
-// Negligible on any GPU that can run Phaser. The Vite build only grows
-// by the lines below — Phaser's built-in pipelines are already bundled.
+// Cost: one full-buffer pass each — bloom (a single shader with 17
+// thresholded taps), the color matrix, and the vignette when on.
 
 import Phaser from "phaser";
+import { BLOOM_PIPELINE, BloomPipeline } from "../render/BloomPipeline";
+import { attachPostPipeline } from "../render/postPipelines";
 
 export interface CinematicFXOptions {
   // 0 = no bloom, 1 = default subtle, >1 = increasingly cinematic.
-  // Maps to Phaser's bloom.strength + a small blurStrength uplift.
+  // Scales how much highlight glow is added back (BloomPipeline.strength).
   bloomIntensity?: number;
-  // Tint applied to the bloom — warm amber pulls torches + sunset
-  // palettes; cool blue suits ice / night. Default is a warm cream.
-  bloomColor?: number;
   // Saturation multiplier. Phaser's saturate() takes a delta (0 = none),
   // so 0.15 = "15% more saturated than source."
   saturation?: number;
@@ -48,7 +45,6 @@ export interface CinematicFXOptions {
 // the per-scene call sites verbose.
 const DEFAULTS: Required<CinematicFXOptions> = {
   bloomIntensity: 0.6,
-  bloomColor: 0xfff0d0,    // warm cream — pulls torches + sunlight
   saturation: 0.12,
   brightness: 1.03,
   vignette: 0
@@ -71,22 +67,13 @@ export const applyCinematicFX = (
   const cam = scene.cameras.main;
 
   if (cfg.bloomIntensity > 0) {
-    // Phaser.FX.Bloom signature:
-    //   addBloom(color?, offsetX?, offsetY?, blurStrength?, strength?, steps?)
-    // We let the blur stay tight (1px offset) and modulate the visible
-    // intensity through `strength`. Higher bloomIntensity → both a
-    // slightly wider blur and a brighter halo.
-    //
-    // steps: 2, not the default 4. Each step is TWO full-buffer shader
-    // passes, and with native-res rendering the buffer is 2560×1440 —
-    // the default bloom alone was eight ~3.7-megapixel passes per frame,
-    // the single biggest fixed GPU cost in the game. At the subtle
-    // strengths we run, two steps is visually indistinguishable and
-    // halves that bill. Measured target: integrated-GPU laptops holding
-    // 60fps mid-battle.
-    const blurStrength = 0.5 + cfg.bloomIntensity * 0.5;  // 0.5 → 1.0
-    const strength = cfg.bloomIntensity;
-    cam.postFX.addBloom(cfg.bloomColor, 1, 1, blurStrength, strength, 2);
+    // NOT Phaser's addBloom — see render/BloomPipeline.ts. Its final step
+    // mixed the frame 50/50 with a dimmed blurred copy, which left every
+    // battle ~25% darker and half-blurred, and dropped an opaque board's
+    // alpha to ~0.75 (see-through over the ¾ board's backdrop). One pass
+    // at the native-res buffer, where Phaser's cost four.
+    const bloom = attachPostPipeline(cam, scene.game, BLOOM_PIPELINE, BloomPipeline);
+    if (bloom) bloom.strength = cfg.bloomIntensity * 0.85;
   }
 
   if (cfg.saturation !== 0 || cfg.brightness !== 1) {
@@ -112,4 +99,5 @@ export const applyCinematicFX = (
 export const clearCinematicFX = (scene: Phaser.Scene): void => {
   if (scene.game.renderer.type !== Phaser.WEBGL) return;
   scene.cameras.main.postFX.clear();
+  scene.cameras.main.removePostPipeline(BLOOM_PIPELINE);
 };

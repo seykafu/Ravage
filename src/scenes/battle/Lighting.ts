@@ -33,22 +33,42 @@ const ensureTorchGlowTexture = (scene: Phaser.Scene): string => {
   return TORCH_TEX;
 };
 
-// Place a flickering warm glow at (x, y) — typically a torch tile's pixel
-// center. Each glow gets a randomized flicker phase/period so a row of
-// torches shimmers independently rather than pulsing in lockstep.
+export interface TorchGlowOptions {
+  depth?: number;
+  /** Base scale the flicker breathes around. Unequal x/y lays the glow
+   *  flat on foreshortened ground. */
+  scaleX?: number;
+  scaleY?: number;
+}
+
+// Place a flickering warm glow at (x, y). Each glow gets a randomized
+// flicker phase/period so a row of torches shimmers independently rather
+// than pulsing in lockstep.
+//
+// With no options this is the original flat-board behaviour (a round glow
+// nudged 4px up from the tile centre). With options the position is taken
+// exactly, and the flicker scales AROUND the given base scale — tweening
+// `scale` directly would flatten a foreshortened pool back into a circle
+// on the first frame.
 export const addTorchGlow = (
   scene: Phaser.Scene,
   x: number,
-  y: number
+  y: number,
+  opts?: TorchGlowOptions
 ): Phaser.GameObjects.Image => {
   const key = ensureTorchGlowTexture(scene);
-  const glow = scene.add.image(x, y - 4, key)
+  const sx = opts?.scaleX ?? 1;
+  const sy = opts?.scaleY ?? 1;
+  const glow = scene.add.image(x, opts ? y : y - 4, key)
     .setOrigin(0.5)
-    .setBlendMode(Phaser.BlendModes.ADD);
+    .setBlendMode(Phaser.BlendModes.ADD)
+    .setScale(sx, sy);
+  if (opts?.depth !== undefined) glow.setDepth(opts.depth);
   scene.tweens.add({
     targets: glow,
     alpha: { from: 0.6, to: 1.0 },
-    scale: { from: 0.9, to: 1.1 },
+    scaleX: { from: sx * 0.9, to: sx * 1.1 },
+    scaleY: { from: sy * 0.9, to: sy * 1.1 },
     yoyo: true,
     repeat: -1,
     duration: 360 + Math.floor(Math.random() * 280),
