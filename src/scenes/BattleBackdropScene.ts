@@ -33,6 +33,13 @@ export const BACKDROP_PARALLAX = 0.14;
 const DISTANCE_BLUR_PX = 3;
 
 /**
+ * The one blurred backdrop kept between battles (~6MB of canvas each).
+ * A retry of the same battle reuses it instead of re-blurring on the main
+ * thread; entering a battle with a different backdrop frees it.
+ */
+let keptDistant: string | undefined;
+
+/**
  * The distance, out of focus. A crisp board in front of a soft world is
  * the oldest diorama cue there is (tilt-shift photography fakes a model
  * village with nothing else), and the painted backdrops were as sharp as
@@ -78,13 +85,10 @@ export class BattleBackdropScene extends Phaser.Scene {
   create(): void {
     const sharp = ensureBackdropForKey(this, this.backdropKey);
     const key = ensureDistant(this, sharp);
-    // ~6MB of canvas per backdrop: rebuilt per battle rather than kept
-    // for every backdrop a long session passes through.
-    if (key !== sharp) {
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-        if (this.textures.exists(key)) this.textures.remove(key);
-      });
+    if (keptDistant && keptDistant !== key && this.textures.exists(keptDistant)) {
+      this.textures.remove(keptDistant);
     }
+    keptDistant = key !== sharp ? key : undefined;
     // Oversized, and biased toward the bottom-right: the battle camera
     // only ever scrolls right/down from zero, so that's the direction the
     // parallax drags the image. 1.5× covers a pan of ~4000px across and

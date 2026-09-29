@@ -59,11 +59,14 @@ void main () {
          + bright(outTexCoord + vec2( 0.0,  1.0) * r2) + bright(outTexCoord + vec2( 0.0, -1.0) * r2)
          + bright(outTexCoord + vec2( 0.707,  0.707) * r2) + bright(outTexCoord + vec2(-0.707,  0.707) * r2)
          + bright(outTexCoord + vec2( 0.707, -0.707) * r2) + bright(outTexCoord + vec2(-0.707, -0.707) * r2)) * 0.03;
-  // Additive on premultiplied colour, alpha untouched: over the board this
-  // only ever brightens; over empty sky a torch's halo still spills onto
-  // the backdrop, because premultiplied colour with zero alpha composites
-  // additively.
-  gl_FragColor = vec4(base.rgb + glow * uStrength, base.a);
+  // Additive on premultiplied colour. Over the board (alpha 1) the glow
+  // only ever brightens and alpha stays 1. Over empty sky (alpha 0) the
+  // halo gets just enough alpha to carry it — the brightest channel, which
+  // keeps the colour validly premultiplied. Left at alpha 0, the colour
+  // grade after us (which un-premultiplies) zeroed it, and a back-row
+  // torch's glow stopped dead at the board's silhouette.
+  vec3 g = glow * uStrength;
+  gl_FragColor = vec4(base.rgb + g, max(base.a, min(1.0, max(g.r, max(g.g, g.b)))));
 }
 `;
 
@@ -88,9 +91,3 @@ export class BloomPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipelin
     this.set1f("uRadius", this.radius);
   }
 }
-
-export const ensureBloomPipeline = (game: Phaser.Game): boolean => {
-  if (game.renderer.type !== Phaser.WEBGL) return false;
-  (game.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines.addPostPipeline(BLOOM_PIPELINE, BloomPipeline);
-  return true;
-};

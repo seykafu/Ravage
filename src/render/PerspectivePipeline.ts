@@ -55,11 +55,3 @@ export class PerspectivePipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXP
   }
 }
 
-/** Register once per game; later calls are no-ops. */
-export const ensurePerspectivePipeline = (game: Phaser.Game): boolean => {
-  if (game.renderer.type !== Phaser.WEBGL) return false;
-  const renderer = game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
-  // addPostPipeline is itself a no-op when the name is already registered.
-  renderer.pipelines.addPostPipeline(PERSPECTIVE_PIPELINE, PerspectivePipeline);
-  return true;
-};

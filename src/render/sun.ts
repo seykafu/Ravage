@@ -1,8 +1,10 @@
 // The sun on the ¾ board.
 //
-// The board is lit from the viewer's front-left (south-west): raised tops
-// catch light along their west and front edges and fall into shade on the
-// east. Figures standing on it had only a round contact blob under their
+// The board is lit by a low sun in the west-south-west, off the viewer's
+// left shoulder: raised tops catch light along their west and front edges
+// and fall into shade on the east. (Walls stay darker than the tops above
+// them because tops face the whole sky; ambient occlusion is sky-light,
+// not sun, and falls on every side.) Figures standing on it had only a round contact blob under their
 // feet — lit from nowhere. A cast shadow, the figure's own silhouette laid
 // on the ground and thrown away from the light, puts them IN the same
 // light as the board, and it is the strongest single cue that a figure is
@@ -53,13 +55,20 @@ export const torchShadow = (
   }
   if (!best || best.d < 4) return null;
   const falloff = 1 - best.d / best.r;
+  // How much the shadow points toward the camera (down the board): 0 for
+  // a sideways or up-board shadow, 1 straight at the viewer. Shadows are
+  // drawn in one band above the terrain, so a long one thrown forward
+  // would lie across the face of a raised tile in front — where no shadow
+  // could land. Toward the camera they are shortened to stay about the
+  // caster's own footing (and there the figure mostly covers them anyway).
+  const forward = Math.max(0, best.dy / best.d);
   return {
     // Upright rotated clockwise by θ points along (sin θ, -cos θ).
     angle: Math.atan2(best.dx, -best.dy) * 180 / Math.PI,
     // Long: a torch stands barely above head height. A shadow thrown
     // sideways lies along the ground at foot level, right where the HP bar
     // sits, and a short one was hidden under it.
-    squash: Math.min(1.15, 0.55 + best.d / 90),
+    squash: Math.min(1.15, 0.55 + best.d / 90) * (1 - 0.55 * forward),
     // Linear: squared, a figure one tile from the flame got 16% and the
     // shadow was lost in the cobbles.
     alpha: 0.7 * falloff

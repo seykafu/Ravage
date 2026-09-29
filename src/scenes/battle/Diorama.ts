@@ -330,10 +330,38 @@ export const buildDiorama = (
   const raised = opts.elevStep > 0;
   const isWater = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < W && y < H && grid.tileAt({ x, y }).terrain === "water";
-  // One overlay layer per row — grid lines and edge light, sorted with the
-  // row so a raised row in front covers them (terrainOverlayDepth).
-  const rowG = Array.from({ length: H }, (_, y) =>
-    scene.add.graphics().setDepth(terrainOverlayDepth(y)));
+  // Overlays (grid, edge light, AO, shimmer, foam) must sort under any
+  // raised row in front of them (terrainOverlayDepth) — but only a row that
+  // RISES above the one behind it can cover that one's overlays, so runs
+  // of rows with no rise between them share one layer. A flat field is a
+  // single layer; the cliff staircase, which only ever steps down toward
+  // the camera, is one; each bank above a sunk river starts a new one.
+  // One Graphics per row instead cost a render-pipeline switch — a batch
+  // flush — per row, every frame.
+  const overlayRow: number[] = new Array(H);
+  for (let y = H - 1, last = H - 1; y >= 0; y--) {
+    if (y < H - 1) {
+      let rises = false;
+      for (let x = 0; x < W && !rises; x++) rises = elev(x, y + 1) > elev(x, y);
+      if (rises) last = y;
+    }
+    overlayRow[y] = last;
+  }
+  // Within a layer, one sub-depth per kind, so each kind batches as a run
+  // instead of alternating normal and ADD blending tile by tile.
+  const OVERLAY = { ao: 0, foam: 1e-6, shimmer: 2e-6, lines: 3e-6 } as const;
+  const overlayDepth = (y: number, kind: keyof typeof OVERLAY): number =>
+    terrainOverlayDepth(overlayRow[y]!) + OVERLAY[kind];
+  const layerG = new Map<number, Phaser.GameObjects.Graphics>();
+  const rowG = Array.from({ length: H }, (_, y) => {
+    const key = overlayRow[y]!;
+    let g = layerG.get(key);
+    if (!g) {
+      g = scene.add.graphics().setDepth(overlayDepth(y, "lines"));
+      layerG.set(key, g);
+    }
+    return g;
+  });
   const lights: DioramaResult["lights"] = [];
   // Props that could throw a torch shadow — resolved once every flame on
   // the board is known.
@@ -388,7 +416,7 @@ export const buildDiorama = (
           .setDisplaySize(top.w, top.h)
           .setBlendMode(Phaser.BlendModes.ADD)
           .setAlpha(0.2)
-          .setDepth(terrainOverlayDepth(y));
+          .setDepth(overlayDepth(y, "shimmer"));
         sh.setFlipX((hash & 8) === 8);
         scene.tweens.add({
           targets: sh,
@@ -404,7 +432,7 @@ export const buildDiorama = (
         // and to either side. Off the board is open water — no bank, no
         // foam. The bank in FRONT hides this tile's near edge, so none there.
         const lap = (img: Phaser.GameObjects.Image, phase: number) => {
-          img.setDepth(terrainOverlayDepth(y)).setAlpha(0.5);
+          img.setDepth(overlayDepth(y, "foam")).setAlpha(0.5);
           scene.tweens.add({
             targets: img,
             alpha: { from: 0.42, to: 0.85 },
@@ -447,10 +475,12 @@ export const buildDiorama = (
           rowG[y]!.lineBetween(top.x, top.y + top.h - 0.5, top.x + top.w, top.y + top.h - 0.5);
         }
       }
-      // Side edges of a raised top: the sun is north-west, so an edge
-      // standing over lower ground to the west catches light and one over
-      // lower ground to the east falls into shade. This is what makes a
-      // block read as a block when there are no side faces to draw.
+      // Side edges of a raised top, under the low west-south-west sun the
+      // shadows fall from (render/sun): an edge over lower ground to the
+      // west catches light and one over lower ground to the east falls
+      // into shade. This is what makes a block read as a block when there
+      // are no side faces to draw. (The front edge's catch-light is drawn
+      // with the face above; the back edge faces away from the sun.)
       if (hereUp > 0 && tile.terrain !== "water") {
         const g = rowG[y]!;
         if (elev(x - 1, y) < hereUp) {
@@ -461,10 +491,6 @@ export const buildDiorama = (
           g.lineStyle(1.5, 0x08060e, 0.35);
           g.lineBetween(top.x + top.w - 0.75, top.y, top.x + top.w - 0.75, top.y + top.h);
         }
-        if (elev(x, y - 1) < hereUp) {
-          g.lineStyle(1, 0xfff2dc, 0.14);
-          g.lineBetween(top.x, top.y + 0.5, top.x + top.w, top.y + 0.5);
-        }
       }
 
       // ---- ambient occlusion from taller neighbours -------------------
@@ -473,13 +499,13 @@ export const buildDiorama = (
         scene.add.image(top.x, top.y, ao.v).setOrigin(0, 0)
           .setDisplaySize(top.w, Math.min(top.h * 0.55, 6 + behind * 0.45))
           .setAlpha(Math.min(1, 0.55 + behind / 60))
-          .setDepth(terrainOverlayDepth(y));
+          .setDepth(overlayDepth(y, "ao"));
       }
       const left = elev(x - 1, y) - hereUp;
       if (left > 0) {
         scene.add.image(top.x, top.y, ao.h).setOrigin(0, 0)
           .setDisplaySize(Math.min(top.w * 0.4, 5 + left * 0.4), top.h)
-          .setDepth(terrainOverlayDepth(y));
+          .setDepth(overlayDepth(y, "ao"));
       }
       const right = elev(x + 1, y) - hereUp;
       if (right > 0) {
@@ -487,7 +513,7 @@ export const buildDiorama = (
           .setDisplaySize(Math.min(top.w * 0.3, 4 + right * 0.3), top.h)
           .setFlipX(true).setOrigin(1, 0)
           .setAlpha(0.6)
-          .setDepth(terrainOverlayDepth(y));
+          .setDepth(overlayDepth(y, "ao"));
       }
 
       // Faint grid: legibility without the old checkerboard look. Fainter

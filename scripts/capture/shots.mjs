@@ -350,9 +350,10 @@ export const probe = [{
       keystone: "battle().cameras.main.removePostPipeline('RavagePerspective');",
       clouds: "battle().children.list.filter((o) => o.depth === 1.5).forEach((o) => o.setVisible(false));",
       atmo: "battle().atmosphere?.setVisible?.(false);",
+      // Camera post-FX live in cam.postPipelines by name ("14" = Phaser's
+      // ColorMatrix); cam.postFX.list stays empty for cameras.
       bloomonly: "battle().cameras.main.removePostPipeline('14');",
-      gradeonly: "battle().cameras.main.removePostPipeline('13');",
-      listfx: "window.__fxlist = battle().cameras.main.postFX.list.map((e) => e.constructor?.name + ':' + e.type);"
+      gradeonly: "battle().cameras.main.removePostPipeline('RavageBloom');"
     })[k] ?? "").join(" ")}`)
 }];
 
@@ -381,7 +382,7 @@ export const anim = [
     seconds: 1.4,
     settleFrames: 2,
     setup: fn(`
-      const b = battle(); const u = side("player").find((p) => p.weapon === "bow"); const foe = nearestFoe(u);
+      const b = battle(); const u = side("player").find((p) => p.weapon === "bow"); const foe = u && nearestFoe(u);
       if (u && foe) {
         const g = b.state.grid;
         const occ = (p) => b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
@@ -411,7 +412,8 @@ export const anim = [
       for (let y = 0; y < g.height && !torch; y++) for (let x = 0; x < g.width; x++)
         if (g.tileAt({ x, y }).obstacle === "torch") { torch = { x, y }; break; }
       const u = side("player")[0];
-      if (torch && u) {
+      const ok = (p) => g.inBounds(p) && !g.tileAt(p).blocksMovement;
+      if (torch && u && ok({ x: torch.x - 1, y: torch.y }) && ok({ x: torch.x + 1, y: torch.y })) {
         u.state.position = { x: torch.x - 1, y: torch.y }; b.refreshAllUnits();
         zoomTo(2.2); frameOn(u);
         b.enterMoveMode(u); void b.animateMove(u, { x: torch.x + 1, y: torch.y });
