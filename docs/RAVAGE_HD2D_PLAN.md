@@ -295,12 +295,14 @@ second renderer.
 biome), `quick` (`CAP_IDS=a,b`), `anim` (melee kill, arrow, torch walk,
 arrival), `scenes`, `probe` (`CAP_MAGENTA`, `CAP_NOFOG`, `CAP_STRIP`).
 
+### Art (generated with Codex, September 2026)
+- Every unit class — the ten Tier 1 classes and the seven Tier 2
+  promotion classes — has idle, walk, attack, hit and death sheets.
+  Pipeline and sources: art_sources/README.md, scripts/art/.
+- Standing tree and palace column for the diorama
+  (public/assets/obstacles/tall/), faded while a unit is behind them.
+
 ### Left for art
-- Only **idle** sheets exist; walk / attack / hit / death are declared in
-  the manifest and 404 at load. Real frames would replace the procedural
-  lean-and-hop with animation.
-- Trees read as bushes and pillars as posts next to 48×60 figures; taller
-  prop art would suit the diorama.
 - Front faces reuse the top texture's material; purpose-painted side
   textures (strata, masonry, root-bound earth) would sharpen elevation.
 

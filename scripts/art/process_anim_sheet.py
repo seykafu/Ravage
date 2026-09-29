@@ -169,11 +169,15 @@ def main() -> int:
     ap.add_argument("--fit", action="store_true", help="shrink frames wider than the cell to fit it")
     ap.add_argument("--body-scale", type=float, default=1.0, help="nudge the fitted scale")
     ap.add_argument("--preview")
+    ap.add_argument("--ref-class", help="measure against this class's idle (a new class has none yet)")
+    ap.add_argument("--ref-scale", type=float, default=1.0,
+                    help="target body height as a multiple of the reference idle's")
     args = ap.parse_args()
 
-    idle_path = os.path.join(ROOT, "public", "assets", "sprites", args.cls, "idle.png")
+    idle_path = os.path.join(ROOT, "public", "assets", "sprites", args.ref_class or args.cls, "idle.png")
     idle = np.asarray(Image.open(idle_path).convert("RGBA"))[:, :CELL_W]
     ref = body_metrics(idle[..., 3] >= 96)
+    ref["h"] = round(ref["h"] * args.ref_scale)
 
     raw = Image.open(args.raw).convert("RGB")
     keyed = key_magenta(np.asarray(raw))
@@ -253,6 +257,7 @@ def main() -> int:
                       f"width {sm['x1'] - sm['x0'] + 1}px{fitted}{'  CLIPPED at the cell edge' if clipped else ''}")
 
     out_dir = os.path.join(ROOT, "public", "assets", "sprites", args.cls)
+    os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{args.state}.png")
     Image.fromarray(sheet.astype(np.uint8), "RGBA").save(out_path)
     src_keep = os.path.join(ROOT, "art_sources", "sprites", f"{args.cls}_{args.state}_src.png")

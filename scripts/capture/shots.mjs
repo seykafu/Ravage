@@ -447,4 +447,47 @@ export const scenes = [
   { name: "prep", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("BattlePrepScene", { battleId: "b18_path_chosen" });`) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes };
+// PROMOTED — every Tier 2 class in battle. The live units are promoted in
+// place (classKind swapped, views rebuilt), so no save surgery is needed.
+const PROMOTE = `
+  const T2 = { lucian: "spearton_lord", ning: "robinhelm", maya: "shinobi_master", leo: "dactyl_king",
+               ranatoli: "guardian", veya: "prismarch", corin: "khan" };
+  const b = battle();
+  for (const u of b.state.units) {
+    const to = T2[u.id]; if (!to || u.classKind === to) continue;
+    u.classKind = to; u.spriteClassOverride = undefined;
+    const v = b.unitViews.get(u.id);
+    if (v) { [v.sprite, v.shadow, v.hpBg, v.hpBar, v.stanceIcon, v.castShadow].forEach((o) => o && o.destroy());
+             b.unitViews.delete(u.id); }
+    b.buildUnitView(u);
+  }
+  b.refreshAllUnits();
+`;
+export const promoted = [
+  { name: "coast", seconds: 1, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b26_coastal_hold" });`),
+    each: fn(`closeDialogue(); if (!window.__promoted1) { window.__promoted1 = true; ${PROMOTE} }`) },
+  { name: "guardian-kill", seconds: 2.2, settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = unit("ranatoli") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) { closeWith(u, foe); softenTarget(foe); zoomTo(2); frameOn(u, foe); void b.animateAttack(u, foe); }
+    `) },
+  { name: "robinhelm-shot", seconds: 1.6, settleFrames: 20,
+    setup: fn(`
+      const b = battle(); const u = unit("ning"); const foe = u && nearestFoe(u);
+      if (u && foe) {
+        const g = b.state.grid;
+        const occ = (p) => b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
+        for (const d of [{x:-3,y:0},{x:3,y:0},{x:0,y:3},{x:0,y:-3}]) {
+          const p = { x: foe.state.position.x + d.x, y: foe.state.position.y + d.y };
+          if (g.inBounds(p) && !g.tileAt(p).blocksMovement && !occ(p)) { u.state.position = p; b.refreshAllUnits(); break; }
+        }
+        foe.state.hp = foe.stats.hp; zoomTo(2); frameOn(u, foe); void b.animateAttack(u, foe);
+      }
+    `) },
+  { name: "mountain", seconds: 1, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b05_mountain_ndari" });`),
+    each: fn(`closeDialogue(); if (!window.__promoted2) { window.__promoted2 = true; ${PROMOTE} }`) }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted };

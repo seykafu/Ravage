@@ -33,3 +33,23 @@ for c in swordsman spearton knight archer shinobi sentinel dactyl_rider swordmas
   $P "$SRC/${c}_hit_src.png"    "$c" hit 2 "${hit[@]}"
   $P "$SRC/${c}_death_src.png"  "$c" death 4 --fit
 done
+
+# Tier 2 (promotion) classes: one character each, idle generated from the
+# Tier 1 idle plus the character's portrait, the rest from that new idle
+# with the Tier 1 render of each state as a pose guide. The idle has no
+# sheet of its own to measure against yet, so it is fitted to its Tier 1
+# class's idle (--ref-class); the dactyl king's bigger mount is held to
+# the rider's footprint (--ref-scale).
+declare -A BASE=( [spearton_lord]=spearton [robinhelm]=archer [shinobi_master]=shinobi
+                  [dactyl_king]=dactyl_rider [guardian]=sentinel [prismarch]=lenscaster [khan]=knight )
+for c in spearton_lord robinhelm shinobi_master dactyl_king guardian prismarch khan; do
+  idle=(); walk=(); attack=(); hit=()
+  case "$c" in
+    dactyl_king) idle=(--ref-scale 0.9); walk=(--body-scale 0.86); attack=(--body-scale 0.85); hit=(--body-scale 0.88) ;;
+  esac
+  $P "$SRC/${c}_idle_src.png"   "$c" idle 2 --ref-class "${BASE[$c]}" --scale-median "${idle[@]}"
+  $P "$SRC/${c}_walk_src.png"   "$c" walk 4 --scale-median "${walk[@]}"
+  $P "$SRC/${c}_attack_src.png" "$c" attack 5 "${attack[@]}"
+  $P "$SRC/${c}_hit_src.png"    "$c" hit 2 "${hit[@]}"
+  $P "$SRC/${c}_death_src.png"  "$c" death 4 --fit
+done

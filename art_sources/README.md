@@ -23,6 +23,15 @@ never again). The shipped game assets are derived from these:
   The knight's attack was generated with the spearton's attack as a
   second, pose reference (its first render flipped the spear).
 
+- Tier 2 (promotion) classes: sprites/<class>_<state>_src.png for all
+  five states, including idle. Each Tier 2 class belongs to one
+  character, so its IDLE was generated from two references: the Tier 1
+  class's idle (scale, style, silhouette) and the character's portrait
+  (face, hair, build). The other states use that new idle as the
+  character reference plus the Tier 1 render of the same state as a pose
+  guide. The Guardian's walk was regenerated with an explicit hold (its
+  first render swapped the shield to his back).
+
 - obstacles/<id>_tall_src.png → public/assets/obstacles/tall/<id>.png
   Standing props for the ¾ board (Codex renders, the flat prop attached
   as a style reference). scripts/art/process_prop.py; the cell size is

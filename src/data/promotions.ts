@@ -40,12 +40,12 @@ const STANDARD_BOOST: Partial<UnitStats> = {
 // is omitted — she joins B7 already promoted (her base classKind is
 // "swordmaster"). Kian is omitted — antagonist arc, never promotes.
 //
-// Sprite overrides: every Tier 2 except swordmaster routes back to its
-// Tier 1 sprite folder via spriteClassOverride until proper assets ship.
-// (Swordmaster has its own folder.) This keeps the promoted unit's
-// silhouette stable through the upgrade rather than dropping to the
-// procedural fallback (which would surface as a DEV warning per the
-// Kian-was-crappy-sprite fix).
+// Sprite overrides: every Tier 2 class now ships its own sprite folder,
+// and resolveSpriteClass always prefers real class art — so these only
+// take effect if a Tier 2 sheet fails to load, when the promoted unit
+// falls back to its own Tier 1 art rather than the procedural painter.
+// (They are also written into the save at promotion, so they must stay
+// valid classes.)
 export const PROMOTIONS: Partial<Record<string, PromotionData>> = {
   amar: {
     toClass: "swordmaster",
@@ -85,7 +85,7 @@ export const PROMOTIONS: Partial<Record<string, PromotionData>> = {
   veya: {
     toClass: "prismarch",
     newAbility: "Refract",
-    spriteClassOverride: "shinobi",
+    spriteClassOverride: "lenscaster",
     statBoost: STANDARD_BOOST
   },
   // Corin fills the khan line — the one Tier 2 that sat in the union
@@ -94,7 +94,7 @@ export const PROMOTIONS: Partial<Record<string, PromotionData>> = {
   corin: {
     toClass: "khan",
     newAbility: "Charge",
-    spriteClassOverride: "spearton",
+    spriteClassOverride: "knight",
     statBoost: STANDARD_BOOST
   }
   // kian: never promotes — turns hostile in B10 before any promotion beat fires.

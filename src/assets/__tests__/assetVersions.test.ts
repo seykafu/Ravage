@@ -42,6 +42,6 @@ describe("asset version map", () => {
   it("versionedPath appends ?v= for hashed files and passes unknown paths through", () => {
     const key = "assets/sprites/lenscaster/idle.png";
     expect(versionedPath(key)).toBe(`${key}?v=${ASSET_VERSIONS[key]}`);
-    expect(versionedPath("assets/sprites/khan/idle.png")).toBe("assets/sprites/khan/idle.png");
+    expect(versionedPath("assets/sprites/no_such_class/idle.png")).toBe("assets/sprites/no_such_class/idle.png");
   });
 });

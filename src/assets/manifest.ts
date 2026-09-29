@@ -136,10 +136,9 @@ const portraitEntries: ManifestEntry[] = [...baseEntries, ...expressionEntries];
 const CLASSES: ClassKind[] = [
   "swordsman", "spearton", "knight", "archer",
   "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss",
-  // Classes still rendering through spriteClassOverride stand-ins.
-  // Registered so the moment art lands in public/assets/sprites/<class>/
-  // it loads on boot and resolveSpriteClass upgrades every unit of that
-  // class automatically — no code change. Missing folders 404 harmlessly.
+  // The lenscaster, then the Tier 2 (promotion) classes. resolveSpriteClass
+  // upgrades a unit to its class's art whenever that class's idle loaded;
+  // a missing folder 404s harmlessly and the unit keeps its stand-in.
   "lenscaster", "khan", "prismarch", "spearton_lord",
   "robinhelm", "dactyl_king", "shinobi_master", "guardian"
 ];
