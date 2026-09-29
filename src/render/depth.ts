@@ -12,7 +12,9 @@
 //
 //   BACKDROP        painted sky / distance, parallaxed behind everything
 //   TERRAIN         tile tops and the walls under them, painter-sorted
-//   TERRAIN_FX      water shimmer, ambient occlusion, grid, cloud shadows
+//   TERRAIN         tile overlays (shimmer, foam, AO, grid) sort per row
+//                   inside this band — see terrainOverlayDepth
+//   TERRAIN_FX      reserved (was every terrain overlay; see above)
 //   SHADOW          contact shadows of props and units
 //   LIGHT           light pooling ON the ground: torch pools, Ravage aura
 //   GROUND_OVERLAY  move / attack / danger / threat washes and contours
@@ -50,6 +52,17 @@ export const DEPTH = {
  * elevation), scaled far below 1 so the whole board stays inside TERRAIN.
  */
 export const terrainDepth = (key: number): number => DEPTH.TERRAIN + key * 1e-4;
+
+/**
+ * Depth for things painted ON row `row`'s top faces: water shimmer, shore
+ * foam, ambient occlusion, grid lines. Above every tile, face and lip of
+ * that row (keys row-0.001 … row+0.006, faces +0.5, lips +0.6), below every
+ * tile of the row in front — so a raised tile in front hides them exactly
+ * as it hides the ground they sit on. A single band above ALL terrain let a
+ * sunk river's shimmer and a courtyard's grid draw across the front of the
+ * wall standing before them.
+ */
+export const terrainOverlayDepth = (row: number): number => terrainDepth(row + 0.8);
 
 /**
  * Actor depth from the world y of an actor's FEET. Nearer the camera =
