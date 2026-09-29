@@ -11,7 +11,7 @@ import {
   UNIT_DIORAMA_H, UNIT_DIORAMA_W, UNIT_FLAT_H, UNIT_FLAT_W
 } from "../render/dioramaConfig";
 import { DEPTH, actorDepth } from "../render/depth";
-import { SUN, UNIT_FOOT_ORIGIN, castFrom, type Sun } from "../render/sun";
+import { SUN, UNIT_FOOT_ORIGIN, castFrom, torchShadow, type Sun } from "../render/sun";
 import { DIORAMA_PERSPECTIVE_K } from "../render/dioramaConfig";
 import { screenToSource, type KeystoneParams } from "../render/keystone";
 import { PERSPECTIVE_PIPELINE, PerspectivePipeline, ensurePerspectivePipeline } from "../render/PerspectivePipeline";
@@ -245,6 +245,8 @@ export class BattleScene extends Phaser.Scene {
   private unitLift = -4;
   // The sun for this battle's cast shadows (render/sun), or none.
   private sun?: Sun;
+  // No sun, but flames: figures near a torch throw shadows away from it.
+  private torchShadows = false;
   // Unit billboard size for this board (see dioramaConfig).
   private unitW = UNIT_FLAT_W;
   private unitH = UNIT_FLAT_H;
@@ -780,12 +782,14 @@ export class BattleScene extends Phaser.Scene {
     // made during this setup sweep, so the UI camera never double-draws it.
     // A sun on the diorama in daylight; dark battles are lit by torches.
     this.sun = this.diorama && !node?.darkBattle ? SUN : undefined;
+    this.torchShadows = this.diorama && !!node?.darkBattle;
     const board = buildDiorama(this, grid, this.projection, {
       footDY: this.diorama ? DIORAMA_FOOT_DY : TILE_SIZE * 0.3,
       seed: map.id.length * 31 + 7,
       elevationAt: this.elevAt,
       elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0,
-      sun: this.sun
+      sun: this.sun,
+      torchShadows: this.torchShadows
     });
     this.boardLights = board.lights;
 
@@ -1470,7 +1474,7 @@ export class BattleScene extends Phaser.Scene {
     const sprite = this.addWorld(this.add.sprite(px.x, baseY, tex).setDisplaySize(this.unitW, this.unitH)
       .setDepth(actorDepth(baseY + this.unitH / 2)));
     if (u.faction === "enemy") sprite.setFlipX(true);
-    const castShadow = this.sun
+    const castShadow = this.sun || (this.torchShadows && this.boardLights.length > 0)
       ? this.addWorld(this.add.image(px.x, baseY + 24, tex)
         .setOrigin(0.5, UNIT_FOOT_ORIGIN)
         .setTintFill(0x000000)
@@ -1826,15 +1830,20 @@ export class BattleScene extends Phaser.Scene {
   // shadow standing upright under a toppling body reads as a second body.
   private syncCastShadow(v: UnitView): void {
     const cs = v.castShadow;
-    if (!cs || !this.sun) return;
+    if (!cs) return;
     const s = v.sprite;
-    const show = s.visible && !v.dying && v.shadow.visible;
+    // By day the sun; by night whichever flame the figure stands nearest,
+    // recomputed as they walk — a soldier crossing a torch-lit square has
+    // his shadow swing round him.
+    const light = this.sun ?? torchShadow(v.shadow.x, v.shadow.y, this.boardLights);
+    const show = !!light && s.visible && !v.dying && v.shadow.visible;
     cs.setVisible(show);
-    if (!show) return;
+    if (!show || !light) return;
     if (cs.texture !== s.texture || cs.frame.name !== s.frame.name) cs.setTexture(s.texture.key, s.frame.name);
     cs.setPosition(v.shadow.x, v.shadow.y);
-    castFrom(cs, s, this.sun);
-    cs.setAlpha(this.sun.alpha * s.alpha * v.shadow.alpha);
+    cs.setDepth(this.sun ? DEPTH.SHADOW - 0.05 : DEPTH.TORCH_SHADOW);
+    castFrom(cs, s, light);
+    cs.setAlpha(light.alpha * s.alpha * v.shadow.alpha);
   }
 
   private refreshAllUnits(): void {

@@ -35,6 +35,37 @@ export const SUN: Sun = { angle: 58, squash: 0.55, alpha: 0.32 };
  */
 export const UNIT_FOOT_ORIGIN = 0.9;
 
+/**
+ * The shadow a flame throws on a figure standing at (x, y): leaning straight
+ * away from the light, longer the further out the figure stands (a torch
+ * is barely above head height), darkest close in and gone at the edge of
+ * the light. Null when the figure is outside every light's reach.
+ */
+export const torchShadow = (
+  x: number,
+  y: number,
+  lights: ReadonlyArray<{ x: number; y: number; radius: number }>
+): Sun | null => {
+  let best: { dx: number; dy: number; d: number; r: number } | null = null;
+  for (const l of lights) {
+    const dx = x - l.x, dy = y - l.y, d = Math.hypot(dx, dy);
+    if (d < l.radius && (!best || d / l.radius < best.d / best.r)) best = { dx, dy, d, r: l.radius };
+  }
+  if (!best || best.d < 4) return null;
+  const falloff = 1 - best.d / best.r;
+  return {
+    // Upright rotated clockwise by θ points along (sin θ, -cos θ).
+    angle: Math.atan2(best.dx, -best.dy) * 180 / Math.PI,
+    // Long: a torch stands barely above head height. A shadow thrown
+    // sideways lies along the ground at foot level, right where the HP bar
+    // sits, and a short one was hidden under it.
+    squash: Math.min(1.15, 0.55 + best.d / 90),
+    // Linear: squared, a figure one tile from the flame got 16% and the
+    // shadow was lost in the cobbles.
+    alpha: 0.7 * falloff
+  };
+};
+
 /** Lay a black silhouette of `src`'s current look on the ground. */
 export const castFrom = (
   shadow: Phaser.GameObjects.Image,

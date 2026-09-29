@@ -392,12 +392,31 @@ export const anim = [
         foe.state.hp = foe.stats.hp; foe.stats = { ...foe.stats, speed: 1 };
         zoomTo(1.8); frameOn(u, foe); void b.animateAttack(u, foe);
       }
-    `),
-    each: fn(`if (${!!process.env.CAP_DEBUG}) { const b = battle();
-      const e = b.children.list.filter((o) => o.type === "Ellipse" && o.depth > 2.2 && o.depth < 2.8);
-      if (e.length) console.error("SHADE", e.map((o) => [o.x|0, o.y|0, o.alpha.toFixed(2), o.visible, o.scaleX.toFixed(2), o.cameraFilter].join(",")).join(" | "));
-      const a = b.children.list.filter((o) => o.texture && o.texture.key === "vfx_arrow_proc");
-      if (a.length) console.error("ARROW", a.map((o) => [o.x|0, o.y|0, o.depth].join(",")).join(" | ")); }`)
+    `)
+  },
+  {
+    name: "torch",
+    seconds: 1.8,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b17_lie" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "torch-walk",
+    seconds: 2.6,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); closeDialogue();
+      const g = b.state.grid; let torch = null;
+      for (let y = 0; y < g.height && !torch; y++) for (let x = 0; x < g.width; x++)
+        if (g.tileAt({ x, y }).obstacle === "torch") { torch = { x, y }; break; }
+      const u = side("player")[0];
+      if (torch && u) {
+        u.state.position = { x: torch.x - 1, y: torch.y }; b.refreshAllUnits();
+        zoomTo(2.2); frameOn(u);
+        b.enterMoveMode(u); void b.animateMove(u, { x: torch.x + 1, y: torch.y });
+      }
+    `)
   },
   {
     name: "arrival",
@@ -419,4 +438,11 @@ export const anim = [
   }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim };
+// SCENES — one still of each non-battle screen that shows the world.
+export const scenes = [
+  { name: "overworld", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("OverworldScene");`) },
+  { name: "camp", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("CampScene");`) },
+  { name: "prep", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("BattlePrepScene", { battleId: "b18_path_chosen" });`) }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes };

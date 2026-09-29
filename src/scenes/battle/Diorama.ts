@@ -6,7 +6,7 @@ import { ensureObstacleTexture, ensureTileTexture } from "../../art/TileArt";
 import { DEPTH, actorDepth, terrainDepth, terrainOverlayDepth } from "../../render/depth";
 import { addTorchGlow } from "./Lighting";
 import { ensureDotTexture } from "./Atmosphere";
-import { castFrom, type Sun } from "../../render/sun";
+import { castFrom, torchShadow, type Sun } from "../../render/sun";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Diorama — builds the battle board as a physical object.
@@ -297,6 +297,8 @@ export interface DioramaOptions {
   elevStep: number;
   /** Cast shadows from the sun (render/sun). Omit for no sun: dark battles, the flat board. */
   sun?: Sun;
+  /** No sun, but props near a flame throw shadows away from it (dark battles). */
+  torchShadows?: boolean;
 }
 
 export interface DioramaResult {
@@ -333,6 +335,9 @@ export const buildDiorama = (
   const rowG = Array.from({ length: H }, (_, y) =>
     scene.add.graphics().setDepth(terrainOverlayDepth(y)));
   const lights: DioramaResult["lights"] = [];
+  // Props that could throw a torch shadow — resolved once every flame on
+  // the board is known.
+  const shadowCasters: Phaser.GameObjects.Image[] = [];
 
   // Board shadow — the diorama sitting on the world. Drawn first so the
   // board paints over its own shadow.
@@ -519,6 +524,8 @@ export const buildDiorama = (
             .setAlpha(opts.sun.alpha)
             .setDepth(DEPTH.SHADOW - 0.1);
           castFrom(cast, obs, opts.sun);
+        } else if (opts.torchShadows && tile.obstacle !== "torch") {
+          shadowCasters.push(obs);
         }
         if (tile.obstacle === "torch") {
           // Light pooling on the ground around the base, foreshortened
@@ -535,6 +542,17 @@ export const buildDiorama = (
         }
       }
     }
+  }
+
+  for (const obs of shadowCasters) {
+    const lit = torchShadow(obs.x, obs.y, lights);
+    if (!lit) continue;
+    const cast = scene.add.image(obs.x, obs.y, obs.texture.key)
+      .setOrigin(obs.originX, obs.originY)
+      .setTintFill(0x000000)
+      .setAlpha(lit.alpha)
+      .setDepth(DEPTH.TORCH_SHADOW - 0.01);
+    castFrom(cast, obs, lit);
   }
 
   return { lights };

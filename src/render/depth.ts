@@ -35,6 +35,12 @@ export const DEPTH = {
   CLOUD_SHADOW: 1.5,
   SHADOW: 2,
   LIGHT: 3,
+  /**
+   * Shadows thrown BY a torch: above its light pool, because a shadow is
+   * where that light doesn't land. (Sun shadows sit at SHADOW, under the
+   * pools — torchlight can fall into a shadow the sun made.)
+   */
+  TORCH_SHADOW: 3.2,
   GROUND_OVERLAY: 4,
   GROUND_MARK: 5,
   ACTORS: 10,
