@@ -128,7 +128,7 @@ import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
-import { ashBurst, hitStop, soulWisp, timeDilate } from "./battle/Impact";
+import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 import { TutorialDirector } from "./battle/Tutorial";
 
 interface BattleArgs {
@@ -166,6 +166,12 @@ interface UnitView {
   // actually cost" read. Healing snaps it up instantly.
   hpShown?: number;
   hpGhostTween?: Phaser.Tweens.Tween;
+  // True while the death animation is playing. The unit is already dead
+  // in state, and every refresh hides dead units and snaps sprites to
+  // their tile — which, since attack resolution refreshes the defender
+  // BEFORE the death plays, meant no death animation was ever seen: the
+  // body vanished and only the ash and the wisp played.
+  dying?: boolean;
 }
 
 const PANEL_W = 280;
@@ -1332,6 +1338,7 @@ export class BattleScene extends Phaser.Scene {
   // identical however they were summoned.
   private landWaves(pick: (w: BattleWave) => boolean): void {
     let landed = false;
+    const arrivals: UnitView[] = [];
     for (const wave of this.reinforcements) {
       if (!pick(wave) || this.spawnedWaves.has(waveKey(wave))) continue;
       this.spawnedWaves.add(waveKey(wave));
@@ -1342,13 +1349,7 @@ export class BattleScene extends Phaser.Scene {
         this.state.units.push(unit);
         this.buildUnitView(unit);
         const view = this.unitViews.get(unit.id);
-        if (view) {
-          // Wade-in: fade up from nothing so arrivals read as arrivals,
-          // not as pop-in.
-          view.sprite.setAlpha(0);
-          view.shadow.setAlpha(0);
-          this.tweens.add({ targets: [view.sprite, view.shadow], alpha: 1, duration: 500, ease: "Sine.easeOut" });
-        }
+        if (view) arrivals.push(view);
       });
       if (wave.announce) this.pushLog(wave.announce);
     }
@@ -1356,6 +1357,68 @@ export class BattleScene extends Phaser.Scene {
       this.initiative.reseed(this.state.units);
       this.refreshAllUnits();
     }
+    // After the refresh, which snaps every sprite to its tile at full
+    // alpha — started before it, an arrival showed on its tile for a
+    // frame before stepping in from the edge.
+    arrivals.forEach((v, i) => this.playArrival(v, i * 140));
+  }
+
+  // Reinforcements arrive: they come in over the nearest edge of the
+  // board — two strides from half a tile out, fading up as they come —
+  // and plant with a puff of dust. Staggered per unit so a wave reads as
+  // a column arriving, not a block appearing.
+  private playArrival(view: UnitView, delay: number): void {
+    const u = view.unit;
+    const p = u.state.position;
+    const g = this.state.grid;
+    // Nearest edge: which way is "outside" from here.
+    const edges = [
+      { d: p.x, dx: -1, dy: 0 },
+      { d: g.width - 1 - p.x, dx: 1, dy: 0 },
+      { d: p.y, dx: 0, dy: -1 },
+      { d: g.height - 1 - p.y, dx: 0, dy: 1 }
+    ].sort((a, b) => a.d - b.d);
+    const e = edges[0]!;
+    const here = this.projection.tileToWorld(p);
+    const from = this.projection.tileToWorld({ x: p.x + e.dx, y: p.y + e.dy });
+    const ox = (from.x - here.x) * 0.6, oy = (from.y - here.y) * 0.6;
+    this.stopBreathing(view);
+    const s = view.sprite, sh = view.shadow;
+    const bx = s.x, by = s.y, shx = sh.x, shy = sh.y;
+    if (e.dx !== 0) s.setFlipX(e.dx > 0);
+    s.setAlpha(0);
+    sh.setAlpha(0);
+    const place = (f: number) => {
+      // f: 0 = half a tile out, 1 = on the tile. Two strides.
+      const k = 1 - f;
+      const hop = Math.abs(Math.sin(f * Math.PI * 2)) * 3;
+      s.setPosition(bx + ox * k, by + oy * k - hop);
+      sh.setPosition(shx + ox * k, shy + oy * k);
+      // The HUD rides the sprite (update()), so it has to fade with it —
+      // otherwise an HP bar hangs in the air off the edge of the board.
+      const a = Math.min(1, f * 1.8);
+      for (const o of [s, sh, view.hpBg, view.hpBar, view.stanceIcon]) o.setAlpha(a);
+    };
+    place(0);
+    // One counter spanning the stagger AND the walk, so the unit is held
+    // off-tile and invisible while it waits its turn (a tween `delay`
+    // leaves it wherever the last refresh put it: on the tile, visible).
+    const WALK = 520;
+    this.tweens.addCounter({
+      from: 0,
+      to: delay + WALK,
+      duration: delay + WALK,
+      onUpdate: (tw) => {
+        const ms = tw.getValue() ?? 0;
+        place(Phaser.Math.Easing.Sine.Out(Math.max(0, (ms - delay) / WALK)));
+      },
+      onComplete: () => {
+        place(1);
+        this.spawnDust(bx, shy);
+        s.setFlipX(u.state.facingX === -1);
+        this.startBreathing(view);
+      }
+    });
   }
 
   // Nearest free walkable tile to the wave's requested entry point —
@@ -1424,6 +1487,14 @@ export class BattleScene extends Phaser.Scene {
   private refreshUnitView(u: Unit): void {
     const v = this.unitViews.get(u.id);
     if (!v) return;
+    // Mid-fall: the death animation owns the sprite until it has faded.
+    if (v.dying && !isAlive(u)) {
+      v.hpBg.clear();
+      v.hpBar.clear();
+      v.stanceIcon.setText("");
+      this.clearRavageAura(v);
+      return;
+    }
     const px = this.projection.tileToWorld(u.state.position);
     // Keep the breathing anchor AND the shadow in lock-step with the
     // sprite snap. This function used to reposition only the sprite —
@@ -1719,7 +1790,11 @@ export class BattleScene extends Phaser.Scene {
       // to be per-frame — walks, lunges and flinches move sprites under
       // tween control, and a unit crossing a row mid-walk must pass in
       // front of or behind its neighbours at the right moment.
-      v.sprite.setDepth(actorDepth(v.sprite.y + this.unitH / 2));
+      // A corpse keeps the depth of the spot it fell on: the topple moves
+      // the sprite's centre down toward the floor, which would otherwise
+      // sort the body in front of whoever stands in the next row.
+      const sortY = isAlive(v.unit) ? v.sprite.y : v.baseY;
+      v.sprite.setDepth(actorDepth(sortY + this.unitH / 2));
       // HUD rides the sprite, not the tile (see drawHpBar).
       v.hpBg.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
       v.hpBar.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
@@ -3536,11 +3611,16 @@ export class BattleScene extends Phaser.Scene {
 
   // Three small puffs at the unit's foot — fan upward + outward, fade out.
   // Sells the push-off without spamming particles per step.
+  //
+  // Sorted with the actors at that foot position. These were created at
+  // depth 0 — under every terrain tile past the first row, so on most of
+  // the board the footfalls were never actually seen.
   private spawnDust(x: number, y: number): void {
     for (let i = 0; i < 3; i++) {
       const dir = (i - 1) * 0.7; // -0.7, 0, +0.7 radians of horizontal spread
       const dist = 10 + Math.random() * 6;
-      const puff = this.addWorld(this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55));
+      const puff = this.addWorld(this.add.circle(x, y, 2.5 + Math.random() * 1.5, 0xc9b07a, 0.55)
+        .setDepth(actorDepth(y + 2)));
       this.tweens.add({
         targets: puff,
         x: x + Math.sin(dir) * dist,
@@ -3754,32 +3834,99 @@ export class BattleScene extends Phaser.Scene {
   // fade: grey-out, a squash-and-topple, dark ash kicked off the body,
   // and one soft light rising away. Shared by every death site (normal
   // kills, Destruct mutual kills, counter deaths).
-  private playDeathDissolve(view: UnitView, u: Unit): void {
+  //
+  // The fall pivots at the FEET (where the shadow sits), away from the
+  // blow, so the body comes down onto the tile it stood on. The old tilt
+  // turned the sprite about its centre: the feet swung out into the air
+  // and the body lay half a figure above the ground — invisible on the
+  // flat board, obvious on the tilted one where the floor is a plane.
+  private playDeathDissolve(view: UnitView, u: Unit, fromX?: number): void {
     playUnitState(this, view.sprite, u, "death");
     this.stopBreathing(view);
-    view.sprite.setTint(0x6a6a72);
-    this.tweens.add({
-      targets: view.sprite,
-      alpha: 0.15,
-      angle: 90,
-      scaleY: view.sprite.scaleY * 0.8,
-      duration: 460,
-      ease: "Cubic.easeIn"
+    const s = view.sprite;
+    view.dying = true;
+    s.setVisible(true);
+    s.setTint(0x6a6a72);
+    const x0 = s.x;
+    const footY = view.shadow.y;
+    const arm = footY - s.y; // feet → centre
+    const away = fromX === undefined || Math.abs(fromX - x0) < 2
+      ? (u.state.facingX === -1 ? 1 : -1)
+      : Math.sign(x0 - fromX);
+    const fallDeg = 82 * away;
+    const sy0 = s.scaleY;
+    const pose = (deg: number, squash: number) => {
+      const th = Phaser.Math.DegToRad(deg);
+      s.setAngle(deg);
+      s.setPosition(x0 + arm * Math.sin(th), footY - arm * Math.cos(th));
+      s.scaleY = sy0 * squash;
+    };
+    const world = <T extends Phaser.GameObjects.GameObject>(o: T) => this.addWorld(o);
+    const squash = this.diorama ? 0.86 : 0.9;
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: 400,
+      ease: "Quad.easeIn",
+      onUpdate: (tw) => {
+        const f = tw.getValue() ?? 0;
+        pose(fallDeg * f, 1 - (1 - squash) * f);
+      },
+      onComplete: () => {
+        // Landing: dust where the shoulders hit, a small rebound, then
+        // the body settles and fades.
+        const headX = x0 + arm * 1.6 * away;
+        groundDust(this, world, headX, footY, {
+          depth: actorDepth(footY + 2), count: 7, spread: 16, squash: this.groundSquash()
+        });
+        this.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: 150,
+          ease: "Sine.easeOut",
+          onUpdate: (tw) => pose(fallDeg - 7 * away * Math.sin(Math.PI * (tw.getValue() ?? 0)), squash)
+        });
+        // Lie still a beat, then go. Hidden at the end, exactly as every
+        // refresh leaves a dead unit.
+        this.tweens.add({
+          targets: s, alpha: 0, duration: 600, delay: 420, ease: "Sine.easeIn",
+          onComplete: () => {
+            view.dying = false;
+            s.setVisible(false);
+          }
+        });
+      }
     });
+    // The shadow stretches along the falling body, then goes with it.
     this.tweens.add({
       targets: view.shadow,
-      alpha: 0,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      duration: 460
+      x: x0 + arm * 0.8 * away,
+      scaleX: 1.7,
+      duration: 400,
+      ease: "Quad.easeIn",
+      onComplete: () => {
+        this.tweens.add({ targets: view.shadow, alpha: 0, duration: 500, delay: 200 });
+      }
     });
-    ashBurst(this, (o) => this.addWorld(o), view.sprite.x, view.baseY + 18);
-    soulWisp(this, (o) => this.addWorld(o), view.sprite.x, view.sprite.y, ensureDotTexture(this));
+    ashBurst(this, world, x0, footY - 6);
+    soulWisp(this, world, x0, footY - arm, ensureDotTexture(this));
+  }
+
+  /** Vertical squash of a ring lying on the floor (tile depth ÷ tile width). */
+  private groundSquash(): number {
+    return this.diorama ? DIORAMA_TILE_H / DIORAMA_TILE_W : 0.6;
   }
 
   private flashSprite(s: Phaser.GameObjects.Sprite, color: number, u?: Unit): void {
     s.setTintFill(color);
     this.time.delayedCall(120, () => {
+      // A killing blow: the death animation has taken the sprite over
+      // (grey, falling, fading) — hand it back the death grey, not the
+      // living unit's tint and full alpha.
+      if (u && !isAlive(u)) {
+        s.setTint(0x6a6a72);
+        return;
+      }
       s.clearTint();
       if (u) this.applySpentTint(s, u);
     });
@@ -3869,7 +4016,11 @@ export class BattleScene extends Phaser.Scene {
         yoyo: true
       });
       await this.delay(70); // release at the top of the draw
-      await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2);
+      await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2, {
+        fromY: av.shadow.y,
+        toY: tv.shadow.y,
+        depth: DEPTH.SHADOW + 0.5
+      });
       playUnitState(this, av.sprite, attacker, "idle");
       this.startBreathing(av);
       return;
@@ -3915,24 +4066,34 @@ export class BattleScene extends Phaser.Scene {
         }
       });
     });
-    // Shadow only follows the horizontal lunge — the body leans in but feet
-    // stay on the same tile.
-    this.tweens.add({
-      targets: av.shadow,
-      x: sx + (tx - sx) * 0.32,
-      duration: 130,
-      ease: "Cubic.easeOut",
-      yoyo: true
+    // The strike is a STEP: the body lifts off the back foot, drives a
+    // third of the way in and plants — dust at the front foot — then
+    // recovers. The shadow is the feet: it steps half as far, and the gap
+    // between it and the rising body is what reads as weight leaving the
+    // ground on the tilted board.
+    const reach = 0.32;
+    const sh0x = av.shadow.x, sh0y = av.shadow.y;
+    const hop = this.diorama ? 4 : 2.5;
+    const place = (f: number) => {
+      av.sprite.setPosition(sx + (tx - sx) * reach * f, sy + (ty - sy) * reach * f - hop * Math.sin(Math.PI * f));
+      av.shadow.setPosition(sh0x + (tx - sx) * reach * 0.55 * f, sh0y + (ty - sy) * reach * 0.55 * f);
+    };
+    await new Promise<void>((res) => {
+      this.tweens.addCounter({
+        from: 0, to: 1, duration: 130, ease: "Cubic.easeOut",
+        onUpdate: (tw) => place(tw.getValue() ?? 0),
+        onComplete: () => res()
+      });
+    });
+    groundDust(this, (o) => this.addWorld(o), av.shadow.x + dirX * 6, av.shadow.y, {
+      depth: actorDepth(av.shadow.y + 2), count: 4, spread: 9, squash: this.groundSquash(), dirX
     });
     return new Promise((res) => {
-      this.tweens.add({
-        targets: av.sprite,
-        x: sx + (tx - sx) * 0.32,
-        y: sy + (ty - sy) * 0.32,
-        duration: 130,
-        ease: "Cubic.easeOut",
-        yoyo: true,
+      this.tweens.addCounter({
+        from: 1, to: 0, duration: 150, ease: "Sine.easeInOut",
+        onUpdate: (tw) => place(tw.getValue() ?? 0),
         onComplete: () => {
+          av.shadow.setPosition(sh0x, sh0y);
           playUnitState(this, av.sprite, attacker, "idle");
           this.startBreathing(av);
           res();
@@ -4023,7 +4184,14 @@ export class BattleScene extends Phaser.Scene {
       }
       hitSpark(this, (o) => this.addWorld(o), tx, ty, result.crit);
       // Crits own the moment: a gold ring snaps outward from the impact.
-      if (result.crit) critShockwave(this, (o) => this.addWorld(o), tx, ty);
+      if (result.crit) {
+        critShockwave(this, (o) => this.addWorld(o), tx, ty);
+        // Driven back a step: dust off the heels, on the far side.
+        groundDust(this, (o) => this.addWorld(o), tv.shadow.x, tv.shadow.y, {
+          depth: actorDepth(tv.shadow.y + 2), count: 5, spread: 14,
+          squash: this.groundSquash(), dirX: Math.cos(impactAngle) >= 0 ? 1 : -1
+        });
+      }
       // Crisp white impact flash — reads instantly as "got hit", regardless
       // of unit palette. Red tint blended in with enemy reds before.
       this.flashSprite(tv.sprite, 0xffffff, defender);
@@ -4047,7 +4215,7 @@ export class BattleScene extends Phaser.Scene {
     if (result.defenderKilled) {
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
-      this.playDeathDissolve(tv, defender);
+      this.playDeathDissolve(tv, defender, av.sprite.x);
       // XP award: only player kills of enemies count. Allied kills (friendly
       // fire, AI vs AI) and enemy kills of players don't award anything.
       // The reward is computed from base-by-class × level-diff modifier; a
@@ -4185,7 +4353,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          this.playDeathDissolve(av, u);
+          this.playDeathDissolve(av, u, this.unitViews.get(target.id)?.sprite.x);
         }
         this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
       }
@@ -4246,7 +4414,7 @@ export class BattleScene extends Phaser.Scene {
         const av = this.unitViews.get(u.id);
         if (av) {
           sfxDeath();
-          this.playDeathDissolve(av, u);
+          this.playDeathDissolve(av, u, this.unitViews.get(actualDefender.id)?.sprite.x);
         }
         this.pushLog(`${actualDefender.name}'s last act drags ${u.name} down.`);
       }

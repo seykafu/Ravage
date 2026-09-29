@@ -322,9 +322,9 @@ export const baseline = BASELINE_BATTLES.map((id) => ({
 }));
 
 // QUICK — two stills for fast iteration on the board's look.
-export const quick = ["b05_mountain_ndari", "b01_palace_coup"].map((id) => ({
+export const quick = (process.env.CAP_IDS ?? "b05_mountain_ndari,b01_palace_coup").split(",").map((id) => ({
   name: id,
-  seconds: 0.1,
+  seconds: 1,
   settleFrames: 110,
   setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
   each: fn(`closeDialogue();`)
@@ -356,4 +356,67 @@ export const probe = [{
     })[k] ?? "").join(" ")}`)
 }];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe };
+// ANIM — the combat animation pass, staged for frame-by-frame review:
+// a melee kill (step-in, footfall, topple onto the floor), an arrow with
+// its ground shadow, and a reinforcement wave walking in off the edge.
+export const anim = [
+  {
+    name: "melee-kill",
+    seconds: 2.0,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b29_epilogue" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "melee-kill-go",
+    seconds: 2.2,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = unit("amar") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) { closeWith(u, foe); softenTarget(foe); zoomTo(1.8); frameOn(u, foe); void b.animateAttack(u, foe); }
+    `)
+  },
+  {
+    name: "arrow",
+    seconds: 1.4,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = side("player").find((p) => p.weapon === "bow"); const foe = nearestFoe(u);
+      if (u && foe) {
+        const g = b.state.grid;
+        const occ = (p) => b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
+        for (const d of [{x:-3,y:0},{x:3,y:0},{x:0,y:3},{x:0,y:-3},{x:-2,y:1},{x:2,y:-1}]) {
+          const p = { x: foe.state.position.x + d.x, y: foe.state.position.y + d.y };
+          if (g.inBounds(p) && !g.tileAt(p).blocksMovement && !occ(p)) { u.state.position = p; b.refreshAllUnits(); break; }
+        }
+        foe.state.hp = foe.stats.hp; foe.stats = { ...foe.stats, speed: 1 };
+        zoomTo(1.8); frameOn(u, foe); void b.animateAttack(u, foe);
+      }
+    `),
+    each: fn(`if (${!!process.env.CAP_DEBUG}) { const b = battle();
+      const e = b.children.list.filter((o) => o.type === "Ellipse" && o.depth > 2.2 && o.depth < 2.8);
+      if (e.length) console.error("SHADE", e.map((o) => [o.x|0, o.y|0, o.alpha.toFixed(2), o.visible, o.scaleX.toFixed(2), o.cameraFilter].join(",")).join(" | "));
+      const a = b.children.list.filter((o) => o.texture && o.texture.key === "vfx_arrow_proc");
+      if (a.length) console.error("ARROW", a.map((o) => [o.x|0, o.y|0, o.depth].join(",")).join(" | ")); }`)
+  },
+  {
+    name: "arrival",
+    seconds: 2.2,
+    settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b26_coastal_hold" });`),
+    each: fn(`closeDialogue();`)
+  },
+  {
+    name: "arrival-go",
+    seconds: 1.6,
+    settleFrames: 2,
+    setup: fn(`
+      const b = battle(); closeDialogue();
+      const w = b.reinforcements[0];
+      if (w) { b.landWaves((x) => x === w); const nu = b.state.units[b.state.units.length - 1];
+        zoomTo(1.5); frameOn(nu); }
+    `)
+  }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim };
