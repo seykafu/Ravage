@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { Grid } from "../../combat/Grid";
+import type { Tile } from "../../combat/types";
 import type { ObstacleKind, TerrainKind } from "../../combat/types";
 import type { Projection } from "../../render/Projection";
 import { ensureObstacleTexture, ensureTileTexture, tallObstacleTexture } from "../../art/TileArt";
@@ -306,6 +306,27 @@ export interface DioramaOptions {
   sun?: Sun;
   /** No sun, but props near a flame throw shadows away from it (dark battles). */
   torchShadows?: boolean;
+  /**
+   * Quarter-turns the board is rotated (render/ViewRotation). Directional
+   * textures — planks, brick, carpet, water — turn with it.
+   */
+  rotation?: number;
+  /**
+   * The grid cell drawn at a view cell. Per-tile variation (texture
+   * variant, flips, brightness jitter) is keyed on the GRID cell, so
+   * turning the board turns the same tiles rather than reshuffling them.
+   */
+  gridOf?: (x: number, y: number) => { x: number; y: number };
+}
+
+/**
+ * The board as the diorama sees it: cells in VIEW space (see
+ * render/ViewRotation). An unrotated Grid satisfies this as-is.
+ */
+export interface DioramaGrid {
+  readonly width: number;
+  readonly height: number;
+  tileAt(p: { x: number; y: number }): Tile;
 }
 
 export interface DioramaResult {
@@ -325,7 +346,7 @@ export interface DioramaResult {
  */
 export const buildDiorama = (
   scene: Phaser.Scene,
-  grid: Grid,
+  grid: DioramaGrid,
   projection: Projection,
   opts: DioramaOptions
 ): DioramaResult => {
@@ -393,7 +414,8 @@ export const buildDiorama = (
       const t = { x, y };
       const top = projection.topFace(t);
       const key = projection.depthKey(t);
-      const hash = ((x * 73856093) ^ (y * 19349663) ^ (opts.seed * 83492791)) >>> 0;
+      const g = opts.gridOf ? opts.gridOf(x, y) : t;
+      const hash = ((g.x * 73856093) ^ (g.y * 19349663) ^ (opts.seed * 83492791)) >>> 0;
       const hereUp = elev(x, y);
 
       // ---- top face -------------------------------------------------
@@ -402,9 +424,11 @@ export const buildDiorama = (
       const levelsUp = raised ? opts.elevationAt(x, y) : 0;
       const capped = tile.terrain === "wall" && levelsUp > 0;
       const topTerrain = capped ? "stone" : tile.terrain;
-      const baseKey = ensureTileTexture(scene, topTerrain, opts.seed + (x * 73 + y * 131));
+      const baseKey = ensureTileTexture(scene, topTerrain, opts.seed + (g.x * 73 + g.y * 131));
       const smooth = SMOOTH.has(topTerrain);
-      const quarter = ISOTROPIC.has(topTerrain) && !smooth ? (hash >> 2) & 3 : 0;
+      // Every tile turns with the board by the same amount, so seams that
+      // matched still match.
+      const quarter = ((ISOTROPIC.has(topTerrain) && !smooth ? (hash >> 2) & 3 : 0) + (opts.rotation ?? 0)) & 3;
       const topImg = scene.add.image(top.x, top.y, ensureRotated(scene, baseKey, quarter))
         .setOrigin(0, 0)
         .setDisplaySize(top.w, top.h)

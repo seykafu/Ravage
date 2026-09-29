@@ -1,5 +1,6 @@
 import type { TilePos } from "../combat/types";
-import type { PixelPoint, Projection, WorldRect } from "./Projection";
+import type { PixelPoint, Projection, ScreenDir, WorldRect } from "./Projection";
+import { stepOnScreen } from "./ViewRotation";
 
 // ─────────────────────────────────────────────────────────────────────────
 // ObliqueProjection — the tilted ¾ "diorama" view (HD-2D plan, Approach C).
@@ -132,6 +133,10 @@ export class ObliqueProjection implements Projection {
    */
   depthKey(tile: { x: number; y: number }): number {
     return tile.y + this.elevationAt(tile.x, tile.y) * 0.001;
+  }
+
+  neighborOnScreen(tile: { x: number; y: number }, dir: ScreenDir): TilePos {
+    return stepOnScreen(tile, dir);
   }
 
   /**

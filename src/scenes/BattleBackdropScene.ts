@@ -89,13 +89,14 @@ export class BattleBackdropScene extends Phaser.Scene {
       this.textures.remove(keptDistant);
     }
     keptDistant = key !== sharp ? key : undefined;
-    // Oversized, and biased toward the bottom-right: the battle camera
-    // only ever scrolls right/down from zero, so that's the direction the
-    // parallax drags the image. 1.5× covers a pan of ~4000px across and
-    // ~2300px down before an edge could show — far past the largest map.
-    this.add.image(-60, -40, key)
+    // Oversized and centred on the view: the battle camera scrolls both
+    // ways from zero now (every board has drag slack, left and up as well
+    // as right and down), and the parallax moves the distance by 0.14 of
+    // that. 2× with a quarter-screen overhang covers a pan of ~4500px
+    // either way across and ~2500px either way down.
+    this.add.image(-GAME_WIDTH * 0.5, -GAME_HEIGHT * 0.5, key)
       .setOrigin(0, 0)
-      .setDisplaySize(GAME_WIDTH * 1.5, GAME_HEIGHT * 1.5)
+      .setDisplaySize(GAME_WIDTH * 2, GAME_HEIGHT * 2)
       .setScrollFactor(1);
     // The same top-to-bottom dim BattleScene used, pinned to the screen.
     const dim = this.add.graphics().setScrollFactor(0);

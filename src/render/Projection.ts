@@ -1,4 +1,5 @@
 import type { TilePos } from "../combat/types";
+import { stepOnScreen } from "./ViewRotation";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Projection — the single seam that owns ALL tile ↔ world coordinate math.
@@ -36,6 +37,9 @@ export interface PixelPoint {
   y: number;
 }
 
+/** A direction on screen: toward the back of the board, the front, or a side. */
+export type ScreenDir = "up" | "down" | "left" | "right";
+
 /** An axis-aligned world-space rectangle. */
 export interface WorldRect {
   x: number;
@@ -72,6 +76,15 @@ export interface Projection {
 
   /** Painter's-order key: larger draws later (nearer the camera). */
   depthKey(tile: { x: number; y: number }): number;
+
+  /**
+   * The grid tile drawn next to `tile` in a SCREEN direction. On an
+   * unrotated board "up" is simply y - 1; on a rotated one it is whichever
+   * grid neighbour the rotation put there. Anything that walks tile edges
+   * on screen (region outlines) must ask this rather than assume y - 1.
+   * May return a tile off the grid.
+   */
+  neighborOnScreen(tile: { x: number; y: number }, dir: ScreenDir): TilePos;
 
   /** World bounds of everything the board draws. Sizes the camera. */
   bounds(): WorldRect;
@@ -154,6 +167,10 @@ export class OrthographicProjection implements Projection {
 
   depthKey(tile: { x: number; y: number }): number {
     return tile.y;
+  }
+
+  neighborOnScreen(tile: { x: number; y: number }, dir: ScreenDir): TilePos {
+    return stepOnScreen(tile, dir);
   }
 
   bounds(): WorldRect {

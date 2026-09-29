@@ -289,6 +289,23 @@ second renderer.
   and so hidden, before the death played.)
 - Reinforcements stride in from the nearest board edge.
 
+### Board camera (turn, zoom, drag, x-ray)
+On a tilted board the rows in front cover part of the rows behind, so the
+player can move the camera to see and click what is hidden:
+- **Turn** the board in quarter-turns: the ↺ ↻ top-bar buttons or Q / E.
+  `render/ViewRotation.ts` maps grid cells to VIEW cells and
+  `RotatedProjection` wraps the tilted projection, so every call site
+  still passes grid tiles. The diorama is rebuilt in view space. Heights
+  are re-clamped per view, so the playability tests hold from all four
+  sides of every map. Facing is kept in grid terms and shown on screen.
+- **Zoom** 1×–2× with the wheel (or + / -), anchored on the cursor.
+- **Drag** any board: the camera has slack around the board, so boards
+  that fit the playfield can be dragged too. The opening view is framed
+  exactly as before.
+- **R** resets the view.
+- **Hover x-ray:** when the tile or unit under the pointer is hidden behind
+  a unit or a tall prop in front, its outline draws through.
+
 ### Capture harness (`npm run capture <list> [out]`)
 `Date.now` follows the virtual clock (Phaser tweens run on it, and ran
 ~12× fast in every capture before). Lists: `baseline` (one still per
