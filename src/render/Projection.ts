@@ -36,6 +36,14 @@ export interface PixelPoint {
   y: number;
 }
 
+/** An axis-aligned world-space rectangle. */
+export interface WorldRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface Projection {
   /**
    * World-space pixel CENTER of a tile. Equivalent to the legacy
@@ -50,6 +58,23 @@ export interface Projection {
    * input came from a pointer.
    */
   worldToTile(worldX: number, worldY: number): TilePos | null;
+
+  /**
+   * The visible top face of a tile — the rectangle every tile-shaped
+   * overlay (move range, target brackets, cursor) should fill. Square on
+   * the flat board; foreshortened and lifted by elevation on the ¾ board.
+   * Always axis-aligned, which is what lets overlay code stay fillRect.
+   */
+  topFace(tile: { x: number; y: number }): WorldRect;
+
+  /** Height of the south-facing wall under a tile's top face (0 = none). */
+  frontFaceHeight(tile: { x: number; y: number }): number;
+
+  /** Painter's-order key: larger draws later (nearer the camera). */
+  depthKey(tile: { x: number; y: number }): number;
+
+  /** World bounds of everything the board draws. Sizes the camera. */
+  bounds(): WorldRect;
 
   /** Grid dimensions this projection was built for (used for bounds tests). */
   readonly gridWidth: number;
@@ -111,5 +136,32 @@ export class OrthographicProjection implements Projection {
     const y = Math.floor((worldY - this.originY) / this.tileSize);
     if (x < 0 || y < 0 || x >= this.gridWidth || y >= this.gridHeight) return null;
     return { x, y };
+  }
+
+  topFace(tile: { x: number; y: number }): WorldRect {
+    return {
+      x: this.originX + tile.x * this.tileSize,
+      y: this.originY + tile.y * this.tileSize,
+      w: this.tileSize,
+      h: this.tileSize
+    };
+  }
+
+  // A flat board has no walls anywhere.
+  frontFaceHeight(): number {
+    return 0;
+  }
+
+  depthKey(tile: { x: number; y: number }): number {
+    return tile.y;
+  }
+
+  bounds(): WorldRect {
+    return {
+      x: this.originX,
+      y: this.originY,
+      w: this.gridWidth * this.tileSize,
+      h: this.gridHeight * this.tileSize
+    };
   }
 }

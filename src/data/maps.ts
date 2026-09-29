@@ -1,21 +1,38 @@
 import type { MapDef, ObstacleKind, TerrainKind, TilePos } from "../combat/types";
 
-const t = (terrain: TerrainKind, obstacle: ObstacleKind = "none") => ({ terrain, obstacle });
+// `elev` is presentation-only height for the ¾ diorama view (see MapDef).
+// Most maps never pass it: terrain supplies a sensible default (walls
+// stand up, water sinks). It exists for the maps whose design is ABOUT
+// height — the mountain parapet, the cliff staircase — where two aliases
+// of the same terrain were always meant to be two different levels.
+const t = (terrain: TerrainKind, obstacle: ObstacleKind = "none", elev?: number) =>
+  (elev === undefined ? { terrain, obstacle } : { terrain, obstacle, elev });
+
+type Cell = { terrain: TerrainKind; obstacle?: ObstacleKind; elev?: number };
 
 // Helper: build a rectangle map from a 2D array of cell descriptors.
+//
+// `elevation` (optional, presentation-only) sets height per cell for maps
+// whose height varies by POSITION rather than by alias — a staircase
+// descending row by row can't be expressed as one `t(...)` per terrain.
+// Return undefined to leave a cell to its alias / terrain default.
 const buildMap = (
   id: string,
   name: string,
-  rows: ReadonlyArray<ReadonlyArray<{ terrain: TerrainKind; obstacle?: ObstacleKind }>>,
-  starts: { player: TilePos[]; enemy: TilePos[]; ally?: TilePos[] }
+  rows: ReadonlyArray<ReadonlyArray<Cell>>,
+  starts: { player: TilePos[]; enemy: TilePos[]; ally?: TilePos[] },
+  elevation?: (x: number, y: number, cell: Cell) => number | undefined
 ): MapDef => {
   const height = rows.length;
   const width = rows[0]?.length ?? 0;
-  const flat: { terrain: TerrainKind; obstacle?: ObstacleKind }[] = [];
-  for (const r of rows) {
+  const flat: Cell[] = [];
+  rows.forEach((r, y) => {
     if (r.length !== width) throw new Error(`Map ${id} row mismatch`);
-    for (const c of r) flat.push(c);
-  }
+    r.forEach((c, x) => {
+      const e = elevation?.(x, y, c);
+      flat.push(e === undefined ? c : { ...c, elev: e });
+    });
+  });
   return { id, name, width, height, tiles: flat, startPositions: starts };
 };
 
@@ -29,10 +46,12 @@ const buildMap = (
 // + a third rank below break long sight lines into the throne so
 // archers can't snipe across the whole map.
 const _ = t("carpet");
-const S = t("stone");
-const P = t("stone", "pillar");
-const TH = t("carpet", "throne");
-const TO = t("stone", "torch");
+// The stone ring is a raised gallery around a lower carpeted hall, and
+// the throne sits a step higher again on its dais.
+const S = t("stone", "none", 1);
+const P = t("stone", "pillar", 1);
+const TH = t("carpet", "throne", 2);
+const TO = t("stone", "torch", 1);
 const palaceRows = [
   [S,  S,  S,  S,  S,  P,  S,  S,  S, TH, S,  S,  S,  P,  S,  S,  S,  S ],
   [S,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  _,  S ],
@@ -232,8 +251,8 @@ export const swampMap: MapDef = buildMap("swamp", "Marsh Road Ambush", swampRows
 const SN = t("snow");
 const SR = t("snow", "rock");
 const ST = t("snow", "tree");
-const SS = t("stone");
-const SE = t("stone");
+const SS = t("stone", "none", 1);   // parapet rim — one step up off the snow
+const SE = t("stone", "none", 2);   // parapet core — the high ground itself
 
 const mountainRows = [
   [SR, SN, SN, SN, SN, SS, SS, SS, SS, SS, SS, SS, SS, SS, SS, SN, SN, SN, SN, SR],
@@ -504,6 +523,13 @@ export const ravineMap: MapDef = buildMap("ravine", "The Price of Doubt", ravine
     { x: 4,  y: 3 }, // "Bandit" swordsman pressing forward
     { x: 7,  y: 3 }  // "Bandit" swordsman pressing forward
   ]
+}, (_x, y, cell) => {
+  // "The King's regiment in disguise holds the high ground at the north
+  // (rows 0-3)" — now it actually is high ground.
+  if (cell.terrain === "water") return undefined;
+  if (y <= 1) return 2;
+  if (y <= 3) return 1;
+  return undefined;
 });
 
 // ============== Battle 10 — Leaving Thuling ==============
@@ -645,6 +671,15 @@ export const cliffsMap: MapDef = buildMap("cliffs", "Cliffs above Para Harbor", 
     { x: 7, y: 10 }, // Royal Guard, mid-stair seal
     { x: 8, y: 10 }, // Royal Guard, mid-stair seal
   ]
+}, (_x, y) => {
+  // The descent the whole battle is about. The clifftop (rows 0-5) is the
+  // high ground; the staircase drops half a level per row — each step a
+  // visible riser — past the two landings; the ship deck is sea level.
+  // A full level off the clifftop edge into the first stair gives the
+  // top of the cliff its bite.
+  if (y <= 5) return 6;
+  if (y >= 17) return 0;
+  return 5 - (y - 6) * 0.45;
 });
 
 // ============== Battle 12 — The Ravage (Grude harbor district) ==============
@@ -1627,6 +1662,12 @@ export const pathFinalMap: MapDef = buildMap("path_final", "The Processional", p
     { x: 10, y: 3 },
     { x: 8, y: 5 }
   ]
+}, (_x, y, cell) => {
+  // "Only the person waiting at the top of it changes." The marble
+  // processional is a raised causeway through the wreckage, stepping up
+  // once more to the head of the road where the final opponent stands.
+  if (cell.terrain !== "marble") return undefined;
+  return y <= 2 ? 2 : 1;
 });
 
 // ============== Battle 29 — The Smallhold Road (post-credits epilogue) =======

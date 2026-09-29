@@ -302,4 +302,44 @@ export const reel = [
   }
 ];
 
-export const SHOTLISTS = { proof, reel };
+// ---------------------------------------------------------------------
+// BASELINE — one still per biome, native zoom, for before/after review
+// of the 2.5D uplift. Six frames each; the last one is the keeper.
+// ---------------------------------------------------------------------
+const BASELINE_BATTLES = [
+  "b01_palace_coup", "b04_swamp", "b05_mountain_ndari", "b07_monastery",
+  "b11_cliffs", "b17_lie", "b22_grude_burns", "b26_coastal_hold",
+  "b28_path_final", "b29_epilogue"
+];
+export const baseline = BASELINE_BATTLES.map((id) => ({
+  name: id,
+  seconds: 0.2,
+  settleFrames: 110,
+  setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
+  each: fn(`closeDialogue();`)
+}));
+
+// QUICK — two stills for fast iteration on the board's look.
+export const quick = ["b05_mountain_ndari", "b01_palace_coup"].map((id) => ({
+  name: id,
+  seconds: 0.1,
+  settleFrames: 110,
+  setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${id}" });`),
+  each: fn(`closeDialogue();`)
+}));
+
+// PROBE — one battle, settled, dialogue and title card cleared.
+const PROBE_ID = process.env.CAP_BATTLE ?? "b11_cliffs";
+export const probe = [{
+  name: PROBE_ID,
+  seconds: 0.1,
+  settleFrames: 240,
+  // CAP_NOFOG=1 flips darkBattle off for the probe — isolates the fog.
+  setup: fn(`seedRun();
+    ${process.env.CAP_NOFOG ? `cap.battles.battleById("${PROBE_ID}").darkBattle = false;` : ""}
+    cap.goto("BattleScene", { battleId: "${PROBE_ID}" });`),
+  each: fn(`closeDialogue();
+    ${process.env.CAP_NOFOG ? "battle()?.darknessRT?.setVisible(false);" : ""}`)
+}];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe };

@@ -72,6 +72,16 @@ await page.waitForFunction(() => {
 }, null, { timeout: 60_000 });
 console.log("[cap] game up");
 
+// Wait for the background asset streamer to finish. The painted tiles,
+// unit sheets and props stream in AFTER the game is interactive; a shot
+// taken before then captures the procedural placeholders instead (the
+// first 2.5D capture did exactly that — grey stone and pixel dolls).
+await page.waitForFunction(() => {
+  const s = window.__RAVAGE_GAME__?.scene.getScene("AssetStreamScene");
+  return !!s && s.load.totalComplete > 0 && !s.load.isLoading();
+}, null, { timeout: 180_000 });
+console.log("[cap] assets streamed");
+
 // Install the capture control surface in the page. Module handles come
 // through dynamic import so shots can seed saves and drive combat with
 // the game's own code rather than re-implementing any of it.
