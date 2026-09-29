@@ -6,6 +6,7 @@ import { ensureObstacleTexture, ensureTileTexture } from "../../art/TileArt";
 import { DEPTH, actorDepth, terrainDepth, terrainOverlayDepth } from "../../render/depth";
 import { addTorchGlow } from "./Lighting";
 import { ensureDotTexture } from "./Atmosphere";
+import { castFrom, type Sun } from "../../render/sun";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Diorama — builds the battle board as a physical object.
@@ -294,6 +295,8 @@ export interface DioramaOptions {
   elevationAt: (x: number, y: number) => number;
   /** World px per level (0 on the flat board — nothing is drawn raised). */
   elevStep: number;
+  /** Cast shadows from the sun (render/sun). Omit for no sun: dark battles, the flat board. */
+  sun?: Sun;
 }
 
 export interface DioramaResult {
@@ -499,13 +502,24 @@ export const buildDiorama = (
         const size = top.w * s * wobble;
         scene.add.ellipse(cx, footY - 1, top.w * 0.66 * s, top.w * 0.17, 0x000000, 0.3)
           .setDepth(DEPTH.SHADOW);
+        const baseOrigin = propBaseOrigin(scene, obsKey);
         const obs = scene.add.image(cx, footY, obsKey)
-          .setOrigin(0.5, propBaseOrigin(scene, obsKey))
+          .setOrigin(0.5, baseOrigin)
           .setDisplaySize(size, size)
           // A hair behind any unit sharing the tile (fence, barricade and
           // throne are walkable): the soldier stands AT the barricade.
           .setDepth(actorDepth(footY - 0.5));
         if (tile.obstacle !== "torch" && tile.obstacle !== "throne") obs.setFlipX((hash & 4) === 4);
+        // The prop's own shadow across the ground. Not for a torch: it is
+        // a light, and a flame throwing a sun-shadow reads as wrong.
+        if (opts.sun && tile.obstacle !== "torch") {
+          const cast = scene.add.image(cx, footY, obsKey)
+            .setOrigin(0.5, baseOrigin)
+            .setTintFill(0x000000)
+            .setAlpha(opts.sun.alpha)
+            .setDepth(DEPTH.SHADOW - 0.1);
+          castFrom(cast, obs, opts.sun);
+        }
         if (tile.obstacle === "torch") {
           // Light pooling on the ground around the base, foreshortened
           // like the ground it lands on...

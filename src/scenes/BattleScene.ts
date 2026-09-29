@@ -11,6 +11,7 @@ import {
   UNIT_DIORAMA_H, UNIT_DIORAMA_W, UNIT_FLAT_H, UNIT_FLAT_W
 } from "../render/dioramaConfig";
 import { DEPTH, actorDepth } from "../render/depth";
+import { SUN, UNIT_FOOT_ORIGIN, castFrom, type Sun } from "../render/sun";
 import { DIORAMA_PERSPECTIVE_K } from "../render/dioramaConfig";
 import { screenToSource, type KeystoneParams } from "../render/keystone";
 import { PERSPECTIVE_PIPELINE, PerspectivePipeline, ensurePerspectivePipeline } from "../render/PerspectivePipeline";
@@ -153,6 +154,10 @@ interface UnitView {
   // explicit move/lunge tween (which also targets sprite.y) and restarted
   // afterward to avoid two tweens fighting over the same property.
   breathTween?: Phaser.Tweens.Tween;
+  // The figure's silhouette thrown across the ground by the sun (render/
+  // sun). Absent on dark battles and the flat board. Synced to the
+  // sprite's frame, facing and fade every frame in update().
+  castShadow?: Phaser.GameObjects.Image;
   // Crimson glow rendered behind the sprite while the unit is in their
   // Ravaged turn (UnitState.ravagedActive === true). Created lazily by
   // refreshRavageAura(); pulses via a yoyo tween, removed when the turn
@@ -238,6 +243,8 @@ export class BattleScene extends Phaser.Scene {
   // flat board used -4. On the diorama the feet go on the front half of
   // the tile and the body rises over the rows behind it.
   private unitLift = -4;
+  // The sun for this battle's cast shadows (render/sun), or none.
+  private sun?: Sun;
   // Unit billboard size for this board (see dioramaConfig).
   private unitW = UNIT_FLAT_W;
   private unitH = UNIT_FLAT_H;
@@ -771,11 +778,14 @@ export class BattleScene extends Phaser.Scene {
     // water, props standing on the ground, torch light. See
     // scenes/battle/Diorama.ts. Everything it creates is a world object
     // made during this setup sweep, so the UI camera never double-draws it.
+    // A sun on the diorama in daylight; dark battles are lit by torches.
+    this.sun = this.diorama && !node?.darkBattle ? SUN : undefined;
     const board = buildDiorama(this, grid, this.projection, {
       footDY: this.diorama ? DIORAMA_FOOT_DY : TILE_SIZE * 0.3,
       seed: map.id.length * 31 + 7,
       elevationAt: this.elevAt,
-      elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0
+      elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0,
+      sun: this.sun
     });
     this.boardLights = board.lights;
 
@@ -1460,6 +1470,12 @@ export class BattleScene extends Phaser.Scene {
     const sprite = this.addWorld(this.add.sprite(px.x, baseY, tex).setDisplaySize(this.unitW, this.unitH)
       .setDepth(actorDepth(baseY + this.unitH / 2)));
     if (u.faction === "enemy") sprite.setFlipX(true);
+    const castShadow = this.sun
+      ? this.addWorld(this.add.image(px.x, baseY + 24, tex)
+        .setOrigin(0.5, UNIT_FOOT_ORIGIN)
+        .setTintFill(0x000000)
+        .setDepth(DEPTH.SHADOW - 0.05))
+      : undefined;
     // HP bars and stance glyphs sit above every actor so a soldier in the
     // row in front never hides the bar of the one behind him.
     const hpBg = this.addWorld(this.add.graphics().setDepth(DEPTH.UNIT_HUD));
@@ -1471,7 +1487,7 @@ export class BattleScene extends Phaser.Scene {
       stroke: "#000",
       strokeThickness: 2
     }).setOrigin(0.5, 0).setDepth(DEPTH.UNIT_HUD + 0.02));
-    const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon };
+    const view: UnitView = { unit: u, sprite, shadow, baseY, hpBg, hpBar, stanceIcon, castShadow };
     this.unitViews.set(u.id, view);
     this.refreshUnitView(u);
     playUnitState(this, sprite, u, "idle");
@@ -1481,6 +1497,7 @@ export class BattleScene extends Phaser.Scene {
     if (!isAlive(u)) {
       sprite.setVisible(false);
       shadow.setVisible(false);
+      castShadow?.setVisible(false);
     }
   }
 
@@ -1795,11 +1812,29 @@ export class BattleScene extends Phaser.Scene {
       // sort the body in front of whoever stands in the next row.
       const sortY = isAlive(v.unit) ? v.sprite.y : v.baseY;
       v.sprite.setDepth(actorDepth(sortY + this.unitH / 2));
+      this.syncCastShadow(v);
       // HUD rides the sprite, not the tile (see drawHpBar).
       v.hpBg.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
       v.hpBar.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
       v.stanceIcon.setPosition(v.sprite.x, v.sprite.y + 6);
     }
+  }
+
+  // The sun-shadow lies where the contact shadow is — on the ground, so a
+  // hop or a lunge lifts the figure off its shadow — and wears the sprite's
+  // current frame and facing. Gone the moment a unit starts to fall: a
+  // shadow standing upright under a toppling body reads as a second body.
+  private syncCastShadow(v: UnitView): void {
+    const cs = v.castShadow;
+    if (!cs || !this.sun) return;
+    const s = v.sprite;
+    const show = s.visible && !v.dying && v.shadow.visible;
+    cs.setVisible(show);
+    if (!show) return;
+    if (cs.texture !== s.texture || cs.frame.name !== s.frame.name) cs.setTexture(s.texture.key, s.frame.name);
+    cs.setPosition(v.shadow.x, v.shadow.y);
+    castFrom(cs, s, this.sun);
+    cs.setAlpha(this.sun.alpha * s.alpha * v.shadow.alpha);
   }
 
   private refreshAllUnits(): void {
@@ -3174,7 +3209,8 @@ export class BattleScene extends Phaser.Scene {
     }
     const end = pts[pts.length - 1]!;
     this.pathG.lineStyle(1.5, COLORS.hover, 0.9);
-    this.pathG.strokeCircle(end.x, end.y, 10);
+    // Lying on the destination tile, foreshortened like the ground.
+    this.pathG.strokeEllipse(end.x, end.y, 20, 20 * this.groundSquash());
 
     const view = this.unitViews.get(u.id);
     if (!view) return;
@@ -3358,13 +3394,20 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // A ring that expands and fades — its own object so it can't fight
-    // the breathing/idle tweens already running on the unit sprite.
+    // the breathing/idle tweens already running on the unit sprite. It lies
+    // on the ground at the unit's feet, squashed to the board's tilt, and
+    // under the actors: a ping on the floor, not a hoop in the air.
+    const sq = this.groundSquash();
     const ring = this.addWorld(
-      this.add.circle(wp.x, wp.y, 24).setStrokeStyle(3, 0xffd45a, 0.95).setDepth(31)
+      this.add.circle(wp.x, wp.y + (this.diorama ? DIORAMA_FOOT_DY : 0), 24)
+        .setStrokeStyle(3, 0xffd45a, 0.95)
+        .setScale(1, sq)
+        .setDepth(this.darknessRT ? DEPTH.OVER_DARK : DEPTH.GROUND_MARK + 0.5)
     );
     this.tweens.add({
       targets: ring,
-      scale: 1.9,
+      scaleX: 1.9,
+      scaleY: 1.9 * sq,
       alpha: 0,
       duration: 650,
       ease: "Sine.easeOut",
