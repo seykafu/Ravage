@@ -25,6 +25,10 @@ const stopIdleFallback = (sprite: Phaser.GameObjects.Sprite): void => {
   sprite.angle = 0;
 };
 
+/** Whether this unit has real frames for `state` (not the procedural fallback). */
+export const hasUnitState = (scene: Phaser.Scene, unit: Unit, state: UnitAnimState): boolean =>
+  hasUnitAnimation(resolveSpriteClass(scene, unit), state);
+
 export const playUnitState = (
   scene: Phaser.Scene,
   sprite: Phaser.GameObjects.Sprite,
@@ -38,7 +42,18 @@ export const playUnitState = (
   const spriteClass = resolveSpriteClass(scene, unit);
   if (hasUnitAnimation(spriteClass, state)) {
     stopIdleFallback(sprite);
-    sprite.play(animKey(spriteClass, state), true);
+    const key = animKey(spriteClass, state);
+    sprite.play(key, true);
+    // A flinch is a one-shot that hands back to idle when it ends — left
+    // alone the unit froze on its recoil frame until its next action.
+    // (Attack is handed back by the lunge; death holds its last frame.)
+    if (state === "hit") {
+      sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + key, () => {
+        if (sprite.active && sprite.anims.currentAnim?.key === key) {
+          playUnitState(scene, sprite, unit, "idle");
+        }
+      });
+    }
     return;
   }
 

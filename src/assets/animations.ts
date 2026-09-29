@@ -15,7 +15,10 @@ interface AnimSpec {
 const ANIM_SPECS: Record<UnitAnimState, AnimSpec> = {
   idle:   { frameRate: 2,  repeat: -1 },
   walk:   { frameRate: 8,  repeat: -1 },
-  attack: { frameRate: 14, repeat: 0 },
+  // 11fps puts the third (impact) frame on screen from ~180ms to ~270ms:
+  // across the moment a melee lunge connects (~250ms) and the moment the
+  // bow and lens release (BattleScene.lunge waits for it).
+  attack: { frameRate: 11, repeat: 0 },
   hit:    { frameRate: 12, repeat: 0 },
   death:  { frameRate: 6,  repeat: 0 }
 };

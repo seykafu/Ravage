@@ -124,7 +124,7 @@ const HEAL_AMOUNT_FOR_KIND: Record<ItemKind, number> = {
   royal_lens: 0,
   dactyl_food: 0
 };
-import { playUnitState } from "../assets/unitAnim";
+import { playUnitState, hasUnitState } from "../assets/unitAnim";
 import { hasAsset } from "../assets/manifest";
 import { BattleFSM } from "./battle/BattleFSM";
 import { InitiativeBar } from "./battle/InitiativeBar";
@@ -260,6 +260,8 @@ export class BattleScene extends Phaser.Scene {
   private unitH = UNIT_FLAT_H;
   // Flames on the board, for the darkness overlay on night battles.
   private boardLights: { x: number; y: number; radius: number }[] = [];
+  // Standing props that fade while a unit is behind them (Diorama).
+  private occluders: { img: Phaser.GameObjects.Image; footY: number; x0: number; x1: number; y0: number }[] = [];
   // Reusable brush for punching light into the darkness overlay.
   private lightBrush?: Phaser.GameObjects.Image;
   // Camera perspective on the diorama board (null = none: the flat board,
@@ -800,6 +802,7 @@ export class BattleScene extends Phaser.Scene {
       torchShadows: this.torchShadows
     });
     this.boardLights = board.lights;
+    this.occluders = board.occluders;
 
     // Cloud shadows — outdoor maps get two huge, soft, near-black blobs
     // drifting slowly across the board. Added after the tiles and before
@@ -1818,6 +1821,7 @@ export class BattleScene extends Phaser.Scene {
   // continuous render-loop work this scene does.
   update(): void {
     if (this.darknessRT) this.refreshSpotlight();
+    this.fadeOccluders();
     if (this.backdropScene?.scene.isActive()) {
       this.backdropScene.follow(this.cameras.main.scrollX, this.cameras.main.scrollY);
     }
@@ -1865,6 +1869,30 @@ export class BattleScene extends Phaser.Scene {
     cs.setDepth(this.sun ? DEPTH.SHADOW - 0.05 : DEPTH.TORCH_SHADOW);
     castFrom(cs, s, light);
     cs.setAlpha(light.alpha * s.alpha * v.shadow.alpha);
+  }
+
+  // A tree or a column in front of a unit fades to a ghost while anyone
+  // stands behind it — on the tilted board a prop taller than a figure
+  // covers the rows behind it, and a tactics board can't hide who's where.
+  private fadeOccluders(): void {
+    if (this.occluders.length === 0) return;
+    const halfW = this.unitW / 2, halfH = this.unitH / 2;
+    for (const o of this.occluders) {
+      let behind = false;
+      for (const v of this.unitViews.values()) {
+        const s = v.sprite;
+        if (!s.visible || s.alpha < 0.05) continue;
+        const feet = s.y + halfH;
+        if (feet >= o.footY - 2) continue;
+        if (s.x + halfW * 0.6 < o.x0 || s.x - halfW * 0.6 > o.x1) continue;
+        if (feet < o.y0 + 4) continue;
+        behind = true;
+        break;
+      }
+      const target = behind ? 0.42 : 1;
+      const a = o.img.alpha;
+      if (Math.abs(a - target) > 0.01) o.img.setAlpha(a + (target - a) * 0.22);
+    }
   }
 
   private refreshAllUnits(): void {
@@ -3943,6 +3971,31 @@ export class BattleScene extends Phaser.Scene {
       s.scaleY = sy0 * squash;
     };
     const world = <T extends Phaser.GameObjects.GameObject>(o: T) => this.addWorld(o);
+    // Real death frames fall on their own — stagger, knees, collapse, lying
+    // still — so they only need the landing and the fade. Toppling them as
+    // well would fall the body twice.
+    if (hasUnitState(this, u, "death")) {
+      const FALL_MS = 4 * 1000 / 6; // four frames at the death sheet's 6fps
+      this.tweens.add({
+        targets: view.shadow, scaleX: 1.5, duration: FALL_MS, ease: "Quad.easeIn",
+        onComplete: () => this.tweens.add({ targets: view.shadow, alpha: 0, duration: 500, delay: 200 })
+      });
+      this.time.delayedCall(FALL_MS * 0.75, () => {
+        groundDust(this, world, x0, footY, {
+          depth: this.dustDepth(footY), count: 7, spread: 16, squash: this.groundSquash()
+        });
+      });
+      this.tweens.add({
+        targets: s, alpha: 0, duration: 600, delay: FALL_MS + 420, ease: "Sine.easeIn",
+        onComplete: () => {
+          view.animLock = undefined;
+          s.setVisible(false);
+        }
+      });
+      ashBurst(this, world, x0, footY - 6);
+      soulWisp(this, world, x0, footY - arm, ensureDotTexture(this));
+      return;
+    }
     const squash = this.diorama ? 0.86 : 0.9;
     this.tweens.addCounter({
       from: 0,
@@ -4109,7 +4162,9 @@ export class BattleScene extends Phaser.Scene {
         ease: "Cubic.easeOut",
         yoyo: true
       });
-      await this.delay(70); // release at the top of the draw
+      // Release at the top of the draw: the impact frame of a real attack
+      // sheet (see ANIM_SPECS.attack), or a beat into the recoil without one.
+      await this.delay(hasUnitState(this, attacker, "attack") ? 185 : 70);
       await fireArrow(this, (o) => this.addWorld(o), sx + dirX * 10, sy - 6, tx, ty + 2, {
         fromY: av.shadow.y,
         toY: tv.shadow.y,
@@ -4132,6 +4187,7 @@ export class BattleScene extends Phaser.Scene {
         ease: "Sine.easeOut",
         yoyo: true
       });
+      if (hasUnitState(this, attacker, "attack")) await this.delay(110);
       sfxLensBeam();
       await lensBeam(this, (o) => this.addWorld(o), sx + dirX * 8, sy - 8, tx, ty);
       playUnitState(this, av.sprite, attacker, "idle");

@@ -39,7 +39,7 @@ sprites/
 |---|---|---|---|---|
 | `idle` | 2 | ~2 fps | yes | Subtle breathing — torso bob, blink |
 | `walk` | 4 | ~8 fps | yes | One full step cycle (LR LL RR RL or similar) |
-| `attack` | 5 | ~14 fps | no | Wind-up → swing → impact → recover (×2) |
+| `attack` | 5 | 11 fps | no | Wind-up → swing → impact → recover (×2). Frame 3 is the impact: the engine times the hit, the arrow and the lens beam to it |
 | `hit` | 2 | ~12 fps | no | Flinch + recover. Stays facing same direction |
 | `death` | 4 | ~6 fps | no | Stagger → fall → settle → fade-friendly final frame |
 

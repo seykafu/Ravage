@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Grid } from "../../combat/Grid";
 import type { ObstacleKind, TerrainKind } from "../../combat/types";
 import type { Projection } from "../../render/Projection";
-import { ensureObstacleTexture, ensureTileTexture } from "../../art/TileArt";
+import { ensureObstacleTexture, ensureTileTexture, tallObstacleTexture } from "../../art/TileArt";
 import { DEPTH, actorDepth, terrainDepth, terrainOverlayDepth } from "../../render/depth";
 import { addTorchGlow } from "./Lighting";
 import { ensureDotTexture } from "./Atmosphere";
@@ -74,6 +74,13 @@ const LIPPED: ReadonlySet<TerrainKind> = new Set(["grass", "forest", "snow", "sa
 const PROP_SCALE: Partial<Record<ObstacleKind, number>> = {
   tree: 1.3, pillar: 1.25, torch: 1.1, throne: 1.1
 };
+
+/**
+ * World px per art pixel for standing props: the unit billboards' 1.5
+ * (32x40 sheets drawn at 48x60), so a tree's pixels and a soldier's are the
+ * same size on screen — and, on the 2x buffer, a whole 3 device px each.
+ */
+const TALL_PROP_SCALE = 1.5;
 
 // Generated at 2× world size — the render-scale camera draws the world at
 // zoom 2, so these hit the screen at native resolution.
@@ -304,6 +311,11 @@ export interface DioramaOptions {
 export interface DioramaResult {
   /** World positions of every flame, for lights and the darkness overlay. */
   lights: { x: number; y: number; radius: number }[];
+  /**
+   * Standing props tall enough to hide a unit behind them, with their
+   * world bounds — BattleScene fades them while someone is back there.
+   */
+  occluders: { img: Phaser.GameObjects.Image; footY: number; x0: number; x1: number; y0: number }[];
 }
 
 /**
@@ -363,6 +375,7 @@ export const buildDiorama = (
     return g;
   });
   const lights: DioramaResult["lights"] = [];
+  const occluders: DioramaResult["occluders"] = [];
   // Props that could throw a torch shadow — resolved once every flame on
   // the board is known.
   const shadowCasters: Phaser.GameObjects.Image[] = [];
@@ -522,7 +535,8 @@ export const buildDiorama = (
       rowG[y]!.strokeRect(top.x + 0.5, top.y + 0.5, top.w - 1, top.h - 1);
 
       // ---- props -----------------------------------------------------
-      const obsKey = ensureObstacleTexture(scene, tile.obstacle);
+      const tallKey = raised ? tallObstacleTexture(scene, tile.obstacle) : null;
+      const obsKey = tallKey ?? ensureObstacleTexture(scene, tile.obstacle);
       if (obsKey) {
         const cx = top.x + top.w / 2;
         const footY = top.y + top.h / 2 + opts.footDY;
@@ -536,10 +550,18 @@ export const buildDiorama = (
         const baseOrigin = propBaseOrigin(scene, obsKey);
         const obs = scene.add.image(cx, footY, obsKey)
           .setOrigin(0.5, baseOrigin)
-          .setDisplaySize(size, size)
           // A hair behind any unit sharing the tile (fence, barricade and
           // throne are walkable): the soldier stands AT the barricade.
           .setDepth(actorDepth(footY - 0.5));
+        if (tallKey) {
+          const src = sourceOf(scene, tallKey);
+          const k = TALL_PROP_SCALE * wobble;
+          obs.setDisplaySize(src.width * k, src.height * k);
+          const b = obs.getBounds();
+          occluders.push({ img: obs, footY, x0: b.x, x1: b.x + b.width, y0: b.y });
+        } else {
+          obs.setDisplaySize(size, size);
+        }
         if (tile.obstacle !== "torch" && tile.obstacle !== "throne") obs.setFlipX((hash & 4) === 4);
         // The prop's own shadow across the ground. Not for a torch: it is
         // a light, and a flame throwing a sun-shadow reads as wrong.
@@ -581,5 +603,5 @@ export const buildDiorama = (
     castFrom(cast, obs, lit);
   }
 
-  return { lights };
+  return { lights, occluders };
 };
