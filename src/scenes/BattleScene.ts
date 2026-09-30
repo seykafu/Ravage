@@ -13,7 +13,7 @@ import {
 import { DEPTH, actorDepth } from "../render/depth";
 import { SUN, UNIT_FOOT_ORIGIN, castFrom, torchShadow, type Sun } from "../render/sun";
 import { DIORAMA_PERSPECTIVE_K } from "../render/dioramaConfig";
-import { screenToSource, type KeystoneParams } from "../render/keystone";
+import { screenToSource, sourceToScreen, type KeystoneParams } from "../render/keystone";
 import { PERSPECTIVE_PIPELINE, PerspectivePipeline } from "../render/PerspectivePipeline";
 import { attachPostPipeline } from "../render/postPipelines";
 import type { BattleBackdropScene } from "./BattleBackdropScene";
@@ -21,6 +21,8 @@ import { buildDiorama, faceColour, type DioramaGrid, type DioramaProp, type Dior
 import { RotatedProjection, normalizeRotation, viewSize, type ViewRotation } from "../render/ViewRotation";
 import { terrainDepth } from "../render/depth";
 import { IconButton } from "../ui/IconButton";
+import { bodyCentre, figureAt } from "./battle/HitMask";
+import { pickTile, type PickCandidate } from "../render/pick";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
 import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
@@ -335,6 +337,11 @@ export class BattleScene extends Phaser.Scene {
   private xrayImg?: Phaser.GameObjects.Image;
   private xrayUnitId: string | null = null;
   private cursorTopG?: Phaser.GameObjects.Graphics;
+  // Hover rim: an outline round the unit a click would select, so on a
+  // crowded tilted board it is never a guess which figure that is.
+  private rimImgs: Phaser.GameObjects.Image[] = [];
+  private rimUnitId: string | null = null;
+  private rimColour = 0xffffff;
   // Offset from a tile's top-face centre to a unit sprite's CENTRE. The
   // flat board used -4. On the diorama the feet go on the front half of
   // the tile and the body rises over the rows behind it.
@@ -1203,11 +1210,10 @@ export class BattleScene extends Phaser.Scene {
       const child = this.children.list[i];
       if (child) this.pin(child);
     }
-    // Hover damage preview is positioned in WORLD coords (next to the
-    // hovered enemy tile) so its scrollFactor must stay at 1 — without
-    // this the bulk pin above would lock it to a screen position and it
-    // would slide off the enemy when the camera pans.
-    this.hoverPreview.setScrollFactor(1);
+    // The hover damage preview is screen UI: it is placed beside the
+    // hovered enemy's SCREEN position each time it is shown (see
+    // placeHoverPreview), on top of everything and never tilted or zoomed.
+    this.hoverPreview.setDepth(40);
 
     // ---- Two-camera split + fog-of-war spotlight ----
     //
@@ -1269,13 +1275,6 @@ export class BattleScene extends Phaser.Scene {
     const worldObjects = allChildren.filter((o) => !uiSet.has(o));
     if (worldObjects.length > 0) this.uiCamera.ignore(worldObjects);
 
-    // The hover damage preview points at a WORLD tile, but it was created
-    // in the UI section and bulk-pinned, so only the UI camera drew it —
-    // and the UI camera never scrolls, so on any panned map the box sat
-    // off its enemy by exactly the pan. Hand it to the world camera.
-    this.hoverPreview.cameraFilter = 0;
-    for (const c of this.hoverPreview.list) (c as Phaser.GameObjects.GameObject).cameraFilter = 0;
-    this.uiCamera.ignore(this.hoverPreview);
 
     // Fog-of-war spotlight overlay — opt-in per battle via
     // node.darkBattle. Curated to SEVEN nocturnal/interior battles:
@@ -1321,37 +1320,50 @@ export class BattleScene extends Phaser.Scene {
       sy = src.y;
     }
     const wp = cam.getWorldPoint(sx, sy);
-    const tile = this.projection.worldToTile(wp.x, wp.y);
-    // A standing unit's body rises over the rows BEHIND its tile, so on
-    // the diorama the ground under the pointer is often not the ground
-    // the player means. If the pointer is on a unit's sprite, that unit's
-    // tile wins — unless the ground tile is itself a live move destination
-    // with nobody on it, which keeps "walk behind that soldier" possible.
-    const body = this.unitUnderPoint(wp.x, wp.y);
-    if (!body || (tile && tile.x === body.x && tile.y === body.y)) return tile;
-    if (tile && !unitAt(this.state, tile)) {
-      const s = this.fsm.current();
-      const isDest = (s.tag === "move" || s.tag === "roam")
-        && s.tiles.some((d) => d.x === tile.x && d.y === tile.y);
-      if (isDest) return tile;
+    const ground = this.projection.worldToTile(wp.x, wp.y);
+    // A standing figure rises over the rows BEHIND its tile, so on the
+    // diorama the ground under the pointer is often not what the player
+    // means. render/pick.ts decides, from what is actually drawn there:
+    // attack targets first while moving or attacking, then whichever body
+    // is nearest the pointer, and an empty move tile over a body drawn
+    // across it so walking behind a soldier stays possible.
+    const hits: PickCandidate[] = [];
+    for (const v of this.unitViews.values()) {
+      if (!isAlive(v.unit) || !v.sprite.visible || v.sprite.alpha < 0.05) continue;
+      if (!figureAt(v.sprite, wp.x, wp.y, true)) continue;
+      hits.push(this.pickCandidate(v, wp.x, wp.y));
     }
-    return body;
+    let groundOccupant: PickCandidate | null = null;
+    if (ground) {
+      const occ = unitAt(this.state, ground);
+      const v = occ ? this.unitViews.get(occ.id) : undefined;
+      if (v && isAlive(v.unit) && v.sprite.visible) groundOccupant = this.pickCandidate(v, wp.x, wp.y);
+    }
+    const st = this.fsm.current();
+    return pickTile({
+      ground,
+      hits,
+      groundOccupant,
+      actionable: this.actionableTargets(),
+      isEmptyDestination: (t) => (st.tag === "move" || st.tag === "roam")
+        && !unitAt(this.state, t)
+        && st.tiles.some((d) => d.x === t.x && d.y === t.y)
+    });
   }
 
-  // Front-most living unit whose sprite covers a world point. Tested
-  // against a slightly inset box so the transparent margin around a
-  // billboard doesn't steal clicks from the ground beside it.
-  private unitUnderPoint(wx: number, wy: number): TilePos | null {
-    let best: { pos: TilePos; depth: number } | null = null;
-    for (const v of this.unitViews.values()) {
-      if (!isAlive(v.unit) || !v.sprite.visible) continue;
-      const hw = v.sprite.displayWidth / 2 - 8;
-      const hh = v.sprite.displayHeight / 2;
-      if (wx < v.sprite.x - hw || wx > v.sprite.x + hw) continue;
-      if (wy < v.sprite.y - hh + 6 || wy > v.sprite.y + hh) continue;
-      if (!best || v.sprite.depth > best.depth) best = { pos: v.unit.state.position, depth: v.sprite.depth };
-    }
-    return best ? { ...best.pos } : null;
+  private pickCandidate(v: UnitView, wx: number, wy: number): PickCandidate {
+    const c = bodyCentre(v.sprite);
+    return { id: v.unit.id, tile: { ...v.unit.state.position }, d: Math.hypot(wx - c.x, wy - c.y) };
+  }
+
+  /** Units a click would act on right now: the active unit's attack targets. */
+  private actionableTargets(): Set<string> {
+    const st = this.fsm.current();
+    const u = this.initiative.current();
+    if (!u || u.faction !== "player") return new Set();
+    if (st.tag === "attack") return new Set(st.targets.map((x) => x.id));
+    if (st.tag === "move") return new Set(targetsForUnit(this.state, u).map((x) => x.id));
+    return new Set();
   }
 
   // Land any reinforcement wave scheduled for the current round. Called
@@ -1915,6 +1927,7 @@ export class BattleScene extends Phaser.Scene {
       v.hpBar.setPosition(v.sprite.x, v.sprite.y + HP_BAR_DY);
       v.stanceIcon.setPosition(v.sprite.x, v.sprite.y + 6);
     }
+    this.syncHoverRim();
   }
 
   // The sun-shadow lies where the contact shadow is — on the ground, so a
@@ -2515,6 +2528,7 @@ export class BattleScene extends Phaser.Scene {
     const px = src?.x ?? c.x, py = src?.y ?? c.y;
     const wx = cam.scrollX + px / cam.zoom, wy = cam.scrollY + py / cam.zoom;
     this.zoomFactor = f;
+    this.hoverPreview.setVisible(false);
     cam.setZoom(this.baseZoom * f);
     cam.setScroll(wx - px / cam.zoom, wy - py / cam.zoom);
   }
@@ -2562,8 +2576,7 @@ export class BattleScene extends Phaser.Scene {
       if (v.unit.id === exceptId || !v.sprite.visible || !isAlive(v.unit)) continue;
       const feet = v.sprite.y + this.unitH / 2;
       if (feet <= behindFootY + 1) continue;
-      const hw = v.sprite.displayWidth / 2 - 8, hh = v.sprite.displayHeight / 2;
-      if (wx >= v.sprite.x - hw && wx <= v.sprite.x + hw && wy >= v.sprite.y - hh + 6 && wy <= v.sprite.y + hh) return true;
+      if (figureAt(v.sprite, wx, wy, false)) return true;
     }
     for (const o of this.occluders) {
       if (o.footY <= behindFootY + 1) continue;
@@ -2593,7 +2606,8 @@ export class BattleScene extends Phaser.Scene {
     if (view && view.sprite.visible) {
       const s = view.sprite, feet = s.y + this.unitH / 2;
       // Head, chest and hips: hidden if any of them is covered.
-      unitHidden = [-0.3, 0, 0.3].some((k) => this.coveredAt(s.x, s.y + k * s.displayHeight, feet, occ!.id));
+      const c = bodyCentre(s);
+      unitHidden = [-0.22, 0, 0.22].some((k) => this.coveredAt(c.x, c.y + k * s.displayHeight, feet, occ!.id));
     }
     if (tileHidden) {
       const g = this.cursorTopG;
@@ -2604,6 +2618,11 @@ export class BattleScene extends Phaser.Scene {
     }
     this.xrayUnitId = unitHidden && occ ? occ.id : null;
     this.syncXray();
+    // The rim marks the unit a click would select: red for an attack
+    // target, the cursor colour for anyone else.
+    this.rimUnitId = occ && view && view.sprite.visible ? occ.id : null;
+    this.rimColour = occ && this.actionableTargets().has(occ.id) ? 0xff5a3c : COLORS.hover;
+    this.syncHoverRim();
   }
 
   // Above every actor, below the HP bars — and on dark battles above the
@@ -2616,6 +2635,30 @@ export class BattleScene extends Phaser.Scene {
     this.xrayUnitId = null;
     this.cursorTopG?.clear();
     this.xrayImg?.setVisible(false);
+    this.rimUnitId = null;
+    for (const r of this.rimImgs) r.setVisible(false);
+  }
+
+  // Four tinted copies of the hovered figure, a pixel and a half out on
+  // each side and drawn just behind it: an outline that follows its frame,
+  // facing and breath, and sorts with it among the other actors.
+  private syncHoverRim(): void {
+    const v = this.rimUnitId ? this.unitViews.get(this.rimUnitId) : undefined;
+    if (!v || !v.sprite.visible || !isAlive(v.unit) || this.spin) {
+      for (const r of this.rimImgs) r.setVisible(false);
+      return;
+    }
+    const s = v.sprite;
+    if (this.rimImgs.length === 0) {
+      for (let i = 0; i < 4; i++) this.rimImgs.push(this.addWorld(this.add.image(0, 0, s.texture.key, s.frame.name)));
+    }
+    const OFF = [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]] as const;
+    this.rimImgs.forEach((img, i) => {
+      if (img.texture !== s.texture || img.frame.name !== s.frame.name) img.setTexture(s.texture.key, s.frame.name);
+      img.setPosition(s.x + OFF[i]![0], s.y + OFF[i]![1])
+        .setDisplaySize(s.displayWidth, s.displayHeight).setFlipX(s.flipX).setRotation(s.rotation)
+        .setTintFill(this.rimColour).setAlpha(0.9).setDepth(s.depth - 1e-6).setVisible(true);
+    });
   }
 
   // The x-ray silhouette follows its unit's current frame, facing and
@@ -2973,7 +3016,10 @@ export class BattleScene extends Phaser.Scene {
       if (keys.right.isDown || keys.d.isDown) dx += STEP;
       if (keys.up.isDown || keys.w.isDown) dy -= STEP;
       if (keys.down.isDown || keys.s.isDown) dy += STEP;
-      if (dx !== 0 || dy !== 0) cam.setScroll(cam.scrollX + dx, cam.scrollY + dy);
+      if (dx !== 0 || dy !== 0) {
+        cam.setScroll(cam.scrollX + dx, cam.scrollY + dy);
+        this.hoverPreview.setVisible(false);
+      }
     });
   }
 
@@ -4333,6 +4379,26 @@ export class BattleScene extends Phaser.Scene {
     this.buildActionButtons(u);
   }
 
+  /**
+   * Put the forecast box beside a world point as it appears on screen:
+   * to its right, or its left when that would run under the side panel,
+   * always inside the playfield. The box was a world object at depth 0
+   * clamped with screen constants — on the tilted, zoomed, scrolled board
+   * it drew under the tiles and landed away from its enemy.
+   */
+  private placeHoverPreview(wp: { x: number; y: number }, boxW: number, boxH: number): void {
+    const cam = this.cameras.main;
+    const src = { x: (wp.x - cam.scrollX) * cam.zoom, y: (wp.y - cam.scrollY) * cam.zoom };
+    const scr = this.keystone ? sourceToScreen(src.x, src.y, cam.width, cam.height, this.keystone) : src;
+    const sx = scr.x / RENDER_SCALE, sy = scr.y / RENDER_SCALE;
+    const right = GAME_WIDTH - PANEL_W - 12 - 8;
+    let hx = sx + 30;
+    if (hx + boxW > right) hx = sx - 30 - boxW;
+    hx = Phaser.Math.Clamp(hx, 8, right - boxW);
+    const hy = Phaser.Math.Clamp(sy - 16, TOP_BAR_HEIGHT + 6, GAME_HEIGHT - boxH - 12);
+    this.hoverPreview.setPosition(hx, hy).setVisible(true);
+  }
+
   private handlePointerMove(p: Phaser.Input.Pointer): void {
     if (this.fsm.isEnded()) return;
     const tile = this.spin || this.cameraDragState.active ? null : this.screenToTile(p.x, p.y);
@@ -4414,9 +4480,7 @@ export class BattleScene extends Phaser.Scene {
       bg.fillRect(0, 0, boxW, boxH);
       bg.lineStyle(1, COLORS.gold, 0.7);
       bg.strokeRect(0.5, 0.5, boxW - 1, boxH - 1);
-      const hx = Math.min(px.x + 30, GAME_WIDTH - PANEL_W - boxW - 10);
-      const hy = Math.min(px.y - 16, GAME_HEIGHT - boxH - 12);
-      this.hoverPreview.setPosition(hx, hy).setVisible(true);
+      this.placeHoverPreview(px, boxW, boxH);
     } else {
       this.hoverPreview.setVisible(false);
     }

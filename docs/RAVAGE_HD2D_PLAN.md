@@ -311,6 +311,17 @@ player can move the camera to see and click what is hidden:
 - **R** resets the view.
 - **Hover x-ray:** when the tile or unit under the pointer is hidden behind
   a unit or a tall prop in front, its outline draws through.
+- **Picking overlapping units** (`render/pick.ts`, `scenes/battle/HitMask.ts`):
+  hits are tested against each frame's actual pixels (grown 2 px so thin
+  figures are easy to aim at), not the frame rectangle. While moving or
+  attacking, an attack target wins if the pointer is on its figure or on
+  the tile it stands on, even where another figure is drawn over it.
+  Otherwise the body nearest the pointer wins, and an empty move tile
+  still beats a non-target body drawn across it. A rim outlines the unit
+  a click would select (red for a target). The attack forecast is screen
+  UI placed beside the target, so it is never under the tiles.
+  `scripts/capture/pickSweep.js` measures what each point down a column
+  selects.
 
 ### Capture harness (`npm run capture <list> [out]`)
 `Date.now` follows the virtual clock (Phaser tweens run on it, and ran

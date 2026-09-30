@@ -507,4 +507,42 @@ export const camera = [
     each: fn(`const b = battle(); if (!b.spin && !b.__zoomed) { b.__zoomed = true; b.setBoardZoom(1.7); }`) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera };
+// PICK — the report: your unit directly in front of an enemy. Hovers the
+// pointer on your unit's chest, over the enemy's tile, zoomed in; the
+// click there now attacks the enemy (rim, x-ray and forecast show it).
+const STAGE_PAIR = `
+  const b = battle(); closeDialogue();
+  const u = b.initiative.current(); const grid = b.state.grid;
+  const free = (p) => grid.inBounds(p) && !grid.tileAt(p).blocksMovement &&
+    !b.state.units.some((o) => o.state.alive && o.state.position.x === p.x && o.state.position.y === p.y);
+  const foe = b.state.units.find((o) => o.faction === "enemy" && o.state.alive);
+  let spot = null;
+  for (let y = 4; y < grid.height - 1 && !spot; y++) for (let x = 1; x < grid.width - 1 && !spot; x++) {
+    const me = { x, y }, back = b.projection.neighborOnScreen(me, "up");
+    if (free(me) && free(back)) spot = { me, back };
+  }
+  u.state.position = { ...spot.me }; foe.state.position = { ...spot.back };
+  for (const v of b.unitViews.values()) b.stopBreathing(v);
+  b.refreshAllUnits(); for (const v of b.unitViews.values()) b.startBreathing(v);
+  b.cancelTargetingMode(u); b.enterMoveMode(u);
+  b.setBoardZoom(2);
+  const v = b.unitViews.get(u.id); const cam = b.cameras.main;
+  const c = b.playfieldCentreScreen(); const w = b.screenToWorld(c.x, c.y);
+  cam.setScroll(cam.scrollX + v.sprite.x - w.x, cam.scrollY + v.sprite.y - 20 - w.y);
+  window.__pickUnit = u.id;
+`;
+const HOVER = (dy) => `
+  const b = battle(); const v = b.unitViews.get(window.__pickUnit); const cam = b.cameras.main;
+  const wx = v.sprite.x, wy = v.sprite.y + (${dy});
+  const s = cap.keystone.sourceToScreen((wx - cam.scrollX) * cam.zoom, (wy - cam.scrollY) * cam.zoom, cam.width, cam.height, b.keystone);
+  b.handlePointerMove({ x: s.x, y: s.y });
+`;
+export const pick = [
+  { name: "setup", seconds: 0.2, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "b05_mountain_ndari" });`), each: fn(`closeDialogue();`) },
+  { name: "stage", seconds: 0.3, settleFrames: 20, setup: fn(STAGE_PAIR) },
+  { name: "hover-chest", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(-12)), each: fn(HOVER(-12)) },
+  { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick };
