@@ -329,15 +329,73 @@ export interface DioramaGrid {
   tileAt(p: { x: number; y: number }): Tile;
 }
 
+/**
+ * One tile's top face as the turntable (BattleScene's animated board turn)
+ * needs it: which grid cell, and exactly how the static board textured it
+ * at rotation 0 — the variant, the mirror flips, the tint. The turntable
+ * draws this texture rotated by the board angle, which reproduces the
+ * static board at every quarter-turn (see the note on `quarter` below).
+ */
+export interface DioramaTop {
+  gx: number;
+  gy: number;
+  key: string;
+  flipX: boolean;
+  flipY: boolean;
+  tint: number;
+  terrain: TerrainKind;
+}
+
+/** A standing prop: its billboard image (origin at its foot) and its cell. */
+export interface DioramaProp {
+  img: Phaser.GameObjects.Image;
+  gx: number;
+  gy: number;
+}
+
 export interface DioramaResult {
-  /** World positions of every flame, for lights and the darkness overlay. */
-  lights: { x: number; y: number; radius: number }[];
+  /**
+   * World positions of every flame, for lights and the darkness overlay.
+   * `img` is the torch's prop, so a moving board can carry its light.
+   */
+  lights: { x: number; y: number; radius: number; img?: Phaser.GameObjects.Image }[];
   /**
    * Standing props tall enough to hide a unit behind them, with their
    * world bounds — BattleScene fades them while someone is back there.
    */
   occluders: { img: Phaser.GameObjects.Image; footY: number; x0: number; x1: number; y0: number }[];
+  /** Every tile's top face, for the turntable. */
+  tops: DioramaTop[];
+  /** Every standing prop, for the turntable. */
+  props: DioramaProp[];
 }
+
+const faceColourCache = new Map<string, number>();
+
+/**
+ * The average colour of the wall under a tile of `terrain` — the turntable
+ * shades its walls with it while the board is turning.
+ */
+export const faceColour = (scene: Phaser.Scene, terrain: TerrainKind): number => {
+  const hit = faceColourCache.get(terrain);
+  if (hit !== undefined) return hit;
+  let c = 0x4a4540;
+  try {
+    const src = sourceOf(scene, ensureFaceTexture(scene, terrain));
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 1;
+    const ctx = cv.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(src, 0, 0, 1, 1);
+      const d = ctx.getImageData(0, 0, 1, 1).data;
+      c = (d[0]! << 16) | (d[1]! << 8) | d[2]!;
+    }
+  } catch {
+    // A tainted canvas can't be read back — the default is close enough.
+  }
+  faceColourCache.set(terrain, c);
+  return c;
+};
 
 /**
  * Build the board. Every object is a world object created during the
@@ -397,6 +455,8 @@ export const buildDiorama = (
   });
   const lights: DioramaResult["lights"] = [];
   const occluders: DioramaResult["occluders"] = [];
+  const tops: DioramaTop[] = [];
+  const props: DioramaProp[] = [];
   // Props that could throw a torch shadow — resolved once every flame on
   // the board is known.
   const shadowCasters: Phaser.GameObjects.Image[] = [];
@@ -426,15 +486,24 @@ export const buildDiorama = (
       const topTerrain = capped ? "stone" : tile.terrain;
       const baseKey = ensureTileTexture(scene, topTerrain, opts.seed + (g.x * 73 + g.y * 131));
       const smooth = SMOOTH.has(topTerrain);
-      // Every tile turns with the board by the same amount, so seams that
-      // matched still match.
-      const quarter = ((ISOTROPIC.has(topTerrain) && !smooth ? (hash >> 2) & 3 : 0) + (opts.rotation ?? 0)) & 3;
+      // Texture variant and mirror flips are the tile's own (keyed on its
+      // grid cell); the board's turn is applied on top, so every tile turns
+      // with the board by the same amount and seams that matched still
+      // match. The turn has to land AFTER the flips — a turning board spins
+      // each tile as drawn — and a single mirror reverses the canvas
+      // rotation that achieves that, so a flipped tile's variant turns the
+      // other way (a double flip is a half-turn, which commutes).
+      const baseQuarter = ISOTROPIC.has(topTerrain) && !smooth ? (hash >> 2) & 3 : 0;
+      const flipX = (hash & 1) === 1;
+      const flipY = ISOTROPIC.has(topTerrain) && (hash & 2) === 2;
+      const turn = opts.rotation ?? 0;
+      const quarter = (flipX !== flipY ? baseQuarter - turn : baseQuarter + turn) & 3;
       const topImg = scene.add.image(top.x, top.y, ensureRotated(scene, baseKey, quarter))
         .setOrigin(0, 0)
         .setDisplaySize(top.w, top.h)
         .setDepth(terrainDepth(key));
-      topImg.setFlipX((hash & 1) === 1);
-      if (ISOTROPIC.has(topTerrain)) topImg.setFlipY((hash & 2) === 2);
+      topImg.setFlipX(flipX);
+      topImg.setFlipY(flipY);
       // Brightness: a little per-cell jitter against wallpaper repetition,
       // plus height — high ground catches more light, sunk water less.
       const jitter = (hash >> 4) % (smooth ? 5 : 11);
@@ -449,6 +518,7 @@ export const buildDiorama = (
         // painted texture is a bright shallow-lagoon teal, which on its own
         // read as a flat plate rather than something you could drown in.
         topImg.setTint(raised ? 0x92b8cc : 0xb8d4e0);
+        topImg.setData("water", true);
         const sh = scene.add.image(top.x + top.w / 2, top.y + top.h / 2, shimmerKey)
           .setDisplaySize(top.w, top.h)
           .setBlendMode(Phaser.BlendModes.ADD)
@@ -493,6 +563,14 @@ export const buildDiorama = (
             .setFlipX(true).setFlipY((hash & 64) === 64), 800);
         }
       }
+
+      tops.push({
+        gx: g.x, gy: g.y,
+        key: ensureRotated(scene, baseKey, baseQuarter),
+        flipX, flipY,
+        tint: topImg.tintTopLeft,
+        terrain: tile.terrain
+      });
 
       // ---- front face (the wall this height exposes) -----------------
       const fh = projection.frontFaceHeight(t);
@@ -577,6 +655,7 @@ export const buildDiorama = (
           // A hair behind any unit sharing the tile (fence, barricade and
           // throne are walkable): the soldier stands AT the barricade.
           .setDepth(actorDepth(footY - 0.5));
+        props.push({ img: obs, gx: g.x, gy: g.y });
         if (tallKey) {
           const src = sourceOf(scene, tallKey);
           const k = TALL_PROP_SCALE * wobble;
@@ -610,7 +689,7 @@ export const buildDiorama = (
           // ...and a halo at the flame itself, over the prop.
           const flameY = footY - size * 0.72;
           addTorchGlow(scene, cx, flameY, { depth: actorDepth(footY) + 1e-4, scaleX: 0.9, scaleY: 0.9 });
-          lights.push({ x: cx, y: footY, radius: 110 });
+          lights.push({ x: cx, y: footY, radius: 110, img: obs });
         }
       }
     }
@@ -627,5 +706,5 @@ export const buildDiorama = (
     castFrom(cast, obs, lit);
   }
 
-  return { lights, occluders };
+  return { lights, occluders, tops, props };
 };

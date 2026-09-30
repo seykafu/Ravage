@@ -491,18 +491,20 @@ export const promoted = [
     each: fn(`closeDialogue(); if (!window.__promoted2) { window.__promoted2 = true; ${PROMOTE} }`) }
 ];
 
-// CAMERA — the board turned to each side, then zoomed in on the squad.
+// CAMERA — the board turning: mid-turn frames and each side it lands on,
+// then zoomed in on the squad.
 const CAM_ID = process.env.CAP_BATTLE ?? "b05_mountain_ndari";
 export const camera = [
-  { name: "r0", seconds: 0.8, settleFrames: 110,
+  { name: "r0", seconds: 0.6, settleFrames: 110,
     setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${CAM_ID}" });`), each: fn(`closeDialogue();`) },
-  ...[1, 2, 3].map((r) => ({ name: "r" + r, seconds: 0.8, settleFrames: 30,
-    setup: fn(`closeDialogue(); battle().rotateTo(${r});`) })),
-  { name: "r0-zoom", seconds: 0.8, settleFrames: 30,
-    setup: fn(`const b = battle(); b.rotateTo(0); const u = b.initiative.current();
-      setTimeout(() => {}, 0); b.__zoomAfter = true;`),
-    each: fn(`const b = battle(); if (b.__zoomAfter && !b.rotating) { b.__zoomAfter = false;
-      const u = b.initiative.current(); if (u) b.centreOnTile(u.state.position); b.setBoardZoom(1.7); }`) }
+  ...[1, 2, 3].map((r) => ({ name: "r" + r, seconds: 1.0, settleFrames: 0,
+    setup: fn(`closeDialogue(); battle().spinTo(${r});`) })),
+  { name: "hold", seconds: 1.6, settleFrames: 0,
+    setup: fn(`const b = battle(); b.spinButtonDir = 1; b.beginSpin(1);`),
+    each: fn(`const b = battle(); b.__holdT = (b.__holdT || 0) + 1; if (b.__holdT > 30) b.spinButtonDir = 0;`) },
+  { name: "r0-zoom", seconds: 0.8, settleFrames: 40,
+    setup: fn(`battle().spinTo(0);`),
+    each: fn(`const b = battle(); if (!b.spin && !b.__zoomed) { b.__zoomed = true; b.setBoardZoom(1.7); }`) }
 ];
 
 export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera };

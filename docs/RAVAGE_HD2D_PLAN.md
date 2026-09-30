@@ -292,7 +292,13 @@ second renderer.
 ### Board camera (turn, zoom, drag, x-ray)
 On a tilted board the rows in front cover part of the rows behind, so the
 player can move the camera to see and click what is hidden:
-- **Turn** the board in quarter-turns: the ↺ ↻ top-bar buttons or Q / E.
+- **Turn** the board: the ↺ ↻ top-bar buttons or Q / E. A tap turns a
+  quarter; holding keeps it turning, and on release it glides to a stop
+  on the next quarter. The turn is animated by a turntable (tile tops as
+  textured quads turned about the board's centre, walls as shaded quads,
+  props and units carried with their tiles), and the camera centres the
+  board. When the turn lands, the real board is built at the new view and
+  fades in over the turntable.
   `render/ViewRotation.ts` maps grid cells to VIEW cells and
   `RotatedProjection` wraps the tilted projection, so every call site
   still passes grid tiles. The diorama is rebuilt in view space. Heights
