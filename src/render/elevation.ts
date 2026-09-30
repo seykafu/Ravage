@@ -1,5 +1,6 @@
 import type { MapDef, TerrainKind } from "../combat/types";
 import { Grid } from "../combat/Grid";
+import { toGrid, viewSize, type ViewRotation } from "./ViewRotation";
 
 // Presentation-only terrain height for the ¾ diorama board.
 //
@@ -28,14 +29,29 @@ export const TERRAIN_ELEVATION: Partial<Record<TerrainKind, number>> = {
  */
 export const MAX_RISE_IN_FRONT = 1;
 
-/** Height in levels for every tile of `map` (explicit `elev` wins). */
-export const elevationFor = (map: MapDef): ((x: number, y: number) => number) => {
+/**
+ * Height in levels for every cell of `map` as seen under view rotation `r`
+ * (explicit `elev` wins), indexed by VIEW coordinates. At r = 0 view and
+ * grid coincide.
+ *
+ * The clearance clamp runs in view space because "in front" is a screen
+ * relation: turning the board puts different tiles in front of different
+ * standable ground, so each view gets its own clamp. The same wall may
+ * stand a level lower from one side than from another — that is the
+ * price of every standable tile staying visible from every side.
+ */
+export const elevationFor = (map: MapDef, r: ViewRotation = 0): ((x: number, y: number) => number) => {
   const grid = new Grid(map);
+  const { w: VW, h: VH } = viewSize(map.width, map.height, r);
+  const cellAt = (vx: number, vy: number) => {
+    const g = toGrid({ x: vx, y: vy }, map.width, map.height, r);
+    return { g, cell: map.tiles[g.y * map.width + g.x] };
+  };
   const h: number[][] = [];
-  for (let y = 0; y < map.height; y++) {
+  for (let y = 0; y < VH; y++) {
     const row: number[] = [];
-    for (let x = 0; x < map.width; x++) {
-      const cell = map.tiles[y * map.width + x];
+    for (let x = 0; x < VW; x++) {
+      const { cell } = cellAt(x, y);
       row.push(cell ? cell.elev ?? TERRAIN_ELEVATION[cell.terrain] ?? 0 : 0);
     }
     h.push(row);
@@ -46,11 +62,11 @@ export const elevationFor = (map: MapDef): ((x: number, y: number) => number) =>
   // otherwise swallow that tile — the bridge's south parapet hid most of
   // the deck's last row before this. Blocking props (trees, rocks,
   // pillars) have nobody standing on them, so they impose nothing.
-  for (let y = 1; y < map.height; y++) {
-    for (let x = 0; x < map.width; x++) {
-      if (grid.tileAt({ x, y: y - 1 }).blocksMovement) continue;
+  for (let y = 1; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      if (grid.tileAt(cellAt(x, y - 1).g).blocksMovement) continue;
       h[y]![x] = Math.min(h[y]![x]!, h[y - 1]![x]! + MAX_RISE_IN_FRONT);
     }
   }
-  return (x, y) => (x < 0 || y < 0 || x >= map.width || y >= map.height ? 0 : h[y]![x]!);
+  return (x, y) => (x < 0 || y < 0 || x >= VW || y >= VH ? 0 : h[y]![x]!);
 };

@@ -17,7 +17,9 @@ import { screenToSource, type KeystoneParams } from "../render/keystone";
 import { PERSPECTIVE_PIPELINE, PerspectivePipeline } from "../render/PerspectivePipeline";
 import { attachPostPipeline } from "../render/postPipelines";
 import type { BattleBackdropScene } from "./BattleBackdropScene";
-import { buildDiorama } from "./battle/Diorama";
+import { buildDiorama, type DioramaGrid } from "./battle/Diorama";
+import { RotatedProjection, normalizeRotation, viewSize, type ViewRotation } from "../render/ViewRotation";
+import { IconButton } from "../ui/IconButton";
 import { Grid } from "../combat/Grid";
 import { Initiative } from "../combat/Initiative";
 import { beginUnitTurn, createUnit, damageUnit, effectiveMaxAp, endUnitTurn, hasAbility, isAlive, useItem } from "../combat/Unit";
@@ -109,7 +111,7 @@ import { critShockwave, fireArrow, hitSpark, lensBeam, missWhiff, slashArc } fro
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
-import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type TilePos, type Unit } from "../combat/types";
+import { ELIXIR_HEAL, POTION_HEAL, type ItemKind, type MapDef, type TilePos, type Unit } from "../combat/types";
 
 // Display heal amount per consumable kind. Used by the in-battle item
 // picker to show "+10 HP" / "+25 HP" without re-deriving it from the
@@ -246,7 +248,36 @@ export class BattleScene extends Phaser.Scene {
   // flat board (a real fallback — same code path, flat projection).
   private diorama = true;
   // Presentation-only tile height in levels (see render/elevation.ts).
+  // Tile heights in VIEW coordinates (render/elevation, render/ViewRotation).
+  // Read through elevAtTile() with a grid tile.
   private elevAt: (x: number, y: number) => number = () => 0;
+  // ---- board camera: turn, zoom, drag ----
+  // The rotation the board is drawn at (quarter-turns, see ViewRotation).
+  private viewRotation: ViewRotation = 0;
+  // The projection, typed as the rotation wrapper it always is.
+  private rotProj!: RotatedProjection;
+  // The map the board was built from (rebuilt on every turn).
+  private boardMap!: MapDef;
+  // Atmosphere kind, for the drifting cloud shadows rebuilt with the board.
+  private boardAtmo: string | undefined;
+  // Every object the board build created — destroyed and rebuilt on a turn.
+  private boardObjects: Phaser.GameObjects.GameObject[] = [];
+  // The camera's scroll limits (world px), and the world zoom at 1x.
+  private cameraBoundsRect = { x: 0, y: 0, w: GAME_WIDTH, h: GAME_HEIGHT };
+  private baseZoom = 1;
+  // Player zoom on top of the base zoom (1 = the default view).
+  private zoomFactor = 1;
+  // A turn is fading the board out and back in, toward rotatingTo.
+  private rotating = false;
+  private rotatingTo: ViewRotation = 0;
+  // A turn asked for while the board was busy (an attack, the enemy
+  // phase); applied the moment input unblocks.
+  private pendingRotation: ViewRotation | null = null;
+  // Hover x-ray: when what the pointer is on is hidden behind something
+  // standing in front of it, its outline (and the tile's) is drawn through.
+  private xrayImg?: Phaser.GameObjects.Image;
+  private xrayUnitId: string | null = null;
+  private cursorTopG?: Phaser.GameObjects.Graphics;
   // Offset from a tile's top-face centre to a unit sprite's CENTRE. The
   // flat board used -4. On the diorama the feet go on the front half of
   // the tile and the body rises over the rows behind it.
@@ -635,43 +666,14 @@ export class BattleScene extends Phaser.Scene {
     // already saw (including the round-1 opener) don't replay.
     if (resumeSnap) this.dialogue.restore(resumeSnap.dialogue);
 
-    // Layout. The playfield viewport is the screen area NOT occupied by
-    // the side panel (right) or the top bar (top). Maps that fit inside
-    // it are centered; maps bigger than it anchor to the top-left corner
-    // of the viewport and the camera scrolls to reveal the rest.
-    const playW = GAME_WIDTH - PANEL_W - 40;
-    const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
     // ¾ diorama (default) or the original flat board (`?flat=1`).
     this.diorama = !new URLSearchParams(window.location.search).has("flat");
-    this.elevAt = this.diorama ? elevationFor(map) : () => 0;
-    const buildProjection = (ox: number, oy: number): Projection => this.diorama
-      ? new ObliqueProjection({
-          originX: ox, originY: oy,
-          tileW: DIORAMA_TILE_W, tileH: DIORAMA_TILE_H,
-          elevStep: DIORAMA_ELEV_STEP, slabDepth: DIORAMA_SLAB_DEPTH,
-          gridWidth: map.width, gridHeight: map.height,
-          elevationAt: this.elevAt
-        })
-      : new OrthographicProjection({
-          originX: ox, originY: oy, tileSize: TILE_SIZE, gridWidth: map.width, gridHeight: map.height
-        });
-    // Measure the board with its origin at zero, then centre what we
-    // measured. On the diorama the board is shorter than width*48 (tiles
-    // are foreshortened) but gains a slab under the front row, and raised
-    // terrain can poke ABOVE row 0 — probe.y is that overhang (<= 0),
-    // which the origin absorbs so no terrain is drawn under the top bar.
-    const probe = buildProjection(0, 0).bounds();
-    const mapPxW = probe.w;
-    const mapPxH = probe.h;
-    // Math.max(0, ...) keeps the origin from going negative (which would
-    // place the map's top-left off-screen). For oversized maps we anchor
-    // at a small left/top margin and let the camera handle the rest.
-    this.originX = 20 + Math.max(0, Math.floor((playW - mapPxW) / 2));
-    this.originY = MAP_TOP_OFFSET - probe.y + Math.max(0, Math.floor((playH - mapPxH) / 2));
-
-    // Build the coordinate projection now that the grid origin is fixed.
-    // Everything tile↔world goes through this from here on.
-    this.projection = buildProjection(this.originX, this.originY);
+    this.boardMap = map;
+    this.viewRotation = 0;
+    // Projection, board origin and camera bounds (layoutBoard). Rebuilt
+    // whenever the player turns the board.
+    const tight = this.layoutBoard();
+    const boundsW = tight.w, boundsH = tight.h;
     this.unitW = this.diorama ? UNIT_DIORAMA_W : UNIT_FLAT_W;
     this.unitH = this.diorama ? UNIT_DIORAMA_H : UNIT_FLAT_H;
     this.unitLift = this.diorama ? DIORAMA_FOOT_DY - this.unitH / 2 : -4;
@@ -693,15 +695,16 @@ export class BattleScene extends Phaser.Scene {
     //
     // Adding the panel's width to the right margin gives the camera
     // exactly enough room to pull the map's east edge out from under it.
-    const boardRect = this.projection.bounds();
-    const boundsW = Math.max(GAME_WIDTH, boardRect.x + boardRect.w + 40 + PANEL_W + 12);
-    const boundsH = Math.max(GAME_HEIGHT, boardRect.y + boardRect.h + 40);
-    this.cameras.main.setBounds(0, 0, boundsW, boundsH);
+    // (See layoutBoard: those are the TIGHT bounds, used to frame the
+    // opening view; the camera itself gets slack around them to drag.)
     // Disable the browser's right-click context menu so right-click drag
     // doesn't trigger a system menu mid-pan.
     this.input.mouse?.disableContextMenu();
+    this.baseZoom = this.cameras.main.zoom;
+    this.zoomFactor = 1;
     this.setupCameraDragPan();
     this.setupCameraKeyboardPan();
+    this.setupCameraTurnAndZoom();
 
     // Initial camera centering. Phaser's main camera defaults to scroll
     // (0, 0) which shows the world's TOP-LEFT. For maps taller than
@@ -734,7 +737,13 @@ export class BattleScene extends Phaser.Scene {
       // the top-bar offset).
       const targetScrollX = cx - (20 + playW / 2);
       const targetScrollY = cy - (MAP_TOP_OFFSET + playH / 2);
-      this.cameras.main.setScroll(targetScrollX, targetScrollY);
+      // Clamped to the TIGHT bounds, as the opening view always was: a map
+      // that fits the playfield opens centred on the board, not on the
+      // squad. (The camera's own bounds have drag slack beyond these.)
+      this.cameras.main.setScroll(
+        Phaser.Math.Clamp(targetScrollX, 0, Math.max(0, boundsW - GAME_WIDTH)),
+        Phaser.Math.Clamp(targetScrollY, 0, Math.max(0, boundsH - GAME_HEIGHT))
+      );
     }
 
     // Defensive RESUME handler — fires every time BattleScene comes
@@ -793,51 +802,8 @@ export class BattleScene extends Phaser.Scene {
     // A sun on the diorama in daylight; dark battles are lit by torches.
     this.sun = this.diorama && !node?.darkBattle ? SUN : undefined;
     this.torchShadows = this.diorama && !!node?.darkBattle;
-    const board = buildDiorama(this, grid, this.projection, {
-      footDY: this.diorama ? DIORAMA_FOOT_DY : TILE_SIZE * 0.3,
-      seed: map.id.length * 31 + 7,
-      elevationAt: this.elevAt,
-      elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0,
-      sun: this.sun,
-      torchShadows: this.torchShadows
-    });
-    this.boardLights = board.lights;
-    this.occluders = board.occluders;
-
-    // Cloud shadows — outdoor maps get two huge, soft, near-black blobs
-    // drifting slowly across the board. Added after the tiles and before
-    // the overlays/units in add-order, so they darken the ground but
-    // never the pieces standing on it. The motion is what matters: a
-    // static board with moving light reads as a place, not a screenshot.
-    // Interiors and fire-lit battles (embers) skip them — ceilings and
-    // smoke columns don't cast drifting cumulus.
-    const atmoKind = node.atmosphere ?? atmosphereForBackdrop(node.backdropKey);
-    if (atmoKind === "snow" || atmoKind === "dust" || atmoKind === "motes") {
-      const cb = this.projection.bounds();
-      const worldW = cb.w;
-      const worldH = cb.h;
-      const dotKey = ensureDotTexture(this);
-      for (let c = 0; c < 2; c++) {
-        const cloud = this.add.image(
-          this.originX - 420 - c * (worldW * 0.6 + 500),
-          cb.y + worldH * (c === 0 ? 0.3 : 0.72),
-          dotKey
-        );
-        cloud.setTint(0x000000);
-        cloud.setAlpha(0.10);
-        // Shadows fall on the ground, never on the pieces standing on it.
-        cloud.setDepth(DEPTH.CLOUD_SHADOW);
-        cloud.setDisplaySize(560 + c * 180, 320 + c * 90);
-        this.tweens.add({
-          targets: cloud,
-          x: this.originX + worldW + 460,
-          duration: 52000 + c * 21000,
-          repeat: -1,
-          delay: c * 9000,
-          onRepeat: () => { cloud.x = this.originX - 460; }
-        });
-      }
-    }
+    this.boardAtmo = node.atmosphere ?? atmosphereForBackdrop(node.backdropKey);
+    this.buildBoardArt();
 
     // Tactical washes lie ON the ground: above terrain and light, below
     // every prop and unit standing on it (see render/depth.ts). The
@@ -904,7 +870,7 @@ export class BattleScene extends Phaser.Scene {
     // Goal label sits under the round counter so the player always knows what
     // the battle wants from them (rout, survive, escape, kill the boss…).
     // Populated from this.victory.label, set once per battle in create().
-    this.panHintText = this.add.text(16, 64, "drag · WASD · arrows to pan  ·  click a portrait above to find a unit", {
+    this.panHintText = this.add.text(16, 64, "drag · wheel zoom · Q/E turn · R reset · click a portrait", {
       fontFamily: FAMILY_BODY,
       fontSize: "11px",
       color: "#5f6472"
@@ -1117,6 +1083,9 @@ export class BattleScene extends Phaser.Scene {
       this.fastForward = enabled;
       this.applyTurnSpeed();
     });
+    // Turn the board — ↺ / ↻ left of the danger toggle, or Q / E.
+    new IconButton(this, GAME_WIDTH - 208, 35, "\u21BA", () => this.requestRotation(-1));
+    new IconButton(this, GAME_WIDTH - 164, 35, "\u21BB", () => this.requestRotation(1));
     // Danger-range toggle — ⚔ button left of fast-forward, or press T.
     this.dangerVisible = false;
     this.dangerToggle = new IconToggleButton(this, GAME_WIDTH - 120, 35, "⚔", (enabled) => {
@@ -1235,7 +1204,7 @@ export class BattleScene extends Phaser.Scene {
     // B17 the quay before dawn, B27 orbital descent. Daylight outdoor
     // battles render normally.
     if (node.darkBattle) {
-      this.setupSpotlightOverlay(boundsW, boundsH);
+      this.setupSpotlightOverlay();
       // The fog covers the ground; the marks the player reads at a glance
       // must not go under it with the terrain.
       this.pathG.setDepth(DEPTH.OVER_DARK);
@@ -1408,7 +1377,8 @@ export class BattleScene extends Phaser.Scene {
     this.stopBreathing(view);
     const s = view.sprite, sh = view.shadow;
     const bx = s.x, by = s.y, shx = sh.x, shy = sh.y;
-    if (e.dx !== 0) s.setFlipX(e.dx > 0);
+    // Face the way they walk on screen (the board may be turned).
+    if (Math.abs(ox) > 1) s.setFlipX(ox > 0);
     s.setAlpha(0);
     sh.setAlpha(0);
     const place = (f: number) => {
@@ -1548,7 +1518,7 @@ export class BattleScene extends Phaser.Scene {
     if (!arriving) {
       v.sprite.setPosition(px.x, v.baseY);
       v.sprite.setVisible(isAlive(u));
-      v.sprite.setFlipX(u.state.facingX === -1);
+      v.sprite.setFlipX(this.screenFlipX(u));
     }
     v.hpBg.clear();
     v.hpBar.clear();
@@ -1761,9 +1731,12 @@ export class BattleScene extends Phaser.Scene {
     tex.refresh();
   }
 
-  private setupSpotlightOverlay(width: number, height: number): void {
+  private setupSpotlightOverlay(): void {
     this.ensureLightBrushTexture();
-    const rt = this.add.renderTexture(0, 0, width, height)
+    // Covers the camera's whole scroll range, which since drag slack can
+    // start left of / above world zero.
+    const cb = this.cameraBoundsRect;
+    const rt = this.add.renderTexture(cb.x, cb.y, cb.w, cb.h)
       .setOrigin(0, 0)
       .setDepth(DEPTH.DARKNESS) // above terrain + actors, below floaters + tooltips
       // MULTIPLY, not NORMAL. The RT blends as straight alpha, and a
@@ -1804,14 +1777,14 @@ export class BattleScene extends Phaser.Scene {
       const at = view
         ? { x: view.sprite.x, y: view.sprite.y + this.unitH / 2 - 6 }
         : this.projection.tileToWorld(u.state.position);
-      brush.setPosition(at.x, at.y).setScale(1, squash);
+      brush.setPosition(at.x - this.darknessRT.x, at.y - this.darknessRT.y).setScale(1, squash);
       this.darknessRT.erase(brush);
     }
     // Torches and braziers light the night too — they used to be warm
     // specks the fog painted straight over.
     for (const l of this.boardLights) {
       const s = l.radius / BattleScene.SPOTLIGHT_BRUSH_OUTER;
-      brush.setPosition(l.x, l.y).setScale(s, s * squash);
+      brush.setPosition(l.x - this.darknessRT.x, l.y - this.darknessRT.y).setScale(s, s * squash);
       this.darknessRT.erase(brush);
     }
   }
@@ -1820,6 +1793,12 @@ export class BattleScene extends Phaser.Scene {
   // Phaser drives update() every frame; the spotlight is the only
   // continuous render-loop work this scene does.
   update(): void {
+    if (this.pendingRotation !== null && !this.rotating && !this.fsm.isInputBlocked()) {
+      const r = this.pendingRotation;
+      this.pendingRotation = null;
+      this.rotateTo(r);
+    }
+    this.syncXray();
     if (this.darknessRT) this.refreshSpotlight();
     this.fadeOccluders();
     if (this.backdropScene?.scene.isActive()) {
@@ -1893,6 +1872,403 @@ export class BattleScene extends Phaser.Scene {
       const a = o.img.alpha;
       if (Math.abs(a - target) > 0.01) o.img.setAlpha(a + (target - a) * 0.22);
     }
+  }
+
+  // ===================================================================
+  // Board camera: turning, zooming, the board build it all rests on.
+  // ===================================================================
+
+  /**
+   * Projection (rotated to viewRotation), board origin and camera bounds.
+   * Returns the TIGHT bounds — board plus margins, never smaller than the
+   * screen — which frame the opening view. The camera gets slack beyond
+   * them so every board can be dragged, including the many that fit the
+   * playfield (whose tight bounds equal the screen: no pan at all).
+   */
+  private layoutBoard(): { w: number; h: number } {
+    const map = this.boardMap;
+    const r = this.viewRotation;
+    const { w: VW, h: VH } = viewSize(map.width, map.height, r);
+    this.elevAt = this.diorama ? elevationFor(map, r) : () => 0;
+    const build = (ox: number, oy: number): RotatedProjection => new RotatedProjection(
+      this.diorama
+        ? new ObliqueProjection({
+            originX: ox, originY: oy,
+            tileW: DIORAMA_TILE_W, tileH: DIORAMA_TILE_H,
+            elevStep: DIORAMA_ELEV_STEP, slabDepth: DIORAMA_SLAB_DEPTH,
+            gridWidth: VW, gridHeight: VH,
+            elevationAt: this.elevAt
+          })
+        : new OrthographicProjection({ originX: ox, originY: oy, tileSize: TILE_SIZE, gridWidth: VW, gridHeight: VH }),
+      map.width, map.height, r
+    );
+    // The playfield viewport is the screen area NOT occupied by the side
+    // panel (right) or the top bar (top). Measure the board with its origin
+    // at zero, then centre what we measured. On the diorama the board is
+    // shorter than width*48 (tiles are foreshortened) but gains a slab
+    // under the front row, and raised terrain can poke ABOVE row 0 —
+    // probe.y is that overhang (<= 0), which the origin absorbs so no
+    // terrain is drawn under the top bar. Oversized maps anchor at a small
+    // top-left margin and the camera handles the rest.
+    const playW = GAME_WIDTH - PANEL_W - 40;
+    const playH = GAME_HEIGHT - MAP_TOP_OFFSET - 40;
+    const probe = build(0, 0).bounds();
+    this.originX = 20 + Math.max(0, Math.floor((playW - probe.w) / 2));
+    this.originY = MAP_TOP_OFFSET - probe.y + Math.max(0, Math.floor((playH - probe.h) / 2));
+    this.rotProj = build(this.originX, this.originY);
+    this.projection = this.rotProj;
+
+    const b = this.projection.bounds();
+    const tightW = Math.max(GAME_WIDTH, b.x + b.w + 40 + PANEL_W + 12);
+    const tightH = Math.max(GAME_HEIGHT, b.y + b.h + 40);
+    // Slack: any edge of the board can be pulled to about the middle of
+    // the playfield.
+    const slackX = (GAME_WIDTH - PANEL_W) * 0.4;
+    const slackY = (GAME_HEIGHT - MAP_TOP_OFFSET) * 0.4;
+    const x0 = Math.min(0, b.x - slackX);
+    const y0 = Math.min(0, b.y - slackY);
+    this.cameraBoundsRect = { x: x0, y: y0, w: tightW + slackX - x0, h: tightH + slackY - y0 };
+    const cb = this.cameraBoundsRect;
+    this.cameras.main.setBounds(cb.x, cb.y, cb.w, cb.h);
+    return { w: tightW, h: tightH };
+  }
+
+  /**
+   * Everything the board draws: tiles, walls, water, props, torch light
+   * (scenes/battle/Diorama.ts), and the drifting cloud shadows. Built in
+   * VIEW space so it can be rebuilt at any rotation. Every object created
+   * is recorded in boardObjects for the next rebuild to destroy.
+   */
+  private buildBoardArt(): void {
+    const before = new Set(this.children.list);
+    const rp = this.rotProj;
+    const r = this.viewRotation;
+    const map = this.boardMap;
+    const grid = this.state.grid;
+    const { w: VW, h: VH } = viewSize(map.width, map.height, r);
+    const viewGrid: DioramaGrid = { width: VW, height: VH, tileAt: (v) => grid.tileAt(rp.grid(v)) };
+    const board = buildDiorama(this, viewGrid, rp.inner, {
+      footDY: this.diorama ? DIORAMA_FOOT_DY : TILE_SIZE * 0.3,
+      seed: map.id.length * 31 + 7,
+      elevationAt: this.elevAt,
+      elevStep: this.diorama ? DIORAMA_ELEV_STEP : 0,
+      sun: this.sun,
+      torchShadows: this.torchShadows,
+      rotation: r,
+      gridOf: (x, y) => rp.grid({ x, y })
+    });
+    this.boardLights = board.lights;
+    this.occluders = board.occluders;
+
+    const atmoKind = this.boardAtmo;
+    // Cloud shadows — outdoor maps get two huge, soft, near-black blobs
+    // drifting slowly across the board. Added after the tiles and before
+    // the overlays/units in add-order, so they darken the ground but
+    // never the pieces standing on it. The motion is what matters: a
+    // static board with moving light reads as a place, not a screenshot.
+    // Interiors and fire-lit battles (embers) skip them — ceilings and
+    // smoke columns don't cast drifting cumulus.
+    if (atmoKind === "snow" || atmoKind === "dust" || atmoKind === "motes") {
+      const cb = this.projection.bounds();
+      const worldW = cb.w;
+      const worldH = cb.h;
+      const dotKey = ensureDotTexture(this);
+      for (let c = 0; c < 2; c++) {
+        const cloud = this.add.image(
+          this.originX - 420 - c * (worldW * 0.6 + 500),
+          cb.y + worldH * (c === 0 ? 0.3 : 0.72),
+          dotKey
+        );
+        cloud.setTint(0x000000);
+        cloud.setAlpha(0.10);
+        // Shadows fall on the ground, never on the pieces standing on it.
+        cloud.setDepth(DEPTH.CLOUD_SHADOW);
+        cloud.setDisplaySize(560 + c * 180, 320 + c * 90);
+        this.tweens.add({
+          targets: cloud,
+          x: this.originX + worldW + 460,
+          duration: 52000 + c * 21000,
+          repeat: -1,
+          delay: c * 9000,
+          onRepeat: () => { cloud.x = this.originX - 460; }
+        });
+      }
+    }
+
+    this.boardObjects = this.children.list.filter((o) => !before.has(o));
+    // Built after the camera split (a turn): keep it off the UI camera.
+    if (this.uiCamera && this.boardObjects.length) this.uiCamera.ignore(this.boardObjects);
+  }
+
+  /** Height in levels of a GRID tile (elevAt is indexed by view cell). */
+  private elevAtTile(t: TilePos): number {
+    const v = this.rotProj.view(t);
+    return this.elevAt(v.x, v.y);
+  }
+
+  /**
+   * Whether a unit's sprite should be mirrored. Facing is stored in grid
+   * terms (+1 east, -1 west); on screen, east points right, left, or — on
+   * a quarter-turned board — straight into or out of the screen, where
+   * the unit keeps the look it had.
+   */
+  private screenFlipX(u: Unit): boolean {
+    const p = u.state.position;
+    const dx = this.projection.tileToWorld({ x: p.x + 1, y: p.y }).x - this.projection.tileToWorld(p).x;
+    if (Math.abs(dx) < 1) return u.state.facingX === -1;
+    return u.state.facingX * Math.sign(dx) < 0;
+  }
+
+  /** Turn the board a quarter-turn (+1 clockwise, -1 anticlockwise). */
+  private requestRotation(dir: 1 | -1): void {
+    // From wherever the board is HEADED, so two quick presses are two turns.
+    const base = this.pendingRotation ?? (this.rotating ? this.rotatingTo : this.viewRotation);
+    this.rotateTo(normalizeRotation(base + dir));
+  }
+
+  /**
+   * Turn the board to rotation `r`: fade the world out, rebuild the board
+   * at the new rotation, put the same spot back under the middle of the
+   * playfield, fade in. Waits (pendingRotation) while the board is busy —
+   * an attack or the enemy phase has sprites mid-tween in world space.
+   */
+  private rotateTo(r: ViewRotation): void {
+    if (r === this.viewRotation && this.pendingRotation === null) return;
+    if (this.rotating || this.fsm.isInputBlocked()) {
+      this.pendingRotation = r;
+      return;
+    }
+    this.rotating = true;
+    this.rotatingTo = r;
+    const cam = this.cameras.main;
+    const anchor = this.playfieldCentreTile();
+    this.tweens.add({
+      targets: cam,
+      alpha: 0,
+      duration: 110,
+      ease: "Sine.easeIn",
+      onComplete: () => {
+        this.viewRotation = r;
+        this.rebuildBoard(anchor);
+        this.tweens.add({
+          targets: cam,
+          alpha: 1,
+          duration: 190,
+          ease: "Sine.easeOut",
+          onComplete: () => { this.rotating = false; }
+        });
+      }
+    });
+  }
+
+  /** Destroy the board and build it again at the current rotation. */
+  private rebuildBoard(anchor: TilePos | null): void {
+    for (const o of this.boardObjects) {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    }
+    this.boardObjects = [];
+    this.layoutBoard();
+    this.buildBoardArt();
+    if (this.darknessRT) {
+      this.darknessRT.destroy();
+      this.darknessRT = undefined;
+      this.setupSpotlightOverlay();
+    }
+    // Units: a walk-in lands now; a body mid-fall is simply gone (it
+    // would lie at its old world position otherwise).
+    for (const v of this.unitViews.values()) {
+      if (v.animLock === "arriving") v.finishArrival?.();
+      if (v.animLock === "dying") {
+        this.tweens.killTweensOf(v.sprite);
+        this.tweens.killTweensOf(v.shadow);
+        v.animLock = undefined;
+        v.sprite.setVisible(false);
+        v.shadow.setVisible(false);
+      }
+      this.stopBreathing(v);
+    }
+    this.refreshAllUnits();
+    for (const v of this.unitViews.values()) this.startBreathing(v);
+    this.clearXray();
+    this.cursorG.clear();
+    this.clearPathPreview();
+    this.hoverPreview.setVisible(false);
+    this.drawOverlay();
+    const cur = this.initiative.current();
+    const t = anchor ?? cur?.state.position ?? null;
+    if (t) this.centreOnTile(t);
+  }
+
+  /** Screen point (buffer px) at the middle of the playfield. */
+  private playfieldCentreScreen(): { x: number; y: number } {
+    return {
+      x: ((GAME_WIDTH - PANEL_W - 12) / 2) * RENDER_SCALE,
+      y: ((MAP_TOP_OFFSET + GAME_HEIGHT) / 2) * RENDER_SCALE
+    };
+  }
+
+  /** World point under a screen point (buffer px), through the tilt. */
+  private screenToWorld(sx: number, sy: number): { x: number; y: number } {
+    const cam = this.cameras.main;
+    const src = this.keystone ? screenToSource(sx, sy, cam.width, cam.height, this.keystone) : null;
+    const px = src?.x ?? sx, py = src?.y ?? sy;
+    // Cameras zoom about their top-left (util/renderScale), so the world
+    // point is just scroll + screen / zoom — no stale matrix involved.
+    return { x: cam.scrollX + px / cam.zoom, y: cam.scrollY + py / cam.zoom };
+  }
+
+  /** The ground tile at the middle of the playfield, if any. */
+  private playfieldCentreTile(): TilePos | null {
+    const c = this.playfieldCentreScreen();
+    const w = this.screenToWorld(c.x, c.y);
+    return this.projection.worldToTile(w.x, w.y);
+  }
+
+  /** Scroll so a tile sits under the middle of the playfield. */
+  private centreOnTile(t: TilePos): void {
+    const cam = this.cameras.main;
+    const wp = this.projection.tileToWorld(t);
+    const c = this.playfieldCentreScreen();
+    const cur = this.screenToWorld(c.x, c.y);
+    cam.setScroll(cam.scrollX + wp.x - cur.x, cam.scrollY + wp.y - cur.y);
+  }
+
+  /**
+   * Zoom the board to `factor` × the default view (clamped 1–2), keeping
+   * the world point under the given screen point (the cursor) still.
+   */
+  private setBoardZoom(factor: number, sx?: number, sy?: number): void {
+    const f = Phaser.Math.Clamp(factor, 1, 2);
+    if (Math.abs(f - this.zoomFactor) < 1e-3) return;
+    const cam = this.cameras.main;
+    const c = sx === undefined || sy === undefined ? this.playfieldCentreScreen() : { x: sx, y: sy };
+    const src = this.keystone ? screenToSource(c.x, c.y, cam.width, cam.height, this.keystone) : null;
+    const px = src?.x ?? c.x, py = src?.y ?? c.y;
+    const wx = cam.scrollX + px / cam.zoom, wy = cam.scrollY + py / cam.zoom;
+    this.zoomFactor = f;
+    cam.setZoom(this.baseZoom * f);
+    cam.setScroll(wx - px / cam.zoom, wy - py / cam.zoom);
+  }
+
+  /** Back to the authored view: no turn, no zoom, the acting unit centred. */
+  private resetView(): void {
+    this.setBoardZoom(1);
+    const cur = this.initiative.current();
+    if (this.viewRotation !== 0 || this.pendingRotation !== null) {
+      this.rotateTo(0);
+    } else if (cur) {
+      this.centreOnTile(cur.state.position);
+    }
+  }
+
+  // Q / E turn the board, R resets the view, the wheel (or + / -) zooms.
+  private setupCameraTurnAndZoom(): void {
+    const kb = this.input.keyboard;
+    kb?.on("keydown-Q", () => this.requestRotation(-1));
+    kb?.on("keydown-E", () => this.requestRotation(1));
+    kb?.on("keydown-R", () => this.resetView());
+    const step = (up: boolean) => this.setBoardZoom(this.zoomFactor * (up ? 1.15 : 1 / 1.15));
+    kb?.on("keydown-PLUS", () => step(true));
+    kb?.on("keydown-NUMPAD_ADD", () => step(true));
+    kb?.on("keydown-MINUS", () => step(false));
+    kb?.on("keydown-NUMPAD_SUBTRACT", () => step(false));
+    // Proportional to the wheel distance: a mouse notch (~100) is a ~13%
+    // step, while a trackpad's stream of small deltas glides instead of
+    // racing to full zoom in a flick.
+    this.input.on("wheel", (p: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
+      if (this.isOverUi(p) || this.rotating || dy === 0) return;
+      const d = Phaser.Math.Clamp(dy, -200, 200);
+      this.setBoardZoom(this.zoomFactor * Math.exp(-d * 0.0013), p.x, p.y);
+    });
+  }
+
+  // ---- hover x-ray ----------------------------------------------------
+
+  /**
+   * The front-most thing standing IN FRONT of a world point and covering
+   * it: another unit's sprite, or a tall prop. `behindFootY` is the feet
+   * line of whatever is at the point; only things with feet nearer the
+   * camera count.
+   */
+  private coveredAt(wx: number, wy: number, behindFootY: number, exceptId?: string): boolean {
+    for (const v of this.unitViews.values()) {
+      if (v.unit.id === exceptId || !v.sprite.visible || !isAlive(v.unit)) continue;
+      const feet = v.sprite.y + this.unitH / 2;
+      if (feet <= behindFootY + 1) continue;
+      const hw = v.sprite.displayWidth / 2 - 8, hh = v.sprite.displayHeight / 2;
+      if (wx >= v.sprite.x - hw && wx <= v.sprite.x + hw && wy >= v.sprite.y - hh + 6 && wy <= v.sprite.y + hh) return true;
+    }
+    for (const o of this.occluders) {
+      if (o.footY <= behindFootY + 1) continue;
+      if (wx >= o.x0 && wx <= o.x1 && wy >= o.y0 && wy <= o.footY) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Hovering a tile or a unit that something in front hides: draw the
+   * tile's outline above the actors, and the unit's silhouette through
+   * whatever covers it. On a tilted board that is the difference between
+   * "which one am I pointing at?" and knowing.
+   */
+  private updateXray(tile: TilePos): void {
+    if (!this.cursorTopG) {
+      this.cursorTopG = this.addWorld(this.add.graphics().setDepth(this.xrayDepth() + 0.1));
+    }
+    this.cursorTopG.clear();
+    const q = this.tileQuad(tile);
+    const cx = (q.L + q.R) / 2, cy = (q.T + q.B) / 2;
+    const tileFeet = cy + (this.diorama ? DIORAMA_FOOT_DY : 0);
+    const occ = unitAt(this.state, tile);
+    const view = occ ? this.unitViews.get(occ.id) : undefined;
+    const tileHidden = this.coveredAt(cx, cy, tileFeet, occ?.id);
+    let unitHidden = false;
+    if (view && view.sprite.visible) {
+      const s = view.sprite, feet = s.y + this.unitH / 2;
+      // Head, chest and hips: hidden if any of them is covered.
+      unitHidden = [-0.3, 0, 0.3].some((k) => this.coveredAt(s.x, s.y + k * s.displayHeight, feet, occ!.id));
+    }
+    if (tileHidden) {
+      const g = this.cursorTopG;
+      g.lineStyle(3, 0x000000, 0.35);
+      g.strokeRect(q.L + 0.5, q.T + 0.5, q.R - q.L - 1, q.B - q.T - 1);
+      g.lineStyle(1.5, COLORS.hover, 0.95);
+      g.strokeRect(q.L + 0.5, q.T + 0.5, q.R - q.L - 1, q.B - q.T - 1);
+    }
+    this.xrayUnitId = unitHidden && occ ? occ.id : null;
+    this.syncXray();
+  }
+
+  // Above every actor, below the HP bars — and on dark battles above the
+  // fog, like the other tactical marks, or it would be lost in it.
+  private xrayDepth(): number {
+    return this.darknessRT ? DEPTH.OVER_DARK + 0.4 : DEPTH.UNIT_HUD - 0.5;
+  }
+
+  private clearXray(): void {
+    this.xrayUnitId = null;
+    this.cursorTopG?.clear();
+    this.xrayImg?.setVisible(false);
+  }
+
+  // The x-ray silhouette follows its unit's current frame, facing and
+  // breath every frame while it is shown.
+  private syncXray(): void {
+    const v = this.xrayUnitId ? this.unitViews.get(this.xrayUnitId) : undefined;
+    if (!v || !v.sprite.visible || !isAlive(v.unit)) {
+      this.xrayImg?.setVisible(false);
+      return;
+    }
+    const s = v.sprite;
+    if (!this.xrayImg) {
+      this.xrayImg = this.addWorld(this.add.image(0, 0, s.texture.key, s.frame.name).setDepth(this.xrayDepth()));
+    }
+    const img = this.xrayImg;
+    if (img.texture !== s.texture || img.frame.name !== s.frame.name) img.setTexture(s.texture.key, s.frame.name);
+    const tint = v.unit.faction === "enemy" ? 0xff8a6a : v.unit.faction === "ally" ? 0x9fe0a0 : 0x8cc4ff;
+    img.setPosition(s.x, s.y).setDisplaySize(s.displayWidth, s.displayHeight).setFlipX(s.flipX)
+      .setTintFill(tint).setAlpha(0.42).setVisible(true);
   }
 
   private refreshAllUnits(): void {
@@ -2172,14 +2548,20 @@ export class BattleScene extends Phaser.Scene {
       this.cameraDragState.startPointerY = p.y;
     });
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-      // Pointer deltas are in buffer pixels; divide by RENDER_SCALE to pan
-      // by the matching world distance when native-res zoom is on (no-op at 1).
-      const dx = (p.x - this.cameraDragState.startPointerX) / RENDER_SCALE;
-      const dy = (p.y - this.cameraDragState.startPointerY) / RENDER_SCALE;
+      // Pointer deltas are in buffer pixels. The drag threshold is judged in
+      // design px (/ RENDER_SCALE); the pan itself moves the world by the
+      // pointer's distance at the current zoom (/ cam.zoom), so the board
+      // stays under the finger whether the player has zoomed in or not.
+      if (this.rotating) return;
+      const zoom = this.cameras.main.zoom;
+      const dx = (p.x - this.cameraDragState.startPointerX) / zoom;
+      const dy = (p.y - this.cameraDragState.startPointerY) / zoom;
       if (!this.cameraDragState.active) {
+        const tx = (p.x - this.cameraDragState.startPointerX) / RENDER_SCALE;
+        const ty = (p.y - this.cameraDragState.startPointerY) / RENDER_SCALE;
         const movedEnough =
-          Math.abs(dx) > BattleScene.CAMERA_DRAG_THRESHOLD ||
-          Math.abs(dy) > BattleScene.CAMERA_DRAG_THRESHOLD;
+          Math.abs(tx) > BattleScene.CAMERA_DRAG_THRESHOLD ||
+          Math.abs(ty) > BattleScene.CAMERA_DRAG_THRESHOLD;
         if (!movedEnough) return;
         // Left-drag now pans in EVERY player state, not just idle. With
         // click-to-move, a move commits on pointer-UP (handlePointerUp), so a
@@ -3307,12 +3689,16 @@ export class BattleScene extends Phaser.Scene {
   private strokeRegionContour(g: Phaser.GameObjects.Graphics, tiles: readonly TilePos[], color: number): void {
     const inRegion = new Set(tiles.map((t) => `${t.x},${t.y}`));
     const edges: [number, number, number, number][] = [];
+    // Neighbours by SCREEN side: on a turned board the tile above this one
+    // on screen is not y - 1 (Projection.neighborOnScreen).
+    const has = (n: TilePos) => inRegion.has(`${n.x},${n.y}`);
+    const pr = this.projection;
     for (const t of tiles) {
       const { L, R, T, B } = this.tileQuad(t);
-      if (!inRegion.has(`${t.x},${t.y - 1}`)) edges.push([L, T, R, T]);
-      if (!inRegion.has(`${t.x},${t.y + 1}`)) edges.push([L, B, R, B]);
-      if (!inRegion.has(`${t.x - 1},${t.y}`)) edges.push([L, T, L, B]);
-      if (!inRegion.has(`${t.x + 1},${t.y}`)) edges.push([R, T, R, B]);
+      if (!has(pr.neighborOnScreen(t, "up"))) edges.push([L, T, R, T]);
+      if (!has(pr.neighborOnScreen(t, "down"))) edges.push([L, B, R, B]);
+      if (!has(pr.neighborOnScreen(t, "left"))) edges.push([L, T, L, B]);
+      if (!has(pr.neighborOnScreen(t, "right"))) edges.push([R, T, R, B]);
     }
     g.lineStyle(4, color, 0.22);
     for (const [x1, y1, x2, y2] of edges) g.lineBetween(x1, y1, x2, y2);
@@ -3581,9 +3967,10 @@ export class BattleScene extends Phaser.Scene {
 
   private handlePointerMove(p: Phaser.Input.Pointer): void {
     if (this.fsm.isEnded()) return;
-    const tile = this.screenToTile(p.x, p.y);
+    const tile = this.rotating || this.cameraDragState.active ? null : this.screenToTile(p.x, p.y);
     if (!tile) {
       this.cursorG.clear();
+      this.clearXray();
       this.clearPathPreview();
       this.hoverPreview.setVisible(false);
       return;
@@ -3593,6 +3980,7 @@ export class BattleScene extends Phaser.Scene {
     this.cursorG.lineStyle(1, COLORS.hover, 0.9);
     const cq = this.tileQuad(tile);
     this.cursorG.strokeRect(cq.L + 0.5, cq.T + 0.5, cq.R - cq.L - 1, cq.B - cq.T - 1);
+    this.updateXray(tile);
 
     // Path preview: hovering a reachable tile in move/roam mode shows the
     // dotted walking route + a translucent ghost of the unit at the
@@ -3810,10 +4198,11 @@ export class BattleScene extends Phaser.Scene {
           if (i !== lastLeg) {
             lastLeg = i;
             const dx = b.x - a.x;
-            if (dx !== 0) {
-              u.state.facingX = dx > 0 ? 1 : -1;
-              view.sprite.setFlipX(u.state.facingX === -1);
-            }
+            // Facing is kept in GRID terms (east/west), so it survives a
+            // turn of the board; the sprite faces the way it moves on screen.
+            const gdx = legTiles[i + 1]!.x - legTiles[i]!.x;
+            if (gdx !== 0) u.state.facingX = gdx > 0 ? 1 : -1;
+            if (Math.abs(dx) > 0.5) view.sprite.setFlipX(dx < 0);
             sfxStep();
             // Kick a small puff at each stride boundary (not just the
             // push-off) so a long run leaves a readable dust trail.
@@ -3823,7 +4212,7 @@ export class BattleScene extends Phaser.Scene {
           // A small lift through each stride so a walk reads as steps,
           // not a glide — and a real hop when the stride changes height.
           const ta = legTiles[i]!, tb = legTiles[i + 1]!;
-          const climb = Math.abs(this.elevAt(tb.x, tb.y) - this.elevAt(ta.x, ta.y));
+          const climb = Math.abs(this.elevAtTile(tb) - this.elevAtTile(ta));
           const hop = Math.sin(f * Math.PI) * (2.5 + climb * 7);
           const y = a.y + (b.y - a.y) * f + this.unitLift - hop;
           view.sprite.setPosition(x, y);
@@ -3960,7 +4349,7 @@ export class BattleScene extends Phaser.Scene {
     const footY = view.shadow.y;
     const arm = footY - s.y; // feet → centre
     const away = fromX === undefined || Math.abs(fromX - x0) < 2
-      ? (u.state.facingX === -1 ? 1 : -1)
+      ? (this.screenFlipX(u) ? 1 : -1)
       : Math.sign(x0 - fromX);
     const fallDeg = 82 * away;
     const sy0 = s.scaleY;

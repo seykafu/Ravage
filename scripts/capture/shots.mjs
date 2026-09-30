@@ -74,9 +74,10 @@ const HELPERS = `
     const cy = (pa.y + pb.y) / 2;
     const vw = cam.displayWidth, vh = cam.displayHeight;
     const bnd = cam.getBounds();
+    // Bounds can start left of / above zero (the board has drag slack).
     cam.setScroll(
-      Math.min(Math.max(cx - vw / 2, 0), Math.max(0, bnd.width - vw)),
-      Math.min(Math.max(cy - vh / 2, 0), Math.max(0, bnd.height - vh))
+      Math.min(Math.max(cx - vw / 2, bnd.x), bnd.x + Math.max(0, bnd.width - vw)),
+      Math.min(Math.max(cy - vh / 2, bnd.y), bnd.y + Math.max(0, bnd.height - vh))
     );
   };
 
@@ -490,4 +491,18 @@ export const promoted = [
     each: fn(`closeDialogue(); if (!window.__promoted2) { window.__promoted2 = true; ${PROMOTE} }`) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted };
+// CAMERA — the board turned to each side, then zoomed in on the squad.
+const CAM_ID = process.env.CAP_BATTLE ?? "b05_mountain_ndari";
+export const camera = [
+  { name: "r0", seconds: 0.8, settleFrames: 110,
+    setup: fn(`seedRun(); cap.goto("BattleScene", { battleId: "${CAM_ID}" });`), each: fn(`closeDialogue();`) },
+  ...[1, 2, 3].map((r) => ({ name: "r" + r, seconds: 0.8, settleFrames: 30,
+    setup: fn(`closeDialogue(); battle().rotateTo(${r});`) })),
+  { name: "r0-zoom", seconds: 0.8, settleFrames: 30,
+    setup: fn(`const b = battle(); b.rotateTo(0); const u = b.initiative.current();
+      setTimeout(() => {}, 0); b.__zoomAfter = true;`),
+    each: fn(`const b = battle(); if (b.__zoomAfter && !b.rotating) { b.__zoomAfter = false;
+      const u = b.initiative.current(); if (u) b.centreOnTile(u.state.position); b.setBoardZoom(1.7); }`) }
+];
+
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera };
