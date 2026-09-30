@@ -87,12 +87,13 @@ console.log("[cap] assets streamed");
 // the game's own code rather than re-implementing any of it.
 await page.evaluate(async (fps) => {
   const g = window.__RAVAGE_GAME__;
-  const [save, items, arcs, unitApi, battles] = await Promise.all([
+  const [save, items, arcs, unitApi, battles, keystone] = await Promise.all([
     import("/src/util/save.ts"),
     import("/src/combat/items.ts"),
     import("/src/story/beats.ts"),
     import("/src/combat/Unit.ts"),
-    import("/src/data/battles.ts")
+    import("/src/data/battles.ts"),
+    import("/src/render/keystone.ts")
   ]);
   // Own the clock.
   g.loop.stop();
@@ -142,7 +143,7 @@ await page.evaluate(async (fps) => {
     // running — the first proof had the title screen's logo and buttons
     // rendering straight through the battle board. Stop everything that
     // isn't infrastructure, then start the one we want.
-    save, items, arcs, unitApi, battles,
+    save, items, arcs, unitApi, battles, keystone,
     goto(key, data) {
       const keep = new Set(["BootScene", "AssetStreamScene", key]);
       for (const s of [...g.scene.scenes]) {
