@@ -476,6 +476,24 @@ export const camp = [
     setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`) }
 ];
 
+// CAMP LIFE — sixteen seconds at the late-game fire, to watch the squad's
+// small scenes (chats, sparring, errands) play out.
+export const campLife = [
+  { name: "camp_life", seconds: 16, settleFrames: 30,
+    setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`) },
+  // The same, with the rarer scenes called on cue so each is seen once.
+  { name: "camp_cued", seconds: 14, settleFrames: 75,
+    setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`),
+    each: fn(`
+      const life = cap.game.scene.getScene("CampScene").life;
+      if (arg.i === 0) { life.stop(); life.spar(); }
+      if (arg.i === 15) life.errand();
+      if (arg.i === 30) life.chat();
+      if (arg.i === 200) life.pop();
+      if (arg.i === 230) life.laugh();
+    `) }
+];
+
 // PROMOTED — every Tier 2 class in battle. The live units are promoted in
 // place (classKind swapped, views rebuilt), so no save surgery is needed.
 const PROMOTE = `
@@ -573,4 +591,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]] };

@@ -11,7 +11,7 @@ import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { ensureUnitTexture, resolveSpriteClass } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
-import type { Tile, Unit, UnitDef } from "../combat/types";
+import type { Tile, UnitDef } from "../combat/types";
 import { resolveCampBeat } from "../data/campTalk";
 import { resolveNextChapter } from "../data/nextChapter";
 import type { BattleNode } from "../data/battles";
@@ -25,10 +25,10 @@ import { screenToSource, sourceToScreen, type KeystoneParams } from "../render/k
 import { DEPTH, actorDepth } from "../render/depth";
 import { castFrom, torchShadow, UNIT_FOOT_ORIGIN } from "../render/sun";
 import { bodyCentre, figureAt } from "./battle/HitMask";
-import { addTorchGlow } from "./battle/Lighting";
 import { ensureDotTexture } from "./battle/Atmosphere";
 import { ART_SCALE, CAMP_BOARD, CAMP_KEYSTONE_K, FIRE, ringSlots, type Slot } from "./camp/layout";
 import type { CampBackdropScene } from "./CampBackdropScene";
+import { CampLife, type LifeChar } from "./camp/CampLife";
 
 // CampScene — the squad's home between battles, as a diorama.
 //
@@ -40,7 +40,11 @@ import type { CampBackdropScene } from "./CampBackdropScene";
 // wagon, a tent, crates, log benches, a lantern post, pines along the
 // back. The fire is the only real light. A darkness layer covers the
 // board and the fire and lantern cut pools out of it; everything near
-// the fire is warmed by it and throws its shadow away from it.
+// the fire is warmed by it and throws its shadow away from it. The squad
+// doesn't stand still: camp/CampLife keeps a couple of small scenes going
+// (chats, a laugh, someone warming their hands, an errand to the wagon, a
+// sparring pair), moving each character's ground position, which this
+// scene turns into sprite, shadow, label and depth every frame.
 //
 // Two cameras, as in BattleScene: the world camera carries the tilt and
 // the grade; the UI camera draws the text and buttons flat and sharp on
@@ -61,12 +65,9 @@ export interface CampArgs {
   nextChapter?: string;
 }
 
-interface CampChar {
-  id: string;
-  unit: Unit;
-  sprite: Phaser.GameObjects.Sprite;
+interface CampChar extends LifeChar {
   label: Phaser.GameObjects.Text;
-  home: Slot;
+  contact: Phaser.GameObjects.Ellipse;
 }
 
 /** Something under the pointer that does something when clicked. */
@@ -81,6 +82,8 @@ interface Pickable {
 interface Caster {
   src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
   cast: Phaser.GameObjects.Image;
+  /** Where its feet are, if it can leave the ground (a hop shouldn't lift its shadow). */
+  ground?: { x: number; y: number };
 }
 
 /** Everything the camp draws; the camp waits for these if they are still streaming in. */
@@ -114,6 +117,9 @@ export class CampScene extends Phaser.Scene {
   /** A panel is open over the camp; the board doesn't answer the pointer. */
   private modal = false;
   private restartWhenResumed = false;
+  private life?: CampLife;
+  /** When the fire last flared (a log settling), scene time. */
+  private flaredAt = Number.NEGATIVE_INFINITY;
 
   constructor() { super("CampScene"); }
 
@@ -136,6 +142,8 @@ export class CampScene extends Phaser.Scene {
     this.darkness = undefined;
     this.brush = undefined;
     this.flames = undefined;
+    this.life = undefined;
+    this.flaredAt = Number.NEGATIVE_INFINITY;
   }
 
   create(): void {
@@ -176,7 +184,18 @@ export class CampScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.RESUME, () => {
       if (this.restartWhenResumed) this.scene.restart(this.args);
     });
+    // The squad comes alive once it has gathered.
+    this.life = new CampLife({
+      scene: this,
+      worldToUi: (x, y) => this.worldToUi(x, y),
+      toUi: (o) => this.ui(o),
+      toWorld: (o) => { this.uiCamera?.ignore(o); return o; },
+      flare: () => this.flare()
+    }, this.chars);
+    this.life.start(300 + squad.length * 110 + 1400);
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.life?.stop();
       this.input.setDefaultCursor("default");
       this.scene.stop("CampBackdropScene");
     });
@@ -193,13 +212,19 @@ export class CampScene extends Phaser.Scene {
     cam.setScroll(cam.scrollX + (tx - cam.scrollX) * 0.05, cam.scrollY + (ty - cam.scrollY) * 0.05);
     this.backdrop()?.follow(cam.scrollX, cam.scrollY);
 
-    const flicker = 1 + 0.035 * Math.sin(time * 0.011) + 0.02 * Math.sin(time * 0.027 + 1.3) + 0.015 * Math.sin(time * 0.061 + 0.4);
-    this.paintDarkness(flicker);
-    for (const c of this.casters) this.castShadow(c, flicker);
+    const sinceFlare = time - this.flaredAt;
+    const flare = sinceFlare < 700 ? 0.16 * (1 - sinceFlare / 700) : 0;
+    const flicker = (1 + 0.035 * Math.sin(time * 0.011) + 0.02 * Math.sin(time * 0.027 + 1.3) + 0.015 * Math.sin(time * 0.061 + 0.4)) * (1 + flare);
+    // The squad stand (and walk, and hop) where CampLife says.
     for (const c of this.chars) {
-      const at = this.worldToUi(c.sprite.x, c.sprite.y + 4);
+      c.sprite.setPosition(c.pos.x, c.pos.y - c.lift).setDepth(actorDepth(c.pos.y)).setTint(this.warmth(c.pos.x, c.pos.y));
+      c.contact.setPosition(c.pos.x, c.pos.y + 1);
+      const at = this.worldToUi(c.pos.x, c.pos.y + 4);
       c.label.setPosition(at.x, at.y).setAlpha(c.sprite.alpha);
     }
+    this.paintDarkness(flicker);
+    for (const c of this.casters) this.castShadow(c, flicker);
+    this.life?.update();
     for (const l of this.propLabels) {
       const at = this.worldToUi(l.x, l.y);
       l.text.setPosition(at.x, at.y);
@@ -313,8 +338,8 @@ export class CampScene extends Phaser.Scene {
     const fx = FIRE.x, fy = FIRE.y;
     this.flameLights.push({ x: fx, y: fy, radius: FIRE.radius });
     // Light on the ground: a wide warm pool and a hot heart.
-    addTorchGlow(this, fx, fy + 6, { depth: DEPTH.LIGHT, scaleX: 6.6, scaleY: 3.1 }).setAlpha(0.42);
-    addTorchGlow(this, fx, fy + 4, { depth: DEPTH.LIGHT, scaleX: 2.6, scaleY: 1.2 }).setAlpha(0.7);
+    this.glow(fx, fy + 6, 560, 260, 0.42, DEPTH.LIGHT);
+    this.glow(fx, fy + 4, 220, 100, 0.62, DEPTH.LIGHT);
 
     if (this.textures.exists("camp:firepit")) {
       this.add.image(fx, fy, "camp:firepit")
@@ -347,7 +372,7 @@ export class CampScene extends Phaser.Scene {
         .play({ key: "camp_flames", startFrame: 4, timeScale: 1.3 });
     }
     // The halo round the flames.
-    addTorchGlow(this, fx, fy - 46, { depth: actorDepth(fy) + 2e-5, scaleX: 2.3, scaleY: 2.3 }).setAlpha(0.5);
+    this.glow(fx, fy - 46, 196, 196, 0.42, actorDepth(fy) + 2e-5);
 
     const dot = ensureDotTexture(this);
     // Sparks.
@@ -374,6 +399,46 @@ export class CampScene extends Phaser.Scene {
       tint: 0x6e6a74,
       frequency: 280
     }).setDepth(actorDepth(fy) + 4e-5);
+  }
+
+  /**
+   * A warm additive glow, w×h world px, flickering a little below `alpha`.
+   * (The battle's torch glow breathes between 0.6 and full opacity — right
+   * for a torch, blown out at the size of a campfire's light.)
+   */
+  private glow(x: number, y: number, w: number, h: number, alpha: number, depth: number): Phaser.GameObjects.Image {
+    const key = "camp_glow";
+    if (!this.textures.exists(key)) {
+      const size = 128;
+      const tex = this.textures.createCanvas(key, size, size);
+      if (tex) {
+        const ctx = tex.getContext();
+        const g = ctx.createRadialGradient(size / 2, size / 2, 1, size / 2, size / 2, size / 2);
+        g.addColorStop(0, "rgba(255,190,104,1)");
+        g.addColorStop(0.4, "rgba(255,138,56,0.45)");
+        g.addColorStop(1, "rgba(255,104,32,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+        tex.refresh();
+      }
+    }
+    const img = this.add.image(x, y, key)
+      .setDisplaySize(w, h)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(depth)
+      .setAlpha(alpha);
+    const sx = img.scaleX, sy = img.scaleY;
+    this.tweens.add({
+      targets: img,
+      alpha: { from: alpha * 0.82, to: alpha },
+      scaleX: { from: sx * 0.96, to: sx * 1.03 },
+      scaleY: { from: sy * 0.96, to: sy * 1.03 },
+      yoyo: true,
+      repeat: -1,
+      duration: Phaser.Math.Between(380, 620),
+      ease: "Sine.easeInOut"
+    });
+    return img;
   }
 
   // ---- Props ----------------------------------------------------------------
@@ -420,8 +485,8 @@ export class CampScene extends Phaser.Scene {
     // The lantern is the camp's second light: a glow at the glass and a
     // small pool under it.
     this.flameLights.push({ x: LANTERN.x + 6, y: LANTERN.y, radius: 150 });
-    addTorchGlow(this, LANTERN.x + 7, LANTERN.y - 56, { depth: actorDepth(LANTERN.y) + 1e-5, scaleX: 0.7, scaleY: 0.7 });
-    addTorchGlow(this, LANTERN.x + 7, LANTERN.y + 2, { depth: DEPTH.LIGHT, scaleX: 1.7, scaleY: 0.8 }).setAlpha(0.5);
+    this.glow(LANTERN.x + 7, LANTERN.y - 56, 60, 60, 0.85, actorDepth(LANTERN.y) + 1e-5);
+    this.glow(LANTERN.x + 7, LANTERN.y + 2, 144, 68, 0.45, DEPTH.LIGHT);
 
     const wagon = this.prop("camp:wagon", 1000, 412, { flip: false });
     this.prop("camp:crates", 1134, 430);
@@ -533,8 +598,9 @@ export class CampScene extends Phaser.Scene {
         timeScale: 0.85 + Math.random() * 0.3
       });
     }
-    this.add.ellipse(slot.x, slot.y + 1, 34, 10, 0x000000, 0.38).setDepth(DEPTH.SHADOW);
-    this.addCaster(sprite);
+    const contact = this.add.ellipse(slot.x, slot.y + 1, 34, 10, 0x000000, 0.38).setDepth(DEPTH.SHADOW);
+    const pos = { x: slot.x, y: slot.y };
+    this.addCaster(sprite, pos);
 
     const label = this.add.text(0, 0, def.name, {
       fontFamily: FAMILY_HEADING,
@@ -547,7 +613,7 @@ export class CampScene extends Phaser.Scene {
     sprite.setAlpha(0);
     this.tweens.add({ targets: sprite, alpha: 1, delay: fadeDelay, duration: 380, ease: "Sine.easeOut" });
 
-    this.chars.push({ id: def.id, unit, sprite, label, home: slot });
+    this.chars.push({ id: def.id, unit, sprite, label, contact, home: slot, pos, lift: 0, busy: false });
     this.picks.push({ imgs: [sprite], kind: "char", label, onClick: () => this.openCharacterTalk(def.id) });
   }
 
@@ -561,24 +627,25 @@ export class CampScene extends Phaser.Scene {
     return (0xff << 16) | (g << 8) | b;
   }
 
-  private addCaster(src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image): void {
+  private addCaster(src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image, ground?: { x: number; y: number }): void {
     const cast = this.add.image(src.x, src.y, src.texture.key, src.frame.name)
       .setOrigin(src.originX, src.originY)
       .setTintFill(0x000000)
       .setAlpha(0)
       .setDepth(DEPTH.TORCH_SHADOW);
-    this.casters.push({ src, cast });
+    this.casters.push({ src, cast, ground });
   }
 
   private castShadow(c: Caster, flicker: number): void {
     const { src, cast } = c;
-    const sun = torchShadow(src.x, src.y, this.flameLights);
+    const gx = c.ground?.x ?? src.x, gy = c.ground?.y ?? src.y;
+    const sun = torchShadow(gx, gy, this.flameLights);
     if (!sun || !src.visible) { cast.setVisible(false); return; }
     if (cast.frame.name !== src.frame.name || cast.texture.key !== src.texture.key) {
       cast.setTexture(src.texture.key, src.frame.name);
     }
     castFrom(cast, src, sun);
-    cast.setPosition(src.x, src.y).setVisible(true).setAlpha(Math.min(0.62, sun.alpha * flicker) * src.alpha);
+    cast.setPosition(gx, gy).setVisible(true).setAlpha(Math.min(0.62, sun.alpha * flicker) * src.alpha);
   }
 
   // The night over the board, with the fire's and the lantern's light cut
@@ -628,6 +695,14 @@ export class CampScene extends Phaser.Scene {
       const s = ((l.radius * 2) / 256) * (i === 0 ? flicker : 1);
       brush.setPosition(l.x - rt.x, l.y - 30 - rt.y).setScale(s, s * 0.74);
       rt.erase(brush);
+    }
+  }
+
+  /** A log settles: the fire flares for a moment, light and flame both. */
+  private flare(): void {
+    this.flaredAt = this.time.now;
+    if (this.flames) {
+      this.tweens.add({ targets: this.flames, scaleX: ART_SCALE * 1.12, scaleY: ART_SCALE * 1.2, duration: 140, yoyo: true, ease: "Sine.easeOut" });
     }
   }
 
