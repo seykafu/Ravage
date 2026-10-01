@@ -628,6 +628,9 @@ export class CampScene extends Phaser.Scene {
   }
 
   private addCaster(src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image, ground?: { x: number; y: number }): void {
+    // A silhouette is a black-tinted copy, and the Canvas fallback renderer
+    // has no tint: there it would be a second, coloured figure.
+    if (this.game.renderer.type !== Phaser.WEBGL) return;
     const cast = this.add.image(src.x, src.y, src.texture.key, src.frame.name)
       .setOrigin(src.originX, src.originY)
       .setTintFill(0x000000)
@@ -807,7 +810,9 @@ export class CampScene extends Phaser.Scene {
     }
     this.input.setDefaultCursor("pointer");
     pk.label?.setColor("#fff6d8").setScale(1.12);
-    // A one-art-pixel gold outline: four gold copies, one pixel out each way.
+    // A one-art-pixel gold outline: four gold copies, one pixel out each way
+    // (WebGL only, for the same reason as the shadows).
+    if (this.game.renderer.type !== Phaser.WEBGL) return;
     for (const img of pk.imgs) {
       for (const [dx, dy] of OUTLINE_OFFSETS) {
         const o = this.add.image(img.x + dx, img.y + dy, img.texture.key, img.frame.name)
