@@ -257,11 +257,13 @@ export class ChoiceScene extends Phaser.Scene {
     let save = loadSave();
     save = setSevenPath(save, choice.path);
     save = unlockBattle(save, choice.openerBattle);
-    writeSave(save);
+    writeSave({ ...save, nextChapter: choice.openerBattle });
 
-    // Route onward — straight into the chosen path's opener prep. The pick
-    // has been persisted and the opener unlocked above, so the campaign
-    // fork happens the moment the fade lands.
+    // Route onward — back to camp with the chosen path's opener as the next
+    // chapter ("Start Next Chapter" opens its prep), as every chapter now
+    // begins between story and battle. The pick has been persisted and the
+    // opener unlocked above, so the campaign fork happens the moment the
+    // fade lands.
     //
     // Idempotent transition: this is an IRREVERSIBLE choice, so getting the
     // player off this screen is non-negotiable. We fire on whichever happens
@@ -274,7 +276,7 @@ export class ChoiceScene extends Phaser.Scene {
     const go = (): void => {
       if (routed) return;
       routed = true;
-      this.scene.start("BattlePrepScene", { battleId: choice.openerBattle });
+      this.scene.start("CampScene", { nextChapter: choice.openerBattle });
     };
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", go);

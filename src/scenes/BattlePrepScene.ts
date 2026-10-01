@@ -15,7 +15,11 @@ import { createScrollableText } from "../ui/scrollableText";
 import { clearSuspendedBattle, getAssignedInventory, getSevenPath, loadSave } from "../util/save";
 import type { BattleId } from "../data/contentIds";
 
-interface PrepArgs { battleId: BattleId; }
+interface PrepArgs {
+  battleId: BattleId;
+  /** Opened from the camp's "Start Next Chapter": the back button returns there. */
+  from?: "camp";
+}
 
 const classLabel = (k: ClassKind): string => {
   switch (k) {
@@ -56,7 +60,11 @@ const weaponLabel = (w: WeaponKind): string => {
 export class BattlePrepScene extends Phaser.Scene {
   private battleId!: BattleId;
   constructor() { super("BattlePrepScene"); }
-  init(data: PrepArgs): void { this.battleId = data.battleId; }
+  private fromCamp = false;
+  init(data: PrepArgs): void {
+    this.battleId = data.battleId;
+    this.fromCamp = data.from === "camp";
+  }
 
   create(): void {
     const rawNode = battleById(this.battleId);
@@ -286,10 +294,10 @@ export class BattlePrepScene extends Phaser.Scene {
     new Button(this, {
       x: 60, y: GAME_HEIGHT - 56,
       w: 180, h: 40,
-      label: "◂ Back to Map",
+      label: this.fromCamp ? "◂ Back to Camp" : "◂ Back to Map",
       primary: false,
       fontSize: 14,
-      onClick: () => this.scene.start("OverworldScene")
+      onClick: () => this.scene.start(this.fromCamp ? "CampScene" : "OverworldScene")
     });
     // Inventory — opens the squad pool / per-character bag distribution
     // / trading post modal as a paused overlay. Sits between the map

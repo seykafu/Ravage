@@ -225,47 +225,47 @@ const uiEntries: ManifestEntry[] = [
   { id: "ui:button_hover", path: "assets/ui/button_hover.png", kind: "image" }
 ];
 
-// Camp props — optional PNG / spritesheet overrides for the painted
-// graphics CampScene draws procedurally. Missing files silently fall
-// back to the procedural draw paths (renderWagon / renderCampfire).
+// The camp diorama's art (public/assets/camp/), drawn by CampScene.
 //
-// CURRENT ASSETS (shipped in public/assets/camp/):
-//   wagon.png  — 1536×1024 single transparent PNG, painted covered wagon.
-//                CampScene auto-scales to fit the wagon footprint.
-//   fire.png   — 1536×1024 horizontal spritesheet, 4 frames at 384×1024
-//                each (frames laid out left-to-right). CampScene loads
-//                this and plays a 6fps loop. Each frame's actual fire
-//                content occupies the bottom-center quarter of its
-//                384×1024 cell — CampScene scales the sprite down so
-//                the visible fire reads at ~150-180px tall in the camp.
+// Props are pixel art at the unit sheets' density — every art pixel is
+// drawn at 2 world px, as the camp draws the 32x40 unit frames at 64x80 —
+// and stand on the camp board as billboards, base on the ground. They are
+// painted lit from the RIGHT (an off-picture fire), so CampScene mirrors
+// any prop standing to the right of the camp's fire.
 //
-// If you regenerate either asset at different dimensions, update the
-// frame block below to match — Phaser slices the spritesheet using
-// the exact pixel dimensions registered here.
+//   flames   — 8 frames of 34x50 in one row: the fire's loop, every frame
+//              on one baseline and centred on its base.
+//   firepit  — the stone ring and embers the flames stand in.
+//   sky      — the painted night beyond the board (LINEAR: it is a
+//              painting, not pixel art), drawn by CampBackdropScene.
+//
+// Sources and the generation/processing scripts: art_sources/camp/,
+// scripts/art/gen_camp_art.py, scripts/art/process_camp_art.py.
 const campEntries: ManifestEntry[] = [
-  { id: "camp:wagon", path: "assets/camp/wagon.webp", kind: "image" },
-  { id: "camp:fire",  path: "assets/camp/fire.webp",  kind: "spritesheet", frame: { w: 384, h: 1024 } },
-  // Memorial headstone — ONE painted stone, stamped once per fallen
-  // character by CampScene.renderMemorial (slight alternating tilt per
-  // stamp so a row reads hand-placed, not cloned). Spec for the asset:
-  // portrait orientation (e.g. 1024×1536), transparent background, flat
-  // base (it's bottom-anchored on the ground line), and a smooth BLANK
-  // central face — the fallen character's name is engraved at runtime as
-  // a text overlay, so any baked-in lettering would collide with it.
-  // Missing file falls back to the procedural weathered-stone painter.
-  { id: "camp:memorial_stone", path: "assets/camp/memorial_stone.webp", kind: "image" }
+  { id: "camp:flames", path: "assets/camp/flames.png", kind: "spritesheet", frame: { w: 34, h: 50 } },
+  { id: "camp:firepit", path: "assets/camp/firepit.png", kind: "image" },
+  { id: "camp:wagon", path: "assets/camp/wagon.png", kind: "image" },
+  { id: "camp:tent", path: "assets/camp/tent.png", kind: "image" },
+  { id: "camp:log", path: "assets/camp/log.png", kind: "image" },
+  { id: "camp:crates", path: "assets/camp/crates.png", kind: "image" },
+  { id: "camp:lantern", path: "assets/camp/lantern.png", kind: "image" },
+  { id: "camp:pine", path: "assets/camp/pine.png", kind: "image" },
+  { id: "camp:memorial", path: "assets/camp/memorial.png", kind: "image" },
+  { id: "backdrop:camp_sky", path: "assets/camp/sky.webp", kind: "image" }
 ];
 
 export const MANIFEST: ManifestEntry[] = [
   ...portraitEntries,
   ...unitAnimEntries,
+  // Early in the stream: ~230KB in all, and the camp is often the first
+  // page after the title.
+  ...campEntries,
   ...backdropEntries,
   ...tileEntries,
   ...obstacleEntries,
   ...tallObstacleEntries,
   ...vfxEntries,
-  ...uiEntries,
-  ...campEntries
+  ...uiEntries
 ];
 
 // --------- Runtime check: is a given asset id loaded? ------------------------

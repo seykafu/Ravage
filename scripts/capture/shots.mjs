@@ -448,6 +448,52 @@ export const scenes = [
   { name: "prep", seconds: 1.2, settleFrames: 60, setup: fn(`seedRun(); cap.goto("BattlePrepScene", { battleId: "b18_path_chosen" });`) }
 ];
 
+// CAMP — the camp diorama at three points in the campaign: a fresh save
+// (Amar alone), mid-campaign with the fallen at the memorial and the
+// story having just brought the squad back on the way to a chapter, and
+// the full late-game squad.
+const seedCamp = (done, next) => `
+  const save = cap.save;
+  const s = save.defaultSave();
+  s.completedBattles = ${JSON.stringify(done)};
+  s.unlockedBattles = [...s.completedBattles, ${JSON.stringify(next)}];
+  s.nextChapter = ${JSON.stringify(next)};
+  s.squadDeaths = 1;
+  save.setCurrentSlot(1);
+  save.writeSave(s);
+`;
+const CAMP_ALL = ["b01_palace_coup","b02_farmland","b03_dawn_bandits","b04_swamp","b05_mountain_ndari",
+  "b06_caravan","b07_monastery","b08_orinhal","b09_ravine","b10_leaving_thuling","b11_cliffs","b12_ravage",
+  "b13_dawn_rebellion","b14_origin","b15_inner_coup","b16_proposal","b17_lie","b18_path_chosen",
+  "b19_path_opener_vengeance","b20_dawn_war","b21_archbold_advances","b22_grude_burns",
+  "b23_path_climax_a","b24_path_climax_b","b25_fleet_arrival"];
+export const camp = [
+  { name: "camp_fresh", seconds: 2.5, settleFrames: 30,
+    setup: fn(`${seedCamp([], "b01_palace_coup")} cap.goto("CampScene");`) },
+  { name: "camp_mid", seconds: 2.5, settleFrames: 30,
+    setup: fn(`${seedCamp(CAMP_ALL.slice(0, 17), "b18_path_chosen")} cap.goto("CampScene", { nextChapter: "b18_path_chosen" });`) },
+  { name: "camp_late", seconds: 2.5, settleFrames: 30,
+    setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`) }
+];
+
+// CAMP LIFE — sixteen seconds at the late-game fire, to watch the squad's
+// small scenes (chats, sparring, errands) play out.
+export const campLife = [
+  { name: "camp_life", seconds: 16, settleFrames: 30,
+    setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`) },
+  // The same, with the rarer scenes called on cue so each is seen once.
+  { name: "camp_cued", seconds: 14, settleFrames: 75,
+    setup: fn(`${seedCamp(CAMP_ALL, "b26_coastal_hold")} cap.goto("CampScene");`),
+    each: fn(`
+      const life = cap.game.scene.getScene("CampScene").life;
+      if (arg.i === 0) { life.stop(); life.spar(); }
+      if (arg.i === 15) life.errand();
+      if (arg.i === 30) life.chat();
+      if (arg.i === 200) life.pop();
+      if (arg.i === 230) life.laugh();
+    `) }
+];
+
 // PROMOTED — every Tier 2 class in battle. The live units are promoted in
 // place (classKind swapped, views rebuilt), so no save surgery is needed.
 const PROMOTE = `
@@ -545,4 +591,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]] };
