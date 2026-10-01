@@ -18,6 +18,7 @@ import { RosterScene } from "./scenes/RosterScene";
 import { InterposeScene } from "./scenes/InterposeScene";
 import { InventoryScene } from "./scenes/InventoryScene";
 import { CampScene } from "./scenes/CampScene";
+import { CampBackdropScene } from "./scenes/CampBackdropScene";
 import { GameOverScene } from "./scenes/GameOverScene";
 import { ChoiceScene } from "./scenes/ChoiceScene";
 import { RomanceScene } from "./scenes/RomanceScene";
@@ -77,6 +78,8 @@ const config: Phaser.Types.Core.GameConfig = {
     SaveSlotScene,
     StoryScene,
     OverworldScene,
+    // Directly BEFORE CampScene so the camp's night sky renders under it.
+    CampBackdropScene,
     CampScene,
     BattlePrepScene,
     // Directly BEFORE BattleScene so it renders underneath it — the

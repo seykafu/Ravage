@@ -12,7 +12,7 @@ import { sfxClick, sfxPageTurn } from "../audio/Sfx";
 import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
 import { trackArcStarted } from "../util/analytics";
-import { getSevenPath, loadSave } from "../util/save";
+import { getSevenPath, loadSave, unlockBattle, writeSave } from "../util/save";
 import type { ArcId, RouteRef } from "../data/contentIds";
 
 interface PortraitMeta {
@@ -484,7 +484,20 @@ export class StoryScene extends Phaser.Scene {
       const id = next.slice("prep:".length);
       const node = battleById(id);
       if (node) {
-        this.scene.start("BattlePrepScene", { battleId: node.id });
+        // Between chapters, the story hands the player back to camp with
+        // this battle set as the next chapter ("Start Next Chapter" opens
+        // its prep). The opening scenes lead straight into the first
+        // battle as before: there is no camp to return to yet.
+        const save = loadSave();
+        if (save.completedBattles.length === 0) {
+          this.scene.start("BattlePrepScene", { battleId: node.id });
+          return;
+        }
+        // Unlocked too: the story is sending the squad there (its victory
+        // has normally unlocked it already), and the camp only offers a
+        // chapter that is open.
+        writeSave({ ...unlockBattle(save, node.id), nextChapter: node.id });
+        this.scene.start("CampScene", { nextChapter: node.id });
         return;
       }
     }

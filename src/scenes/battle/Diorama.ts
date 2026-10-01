@@ -317,6 +317,8 @@ export interface DioramaOptions {
    * turning the board turns the same tiles rather than reshuffling them.
    */
   gridOf?: (x: number, y: number) => { x: number; y: number };
+  /** Draw the faint tactics grid over the ground (default on; the camp has none). */
+  gridLines?: boolean;
 }
 
 /**
@@ -633,8 +635,10 @@ export const buildDiorama = (
 
       // Faint grid: legibility without the old checkerboard look. Fainter
       // still on water, where hard lines read as tiles, not waves.
-      rowG[y]!.lineStyle(1, 0x000000, tile.terrain === "water" ? 0.05 : 0.085);
-      rowG[y]!.strokeRect(top.x + 0.5, top.y + 0.5, top.w - 1, top.h - 1);
+      if (opts.gridLines !== false) {
+        rowG[y]!.lineStyle(1, 0x000000, tile.terrain === "water" ? 0.05 : 0.085);
+        rowG[y]!.strokeRect(top.x + 0.5, top.y + 0.5, top.w - 1, top.h - 1);
+      }
 
       // ---- props -----------------------------------------------------
       const tallKey = raised ? tallObstacleTexture(scene, tile.obstacle) : null;

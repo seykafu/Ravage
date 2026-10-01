@@ -61,6 +61,11 @@ export interface SaveState {
   // through BattlePrep, so deaths in failed attempts don't accumulate).
   // Optional for back-compat with pre-lives saves; treat undefined as 0.
   squadDeaths?: number;
+  // The battle the story is leading to next (see data/nextChapter.ts):
+  // set when a between-chapter scene ends, read by the camp's "Start Next
+  // Chapter" button. Optional for back-compat; ignored once that battle
+  // is won.
+  nextChapter?: string | null;
   // Mid-battle suspend snapshot. Written by BattleScene at every turn
   // boundary, cleared when the battle resolves or the player marches in
   // fresh from BattlePrep. Riding inside SaveState means it persists to

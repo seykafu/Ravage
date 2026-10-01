@@ -164,7 +164,12 @@ export class MusicManager {
       to: this.targetVolume,
       duration: fadeMs,
       onUpdate: (t: Phaser.Tweens.Tween) => {
-        if ("setVolume" in sound) (sound as Phaser.Sound.WebAudioSound).setVolume(t.getValue() ?? 0);
+        // Guarded like retireSound's fade: a quick second play() retires and
+        // destroys this sound while its fade-in may still be running, and a
+        // throw inside a tween stops the game loop dead.
+        try {
+          if ("setVolume" in sound) (sound as Phaser.Sound.WebAudioSound).setVolume(t.getValue() ?? 0);
+        } catch { /* sound already destroyed */ }
       }
     });
     this.current = sound;

@@ -1,768 +1,976 @@
 import Phaser from "phaser";
-import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
+import { FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE } from "../util/constants";
 import { getMusic, MUSIC } from "../audio/Music";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
-import { BATTLES } from "../data/battles";
+import { CtaButton } from "../ui/CtaButton";
 import { PLAYERS } from "../data/units";
 import { fallenCharacters, fallenIds, getActiveSquadIds, ROSTER_ORDER } from "../data/activeRoster";
 import { loadSave, MAX_PERMITTED_DEATHS } from "../util/save";
 import { sfxClick } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
-import { ensureUnitTexture } from "../art/UnitArt";
+import { ensureUnitTexture, resolveSpriteClass } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
-import type { UnitDef } from "../combat/types";
+import type { Tile, Unit, UnitDef } from "../combat/types";
 import { resolveCampBeat } from "../data/campTalk";
-import { hasAsset } from "../assets/manifest";
+import { resolveNextChapter } from "../data/nextChapter";
+import type { BattleNode } from "../data/battles";
+import { animKey, hasUnitAnimation } from "../assets/animations";
+import { buildDiorama } from "./battle/Diorama";
+import { ObliqueProjection } from "../render/ObliqueProjection";
+import { applyCinematicFX } from "../art/CinematicFX";
+import { attachPostPipeline } from "../render/postPipelines";
+import { PERSPECTIVE_PIPELINE, PerspectivePipeline } from "../render/PerspectivePipeline";
+import { screenToSource, sourceToScreen, type KeystoneParams } from "../render/keystone";
+import { DEPTH, actorDepth } from "../render/depth";
+import { castFrom, torchShadow, UNIT_FOOT_ORIGIN } from "../render/sun";
+import { bodyCentre, figureAt } from "./battle/HitMask";
+import { addTorchGlow } from "./battle/Lighting";
+import { ensureDotTexture } from "./battle/Atmosphere";
+import { ART_SCALE, CAMP_BOARD, CAMP_KEYSTONE_K, FIRE, ringSlots, type Slot } from "./camp/layout";
+import type { CampBackdropScene } from "./CampBackdropScene";
 
-// CampScene — the squad's home base between battles.
+// CampScene — the squad's home between battles, as a diorama.
 //
-// COMMIT 2 — replaces the placeholder 2×2 button grid with a painted
-// camp tableau: warm sundown backdrop, painted props (wagon, fire,
-// signpost, memorial) with click hotspots, and character sprites
-// anchored around the fire. Each prop AND each character is
-// clickable. Character clicks open a stub modal in this commit; a
-// proper CampTalkScene with portraits + paginated dialogue ships
-// in commit 3.
+// The camp is built the way the battle board is: a slab of ground made by
+// the battle's own diorama builder (scenes/battle/Diorama), seen through
+// the same keystone tilt and bloom, with the painted night in a scene of
+// its own underneath (CampBackdropScene). On it, everything stands up as
+// a billboard sorted by its foot: the squad in a ring round the fire, the
+// wagon, a tent, crates, log benches, a lantern post, pines along the
+// back. The fire is the only real light. A darkness layer covers the
+// board and the fire and lantern cut pools out of it; everything near
+// the fire is warmed by it and throws its shadow away from it.
 //
-// Layout (all y values from screen top, GAME_HEIGHT = 720):
-//   y 0-160     header (camp name + subtitle + status)
-//   y 160-560   camp tableau (wagon / fire / signpost / chars)
-//   y 560-680   memories + roster strip
-//   y 680-720   footer (Title button + settings)
+// Two cameras, as in BattleScene: the world camera carries the tilt and
+// the grade; the UI camera draws the text and buttons flat and sharp on
+// top. Because the world is tilted, nothing in it is a Phaser interactive
+// object — pointers are run back through the keystone math and tested
+// against what is actually drawn (the sprites' pixel masks).
+//
+// What the camp does is unchanged: talk to anyone at the fire, open the
+// wagon (inventory), the roster, the memorial when someone has fallen,
+// back to the title or out to the map. New: "Start Next Chapter", which
+// opens battle prep for the chapter the story is leading to. Between
+// chapters the story now returns the squad here (see StoryScene) rather
+// than dropping them straight into prep, so this is where every chapter
+// starts.
+
+export interface CampArgs {
+  /** Set when the story has just brought the squad here on the way to a battle. */
+  nextChapter?: string;
+}
+
+interface CampChar {
+  id: string;
+  unit: Unit;
+  sprite: Phaser.GameObjects.Sprite;
+  label: Phaser.GameObjects.Text;
+  home: Slot;
+}
+
+/** Something under the pointer that does something when clicked. */
+interface Pickable {
+  imgs: (Phaser.GameObjects.Sprite | Phaser.GameObjects.Image)[];
+  kind: "char" | "prop";
+  label?: Phaser.GameObjects.Text;
+  onClick: () => void;
+}
+
+/** A billboard throwing the fire's shadow. */
+interface Caster {
+  src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+  cast: Phaser.GameObjects.Image;
+}
+
+/** Everything the camp draws; the camp waits for these if they are still streaming in. */
+const CAMP_ART = [
+  "camp:flames", "camp:firepit", "camp:wagon", "camp:tent", "camp:log",
+  "camp:crates", "camp:lantern", "camp:pine", "camp:memorial", "backdrop:camp_sky"
+];
+
+const LANTERN = { x: 418, y: 446 } as const;
+const LIGHT_BRUSH = "camp_light_brush";
+const OUTLINE_OFFSETS: readonly [number, number][] = [[-ART_SCALE, 0], [ART_SCALE, 0], [0, -ART_SCALE], [0, ART_SCALE]];
+
 export class CampScene extends Phaser.Scene {
-  // Pulsing fire glow — kept as a member so the tween can be cleaned
-  // up if the scene shuts down before the tween completes.
-  private fireGlowTween?: Phaser.Tweens.Tween;
+  private args: CampArgs = {};
+  private uiCamera?: Phaser.Cameras.Scene2D.Camera;
+  private keystone: KeystoneParams | null = null;
+  private chars: CampChar[] = [];
+  private picks: Pickable[] = [];
+  private casters: Caster[] = [];
+  private hovered: Pickable | null = null;
+  private outline: Phaser.GameObjects.Image[] = [];
+  private darkness?: Phaser.GameObjects.RenderTexture;
+  private brush?: Phaser.GameObjects.Image;
+  private flameLights: { x: number; y: number; radius: number }[] = [];
+  private flames?: Phaser.GameObjects.Sprite;
+  private propLabels: { text: Phaser.GameObjects.Text; x: number; y: number }[] = [];
+  /** Made while the world is built, but drawn flat by the UI camera (the name labels). */
+  private uiBorn: Phaser.GameObjects.GameObject[] = [];
+  private pointerAt: { x: number; y: number } | null = null;
+  private leaving = false;
+  /** A panel is open over the camp; the board doesn't answer the pointer. */
+  private modal = false;
+  private restartWhenResumed = false;
 
   constructor() { super("CampScene"); }
 
-  create(): void {
-    // ---- Backdrop ----------------------------------------------------------
-    // Warm sundown camp — the campHome backdrop spec gives us amber sky +
-    // warm hills + a baked-in fire glow at the bottom. The campfire
-    // sprite we paint on top sits over that glow so the whole bottom
-    // half of the screen reads as "around the fire."
-    const bgKey = ensureBackdropTexture(this, "bg_camp_home", BACKDROPS.campHome);
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-    // Light vignette — softer than the world map's so the painted
-    // props don't lose their warmth.
-    const v = this.add.graphics();
-    v.fillGradientStyle(0x0a0604, 0x0a0604, 0x05060a, 0x05060a, 0.35, 0.35, 0.6, 0.6);
-    v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-    // ---- Header (title + subtitle + status) -------------------------------
-    this.add.text(GAME_WIDTH / 2, 50, "The Camp", {
-      fontFamily: FAMILY_DISPLAY,
-      fontSize: "48px",
-      color: "#f4d999",
-      stroke: "#1a0e04",
-      strokeThickness: 5,
-      shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 14, fill: true }
-    }).setOrigin(0.5).setLetterSpacing(4);
-
-    const save = loadSave();
-    const subtitle = this.resolveCampSubtitle(save.completedBattles);
-    this.add.text(GAME_WIDTH / 2, 96, subtitle, {
-      fontFamily: FAMILY_BODY,
-      fontSize: "15px",
-      color: "#c9b07a",
-      fontStyle: "italic"
-    }).setOrigin(0.5);
-
-    const squadIds = this.activeSquadIds(save.completedBattles);
-    this.add.text(GAME_WIDTH / 2, 122, `${squadIds.length} ${squadIds.length === 1 ? "soul" : "souls"} at the fire tonight`, {
-      fontFamily: FAMILY_BODY,
-      fontSize: "12px",
-      color: "#7a7165"
-    }).setOrigin(0.5);
-
-    // Lives readout — campaign-wide losses against the death budget.
-    // Greyed out when no losses; warning yellow once any have landed;
-    // crimson on the last life. Sits just under the squad-count line so
-    // the player sees their margin every time they return to camp.
-    const deaths = save.squadDeaths ?? 0;
-    const livesLeft = Math.max(0, MAX_PERMITTED_DEATHS - deaths);
-    const livesColor =
-      deaths === 0 ? "#5a5448" :
-      livesLeft === 0 ? "#a83c3c" :
-      livesLeft === 1 ? "#d8884a" :
-      "#c9b07a";
-    this.add.text(GAME_WIDTH / 2, 140, `Lives remaining: ${livesLeft} / ${MAX_PERMITTED_DEATHS}`, {
-      fontFamily: FAMILY_BODY,
-      fontSize: "12px",
-      color: livesColor
-    }).setOrigin(0.5);
-
-    // ---- Camp tableau (props + characters) --------------------------------
-    // Anchored coordinates picked to leave the fire as the visual
-    // center of gravity. Characters cluster around the fire; the
-    // wagon and signpost frame the clearing left + right; the
-    // memorial spot anchors the bottom-left when fallen exist.
-    this.renderCampfire(640, 380);
-    this.renderWagon(280, 290, () => this.openWagon(save.completedBattles));
-    // Signpost prop removed — replaced with the top-right "Go to Map"
-    // button below. Frees up the right half of the camp's middle band
-    // for character sprites when the squad expands past 6.
-    // Memorial spot only renders when at least one character has
-    // fallen (post-cliffs in the current slice; future commits will
-    // surface scripted character deaths from later chapters too).
-    const fallen = this.fallenCharacters(save.completedBattles);
-    if (fallen.length > 0) {
-      this.renderMemorial(180, 510, fallen);
-    }
-
-    // Character sprites around the fire. Positions arranged so each
-    // character has breathing room and the click hotspots don't
-    // overlap. Defaults to a clockwise layout starting from Amar at
-    // the fire's south side. Each sprite stagger-fades in 100ms
-    // after the previous so the camp "populates" rather than
-    // slamming the squad into view all at once.
-    const positions = this.characterPositions(squadIds.length);
-    squadIds.forEach((id, i) => {
-      const pos = positions[i];
-      if (!pos) return;
-      const fadeDelay = 250 + i * 120;
-      this.renderCharacter(id, pos.x, pos.y, fadeDelay);
-    });
-
-    // ---- Bottom strip: Roster + Memories Wall -----------------------------
-    // Two compact panels for the lighter actions that don't deserve
-    // a full painted prop. Bumped from y=580 to y=548 so the strip
-    // doesn't crowd the Title button at GAME_HEIGHT-56 (664). Sits
-    // ~26px below the character labels (which end ~y=522) and
-    // leaves ~36px of breath above the Title button.
-    const stripY = 548;
-    // Plain-text labels. Emoji glyphs were not rendering reliably
-    // on every platform/font combination — same issue that hit the
-    // "Go to Map" button.
-    this.renderStripPanel(80, stripY, 360, 80,
-      "The Roster",
-      "Review levels, stats, and abilities for every soul in the squad.",
-      () => {
-        sfxClick();
-        this.scene.pause();
-        this.scene.run("RosterScene", { from: this.scene.key });
-      }
-    );
-    this.renderStripPanel(GAME_WIDTH - 80 - 360, stripY, 360, 80,
-      "Memories Wall",
-      "(no memories forged yet — bonds will surface here in a future update)",
-      () => {
-        sfxClick();
-        this.showMemoriesPlaceholder();
-      },
-      /* enabled */ false
-    );
-
-    // ---- Footer -----------------------------------------------------------
-    new Button(this, {
-      x: 40,
-      y: GAME_HEIGHT - 56,
-      w: 140,
-      h: 40,
-      label: "◂ Title",
-      primary: false,
-      fontSize: 14,
-      onClick: () => {
-        sfxClick();
-        this.cameras.main.fadeOut(300, 0, 0, 0);
-        this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("TitleScene"));
-      }
-    });
-
-    // Top-right action: "Go to Map". Replaces the signpost prop —
-    // sits in the corner so the camp's middle band stays clear for
-    // character sprites. Settings gear sits to the right of it so
-    // the corner cluster reads as "scene controls" together.
-    //
-    // Spacing: Settings gear has a 24px hit-radius (48px touch
-    // target) centered at (GAME_WIDTH - 32, 32) — its hit zone
-    // reaches x=1224. Putting Go to Map right edge at x=1200
-    // (the previous layout) gave only 24px gap which felt cramped.
-    // Bumped left by 30px so the button right edge lands at
-    // x=1170 — 54px of breathing room between the two corner
-    // controls, well clear on any display scale.
-    new Button(this, {
-      x: GAME_WIDTH - 110 - 160,
-      y: 24,
-      w: 160,
-      h: 36,
-      label: "Go to Map",
-      primary: true,
-      fontSize: 14,
-      onClick: () => {
-        sfxClick();
-        this.cameras.main.fadeOut(350, 0, 0, 0);
-        this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("OverworldScene"));
-      }
-    });
-
-    new SettingsButton(this, GAME_WIDTH - 32, 32);
-
-    getMusic(this).play(MUSIC.everydayLife, { fadeMs: 1000 });
-    this.cameras.main.fadeIn(450, 0, 0, 0);
-
-    // Clean up tween on scene shutdown so it doesn't tween a destroyed
-    // graphics object after we navigate away.
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      if (this.fireGlowTween) { this.fireGlowTween.stop(); this.fireGlowTween = undefined; }
-    });
+  init(data: CampArgs): void {
+    this.args = data ?? {};
+    this.chars = [];
+    this.picks = [];
+    this.casters = [];
+    this.hovered = null;
+    this.outline = [];
+    this.flameLights = [];
+    this.propLabels = [];
+    this.uiBorn = [];
+    this.pointerAt = null;
+    this.leaving = false;
+    this.modal = false;
+    this.restartWhenResumed = false;
+    this.uiCamera = undefined;
+    this.keystone = null;
+    this.darkness = undefined;
+    this.brush = undefined;
+    this.flames = undefined;
   }
 
-  // ---- Painted props -------------------------------------------------------
+  create(): void {
+    const save = loadSave();
+    this.scene.launch("CampBackdropScene");
 
-  // Pulsing campfire — central anchor of the tableau. Prefers the
-  // animated pixel-art spritesheet at assets/camp/fire.png when
-  // loaded; falls back to a procedural pulsing glow + procedural
-  // stone ring so the scene stays usable until the asset ships.
-  // The outer warm halo is drawn in either case to spill firelight
-  // onto the surrounding ground.
-  private renderCampfire(cx: number, cy: number): Phaser.GameObjects.GameObject {
-    if (hasAsset("camp:fire")) {
-      // Real pixel-art animation. Frame dimensions match the manifest
-      // (384×1024, 4 frames arranged horizontally → spritesheet
-      // 1536×1024). The asset includes its own logs/embers at the
-      // base AND its own warm glow — so we DO NOT draw the procedural
-      // halo OR stone ring on this path. The painted asset is the
-      // entire visual; nothing should compete with it.
-      //
-      // Fire dropped from cy+40 to cy+100 so it sits closer to the
-      // ground / characters and reads as anchored to the camp's
-      // floor rather than floating mid-screen. Earlier offsets had
-      // a 90px gap between the fire's base and the character row at
-      // fy=510 — now ~30px, much tighter.
-      const animKey = "camp_fire_loop";
-      if (!this.anims.exists(animKey)) {
+    // ---- World ------------------------------------------------------------
+    this.buildBoard();
+    this.buildFire();
+    this.buildProps(() => this.openWagon());
+    const fallen = fallenCharacters(save.completedBattles);
+    if (fallen.length > 0) this.buildMemorial(fallen);
+    const squad = this.activeSquadIds(save.completedBattles);
+    const slots = ringSlots(squad.length);
+    squad.forEach((id, i) => {
+      const slot = slots[i];
+      if (slot) this.buildCharacter(id, slot, 300 + i * 110);
+    });
+    this.buildDarkness();
+    const worldSet = new Set<Phaser.GameObjects.GameObject>(this.children.getChildren());
+    for (const o of this.uiBorn) worldSet.delete(o);
+
+    // ---- UI ---------------------------------------------------------------
+    this.buildInfo(squad.length);
+    this.buildButtons(resolveNextChapter(save));
+    new SettingsButton(this, GAME_WIDTH - 32, 32);
+
+    this.setupCameras(worldSet);
+    this.setupInput();
+
+    getMusic(this).play(MUSIC.everydayLife, { fadeMs: 1000 });
+    // The camera settles onto the camp as it fades in.
+    this.cameras.main.setScroll(0, 26);
+    this.cameras.main.fadeIn(500, 0, 0, 0);
+    this.uiCamera?.fadeIn(500, 0, 0, 0);
+    this.backdrop()?.fade(false, 500);
+
+    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+      if (this.restartWhenResumed) this.scene.restart(this.args);
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.setDefaultCursor("default");
+      this.scene.stop("CampBackdropScene");
+    });
+    this.waitForArt();
+  }
+
+  update(time: number): void {
+    const cam = this.cameras.main;
+    // Drift toward the pointer: a few pixels of parallax between the board
+    // and the sky behind it, so the camp reads as a place with depth.
+    const p = this.pointerAt;
+    const tx = p ? ((p.x / RENDER_SCALE - GAME_WIDTH / 2) / (GAME_WIDTH / 2)) * 12 : 0;
+    const ty = p ? ((p.y / RENDER_SCALE - GAME_HEIGHT / 2) / (GAME_HEIGHT / 2)) * 6 : 0;
+    cam.setScroll(cam.scrollX + (tx - cam.scrollX) * 0.05, cam.scrollY + (ty - cam.scrollY) * 0.05);
+    this.backdrop()?.follow(cam.scrollX, cam.scrollY);
+
+    const flicker = 1 + 0.035 * Math.sin(time * 0.011) + 0.02 * Math.sin(time * 0.027 + 1.3) + 0.015 * Math.sin(time * 0.061 + 0.4);
+    this.paintDarkness(flicker);
+    for (const c of this.casters) this.castShadow(c, flicker);
+    for (const c of this.chars) {
+      const at = this.worldToUi(c.sprite.x, c.sprite.y + 4);
+      c.label.setPosition(at.x, at.y).setAlpha(c.sprite.alpha);
+    }
+    for (const l of this.propLabels) {
+      const at = this.worldToUi(l.x, l.y);
+      l.text.setPosition(at.x, at.y);
+    }
+    if (p) this.setHover(this.pickAt(p.x, p.y));
+    this.syncOutline();
+  }
+
+  // ---- The board ------------------------------------------------------------
+
+  private buildBoard(): void {
+    const B = CAMP_BOARD;
+    // A shelf of raised ground in each back corner, where the pines stand:
+    // the board's earth shows in its walls, as it does on the battle board.
+    const elevationAt = (x: number, y: number): number => {
+      if (y === 0) return x <= 5 || x >= B.cols - 6 ? 1 : 0;
+      if (y === 1) return x <= 2 || x >= B.cols - 3 ? 1 : 0;
+      return 0;
+    };
+    const tiles: Tile[][] = [];
+    for (let y = 0; y < B.rows; y++) {
+      const row: Tile[] = [];
+      for (let x = 0; x < B.cols; x++) {
+        row.push({
+          pos: { x, y },
+          terrain: y === 0 || elevationAt(x, y) > 0 ? "forest" : "grass",
+          obstacle: "none",
+          defendBonus: 1,
+          blocksMovement: false,
+          blocksLineOfSight: false,
+          hitPenalty: 0
+        });
+      }
+      tiles.push(row);
+    }
+    const projection = new ObliqueProjection({
+      originX: B.originX,
+      originY: B.originY,
+      tileW: B.tileW,
+      tileH: B.tileH,
+      elevStep: B.elevStep,
+      slabDepth: B.slabDepth,
+      gridWidth: B.cols,
+      gridHeight: B.rows,
+      elevationAt
+    });
+    buildDiorama(this, {
+      width: B.cols,
+      height: B.rows,
+      tileAt: (p) => tiles[p.y]![p.x]!
+    }, projection, {
+      footDY: 0,
+      seed: 31,
+      elevationAt,
+      elevStep: B.elevStep,
+      gridLines: false
+    });
+
+    // The trampled clearing round the fire: the board's own dirt, feathered
+    // into the grass so it reads as worn ground, not a square of tiles.
+    const clearing = this.ensureClearingTexture();
+    this.add.image(FIRE.x, FIRE.y + 8, clearing).setDepth(DEPTH.TERRAIN_FX).setAlpha(0.92);
+
+    // The far edge sinks into the night before it meets the treeline.
+    const fog = this.add.graphics().setDepth(DEPTH.GROUND_OVERLAY);
+    fog.fillGradientStyle(0x050a18, 0x050a18, 0x050a18, 0x050a18, 0.6, 0.6, 0, 0);
+    fog.fillRect(B.originX, B.originY - B.elevStep, B.cols * B.tileW, B.tileH * 2.2);
+  }
+
+  private ensureClearingTexture(): string {
+    const key = "camp_clearing";
+    if (this.textures.exists(key)) return key;
+    const W = 640, H = 280;
+    const tex = this.textures.createCanvas(key, W, H);
+    if (!tex) return key;
+    const ctx = tex.getContext();
+    const dirt = this.textures.exists("tile:dirt")
+      ? this.textures.get("tile:dirt").getSourceImage() as HTMLImageElement
+      : null;
+    if (dirt && dirt.width) {
+      // One board tile of dirt, foreshortened like the board's, repeated.
+      const cell = document.createElement("canvas");
+      cell.width = CAMP_BOARD.tileW;
+      cell.height = CAMP_BOARD.tileH;
+      cell.getContext("2d")!.drawImage(dirt, 0, 0, cell.width, cell.height);
+      ctx.fillStyle = ctx.createPattern(cell, "repeat") ?? "#5a4632";
+    } else {
+      ctx.fillStyle = "#5a4632";
+    }
+    ctx.fillRect(0, 0, W, H);
+    // Feather it to an ellipse.
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(1, H / W);
+    const g = ctx.createRadialGradient(0, 0, W * 0.16, 0, 0, W / 2);
+    g.addColorStop(0, "rgba(0,0,0,1)");
+    g.addColorStop(0.62, "rgba(0,0,0,0.75)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(-W / 2, -W / 2, W, W);
+    ctx.restore();
+    ctx.globalCompositeOperation = "source-over";
+    tex.refresh();
+    return key;
+  }
+
+  // ---- The fire ---------------------------------------------------------------
+
+  private buildFire(): void {
+    const fx = FIRE.x, fy = FIRE.y;
+    this.flameLights.push({ x: fx, y: fy, radius: FIRE.radius });
+    // Light on the ground: a wide warm pool and a hot heart.
+    addTorchGlow(this, fx, fy + 6, { depth: DEPTH.LIGHT, scaleX: 6.6, scaleY: 3.1 }).setAlpha(0.42);
+    addTorchGlow(this, fx, fy + 4, { depth: DEPTH.LIGHT, scaleX: 2.6, scaleY: 1.2 }).setAlpha(0.7);
+
+    if (this.textures.exists("camp:firepit")) {
+      this.add.image(fx, fy, "camp:firepit")
+        .setOrigin(0.5, 0.62)
+        .setScale(ART_SCALE)
+        .setDepth(actorDepth(fy - 14));
+    }
+    if (this.textures.exists("camp:flames")) {
+      if (!this.anims.exists("camp_flames")) {
         this.anims.create({
-          key: animKey,
-          frames: this.anims.generateFrameNumbers("camp:fire", { start: 0, end: 3 }),
-          frameRate: 6,
+          key: "camp_flames",
+          frames: this.anims.generateFrameNumbers("camp:flames", { start: 0, end: 7 }),
+          frameRate: 11,
           repeat: -1
         });
       }
-      const sprite = this.add.sprite(cx, cy + 100, "camp:fire");
-      sprite.setOrigin(0.5, 1); // bottom-center anchor
-      sprite.setScale(0.35);
-      sprite.play(animKey);
-      return sprite;
+      this.flames = this.add.sprite(fx, fy + 6, "camp:flames")
+        .setOrigin(0.5, 1)
+        .setScale(ART_SCALE)
+        .setDepth(actorDepth(fy))
+        .play("camp_flames");
+      // A second, smaller fire burning inside the first, out of step with
+      // it and added on top: the flame's heart flickers on its own.
+      this.add.sprite(fx, fy + 4, "camp:flames")
+        .setOrigin(0.5, 1)
+        .setScale(ART_SCALE * 0.62, ART_SCALE * 0.7)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.55)
+        .setDepth(actorDepth(fy) + 1e-5)
+        .play({ key: "camp_flames", startFrame: 4, timeScale: 1.3 });
     }
+    // The halo round the flames.
+    addTorchGlow(this, fx, fy - 46, { depth: actorDepth(fy) + 2e-5, scaleX: 2.3, scaleY: 2.3 }).setAlpha(0.5);
 
-    // Procedural fallback path — only drawn when the painted asset
-    // isn't loaded. Halo + stone ring give the procedural glow some
-    // visual structure to sit on.
-    const halo = this.add.graphics();
-    halo.fillStyle(0xefa45a, 0.18);
-    halo.fillCircle(cx, cy + 12, 120);
-    halo.setBlendMode(Phaser.BlendModes.ADD);
-
-    const stones = this.add.graphics();
-    stones.fillStyle(0x3a2a1c, 1);
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      const sx = cx + Math.cos(a) * 56;
-      const sy = cy + Math.sin(a) * 22 + 30;
-      stones.fillCircle(sx, sy, 7);
-    }
-    stones.fillStyle(0x2a1a10, 1);
-    stones.fillEllipse(cx, cy + 28, 100, 28);
-
-    // Procedural fallback — additive-blended orange disc + scale/
-    // alpha tween. Same look as before the asset slot existed.
-    const glow = this.add.graphics();
-    glow.fillStyle(0xff7a2a, 0.55);
-    glow.fillCircle(cx, cy + 8, 36);
-    glow.fillStyle(0xffd966, 0.85);
-    glow.fillCircle(cx, cy + 12, 18);
-    glow.setBlendMode(Phaser.BlendModes.ADD);
-    this.fireGlowTween = this.tweens.add({
-      targets: glow,
-      scale: { from: 0.92, to: 1.08 },
-      alpha: { from: 0.85, to: 1 },
-      yoyo: true,
-      repeat: -1,
-      duration: 700,
-      ease: "Sine.easeInOut"
-    });
-    return glow;
+    const dot = ensureDotTexture(this);
+    // Sparks.
+    this.add.particles(fx, fy - 34, dot, {
+      x: { min: -16, max: 16 },
+      lifespan: { min: 1100, max: 2300 },
+      speedY: { min: -78, max: -34 },
+      speedX: { min: -14, max: 14 },
+      accelerationX: { min: -10, max: 16 },
+      scale: { start: 0.3, end: 0 },
+      alpha: { start: 1, end: 0 },
+      tint: [0xffe08a, 0xffa040, 0xff6a20],
+      blendMode: Phaser.BlendModes.ADD,
+      frequency: 120
+    }).setDepth(actorDepth(fy) + 3e-5);
+    // Smoke, drifting off to the right.
+    this.add.particles(fx, fy - 92, dot, {
+      x: { min: -8, max: 8 },
+      lifespan: 4400,
+      speedY: { min: -26, max: -14 },
+      speedX: { min: 3, max: 12 },
+      scale: { start: 1.3, end: 4.6 },
+      alpha: { start: 0.11, end: 0 },
+      tint: 0x6e6a74,
+      frequency: 280
+    }).setDepth(actorDepth(fy) + 4e-5);
   }
 
-  // Helper for the staggered entry animation. Sets the target's
-  // alpha to 0 immediately, then tweens it to 1 after `delay` ms.
-  // Used on every prop + character sprite so the camp "settles in"
-  // rather than slamming into view all at once. Subtle but reads
-  // as intentional pacing — the player feels they've ARRIVED at a
-  // place.
-  private stagger(target: Phaser.GameObjects.GameObject & { alpha: number }, delay: number, duration = 350): void {
-    target.alpha = 0;
-    this.tweens.add({
-      targets: target,
-      alpha: 1,
-      delay,
-      duration,
-      ease: "Sine.easeOut"
-    });
+  // ---- Props ----------------------------------------------------------------
+
+  /**
+   * Stand a camp billboard with its base at (x, y). The art is lit from the
+   * right, so anything right of the fire is mirrored to face its light.
+   */
+  private prop(
+    key: string,
+    x: number,
+    y: number,
+    opts: { scale?: number; flip?: boolean; shadow?: boolean } = {}
+  ): Phaser.GameObjects.Image | null {
+    if (!this.textures.exists(key)) return null;
+    const s = ART_SCALE * (opts.scale ?? 1);
+    const flip = opts.flip ?? x > FIRE.x;
+    const img = this.add.image(x, y, key)
+      .setOrigin(0.5, 1)
+      .setScale(s)
+      .setFlipX(flip)
+      .setDepth(actorDepth(y))
+      .setTint(this.warmth(x, y));
+    this.add.ellipse(x, y - 2, img.displayWidth * 0.78, Math.max(8, img.displayWidth * 0.16), 0x000000, 0.32)
+      .setDepth(DEPTH.SHADOW);
+    if (opts.shadow !== false) this.addCaster(img);
+    return img;
   }
 
-  // The wagon — clickable hotspot that opens the inventory + trade
-  // screen. Prefers the painted PNG at assets/camp/wagon.png when
-  // loaded; falls back to a procedural wood-box silhouette so the
-  // scene stays usable until the asset ships.
-  private renderWagon(cx: number, cy: number, onClick: () => void): void {
-    const w = 240;
-    const h = 200;
+  private buildProps(openWagon: () => void): void {
+    // Pines along the back, on the raised shelves, and two at the sides
+    // framing the clearing.
+    this.prop("camp:pine", 34, 353, { scale: 1.12, flip: false });
+    this.prop("camp:pine", 146, 341, { scale: 0.96, flip: false });
+    this.prop("camp:pine", 236, 352, { scale: 0.8, flip: false });
+    this.prop("camp:pine", 1060, 350, { scale: 0.84 });
+    this.prop("camp:pine", 1150, 341, { scale: 1.0 });
+    this.prop("camp:pine", 1252, 353, { scale: 1.16 });
+    this.prop("camp:pine", -6, 488, { scale: 1.08, flip: false });
+    this.prop("camp:pine", 1290, 500, { scale: 1.12 });
 
-    if (hasAsset("camp:wagon")) {
-      // Real painted asset — display centered at (cx, cy), scaled to
-      // fit the same hotspot footprint the procedural draw uses so
-      // the click target is consistent regardless of asset choice.
-      const img = this.add.image(cx, cy, "camp:wagon");
-      // Scale to fit within w×h while preserving aspect ratio.
-      const tex = this.textures.get("camp:wagon").getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-      const sx = w / (tex.width || w);
-      const sy = h / (tex.height || h);
-      const scale = Math.min(sx, sy);
-      img.setScale(scale);
-    } else {
-      // Procedural fallback — wood box + canvas top + wheels.
-      const fbW = 200;
-      const fbH = 130;
-      const g = this.add.graphics();
-      g.fillStyle(0x3a2818, 1);
-      g.fillRect(cx - fbW / 2, cy - fbH / 2, fbW, fbH - 24);
-      g.lineStyle(2, 0x5a3e22, 1);
-      g.strokeRect(cx - fbW / 2, cy - fbH / 2, fbW, fbH - 24);
-      g.fillStyle(0xc9b07a, 0.92);
-      g.fillEllipse(cx, cy - fbH / 2 + 4, fbW, 50);
-      g.lineStyle(2, 0x9a8458, 1);
-      g.strokeEllipse(cx, cy - fbH / 2 + 4, fbW, 50);
-      g.fillStyle(0x1a0e04, 1);
-      g.fillCircle(cx - fbW / 2 + 22, cy + fbH / 2 - 22, 16);
-      g.fillCircle(cx + fbW / 2 - 22, cy + fbH / 2 - 22, 16);
-      g.fillStyle(0x5a3e22, 1);
-      g.fillCircle(cx - fbW / 2 + 22, cy + fbH / 2 - 22, 6);
-      g.fillCircle(cx + fbW / 2 - 22, cy + fbH / 2 - 22, 6);
-      // No emoji glyph on the procedural wagon — same rendering
-      // concern that hit the Roster / Memories Wall buttons.
+    this.prop("camp:tent", 318, 404, { flip: false });
+    this.prop("camp:lantern", LANTERN.x, LANTERN.y, { flip: false });
+    // The lantern is the camp's second light: a glow at the glass and a
+    // small pool under it.
+    this.flameLights.push({ x: LANTERN.x + 6, y: LANTERN.y, radius: 150 });
+    addTorchGlow(this, LANTERN.x + 7, LANTERN.y - 56, { depth: actorDepth(LANTERN.y) + 1e-5, scaleX: 0.7, scaleY: 0.7 });
+    addTorchGlow(this, LANTERN.x + 7, LANTERN.y + 2, { depth: DEPTH.LIGHT, scaleX: 1.7, scaleY: 0.8 }).setAlpha(0.5);
+
+    const wagon = this.prop("camp:wagon", 1000, 412, { flip: false });
+    this.prop("camp:crates", 1134, 430);
+    // Log benches either side of the fire.
+    // (No cast shadow: a log's silhouette stood up and leaned back reads as
+    // a dark board behind it, not a shadow on the ground.)
+    this.prop("camp:log", FIRE.x - 128, FIRE.y - 16, { flip: false, shadow: false });
+    this.prop("camp:log", FIRE.x + 132, FIRE.y - 10, { shadow: false });
+
+    if (wagon) {
+      const label = this.add.text(0, 0, "Wagon · Inventory", {
+        fontFamily: FAMILY_HEADING,
+        fontSize: "13px",
+        color: "#f4d999",
+        stroke: "#1a0e04",
+        strokeThickness: 3
+      }).setOrigin(0.5, 0);
+      this.propLabels.push({ text: label, x: wagon.x, y: wagon.y + 4 });
+      this.uiBorn.push(label);
+      this.picks.push({ imgs: [wagon], kind: "prop", label, onClick: openWagon });
     }
-
-    this.add.text(cx, cy + h / 2 + 4, "Wagon — Inventory + Trade", {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "13px",
-      color: "#f4d999",
-      stroke: "#1a0e04",
-      strokeThickness: 3
-    }).setOrigin(0.5);
-
-    this.attachHotspot(cx - w / 2, cy - h / 2, w, h + 20, onClick);
   }
 
-  // (renderSignpost removed — "Go to Map" lives as a top-right
-  // corner button now so the camp's middle band stays clear for
-  // character sprites as the squad expands past 6.)
-
-  // Memorial spot — only renders when fallen characters exist.
-  // One headstone per fallen name, with the name carved visible.
-  // Click opens a quiet narrator beat about who they were.
-  //
-  // Prefers the painted asset at assets/camp/memorial_stone.png (ONE
-  // stone, stamped per fallen with a slight alternating tilt so a row
-  // reads hand-placed). Falls back to a procedural weathered headstone:
-  // arch-top tablet, left-edge bevel shadow + top catch-light (firelight
-  // comes from the camp's fire, up and to the RIGHT of this spot), a
-  // hairline crack, moss at the foot, grass tufts. Names are engraved at
-  // runtime as text in BOTH paths — which is why the painted asset must
-  // keep its central face blank.
-  private renderMemorial(cx: number, cy: number, fallen: { id: string; name: string }[]): void {
-    const SPACING = 58;
+  // Memorial — only when someone has fallen. One stone per name, engraved,
+  // each leaning a little its own way; Lucian's spear planted at the end
+  // of the row. Clicking opens a quiet beat about who they were.
+  private buildMemorial(fallen: { id: string; name: string }[]): void {
+    const cx = 214, cy = 598;
+    const SPACING = 46;
     const startX = cx - ((fallen.length - 1) * SPACING) / 2;
-
-    // Bare-earth mound under the whole row, wide enough for any count.
-    const g = this.add.graphics();
-    g.fillStyle(0x2a2218, 1);
-    g.fillEllipse(cx, cy + 30, Math.max(140, fallen.length * SPACING + 50), 24);
-
-    const usePainted = hasAsset("camp:memorial_stone");
-
+    this.add.ellipse(cx, cy - 2, Math.max(110, fallen.length * SPACING + 40), 20, 0x2a2218, 0.9)
+      .setDepth(DEPTH.SHADOW);
+    const stones: Phaser.GameObjects.Image[] = [];
     fallen.forEach((f, i) => {
       const sx = startX + i * SPACING;
-      const sy = cy;
-      // Alternate the lean a touch per stone — old graves settle unevenly.
       const tilt = (i % 2 === 0 ? -1 : 1) * 0.035;
-
-      // Engraved name: fits the ~46px face. Longer names drop a font step
-      // rather than truncating to initials (LUCIAN at 8px ≈ 34px wide).
+      if (!this.textures.exists("camp:memorial")) return;
+      const img = this.add.image(sx, cy, "camp:memorial")
+        .setOrigin(0.5, 1)
+        .setScale(ART_SCALE)
+        .setRotation(tilt)
+        .setDepth(actorDepth(cy))
+        .setTint(this.warmth(sx, cy));
+      this.addCaster(img);
+      stones.push(img);
       const carved = f.name.toUpperCase();
-      const nameSize = carved.length > 5 ? 8 : 10;
-
-      if (usePainted) {
-        const img = this.add.image(0, 8, "camp:memorial_stone").setOrigin(0.5, 1);
-        const tex = this.textures.get("camp:memorial_stone").getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-        img.setScale(74 / (tex.height || 74));
-        const name = this.add.text(0, -32, carved, {
-          fontFamily: FAMILY_HEADING, fontSize: `${nameSize}px`, color: "#241a10"
-        }).setOrigin(0.5);
-        this.add.container(sx, sy, [img, name]).setRotation(tilt);
-        return;
-      }
-
-      // ---- Procedural weathered headstone (local coords, tilted container) ----
-      const sg = this.add.graphics();
-      // Plinth the tablet sits on.
-      sg.fillStyle(0x4a4036, 1);
-      sg.fillRoundedRect(-27, -4, 54, 12, 3);
-      // Tablet with arched top.
-      sg.fillStyle(0x7d7668, 1);
-      sg.fillRoundedRect(-23, -58, 46, 60, { tl: 22, tr: 22, bl: 3, br: 3 });
-      // Left-edge bevel in shadow (fire is up-right of the memorial).
-      sg.fillStyle(0x5a5448, 0.9);
-      sg.fillRect(-23, -38, 6, 40);
-      // Catch-light along the arch's right shoulder.
-      sg.fillStyle(0x99917f, 0.8);
-      sg.fillRoundedRect(0, -57, 18, 6, 3);
-      // Outline.
-      sg.lineStyle(1.5, 0x241a10, 1);
-      sg.strokeRoundedRect(-23, -58, 46, 60, { tl: 22, tr: 22, bl: 3, br: 3 });
-      // Hairline crack from the arch shoulder, alternating side per stone.
-      const cs = i % 2 === 0 ? -1 : 1;
-      sg.lineStyle(1, 0x3a342a, 0.7);
-      sg.beginPath();
-      sg.moveTo(cs * 10, -52);
-      sg.lineTo(cs * 14, -40);
-      sg.lineTo(cs * 9, -30);
-      sg.strokePath();
-      // Moss at the foot corners.
-      sg.fillStyle(0x4a5d3a, 0.55);
-      sg.fillEllipse(-15, -3, 14, 8);
-      sg.fillEllipse(17, 1, 10, 6);
-      // Grass tufts in front of the plinth.
-      sg.fillStyle(0x55683c, 0.9);
-      sg.fillTriangle(-20, 8, -18, -2, -16, 8);
-      sg.fillTriangle(12, 9, 14, 0, 16, 9);
-      sg.fillTriangle(22, 8, 24, 1, 26, 8);
-      // Carved name + a short rule under it, engraved into the face.
-      const name = this.add.text(0, -34, carved, {
-        fontFamily: FAMILY_HEADING, fontSize: `${nameSize}px`, color: "#241a10"
-      }).setOrigin(0.5);
-      const rule = this.add.graphics();
-      rule.lineStyle(1, 0x241a10, 0.6);
-      rule.lineBetween(-9, -26, 9, -26);
-
-      this.add.container(sx, sy, [sg, name, rule]).setRotation(tilt);
+      this.add.text(sx + Math.sin(tilt) * 40, cy - 40, carved, {
+        fontFamily: FAMILY_HEADING,
+        fontSize: `${carved.length > 5 ? 7 : 8}px`,
+        color: "#2a2016"
+      }).setOrigin(0.5).setRotation(tilt).setAlpha(0.85).setDepth(actorDepth(cy) + 1e-6);
     });
 
-    // Lucian-specific: his spear, planted at the row's end the way
-    // soldiers mark their own. Leans a few degrees, worn haft wrap at
-    // the grip, firelight catching the blade's right edge (the camp
-    // fire is up-right of this spot). Quiet and readable at a glance —
-    // replaced an earlier festival-pennant graphic that read as noise.
     if (fallen.find((f) => f.id === "lucian")) {
       const sg = this.add.graphics();
-      // Haft — weathered ash wood, darker at the soil line.
       sg.fillStyle(0x5a4530, 1);
       sg.fillRect(-1.5, -66, 3, 74);
       sg.fillStyle(0x3c2e1e, 1);
       sg.fillRect(-1.5, 2, 3, 6);
-      // Grip wrap: three worn leather bands where his hands lived.
       sg.fillStyle(0x2e2318, 1);
       sg.fillRect(-2.5, -34, 5, 3);
       sg.fillRect(-2.5, -28, 5, 3);
       sg.fillRect(-2.5, -22, 5, 3);
-      // Blade — leaf-shaped head, dark steel with a firelit right edge.
       sg.fillStyle(0x6e7076, 1);
       sg.fillTriangle(0, -88, -5, -66, 5, -66);
       sg.fillStyle(0xc9a86a, 0.9);
       sg.fillTriangle(0, -88, 2, -70, 5, -66);
-      // Socket collar.
       sg.fillStyle(0x4a4038, 1);
       sg.fillRect(-3, -67, 6, 3);
-      // Soil mound where it was driven in.
       sg.fillStyle(0x2a2218, 1);
       sg.fillEllipse(0, 6, 18, 6);
-      const spear = this.add.container(cx + 70, cy + 24, [sg]);
-      spear.setRotation(0.06);
+      const x = startX + (fallen.length - 1) * SPACING + 40;
+      sg.setPosition(x, cy - 6).setRotation(0.06).setDepth(actorDepth(cy - 6));
     }
 
-    this.add.text(cx, cy + 56, "Memorial", {
+    const label = this.add.text(0, 0, "Memorial", {
       fontFamily: FAMILY_HEADING,
       fontSize: "12px",
       color: "#c9b07a",
       stroke: "#1a0e04",
       strokeThickness: 2
-    }).setOrigin(0.5);
-
-    // Hotspot grows with the row so a third/fourth stone stays clickable.
-    const hotW = Math.max(160, fallen.length * 58 + 50);
-    this.attachHotspot(cx - hotW / 2, cy - 70, hotW, 120, () => this.showMemorialBeat(fallen));
+    }).setOrigin(0.5, 0);
+    this.propLabels.push({ text: label, x: cx, y: cy + 4 });
+    this.uiBorn.push(label);
+    if (stones.length) this.picks.push({ imgs: stones, kind: "prop", label, onClick: () => this.showMemorialBeat(fallen) });
   }
 
-  // Character sprite + click hotspot. Sprite uses the unit's
-  // existing texture (procedural or shipped, whichever loaded).
-  // Name label below in the squad's gold-on-black house style.
-  // Click hotspot is bigger than the sprite to give a generous
-  // click target on the character's full silhouette.
-  // The optional fadeDelay staggers the entry animation so squad
-  // members appear one at a time, ~120ms apart, when the camp
-  // loads.
-  private renderCharacter(id: string, x: number, y: number, fadeDelay = 0): void {
+  // ---- The squad -------------------------------------------------------------
+
+  private buildCharacter(id: string, slot: Slot, fadeDelay: number): void {
     const factory = this.resolvePlayerFactory(id);
     if (!factory) return;
     const def = factory();
-    const u = createUnit(def, { x: 0, y: 0 });
-    const tex = ensureUnitTexture(this, u);
-    const sprite = this.add.sprite(x, y, tex).setDisplaySize(64, 80).setOrigin(0.5, 1);
-    // Soft cast shadow so the sprite reads as standing on the ground
-    // rather than floating above the painted backdrop.
-    const shadow = this.add.ellipse(x, y + 4, 50, 14, 0x000000, 0.45);
-    void shadow;
+    const unit = createUnit(def, { x: 0, y: 0 });
+    const tex = ensureUnitTexture(this, unit);
+    const sprite = this.add.sprite(slot.x, slot.y, tex)
+      .setOrigin(0.5, UNIT_FOOT_ORIGIN)
+      .setDisplaySize(64, 80)
+      .setFlipX(slot.faceLeft)
+      .setDepth(actorDepth(slot.y))
+      .setTint(this.warmth(slot.x, slot.y));
+    const cls = resolveSpriteClass(this, unit);
+    if (hasUnitAnimation(cls, "idle")) {
+      // Out of step with each other: a ring breathing in unison reads as a
+      // screensaver, not people.
+      sprite.play({
+        key: animKey(cls, "idle"),
+        startFrame: Math.floor(Math.random() * 2),
+        timeScale: 0.85 + Math.random() * 0.3
+      });
+    }
+    this.add.ellipse(slot.x, slot.y + 1, 34, 10, 0x000000, 0.38).setDepth(DEPTH.SHADOW);
+    this.addCaster(sprite);
 
-    // Name label
-    const name = this.add.text(x, y + 12, def.name, {
+    const label = this.add.text(0, 0, def.name, {
       fontFamily: FAMILY_HEADING,
-      fontSize: "13px",
+      fontSize: "12px",
       color: "#f4d999",
       stroke: "#1a0e04",
       strokeThickness: 3
     }).setOrigin(0.5, 0);
+    this.uiBorn.push(label);
+    sprite.setAlpha(0);
+    this.tweens.add({ targets: sprite, alpha: 1, delay: fadeDelay, duration: 380, ease: "Sine.easeOut" });
 
-    // Stagger entry — sprite + name fade in together so the
-    // character "arrives" at their spot rather than just appearing.
-    // Cheap pacing detail; the camera's own fadeIn handles the
-    // overall scene reveal.
-    if (fadeDelay > 0) {
-      this.stagger(sprite as unknown as Phaser.GameObjects.GameObject & { alpha: number }, fadeDelay);
-      this.stagger(name as unknown as Phaser.GameObjects.GameObject & { alpha: number }, fadeDelay);
-    }
-
-    // Click hotspot — a transparent zone over the sprite. Opens a
-    // BattleDialogueScene overlay with the character's resolved
-    // idle line. Reusing BattleDialogueScene avoids a redundant
-    // scene; the styling (paused-overlay portrait + dim parent
-    // showing through) translates perfectly to "click on Amar at
-    // the fire."
-    this.attachHotspot(x - 36, y - 80, 72, 100, () => this.openCharacterTalk(def.id));
-    void sprite;
+    this.chars.push({ id: def.id, unit, sprite, label, home: slot });
+    this.picks.push({ imgs: [sprite], kind: "char", label, onClick: () => this.openCharacterTalk(def.id) });
   }
 
-  // Resolve the character's current-era idle line, then pause the
-  // camp and run BattleDialogueScene as a single-beat overlay.
-  // BattleDialogueScene's resume contract returns control here when
-  // the player clicks Continue — same flow the in-battle dialogues
-  // use, no new plumbing needed.
+  // ---- Light ----------------------------------------------------------------
+
+  /** Firelight on a billboard: warm near the flames, untouched far off. */
+  private warmth(x: number, y: number): number {
+    const d = Math.hypot(x - FIRE.x, (y - FIRE.y) * 1.5);
+    const f = Math.max(0, 1 - d / FIRE.radius) * 0.85;
+    const g = Math.round(255 - 52 * f), b = Math.round(255 - 112 * f);
+    return (0xff << 16) | (g << 8) | b;
+  }
+
+  private addCaster(src: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image): void {
+    const cast = this.add.image(src.x, src.y, src.texture.key, src.frame.name)
+      .setOrigin(src.originX, src.originY)
+      .setTintFill(0x000000)
+      .setAlpha(0)
+      .setDepth(DEPTH.TORCH_SHADOW);
+    this.casters.push({ src, cast });
+  }
+
+  private castShadow(c: Caster, flicker: number): void {
+    const { src, cast } = c;
+    const sun = torchShadow(src.x, src.y, this.flameLights);
+    if (!sun || !src.visible) { cast.setVisible(false); return; }
+    if (cast.frame.name !== src.frame.name || cast.texture.key !== src.texture.key) {
+      cast.setTexture(src.texture.key, src.frame.name);
+    }
+    castFrom(cast, src, sun);
+    cast.setPosition(src.x, src.y).setVisible(true).setAlpha(Math.min(0.62, sun.alpha * flicker) * src.alpha);
+  }
+
+  // The night over the board, with the fire's and the lantern's light cut
+  // out of it — the battle's darkness layer (see BattleScene's spotlight),
+  // breathing with the flame.
+  private buildDarkness(): void {
+    if (!this.textures.exists(LIGHT_BRUSH)) {
+      const size = 256;
+      const tex = this.textures.createCanvas(LIGHT_BRUSH, size, size);
+      if (tex) {
+        const ctx = tex.getContext();
+        const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        g.addColorStop(0, "rgba(255,255,255,1)");
+        g.addColorStop(0.3, "rgba(255,255,255,0.92)");
+        g.addColorStop(0.7, "rgba(255,255,255,0.35)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+        tex.refresh();
+      }
+    }
+    this.darkness = this.add.renderTexture(-140, 90, GAME_WIDTH + 280, GAME_HEIGHT - 60)
+      .setOrigin(0, 0)
+      .setDepth(DEPTH.DARKNESS)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY);
+    this.brush = this.make.image({ key: LIGHT_BRUSH, add: false });
+    this.paintDarkness(1);
+    // Moonlight: the darkness alone left the grass a deep saturated olive.
+    // A faint cool blue added over everything lifts the shadows toward the
+    // night sky's colour without lighting them. Added, not painted over:
+    // a normal-blend layer would lower the board's alpha over the sky. Only
+    // over the board's own ground and slab, which are opaque everywhere:
+    // added onto the transparent sky above it, it would paint it over.
+    const B = CAMP_BOARD;
+    this.add.rectangle(B.originX, B.originY, B.cols * B.tileW, B.rows * B.tileH + B.slabDepth, 0x02060e, 1)
+      .setOrigin(0, 0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(DEPTH.DARKNESS + 0.1);
+  }
+
+  private paintDarkness(flicker: number): void {
+    const rt = this.darkness, brush = this.brush;
+    if (!rt || !brush) return;
+    rt.clear();
+    rt.fill(0x0a1230, 0.72);
+    for (const [i, l] of this.flameLights.entries()) {
+      const s = ((l.radius * 2) / 256) * (i === 0 ? flicker : 1);
+      brush.setPosition(l.x - rt.x, l.y - 30 - rt.y).setScale(s, s * 0.74);
+      rt.erase(brush);
+    }
+  }
+
+  // ---- Cameras and input -----------------------------------------------------
+
+  private setupCameras(worldSet: Set<Phaser.GameObjects.GameObject>): void {
+    applyCinematicFX(this, { bloomIntensity: 0.95, saturation: 0.1, brightness: 1.02 });
+    const pipe = attachPostPipeline(this.cameras.main, this.game, PERSPECTIVE_PIPELINE, PerspectivePipeline);
+    if (pipe) {
+      this.keystone = { k: CAMP_KEYSTONE_K, centerX: 0.5 };
+      pipe.k = this.keystone.k;
+      pipe.centerX = this.keystone.centerX;
+    }
+    this.uiCamera = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    const all = this.children.getChildren();
+    const ui = all.filter((o) => !worldSet.has(o));
+    for (const o of ui) this.ignoreDeep(this.cameras.main, o);
+    this.uiCamera.ignore(all.filter((o) => worldSet.has(o)));
+  }
+
+  private ignoreDeep(cam: Phaser.Cameras.Scene2D.Camera, o: Phaser.GameObjects.GameObject): void {
+    cam.ignore(o);
+    if (o instanceof Phaser.GameObjects.Container) for (const c of o.list) this.ignoreDeep(cam, c);
+  }
+
+  /** Route an object made after create() to the flat UI camera only. */
+  private ui<T extends Phaser.GameObjects.GameObject>(o: T): T {
+    this.ignoreDeep(this.cameras.main, o);
+    return o;
+  }
+
+  private setupInput(): void {
+    this.input.on(Phaser.Input.Events.POINTER_MOVE, (p: Phaser.Input.Pointer) => {
+      this.pointerAt = { x: p.x, y: p.y };
+    });
+    this.input.on(Phaser.Input.Events.GAME_OUT, () => {
+      this.pointerAt = null;
+      this.setHover(null);
+    });
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (over.length > 0) return;
+      const hit = this.pickAt(p.x, p.y);
+      if (hit) hit.onClick();
+    });
+  }
+
+  /** A pointer (game px) → the world point drawn there, through the tilt. */
+  private screenToWorld(px: number, py: number): { x: number; y: number } | null {
+    const cam = this.cameras.main;
+    let sx = px, sy = py;
+    if (this.keystone) {
+      const src = screenToSource(px, py, cam.width, cam.height, this.keystone);
+      if (!src) return null;
+      sx = src.x;
+      sy = src.y;
+    }
+    const wp = cam.getWorldPoint(sx, sy);
+    return { x: wp.x, y: wp.y };
+  }
+
+  /** A world point → where it shows on screen, in UI (design) px. */
+  private worldToUi(wx: number, wy: number): { x: number; y: number } {
+    const cam = this.cameras.main;
+    const bx = (wx - cam.scrollX) * cam.zoom, by = (wy - cam.scrollY) * cam.zoom;
+    const s = this.keystone ? sourceToScreen(bx, by, cam.width, cam.height, this.keystone) : { x: bx, y: by };
+    return { x: s.x / RENDER_SCALE, y: s.y / RENDER_SCALE };
+  }
+
+  // What the pointer is on: a companion if any is under it (the nearest
+  // body when two overlap, as on the battle board), otherwise the
+  // front-most prop.
+  private pickAt(px: number, py: number): Pickable | null {
+    if (this.leaving || this.modal) return null;
+    const w = this.screenToWorld(px, py);
+    if (!w) return null;
+    let best: Pickable | null = null, bestD = Infinity, bestProp: Pickable | null = null, bestDepth = -Infinity;
+    for (const pk of this.picks) {
+      for (const img of pk.imgs) {
+        if (!img.visible || img.alpha < 0.2 || !figureAt(img, w.x, w.y, true)) continue;
+        if (pk.kind === "char") {
+          const c = bodyCentre(img);
+          const d = Math.hypot(w.x - c.x, w.y - c.y);
+          if (d < bestD) { bestD = d; best = pk; }
+        } else if (img.depth > bestDepth) {
+          bestDepth = img.depth;
+          bestProp = pk;
+        }
+      }
+    }
+    return best ?? bestProp;
+  }
+
+  private setHover(pk: Pickable | null): void {
+    if (pk === this.hovered) return;
+    this.hovered?.label?.setColor("#f4d999").setScale(1);
+    this.hovered = pk;
+    for (const o of this.outline) o.destroy();
+    this.outline = [];
+    if (!pk) {
+      this.input.setDefaultCursor("default");
+      return;
+    }
+    this.input.setDefaultCursor("pointer");
+    pk.label?.setColor("#fff6d8").setScale(1.12);
+    // A one-art-pixel gold outline: four gold copies, one pixel out each way.
+    for (const img of pk.imgs) {
+      for (const [dx, dy] of OUTLINE_OFFSETS) {
+        const o = this.add.image(img.x + dx, img.y + dy, img.texture.key, img.frame.name)
+          .setOrigin(img.originX, img.originY)
+          .setScale(img.scaleX, img.scaleY)
+          .setFlipX(img.flipX)
+          .setRotation(img.rotation)
+          .setTintFill(0xffd97a)
+          .setAlpha(0.95)
+          .setDepth(img.depth - 1e-7);
+        o.setData("src", img).setData("dx", dx).setData("dy", dy);
+        this.uiCamera?.ignore(o);
+        this.outline.push(o);
+      }
+    }
+  }
+
+  private syncOutline(): void {
+    for (const o of this.outline) {
+      const src = o.getData("src") as Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+      if (o.frame.name !== src.frame.name) o.setFrame(src.frame.name);
+      o.setPosition(src.x + (o.getData("dx") as number), src.y + (o.getData("dy") as number))
+        .setFlipX(src.flipX)
+        .setAlpha(0.95 * src.alpha)
+        .setDepth(src.depth - 1e-7);
+    }
+  }
+
+  // ---- UI ---------------------------------------------------------------------
+
+  private buildInfo(souls: number): void {
+    const save = loadSave();
+    const shade = this.add.graphics();
+    shade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.62, 0, 0.5, 0);
+    shade.fillRect(0, 0, 620, 172);
+    this.add.text(36, 22, "The Camp", {
+      fontFamily: FAMILY_DISPLAY,
+      fontSize: "42px",
+      color: "#f4d999",
+      stroke: "#1a0e04",
+      strokeThickness: 5,
+      shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 14, fill: true }
+    }).setLetterSpacing(3);
+    this.add.text(38, 80, this.resolveCampSubtitle(save.completedBattles), {
+      fontFamily: FAMILY_BODY,
+      fontSize: "15px",
+      color: "#d4bc86",
+      fontStyle: "italic",
+      stroke: "#000",
+      strokeThickness: 2
+    });
+    // Lives — campaign-wide losses against the death budget. Grey with no
+    // losses, warning amber once any have landed, crimson on the last.
+    const deaths = save.squadDeaths ?? 0;
+    const livesLeft = Math.max(0, MAX_PERMITTED_DEATHS - deaths);
+    const livesColor =
+      deaths === 0 ? "#8a8272" :
+      livesLeft === 0 ? "#d05050" :
+      livesLeft === 1 ? "#e0945a" :
+      "#d4bc86";
+    const soulsText = this.add.text(38, 108, `${souls} ${souls === 1 ? "soul" : "souls"} at the fire tonight`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "13px",
+      color: "#a59b88"
+    });
+    this.add.text(soulsText.x + soulsText.width + 14, 108, `·   Lives remaining: ${livesLeft} / ${MAX_PERMITTED_DEATHS}`, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "13px",
+      color: livesColor
+    });
+    this.add.text(38, 132, "Click anyone at the fire to talk · the wagon holds your supplies", {
+      fontFamily: FAMILY_BODY,
+      fontSize: "12px",
+      color: "#7d7666",
+      fontStyle: "italic"
+    });
+  }
+
+  private buildButtons(next: BattleNode | null): void {
+    // The way on: two large buttons in the bottom-right corner, where the
+    // eye goes for "continue". Start Next Chapter (when there is one) is
+    // the gold one, and glows.
+    const W = 344, cx = GAME_WIDTH - 24 - W / 2;
+    const startH = 76, mapH = next ? 52 : 62;
+    const startY = GAME_HEIGHT - 22 - startH / 2;
+    const mapY = next ? startY - startH / 2 - 14 - mapH / 2 : GAME_HEIGHT - 22 - mapH / 2;
+    if (next) {
+      const start = new CtaButton(this, {
+        x: cx,
+        y: startY,
+        w: W,
+        h: startH,
+        label: "Start Next Chapter  ▸",
+        sublabel: `${next.title}: ${next.subtitle}`,
+        primary: true,
+        fontSize: 23,
+        pulse: true,
+        onClick: () => this.leave(() => this.scene.start("BattlePrepScene", { battleId: next.id, from: "camp" }))
+      });
+      if (this.args.nextChapter) {
+        // Brought here by the story on the way to a battle: the button
+        // arrives a beat after the camp does, so the eye finds it.
+        start.setAlpha(0).setScale(0.82);
+        this.tweens.add({ targets: start, alpha: 1, scale: 1, delay: 700, duration: 520, ease: "Back.easeOut" });
+      }
+    }
+    new CtaButton(this, {
+      x: cx,
+      y: mapY,
+      w: W,
+      h: mapH,
+      label: "Go to Map",
+      fontSize: 19,
+      onClick: () => this.leave(() => this.scene.start("OverworldScene"))
+    });
+
+    // Everything else, smaller, bottom-left.
+    const bw = 116, bh = 38, by = GAME_HEIGHT - 22 - bh, gap = 8;
+    const small: { label: string; onClick: () => void; enabled?: boolean }[] = [
+      { label: "◂ Title", onClick: () => this.leave(() => this.scene.start("TitleScene")) },
+      { label: "Roster", onClick: () => { this.scene.pause(); this.scene.run("RosterScene", { from: this.scene.key }); } },
+      { label: "Inventory", onClick: () => this.openWagon() },
+      // Bonds will surface here in a future update.
+      { label: "Memories", onClick: () => this.showMemoriesPlaceholder(), enabled: false }
+    ];
+    small.forEach((b, i) => {
+      new Button(this, {
+        x: 24 + i * (bw + gap),
+        y: by,
+        w: bw,
+        h: bh,
+        label: b.label,
+        fontSize: 14,
+        enabled: b.enabled,
+        onClick: b.onClick
+      });
+    });
+  }
+
+  private backdrop(): CampBackdropScene | undefined {
+    const s = this.scene.get("CampBackdropScene") as CampBackdropScene | undefined;
+    return s && s.sys.isActive() ? s : undefined;
+  }
+
+  private leave(go: () => void): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.setHover(null);
+    this.cameras.main.fadeOut(350, 0, 0, 0);
+    this.uiCamera?.fadeOut(350, 0, 0, 0);
+    this.backdrop()?.fade(true, 350);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, go);
+  }
+
+  // The camp can be reached seconds after boot ("Resume Last Slot"), before
+  // its art has streamed in. Small as it is, if any of it is still on its
+  // way, rebuild the camp once it lands rather than leave a bare board.
+  private waitForArt(): void {
+    const missing = CAMP_ART.filter((k) => !this.textures.exists(k));
+    if (!missing.length) return;
+    const stream = this.scene.get("AssetStreamScene");
+    const loader = stream?.load;
+    if (!loader || !loader.isLoading()) return;
+    const pending = new Set(missing);
+    let arrived = 0;
+    const rebuild = (): void => {
+      if (this.leaving) return;
+      if (this.scene.isPaused()) this.restartWhenResumed = true;
+      else this.scene.restart(this.args);
+    };
+    const onFile = (key: string): void => {
+      if (!pending.delete(key)) return;
+      arrived++;
+      if (pending.size === 0) { off(); rebuild(); }
+    };
+    const onDone = (): void => { off(); if (arrived > 0) rebuild(); };
+    const off = (): void => {
+      loader.off(Phaser.Loader.Events.FILE_COMPLETE, onFile);
+      loader.off(Phaser.Loader.Events.COMPLETE, onDone);
+    };
+    loader.on(Phaser.Loader.Events.FILE_COMPLETE, onFile);
+    loader.once(Phaser.Loader.Events.COMPLETE, onDone);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, off);
+  }
+
+  // ---- Actions ----------------------------------------------------------------
+
+  // Resolve the character's current-era idle line, then pause the camp and
+  // run BattleDialogueScene as a single-beat overlay; its resume contract
+  // hands control back here when the player clicks Continue.
   private openCharacterTalk(characterId: string): void {
     sfxClick();
     const save = loadSave();
     const beat = resolveCampBeat(characterId, save.completedBattles);
+    this.setHover(null);
     this.scene.pause();
-    this.scene.run("BattleDialogueScene", {
-      beats: [beat],
-      resumeKey: this.scene.key
-    });
+    this.scene.run("BattleDialogueScene", { beats: [beat], resumeKey: this.scene.key });
   }
 
-  // Shared hotspot helper — adds a transparent interactive zone +
-  // gold ring on hover. Reused by every painted prop.
-  private attachHotspot(x: number, y: number, w: number, h: number, onClick: () => void): void {
-    const zone = this.add.zone(x, y, w, h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    const ring = this.add.graphics();
-    zone.on("pointerover", () => {
-      ring.clear();
-      ring.lineStyle(2, 0xffd97a, 0.85);
-      ring.strokeRoundedRect(x + 0.5, y + 0.5, w - 1, h - 1, 4);
-    });
-    zone.on("pointerout", () => ring.clear());
-    zone.on("pointerdown", onClick);
-  }
-
-  // ---- Compact strip panels (Roster + Memories Wall) -----------------------
-  // Smaller cousins of the painted props above; used for the lighter
-  // actions that don't deserve a full painted hotspot.
-  private renderStripPanel(
-    x: number, y: number, w: number, h: number,
-    label: string, desc: string,
-    onClick: () => void,
-    enabled = true
-  ): void {
-    const g = this.add.graphics();
-    drawPanel(g, x, y, w, h);
-    if (!enabled) {
-      const grey = this.add.graphics();
-      grey.fillStyle(0x000000, 0.45);
-      grey.fillRect(x, y, w, h);
-    }
-    this.add.text(x + 16, y + 12, label, {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "16px",
-      color: enabled ? "#f4d999" : "#7a7165",
-      stroke: "#1a0e04",
-      strokeThickness: 3
-    });
-    this.add.text(x + 16, y + 38, desc, {
-      fontFamily: FAMILY_BODY,
-      fontSize: "12px",
-      color: enabled ? "#dad3bd" : "#5a5a62",
-      wordWrap: { width: w - 32 },
-      lineSpacing: 4
-    });
-    if (enabled) {
-      this.attachHotspot(x, y, w, h, onClick);
-    }
-  }
-
-  // ---- Wagon entrypoint (commit 1, unchanged) ------------------------------
-  private openWagon(completedBattles: string[]): void {
-    const next = this.resolveNextBattle(completedBattles);
+  private openWagon(): void {
+    const next = resolveNextChapter(loadSave());
     if (!next) {
-      const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 90, "Nothing to prep — the squad's caught up to the road's end.", {
+      const t = this.ui(this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, "Nothing to prep — the squad's caught up to the road's end.", {
         fontFamily: FAMILY_BODY,
         fontSize: "14px",
-        color: "#c9b07a"
-      }).setOrigin(0.5);
-      this.tweens.add({ targets: t, alpha: 0, duration: 1800, onComplete: () => t.destroy() });
+        color: "#c9b07a",
+        stroke: "#000",
+        strokeThickness: 3
+      }).setOrigin(0.5));
+      this.tweens.add({ targets: t, alpha: 0, delay: 600, duration: 1800, onComplete: () => t.destroy() });
       return;
     }
     sfxClick();
+    this.setHover(null);
     this.scene.pause();
-    this.scene.run("InventoryScene", {
-      battleId: next,
-      resumeKey: this.scene.key
-    });
-  }
-
-  private resolveNextBattle(completedBattles: string[]): string | null {
-    const save = loadSave();
-    for (const b of BATTLES) {
-      if (!b.playable) continue;
-      if (completedBattles.includes(b.id)) continue;
-      if (!save.unlockedBattles.includes(b.id)) continue;
-      return b.id;
-    }
-    return null;
-  }
-
-  // ---- Layout helpers ------------------------------------------------------
-
-  // Anchored positions for character sprites around the fire. Layout
-  // changes by squad size so 1-character posts look intentional and
-  // big-squad posts don't crowd or overlap props.
-  //
-  // Spatial budget (informs the per-count layouts below):
-  //   * Wagon footprint — x=160-400, y=190-390. Characters can
-  //     sit BELOW the wagon (y >= 430) at any x, but shouldn't
-  //     overlap horizontally if positioned at the wagon's y.
-  //   * Fire stones — x=580-700, y=380-440. Characters' top edge
-  //     at y=fy-80 enters this zone if fy <= 520; positioning
-  //     directly south of the fire is the canonical look.
-  //   * Strip panels (Roster + Memories Wall) — y=548-628. Front-
-  //     row character labels sit at y=fy+12, so fy=510 puts the
-  //     label at 522 with 26px to the strip top — comfortable.
-  //   * Title button — y=664. ~36px below the strip's bottom edge.
-  //
-  // SQUAD-SIZE LAYOUTS:
-  //   1-6: single arc south of the fire. Center characters slightly
-  //        forward (fy + 20-30) so the arc curves toward the fire.
-  //   7-8: wider single arc. Spacing tightens; arc curves less.
-  //   9-10: two rows. Front row (5 characters at fy+10) takes
-  //         priority for the new joiners; back row (4-5 characters
-  //         at fy-30) takes the originals + later additions. Back-
-  //         row sprites sit BEHIND the front row visually but the
-  //         click hotspots layer correctly because back-row is
-  //         rendered first.
-  //
-  // BACK ROW + FIRE COLLISION:
-  //   The fire's stone ring extends from x=580 to x=700 at y=380-440.
-  //   Back row at y=480 (sprite top y=400) would clip the fire's
-  //   stones if positioned at x=580-700. To avoid this, the back row
-  //   layouts skip the x=580-700 band — characters sit either side
-  //   of the fire (3 left of x=560, 2-3 right of x=720), with the
-  //   front row covering the central x band.
-  //
-  // BEYOND 10 CHARACTERS:
-  //   Not designed for. The campaign tops out around 10 active
-  //   members per the script. If we ever exceed that, the next
-  //   layout step is a third row OR scrolling the camp horizontally.
-  private characterPositions(count: number): { x: number; y: number }[] {
-    const fy = 510; // baseline ground line for the front row
-    const fyBack = 480; // back-row baseline (sprite top y=400, ~30px above front)
-
-    const layouts: Record<number, { x: number; y: number }[]> = {
-      1: [{ x: 640, y: fy }],
-      2: [{ x: 580, y: fy }, { x: 700, y: fy }],
-      3: [{ x: 540, y: fy }, { x: 640, y: fy + 20 }, { x: 740, y: fy }],
-      4: [{ x: 500, y: fy }, { x: 600, y: fy + 20 }, { x: 700, y: fy + 20 }, { x: 800, y: fy }],
-      5: [{ x: 460, y: fy }, { x: 560, y: fy + 20 }, { x: 660, y: fy + 30 }, { x: 760, y: fy + 20 }, { x: 860, y: fy }],
-      6: [{ x: 440, y: fy }, { x: 530, y: fy + 20 }, { x: 620, y: fy + 30 }, { x: 700, y: fy + 30 }, { x: 790, y: fy + 20 }, { x: 880, y: fy }],
-      // Single-row stretches — tighten spacing as count grows.
-      7: [
-        { x: 410, y: fy }, { x: 490, y: fy + 15 }, { x: 570, y: fy + 25 },
-        { x: 640, y: fy + 30 },
-        { x: 710, y: fy + 25 }, { x: 790, y: fy + 15 }, { x: 870, y: fy }
-      ],
-      8: [
-        { x: 380, y: fy }, { x: 460, y: fy + 12 }, { x: 540, y: fy + 22 }, { x: 610, y: fy + 28 },
-        { x: 680, y: fy + 28 }, { x: 750, y: fy + 22 }, { x: 830, y: fy + 12 }, { x: 910, y: fy }
-      ],
-      // Two-row layouts. Back row STRADDLES the fire (3 left, 2 right
-      // for 9; 3 left, 3 right for 10) — never sits in the x=580-700
-      // band where the fire's stone ring is. Front row takes 5 spots
-      // across the full arc.
-      9: [
-        // Back row (4 — left+right of fire, none center)
-        { x: 380, y: fyBack }, { x: 460, y: fyBack }, { x: 760, y: fyBack }, { x: 840, y: fyBack },
-        // Front row (5 — full arc south of fire)
-        { x: 420, y: fy + 10 }, { x: 530, y: fy + 25 }, { x: 640, y: fy + 30 },
-        { x: 750, y: fy + 25 }, { x: 860, y: fy + 10 }
-      ],
-      10: [
-        // Back row (5 — 3 left of fire, 2 right; the asymmetry
-        // mirrors how the squad usually clusters around someone
-        // talking on the right)
-        { x: 360, y: fyBack }, { x: 440, y: fyBack }, { x: 520, y: fyBack },
-        { x: 760, y: fyBack }, { x: 840, y: fyBack },
-        // Front row (5)
-        { x: 400, y: fy + 10 }, { x: 510, y: fy + 25 }, { x: 620, y: fy + 30 },
-        { x: 730, y: fy + 25 }, { x: 840, y: fy + 10 }
-      ]
-    };
-    return layouts[Math.min(10, Math.max(1, count))] ?? [];
+    this.scene.run("InventoryScene", { battleId: next.id, resumeKey: this.scene.key });
   }
 
   private resolvePlayerFactory(id: string): (() => UnitDef) | undefined {
-    // Derived from the shared ROSTER_ORDER table — this method used to
-    // carry its own id→factory map, the THIRD private fork of the
-    // roster data, and like the others it had gone stale: Veya and
-    // Corin resolved to undefined and silently never rendered at the
-    // fire even though activeSquadIds listed them. One table now feeds
-    // the battle rosters, the roster UI, and the camp.
-    //
-    // amar_true (the pre-amnesia B1 statline) shares amar's canonical
-    // camp sprite.
+    // amar_true (the pre-amnesia B1 statline) shares amar's camp sprite.
     if (id === "amar_true") return PLAYERS.amar;
     return ROSTER_ORDER.find((r) => r.recordId === id)?.factory;
   }
 
-  // Fallen-character resolver — returns the names + ids of squad
-  // members who have died scripted deaths in completed battles.
-  // Currently just Lucian (post_cliffs after B11). Future scripted
-  // deaths in B13/B17/etc. plug in here.
-  private fallenCharacters(completedBattles: string[]): { id: string; name: string }[] {
-    // Shared table — see FALLEN_AFTER in src/data/activeRoster.ts, which
-    // also drives the living-roster subtraction below.
-    return fallenCharacters(completedBattles);
+  private activeSquadIds(completedBattles: string[]): string[] {
+    // The dead don't stand at the fire (Rose dies in B13's post-arc while
+    // still in its battle roster).
+    const gone = fallenIds(completedBattles);
+    const living = getActiveSquadIds(completedBattles).filter((id) => !gone.has(id));
+    // Fresh save, nothing completed — show Amar so camp isn't empty.
+    return living.length > 0 ? living : ["amar"];
   }
 
-  // ---- Memorial / Memories overlays ----------------------------------------
+  // ---- Memorial / Memories overlays -------------------------------------------
 
   private showMemorialBeat(fallen: { id: string; name: string }[]): void {
     sfxClick();
-    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7).setInteractive();
-    const panelW = 540;
-    const panelX = (GAME_WIDTH - panelW) / 2;
-
-    // Per-character memorial text. Lucian is the only canonical
-    // death in the playable slice; future scripted deaths add
-    // entries here.
+    this.setHover(null);
     const blocks: string[] = [];
     for (const f of fallen) {
       if (f.id === "lucian") {
@@ -773,42 +981,46 @@ export class CampScene extends Phaser.Scene {
         blocks.push(`${f.name} — fell in the line of duty.`);
       }
     }
-    // Measure-first layout: the panel grows to fit the text instead of the
-    // text overflowing a fixed panel (with two fallen, the old fixed 280px
-    // panel ran the body under the Close button). Create the body off-panel,
-    // measure its wrapped height, then size and place everything around it.
-    // If the roster of the fallen ever outgrows the screen, step the font
-    // down a notch before clamping.
-    const TITLE_ZONE = 64;   // panel top → body top (title + gap)
-    const BUTTON_ZONE = 66;  // body bottom → panel bottom (gap + 36px button + margin)
-    const MAX_PANEL_H = GAME_HEIGHT - 80;
-    const body = this.add.text(0, 0, blocks.join("\n\n"), {
+    this.showOverlay("At the Memorial", blocks.join("\n\n"));
+  }
+
+  private showMemoriesPlaceholder(): void {
+    this.showOverlay("Memories Wall",
+      "Bonds between characters get forged at specific story beats — saving someone's life, sharing a Ravaged turn, standing back-to-back at a moment that mattered. Each forged bond will live on this wall as a named memory ('The South Ford', 'The Practice Yard') and unlock a combined technique when both characters are adjacent in battle.\n\nNo memories forged yet. Coming in a future update.");
+  }
+
+  // A modal panel on the UI camera, sized to its text: the body is measured
+  // first and the panel grows to fit it (stepping the font down if even
+  // that would overflow the screen).
+  private showOverlay(heading: string, text: string): void {
+    const dim = this.ui(this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7)
+      .setInteractive().setDepth(100));
+    const panelW = 540;
+    const panelX = (GAME_WIDTH - panelW) / 2;
+    const TITLE_ZONE = 64, BUTTON_ZONE = 66, MAX_PANEL_H = GAME_HEIGHT - 80;
+    const body = this.ui(this.add.text(0, 0, text, {
       fontFamily: FAMILY_BODY,
       fontSize: "13px",
       color: "#dad3bd",
       wordWrap: { width: panelW - 48 },
       lineSpacing: 5
-    });
+    }));
     if (TITLE_ZONE + body.height + BUTTON_ZONE > MAX_PANEL_H) {
       body.setFontSize(12);
       body.setLineSpacing(4);
     }
     const panelH = Math.max(220, Math.min(MAX_PANEL_H, TITLE_ZONE + body.height + BUTTON_ZONE));
     const panelY = (GAME_HEIGHT - panelH) / 2;
-
-    const pg = this.add.graphics();
+    const pg = this.ui(this.add.graphics().setDepth(101));
     drawPanel(pg, panelX, panelY, panelW, panelH);
-    const title = this.add.text(panelX + panelW / 2, panelY + 22, "At the Memorial", {
+    const title = this.ui(this.add.text(panelX + panelW / 2, panelY + 22, heading, {
       fontFamily: FAMILY_HEADING,
       fontSize: "22px",
       color: "#f4d999"
-    }).setOrigin(0.5, 0);
-    body.setPosition(panelX + 24, panelY + TITLE_ZONE);
-    // Draw order: the panel + title were created after the body, so pull the
-    // body above the panel graphics.
-    body.setDepth(1); title.setDepth(1);
-
-    const closeBtn = new Button(this, {
+    }).setOrigin(0.5, 0).setDepth(102));
+    body.setPosition(panelX + 24, panelY + TITLE_ZONE).setDepth(102);
+    this.modal = true;
+    const closeBtn: Button = this.ui(new Button(this, {
       x: panelX + panelW / 2 - 70,
       y: panelY + panelH - 50,
       w: 140,
@@ -818,55 +1030,13 @@ export class CampScene extends Phaser.Scene {
       fontSize: 13,
       onClick: () => {
         dim.destroy(); pg.destroy(); title.destroy(); body.destroy(); closeBtn.destroy();
+        this.modal = false;
       }
-    });
+    }).setDepth(102));
   }
 
-  private showMemoriesPlaceholder(): void {
-    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7).setInteractive();
-    const panelW = 540;
-    const panelX = (GAME_WIDTH - panelW) / 2;
-    // Measure-first layout, same pattern as showMemorialBeat above: the
-    // fixed 240px panel put ~130px of wrapped copy into a ~126px zone and
-    // ran the last line under the Close button. Panel now grows to fit.
-    const TITLE_ZONE = 64;
-    const BUTTON_ZONE = 66;
-    const body = this.add.text(0, 0,
-      "Bonds between characters get forged at specific story beats — saving someone's life, sharing a Ravaged turn, standing back-to-back at a moment that mattered. Each forged bond will live on this wall as a named memory ('The South Ford', 'The Practice Yard') and unlock a combined technique when both characters are adjacent in battle.\n\nNo memories forged yet. Coming in a future update.",
-      {
-        fontFamily: FAMILY_BODY,
-        fontSize: "13px",
-        color: "#dad3bd",
-        wordWrap: { width: panelW - 48 },
-        lineSpacing: 5
-      }
-    );
-    const panelH = Math.max(220, Math.min(GAME_HEIGHT - 80, TITLE_ZONE + body.height + BUTTON_ZONE));
-    const panelY = (GAME_HEIGHT - panelH) / 2;
-    const pg = this.add.graphics();
-    drawPanel(pg, panelX, panelY, panelW, panelH);
-    const title = this.add.text(panelX + panelW / 2, panelY + 24, "Memories Wall", {
-      fontFamily: FAMILY_HEADING,
-      fontSize: "22px",
-      color: "#f4d999"
-    }).setOrigin(0.5, 0);
-    body.setPosition(panelX + 24, panelY + TITLE_ZONE);
-    body.setDepth(1); title.setDepth(1);
-    const closeBtn = new Button(this, {
-      x: panelX + panelW / 2 - 70,
-      y: panelY + panelH - 50,
-      w: 140,
-      h: 36,
-      label: "Close",
-      primary: false,
-      fontSize: 13,
-      onClick: () => {
-        dim.destroy(); pg.destroy(); title.destroy(); body.destroy(); closeBtn.destroy();
-      }
-    });
-  }
+  // ---- Subtitle -----------------------------------------------------------------
 
-  // ---- Subtitle resolver (unchanged from commit 1) -------------------------
   private resolveCampSubtitle(completedBattles: string[]): string {
     const last = completedBattles[completedBattles.length - 1];
     if (!last) return "Outside the palace gates, before everything begins";
@@ -884,22 +1054,4 @@ export class CampScene extends Phaser.Scene {
     if (last === "b11_cliffs") return "Below decks, Madame Dawn's ship — the long crossing has begun";
     return "Somewhere in the long crossing — destination Grude";
   }
-
-  // ---- Active squad resolver (unchanged from commit 1) ---------------------
-  private activeSquadIds(completedBattles: string[]): string[] {
-    // Shared resolver — see src/data/activeRoster.ts. This method used
-    // to carry a private copy of the squad table that stopped updating
-    // at B11: everyone recruited after the crossing (Rose, Veya, Corin,
-    // the returning Selene and Ranatoli) never appeared at the fire.
-    const ids = getActiveSquadIds(completedBattles);
-    // The dead don't stand at the fire. Rose is in B13's battle roster
-    // and dies in its post-arc, so without this she was clickable at the
-    // campfire while her headstone stood ten feet away.
-    const gone = fallenIds(completedBattles);
-    const living = ids.filter((id) => !gone.has(id));
-    // Fresh save, nothing completed — show Amar so camp isn't empty.
-    return living.length > 0 ? living : ["amar"];
-  }
 }
-
-void COLORS;
