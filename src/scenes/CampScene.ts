@@ -181,9 +181,10 @@ export class CampScene extends Phaser.Scene {
     this.uiCamera?.fadeIn(500, 0, 0, 0);
     this.backdrop()?.fade(false, 500);
 
-    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+    const onResume = (): void => {
       if (this.restartWhenResumed) this.scene.restart(this.args);
-    });
+    };
+    this.events.on(Phaser.Scenes.Events.RESUME, onResume);
     // The squad comes alive once it has gathered.
     this.life = new CampLife({
       scene: this,
@@ -195,6 +196,8 @@ export class CampScene extends Phaser.Scene {
     this.life.start(300 + squad.length * 110 + 1400);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      // Scene events outlive shutdown; the camp is entered many times.
+      this.events.off(Phaser.Scenes.Events.RESUME, onResume);
       this.life?.stop();
       this.input.setDefaultCursor("default");
       this.scene.stop("CampBackdropScene");
