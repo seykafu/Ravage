@@ -117,6 +117,9 @@ export class StoryScene extends Phaser.Scene {
   init(data: StoryArgs): void {
     this.arcId = data.arcId;
     this.idx = 0;
+    // The scene is reused for every arc; these belonged to the last one.
+    this.portrait = undefined;
+    this.speakPulse = undefined;
   }
 
   create(): void {
