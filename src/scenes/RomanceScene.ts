@@ -35,6 +35,12 @@ export class RomanceScene extends Phaser.Scene {
   constructor() { super("RomanceScene"); }
 
   create(): void {
+    // Scene instances are reused: a second ending in one session found the
+    // last visit's (destroyed) commit button still set, made no new one,
+    // and left no way to answer.
+    this.selected = null;
+    this.highlights = new Map();
+    this.commitBtn = undefined;
     const save = loadSave();
     const path = getSevenPath(save);
     const pair = path ? PATH_ROMANCES[path] : undefined;

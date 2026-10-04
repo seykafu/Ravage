@@ -526,6 +526,18 @@ export class BattleScene extends Phaser.Scene {
     // lazily recreates them in the new scene lifetime.
     this.moveGhost = undefined;
     this.lastPathKey = null;
+    // The same for the hover x-ray (the silhouette of a unit seen through
+    // whatever covers it, and the tile outline drawn over the actors). Left
+    // pointing at the last battle's destroyed objects, the first hover over
+    // a covered unit in the next battle retextured a dead image, which threw
+    // inside update() and stopped the game loop: the battle froze.
+    this.xrayImg = undefined;
+    this.xrayUnitId = null;
+    this.cursorTopG = undefined;
+    // Never on the display list, so shutdown doesn't destroy it; it would
+    // carry over working, but nothing of one battle should outlive it.
+    this.lightBrush?.destroy();
+    this.lightBrush = undefined;
   }
 
   create(): void {
@@ -843,7 +855,7 @@ export class BattleScene extends Phaser.Scene {
     // Listener is `on` not `once` because the same scene resumes many
     // times across a battle (every dialogue, every modal). The
     // SHUTDOWN listener registered separately tears it down.
-    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+    const onResume = (): void => {
       // Any press armed before the pause is stale — the overlay owned it.
       this.pressBegunInScene = false;
       this.refreshAllUnits();
@@ -863,7 +875,12 @@ export class BattleScene extends Phaser.Scene {
       // restore may have raced the pause — never come back from a
       // dialogue in slow motion.
       this.applyTurnSpeed();
-    });
+    };
+    this.events.on(Phaser.Scenes.Events.RESUME, onResume);
+    // Scene events outlive the scene's shutdown (the instance is reused for
+    // every battle), so without this each battle added another resume
+    // handler and they all ran on every resume of every later battle.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.RESUME, onResume));
 
     // The suspend write is idle-deferred (see writeSuspend). Two exits
     // bypass idle: scene shutdown (DevJump warp, defeat restart) and the
@@ -2592,7 +2609,7 @@ export class BattleScene extends Phaser.Scene {
    * "which one am I pointing at?" and knowing.
    */
   private updateXray(tile: TilePos): void {
-    if (!this.cursorTopG) {
+    if (!this.cursorTopG?.active) {
       this.cursorTopG = this.addWorld(this.add.graphics().setDepth(this.xrayDepth() + 0.1));
     }
     this.cursorTopG.clear();
@@ -2670,7 +2687,8 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const s = v.sprite;
-    if (!this.xrayImg) {
+    // `active` too: a destroyed image must never be reused (see init).
+    if (!this.xrayImg?.active) {
       this.xrayImg = this.addWorld(this.add.image(0, 0, s.texture.key, s.frame.name).setDepth(this.xrayDepth()));
     }
     const img = this.xrayImg;
@@ -3009,7 +3027,7 @@ export class BattleScene extends Phaser.Scene {
     }) as { [k: string]: Phaser.Input.Keyboard.Key } | undefined;
     if (!keys) return;
     const STEP = 8; // px per frame at 60fps ≈ 480px/s
-    this.events.on("update", () => {
+    const pan = (): void => {
       const cam = this.cameras.main;
       let dx = 0, dy = 0;
       if (keys.left.isDown || keys.a.isDown) dx -= STEP;
@@ -3020,7 +3038,10 @@ export class BattleScene extends Phaser.Scene {
         cam.setScroll(cam.scrollX + dx, cam.scrollY + dy);
         this.hoverPreview.setVisible(false);
       }
-    });
+    };
+    this.events.on(Phaser.Scenes.Events.UPDATE, pan);
+    // Off at shutdown: scene events outlive it (see the resume handler).
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(Phaser.Scenes.Events.UPDATE, pan));
   }
 
   private lastActorFaction: Unit["faction"] | null = null;
