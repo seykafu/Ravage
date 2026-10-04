@@ -534,6 +534,14 @@ export class BattleScene extends Phaser.Scene {
     this.xrayImg = undefined;
     this.xrayUnitId = null;
     this.cursorTopG = undefined;
+    // And the hover rim (the outline round the unit under the pointer):
+    // four images made on first hover, kept in an array that was only ever
+    // filled once — the next battle retextured the dead ones and froze.
+    this.rimImgs = [];
+    this.rimUnitId = null;
+    // Every pinned UI object of the battle; never emptied, so each battle's
+    // camera setup walked every destroyed object of every earlier one.
+    this.uiObjects = [];
     // Never on the display list, so shutdown doesn't destroy it; it would
     // carry over working, but nothing of one battle should outlive it.
     this.lightBrush?.destroy();
@@ -2666,7 +2674,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     const s = v.sprite;
-    if (this.rimImgs.length === 0) {
+    // `active` too: destroyed images must never be reused (see init).
+    if (this.rimImgs.length === 0 || !this.rimImgs.every((r) => r.active)) {
+      for (const r of this.rimImgs) r.destroy();
+      this.rimImgs = [];
       for (let i = 0; i < 4; i++) this.rimImgs.push(this.addWorld(this.add.image(0, 0, s.texture.key, s.frame.name)));
     }
     const OFF = [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]] as const;
@@ -4237,30 +4248,35 @@ export class BattleScene extends Phaser.Scene {
   // player clicks a portrait in the initiative bar — the fastest way to
   // find the last enemy standing on a map wider than the viewport.
   //
-  // Camera.pan centers on a world point and clamps itself to the camera
-  // bounds, so a unit near an edge scrolls as far as the board allows
-  // rather than pushing the view off the map.
+  // The unit lands in the middle of the PLAYFIELD (the side panel covers
+  // the right of the screen) as it is actually drawn: through the board's
+  // tilt and at the current zoom. The world point under any screen point
+  // is the scroll plus a fixed offset (screenToWorld), so the scroll that
+  // puts the unit under the playfield's centre is exact in one step —
+  // the same move centreBoard makes for the board after a turn.
+  //
+  // It used to centre with flat-board arithmetic, clamped to scrolls from
+  // 0: on the tilted board, whose camera range now runs left of and above
+  // 0 (drag slack), a unit near the top or left landed well off centre —
+  // the enemy row of B8 ended up at the top of the screen.
   private focusUnit(u: Unit): void {
     if (!isAlive(u)) return;
     sfxHover();
     const cam = this.cameras.main;
-    const wp = this.projection.tileToWorld(u.state.position);
+    const view = this.unitViews.get(u.id);
+    const wp = view ? bodyCentre(view.sprite) : this.projection.tileToWorld(u.state.position);
+    const c = this.playfieldCentreScreen();
+    const under = this.screenToWorld(c.x, c.y);
+    // Inside the camera's range (cameras zoom about their top-left, so the
+    // range is simply bounds.x .. bounds.right - view width).
+    const b = cam.getBounds();
+    const viewW = cam.width / cam.zoom, viewH = cam.height / cam.zoom;
+    const targetX = Phaser.Math.Clamp(cam.scrollX + wp.x - under.x, b.x, Math.max(b.x, b.right - viewW));
+    const targetY = Phaser.Math.Clamp(cam.scrollY + wp.y - under.y, b.y, Math.max(b.y, b.bottom - viewH));
 
-    // Centre on the VISIBLE playfield, not the whole viewport: the side
-    // panel covers the right ~292px, so centring on the screen would park
-    // the unit behind it. Camera.pan() is deliberately not used — its
-    // centring math doesn't survive the native-resolution zoom patch
-    // (installRenderScale), so it starts an effect that never moves. A
-    // plain tween over setScroll is what the drag pan already does.
-    const viewW = cam.width / cam.zoom;
-    const viewH = cam.height / cam.zoom;
-    const playfieldCentreX = (GAME_WIDTH - PANEL_W - 12) / 2;
-    const playfieldCentreY = MAP_TOP_OFFSET + (GAME_HEIGHT - MAP_TOP_OFFSET) / 2;
-    const maxX = Math.max(0, cam.getBounds().width - viewW);
-    const maxY = Math.max(0, cam.getBounds().height - viewH);
-    const targetX = Phaser.Math.Clamp(wp.x - playfieldCentreX, 0, maxX);
-    const targetY = Phaser.Math.Clamp(wp.y - playfieldCentreY, 0, maxY);
-
+    // Camera.pan() is deliberately not used — its centring math doesn't
+    // survive the native-resolution zoom patch (installRenderScale). A plain
+    // tween over setScroll is what the drag pan already does.
     this.tweens.add({
       targets: { x: cam.scrollX, y: cam.scrollY },
       x: targetX,
@@ -4275,8 +4291,9 @@ export class BattleScene extends Phaser.Scene {
     // on the ground at the unit's feet, squashed to the board's tilt, and
     // under the actors: a ping on the floor, not a hoop in the air.
     const sq = this.groundSquash();
+    const foot = this.projection.tileToWorld(u.state.position);
     const ring = this.addWorld(
-      this.add.circle(wp.x, wp.y + (this.diorama ? DIORAMA_FOOT_DY : 0), 24)
+      this.add.circle(foot.x, foot.y + (this.diorama ? DIORAMA_FOOT_DY : 0), 24)
         .setStrokeStyle(3, 0xffd45a, 0.95)
         .setScale(1, sq)
         .setDepth(this.darknessRT ? DEPTH.OVER_DARK : DEPTH.GROUND_MARK + 0.5)

@@ -114,6 +114,9 @@ export class BattleDialogueScene extends Phaser.Scene {
     this.resumeKey = data.resumeKey;
     this.beats = data.beats;
     this.idx = 0;
+    // The scene is reused for every dialogue; these belonged to the last one.
+    this.portrait = undefined;
+    this.speakPulse = undefined;
     this.restoreMusic = data.restoreMusic;
     // Apply the music override immediately at init() — earlier than
     // create() so the new track is already fading in by the time the
