@@ -246,6 +246,11 @@ if (import.meta.env.DEV) {
   void import("./scenes/DevJumpScene").then(({ DevJumpScene }) => {
     game.scene.add("DevJumpScene", DevJumpScene, false);
   });
+  // ?test=<battle>&path=<road>[&finale=1] — open one chapter directly.
+  // See src/dev/testRoute.ts.
+  if (new URLSearchParams(window.location.search).has("test")) {
+    void import("./dev/testRoute").then(({ runTestRoute }) => runTestRoute(game));
+  }
 
   let pausedKey: string | null = null;
 
