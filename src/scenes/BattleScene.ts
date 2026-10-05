@@ -136,6 +136,7 @@ import { InitiativeBar } from "./battle/InitiativeBar";
 import { DialogueDirector } from "./battle/DialogueDirector";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
 import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
+import { finaleFor, playFinale, type FinaleHost, type Pt } from "./battle/Finale";
 import { TutorialDirector } from "./battle/Tutorial";
 
 interface BattleArgs {
@@ -509,6 +510,11 @@ export class BattleScene extends Phaser.Scene {
     this.resumeRequested = data.resume === true;
     this.tutorial = undefined;
     this.pressBegunInScene = false;
+    this.dragArmed = false;
+    this.finalBlow = null;
+    this.spinPace = 1;
+    this.finalePlayed = false;
+    this.cineActive = false;
     // Scene instances are reused across battles. The spotlight RT from a
     // dark battle (B4/B7/B11/B13/B15/B17/B27) is destroyed by scene shutdown, but
     // the FIELD survives — and update() touches it every frame. Left
@@ -866,6 +872,7 @@ export class BattleScene extends Phaser.Scene {
     const onResume = (): void => {
       // Any press armed before the pause is stale — the overlay owned it.
       this.pressBegunInScene = false;
+      this.dragArmed = false;
       this.refreshAllUnits();
       const cur = this.initiative.current();
       if (cur) this.drawActiveMarker(cur);
@@ -2305,8 +2312,8 @@ export class BattleScene extends Phaser.Scene {
     s.elapsed += dt;
     // About half a second for a quarter-turn from rest; held, a steady
     // quarter every quarter of a second or so.
-    const w0 = 18;
-    const maxV = Q / 0.26;
+    const w0 = 18 * this.spinPace;
+    const maxV = (Q / 0.26) * this.spinPace;
     // Acceleration is capped so a turn eases in: a bare spring leaps off
     // the mark (a fifth of a quarter in its first 80ms).
     const maxA = maxV / 0.1;
@@ -2545,6 +2552,8 @@ export class BattleScene extends Phaser.Scene {
    * the world point under the given screen point (the cursor) still.
    */
   private setBoardZoom(factor: number, sx?: number, sy?: number): void {
+    // The battle is over: the camera belongs to its finale.
+    if (this.fsm.isEnded()) return;
     const f = Phaser.Math.Clamp(factor, 1, 2);
     if (Math.abs(f - this.zoomFactor) < 1e-3) return;
     const cam = this.cameras.main;
@@ -2582,7 +2591,7 @@ export class BattleScene extends Phaser.Scene {
     // step, while a trackpad's stream of small deltas glides instead of
     // racing to full zoom in a flick.
     this.input.on("wheel", (p: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
-      if (this.isOverUi(p) || this.spin || dy === 0) return;
+      if (this.isOverUi(p) || this.spin || dy === 0 || this.fsm.isEnded()) return;
       const d = Phaser.Math.Clamp(dy, -200, 200);
       this.setBoardZoom(this.zoomFactor * Math.exp(-d * 0.0013), p.x, p.y);
     });
@@ -2955,6 +2964,16 @@ export class BattleScene extends Phaser.Scene {
   // release: no character ever moves from a click the player aimed at
   // a dialogue box.
   private pressBegunInScene = false;
+  /** The current press began on the board, so dragging it pans. */
+  private dragArmed = false;
+  /** The blow that decided the battle — where a finale points its camera. */
+  private finalBlow: { attacker: string; target: string } | null = null;
+  /** Speed of the board's turn: 1 for the player's turns, slower for a finale's orbit. */
+  private spinPace = 1;
+  /** A finale played: the UI camera fades out with the world on the way to EndScene. */
+  private finalePlayed = false;
+  /** A finale has the screen: the side panel and the turn markers stop redrawing. */
+  private cineActive = false;
 
   // Camera panning. Originally right-click-drag only, which was
   // undiscoverable — players instinctively try LEFT-click drag, get
@@ -2973,8 +2992,10 @@ export class BattleScene extends Phaser.Scene {
       // A press that BEGINS while the battle is active arms the click
       // pipeline — see pressBegunInScene. A press on the side panel or
       // top bar is the UI's, so it neither arms the board nor pans.
-      if (this.isOverUi(p)) { this.pressBegunInScene = false; return; }
+      if (this.isOverUi(p)) { this.pressBegunInScene = false; this.dragArmed = false; return; }
       this.pressBegunInScene = true;
+      // Once the battle has ended the camera belongs to its finale.
+      this.dragArmed = !this.fsm.isEnded();
       // Record the press origin for every button. Whether this becomes
       // a pan is decided in pointermove once the pointer has actually
       // moved past the threshold.
@@ -2991,6 +3012,12 @@ export class BattleScene extends Phaser.Scene {
       // pointer's distance at the current zoom (/ cam.zoom), so the board
       // stays under the finger whether the player has zoomed in or not.
       if (this.spin) return;
+      // Only a press that began on the board pans it. A press on the side
+      // panel or top bar records no origin, so measuring from the last
+      // board press's (stale) origin turned the slightest wobble on End
+      // Turn, Move or a portrait into a jump of the whole view — the
+      // camera "shifting off-centre" as the next character was selected.
+      if (!this.dragArmed || !p.isDown) return;
       const zoom = this.cameras.main.zoom;
       const dx = (p.x - this.cameraDragState.startPointerX) / zoom;
       const dy = (p.y - this.cameraDragState.startPointerY) / zoom;
@@ -3019,6 +3046,7 @@ export class BattleScene extends Phaser.Scene {
     });
     this.input.on("pointerup", () => {
       this.cameraDragState.active = false;
+      this.dragArmed = false;
     });
   }
 
@@ -3039,6 +3067,7 @@ export class BattleScene extends Phaser.Scene {
     if (!keys) return;
     const STEP = 8; // px per frame at 60fps ≈ 480px/s
     const pan = (): void => {
+      if (this.fsm.isEnded()) return;
       const cam = this.cameras.main;
       let dx = 0, dy = 0;
       if (keys.left.isDown || keys.a.isDown) dx -= STEP;
@@ -3128,6 +3157,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private drawActiveMarker(u: Unit): void {
+    if (this.cineActive) {
+      this.activeRing.clear().setVisible(false);
+      this.activeArrow.setVisible(false);
+      return;
+    }
     const view = this.unitViews.get(u.id);
     this.activeRing.clear();
     if (this.activeRingTween) { this.activeRingTween.stop(); this.activeRingTween = undefined; }
@@ -3243,6 +3277,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshSidePanel(u: Unit): void {
+    // During a finale the panel is gone; redrawing it would bring its
+    // avatar back (it is made fresh on every refresh).
+    if (this.cineActive) return;
     this.setSidePanelAvatar(u);
     // Compress LV (and XP-toward-next-level for players) into the apText
     // one-liner so the stat block below stays at 7-row max. Adding LV as
@@ -3572,14 +3609,129 @@ export class BattleScene extends Phaser.Scene {
       const beforeVictory = this.dialogue.findBeforeVictory();
       if (beforeVictory) {
         this.events.once(Phaser.Scenes.Events.RESUME, () => {
-          this.transitionToEndScene(v);
+          this.endBattle(v);
         });
         this.dialogue.fire(beforeVictory);
         return true;
       }
     }
-    this.transitionToEndScene(v);
+    this.endBattle(v);
     return true;
+  }
+
+  // The last two chapters of every road close on a finale — a short
+  // cut-scene on the board (scenes/battle/Finale.ts) — before the fade to
+  // the victory screen. Not on the way to a game over.
+  private endBattle(v: "player" | "enemy"): void {
+    const save = loadSave();
+    const script = v === "player" && !hasExceededDeathLimit(save) ? finaleFor(this.battleId, getSevenPath(save)) : null;
+    if (!script) { this.transitionToEndScene(v); return; }
+    void (async () => {
+      // Let the last fall finish before the camera goes to it.
+      for (let t = 0; t < 1600 && [...this.unitViews.values()].some((x) => x.animLock === "dying"); t += 50) {
+        await this.delay(50);
+      }
+      this.finalePlayed = true;
+      try {
+        await playFinale(this.finaleHost(), script);
+      } catch (e) {
+        // A finale must never strand the player on a won board.
+        console.error("[finale]", e);
+      }
+      if (this.scene.isActive()) this.transitionToEndScene(v);
+    })();
+  }
+
+  private finaleHost(): FinaleHost {
+    const cam = this.cameras.main;
+    const hideMarks = (): void => {
+      for (const v of this.unitViews.values()) {
+        v.hpBg.setVisible(false);
+        v.hpBar.setVisible(false);
+        v.stanceIcon.setVisible(false);
+      }
+      for (const h of [this.overlayG, this.contourG, this.dangerG, this.threatG, this.cursorG, this.pathG, this.activeRing, this.activeArrow]) h.setVisible(false);
+      this.clearXray();
+      this.hoverPreview.setVisible(false);
+      this.rimUnitId = null;
+    };
+    return {
+      scene: this,
+      webgl: this.game.renderer.type === Phaser.WEBGL,
+      finalBlow: this.finalBlow,
+      unitPoint: (id: string): Pt | null => {
+        const v = this.unitViews.get(id);
+        if (v && isAlive(v.unit) && v.sprite.visible) return bodyCentre(v.sprite);
+        const u = this.state.units.find((x) => x.id === id);
+        if (!u) return null;
+        const p = this.projection.tileToWorld(u.state.position);
+        return { x: p.x, y: p.y + this.unitLift };
+      },
+      living: (f) => this.state.units.filter((u) => u.faction === f && isAlive(u)).map((u) => u.id),
+      boardCentre: () => {
+        const c = this.layouts[this.viewRotation]?.centre;
+        return c ? { x: c.x, y: c.y } : this.screenToWorld(cam.width / 2, cam.height / 2);
+      },
+      focus: (p, zoom, ms) => new Promise<void>((res) => {
+        // The finale's camera is free of the board's scroll range, and
+        // centres on the whole screen (the side panel is gone).
+        cam.removeBounds();
+        const mid = { x: cam.width / 2, y: cam.height / 2 };
+        const z0 = this.zoomFactor;
+        const from = this.screenToWorld(mid.x, mid.y);
+        this.tweens.addCounter({
+          from: 0, to: 1, duration: ms, ease: "Sine.easeInOut",
+          onUpdate: (tw) => {
+            const e = tw.getValue() ?? 1;
+            this.zoomFactor = z0 + (zoom - z0) * e;
+            cam.setZoom(this.baseZoom * this.zoomFactor);
+            const want = { x: from.x + (p.x - from.x) * e, y: from.y + (p.y - from.y) * e };
+            const under = this.screenToWorld(mid.x, mid.y);
+            cam.setScroll(cam.scrollX + want.x - under.x, cam.scrollY + want.y - under.y);
+          },
+          onComplete: () => res()
+        });
+      }),
+      orbit: (quarters, pace) => new Promise<void>((res) => {
+        if (this.spin || quarters === 0) { res(); return; }
+        this.spinPace = pace;
+        const Q = Math.PI / 2;
+        this.startSpin(quarters > 0 ? 1 : -1, this.viewRotation * Q + quarters * Q, true);
+        const landed = (): void => {
+          if (this.spin || this.spinSettle) { this.time.delayedCall(40, landed); return; }
+          this.spinPace = 1;
+          // The turn rebuilt the board and its marks, and boxed the camera
+          // back into the board's range.
+          cam.removeBounds();
+          hideMarks();
+          res();
+        };
+        this.time.delayedCall(40, landed);
+      }),
+      hideUi: (ms) => {
+        this.cineActive = true;
+        hideMarks();
+        const ui = this.uiObjects.filter((o) => o.active && typeof (o as unknown as { alpha?: number }).alpha === "number");
+        this.tweens.add({ targets: ui, alpha: 0, duration: ms });
+      },
+      hop: (id, height, times) => new Promise<void>((res) => {
+        const v = this.unitViews.get(id);
+        if (!v || !isAlive(v.unit)) { res(); return; }
+        this.stopBreathing(v);
+        this.tweens.add({
+          targets: v.sprite, y: v.baseY - height, duration: 140, yoyo: true, repeat: times - 1, ease: "Sine.easeOut",
+          onComplete: () => { this.startBreathing(v); res(); }
+        });
+      }),
+      worldToUi: (x, y) => {
+        const src = { x: (x - cam.scrollX) * cam.zoom, y: (y - cam.scrollY) * cam.zoom };
+        const scr = this.keystone ? sourceToScreen(src.x, src.y, cam.width, cam.height, this.keystone) : src;
+        return { x: scr.x / RENDER_SCALE, y: scr.y / RENDER_SCALE };
+      },
+      world: (o) => this.addWorld(o),
+      ui: (o) => { this.ignoreDeepOnWorldCamera(o); return o; },
+      groundSquash: () => this.groundSquash()
+    };
   }
 
   // Extracted from the tail of checkEnd so the EndScene transition can
@@ -3646,6 +3798,9 @@ export class BattleScene extends Phaser.Scene {
     clearSuspendedBattle();
     getMusic(this).stop(650);
     this.cameras.main.fadeOut(700, 0, 0, 0);
+    // After a finale the screen is its letterbox and closing card: those
+    // go to black with the board.
+    if (this.finalePlayed) this.uiCamera?.fadeOut(700, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       if (v === "player" && hasExceededDeathLimit(loadSave())) {
         this.scene.start("GameOverScene", { battleId: this.battleId, deathsThisBattle: this.lastBattleDeaths });
@@ -5222,6 +5377,7 @@ export class BattleScene extends Phaser.Scene {
     }
     this.refreshUnitView(defender);
     if (result.defenderKilled) {
+      this.finalBlow = { attacker: attacker.id, target: defender.id };
       sfxDeath();
       this.pushLog(`${defender.name} falls.`);
       this.playDeathDissolve(tv, defender, av.sprite.x);
