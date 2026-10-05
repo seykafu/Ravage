@@ -509,6 +509,7 @@ export class BattleScene extends Phaser.Scene {
     this.resumeRequested = data.resume === true;
     this.tutorial = undefined;
     this.pressBegunInScene = false;
+    this.dragArmed = false;
     // Scene instances are reused across battles. The spotlight RT from a
     // dark battle (B4/B7/B11/B13/B15/B17/B27) is destroyed by scene shutdown, but
     // the FIELD survives — and update() touches it every frame. Left
@@ -866,6 +867,7 @@ export class BattleScene extends Phaser.Scene {
     const onResume = (): void => {
       // Any press armed before the pause is stale — the overlay owned it.
       this.pressBegunInScene = false;
+      this.dragArmed = false;
       this.refreshAllUnits();
       const cur = this.initiative.current();
       if (cur) this.drawActiveMarker(cur);
@@ -2955,6 +2957,8 @@ export class BattleScene extends Phaser.Scene {
   // release: no character ever moves from a click the player aimed at
   // a dialogue box.
   private pressBegunInScene = false;
+  /** The current press began on the board, so dragging it pans. */
+  private dragArmed = false;
 
   // Camera panning. Originally right-click-drag only, which was
   // undiscoverable — players instinctively try LEFT-click drag, get
@@ -2973,8 +2977,9 @@ export class BattleScene extends Phaser.Scene {
       // A press that BEGINS while the battle is active arms the click
       // pipeline — see pressBegunInScene. A press on the side panel or
       // top bar is the UI's, so it neither arms the board nor pans.
-      if (this.isOverUi(p)) { this.pressBegunInScene = false; return; }
+      if (this.isOverUi(p)) { this.pressBegunInScene = false; this.dragArmed = false; return; }
       this.pressBegunInScene = true;
+      this.dragArmed = true;
       // Record the press origin for every button. Whether this becomes
       // a pan is decided in pointermove once the pointer has actually
       // moved past the threshold.
@@ -2991,6 +2996,12 @@ export class BattleScene extends Phaser.Scene {
       // pointer's distance at the current zoom (/ cam.zoom), so the board
       // stays under the finger whether the player has zoomed in or not.
       if (this.spin) return;
+      // Only a press that began on the board pans it. A press on the side
+      // panel or top bar records no origin, so measuring from the last
+      // board press's (stale) origin turned the slightest wobble on End
+      // Turn, Move or a portrait into a jump of the whole view — the
+      // camera "shifting off-centre" as the next character was selected.
+      if (!this.dragArmed || !p.isDown) return;
       const zoom = this.cameras.main.zoom;
       const dx = (p.x - this.cameraDragState.startPointerX) / zoom;
       const dy = (p.y - this.cameraDragState.startPointerY) / zoom;
@@ -3019,6 +3030,7 @@ export class BattleScene extends Phaser.Scene {
     });
     this.input.on("pointerup", () => {
       this.cameraDragState.active = false;
+      this.dragArmed = false;
     });
   }
 
