@@ -354,3 +354,47 @@ export const installAudioUnlock = (scene: Phaser.Scene): void => {
   scene.input.once("pointerdown", handler);
   scene.input.keyboard?.once("keydown", handler);
 };
+
+// ---- Finale cut-scenes (scenes/battle/Finale.ts) ----
+// The same four families, scored for a closing shot rather than a hit:
+// longer tails and more of the room.
+
+// The camera slams in on the last blow: a deep drop with a long air tail.
+export const sfxCineBoom = (): void => {
+  thump(70, 26, 1.1, 0.2, 0, 0.5);
+  thump(140, 40, 0.35, 0.08, 0, 0.3);
+  noise({ duration: 1.2, vol: 0.06, freq: 700, freqEnd: 80, attack: 0.01, send: 0.6 });
+};
+
+// A great bell, struck once: a low fundamental under bell partials.
+export const sfxCineBell = (pitch = 1): void => {
+  metal(392 * pitch, 2.4, 0.03, 0, 0.8);
+  tone({ freq: 196 * pitch, duration: 2.6, type: "sine", vol: 0.05, attack: 0.005, send: 0.7 });
+  tone({ freq: 98 * pitch, duration: 2.2, type: "sine", vol: 0.04, attack: 0.01, send: 0.5 });
+};
+
+// A slow rising breath under a reveal: filtered air opening upward.
+export const sfxCineRise = (): void => {
+  noise({ duration: 2.2, vol: 0.05, freq: 180, freqEnd: 3200, attack: 0.9, send: 0.6 });
+  tone({ freq: 110, freqEnd: 220, duration: 2.2, type: "triangle", vol: 0.03, attack: 0.8, send: 0.6 });
+};
+
+// One soft glass note — a name appearing in the air.
+export const sfxCineChime = (pitch = 1): void => {
+  tone({ freq: 880 * pitch, duration: 1.1, type: "sine", vol: 0.03, send: 0.7 });
+  tone({ freq: 880 * pitch * 2.01, duration: 0.6, type: "sine", vol: 0.012, send: 0.7 });
+};
+
+// Steel set down point-first into stone.
+export const sfxCineClang = (): void => {
+  metal(1300, 1.4, 0.05, 0, 0.7);
+  thump(160, 70, 0.25, 0.1, 0, 0.3);
+  noise({ duration: 0.25, vol: 0.05, freq: 2600, freqEnd: 600, attack: 0.002, send: 0.4 });
+};
+
+// A distant battery: a far thud, then the shell's whistle.
+export const sfxCineCannon = (): void => {
+  thump(90, 40, 0.5, 0.1, 0, 0.6);
+  noise({ duration: 0.5, vol: 0.04, freq: 400, freqEnd: 90, attack: 0.005, send: 0.6 });
+  tone({ freq: 2400, freqEnd: 700, duration: 0.7, type: "sine", vol: 0.012, at: 0.12, send: 0.5 });
+};

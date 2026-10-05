@@ -494,6 +494,57 @@ export const campLife = [
     `) }
 ];
 
+// FINALES — the closing cut-scene of the last two chapters of every road
+// (scenes/battle/Finale.ts). Each shot opens the battle on its road, settles
+// it, then wins it on the spot: everyone on the other side down, the boss
+// (or the last of them) taking the final blow from Amar.
+const seedFinale = (battleId, path) => `
+  const save = cap.save;
+  const all = cap.battles.BATTLES.map((b) => b.id)
+    .filter((b) => !b.startsWith("b19_") || b === "b19_path_opener_${path ?? "vengeance"}" || b === "${battleId}");
+  const done = all.slice(0, all.indexOf("${battleId}"));
+  let s = save.defaultSave();
+  s.completedBattles = done;
+  s.unlockedBattles = [...done, "${battleId}"];
+  ${path ? `s = save.setSevenPath(s, "${path}");` : ""}
+  save.setCurrentSlot(1);
+  save.writeSave(s);
+  cap.goto("BattleScene", { battleId: "${battleId}" });
+`;
+const winNow = (boss) => `
+  if (arg.i === 0) {
+    closeDialogue();
+    const b = battle();
+    const foes = b.state.units.filter((u) => u.faction === "enemy");
+    const last = foes.find((u) => u.id === ${JSON.stringify(boss)}) ?? foes[foes.length - 1];
+    for (const u of foes) {
+      u.state.secondWindUsed = true;
+      u.state.hp = 0;
+      const v = b.unitViews.get(u.id);
+      if (v && u !== last) { v.sprite.setVisible(false); v.shadow.setVisible(false); }
+    }
+    b.finalBlow = { attacker: "amar", target: last.id };
+    b.checkEnd();
+  }
+  closeDialogue();
+`;
+const finale = (name, battleId, path, boss, seconds) => ({
+  name, seconds, settleFrames: 90,
+  setup: fn(seedFinale(battleId, path)),
+  each: fn(winNow(boss))
+});
+export const finales = [
+  finale("finale_b28_vengeance", "b28_path_final", "vengeance", "archbold", 15),
+  finale("finale_b18", "b18_path_chosen", null, null, 15),
+  finale("finale_b28_restoration", "b28_path_final", "restoration", "ravage_commander", 15),
+  finale("finale_b28_revolution", "b28_path_final", "revolution", "dawn_boss", 15),
+  finale("finale_b28_duty", "b28_path_final", "duty", "ravage_commander", 15),
+  finale("finale_b28_mercy", "b28_path_final", "mercy", "archbold", 15),
+  finale("finale_b19_exile", "b19_path_opener_exile", "exile", null, 15),
+  finale("finale_b19_forgetting", "b19_path_opener_forgetting", "forgetting", null, 15),
+  finale("finale_b29", "b29_epilogue", "vengeance", null, 15)
+];
+
 // PROMOTED — every Tier 2 class in battle. The live units are promoted in
 // place (classKind swapped, views rebuilt), so no save surgery is needed.
 const PROMOTE = `
@@ -591,4 +642,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]] };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]] };
