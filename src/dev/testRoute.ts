@@ -9,6 +9,7 @@ import { ROSTER_ORDER } from "../data/activeRoster";
 import { PROMOTIONS } from "../data/promotions";
 import { POST_ARC } from "../data/postArcs";
 import { ARCS } from "../story/beats";
+import { finaleBoss } from "../scenes/battle/Finale";
 import type { ArcId } from "../data/contentIds";
 import { PATH_ROMANCES, ROMANCE_FLAG } from "../data/romance";
 import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSave, type CharacterRecord } from "../util/save";
@@ -19,9 +20,12 @@ import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSav
 //   /play/?test=b28&path=vengeance             B28's prep screen, on that road
 //   /play/?test=b28&path=vengeance&finale=1    B28 won on the spot, to watch
 //                                              its finale (after its closing
-//                                              dialogue)
+//                                              dialogue) — any boss fight too:
+//                                              ?test=b11&finale=1
 //   /play/?test=wed_maya                       a story arc (here a wedding
 //                                              coda, on its partner's road)
+//   /play/?test=cold_open_dawn                 the opening (any arc: on the
+//                                              campaign up to its battle)
 //   /play/?test=b29&partner=leo                the epilogue, married to Leo
 //                                              (any RomanceOption id, or none)
 //
@@ -45,15 +49,29 @@ interface BattleInternals {
   checkEnd(): boolean;
 }
 
+/** The battle an arc leads into, following the story on; null past the last. */
+const battleAfter = (id: ArcId): string | null => {
+  const seen = new Set<string>();
+  let cur: ArcId | null = id;
+  while (cur && !seen.has(cur)) {
+    seen.add(cur);
+    const next: string | undefined = ARCS[cur]?.next;
+    if (next?.startsWith("prep:")) return next.slice("prep:".length);
+    cur = next?.startsWith("story:") ? (next.slice("story:".length) as ArcId) : null;
+  }
+  return null;
+};
+
 export const runTestRoute = (game: Phaser.Game): void => {
   const q = new URLSearchParams(window.location.search);
   const want = q.get("test");
   if (!want) return;
-  // A story arc plays on the save of the whole campaign before the last
-  // battle (a wedding coda, say, with the squad as the war left them).
+  // A story arc plays on the save of the campaign up to the battle it leads
+  // into (the opening on a new game's), or, past the last battle, of the
+  // whole war (a wedding coda, say, with the squad as the war left them).
   const arcId = want in ARCS ? (want as ArcId) : null;
   const node = arcId
-    ? BATTLES.find((b) => b.id === "b28_path_final")
+    ? BATTLES.find((b) => b.id === battleAfter(arcId)) ?? BATTLES.find((b) => b.id === "b28_path_final")
     : BATTLES.find((b) => b.id === want) ?? BATTLES.find((b) => b.id.startsWith(`${want}_`));
   if (!node) {
     console.warn(`[test] no battle or arc "${want}"`);
@@ -133,7 +151,8 @@ export const runTestRoute = (game: Phaser.Game): void => {
       const dlg = game.scene.getScene("BattleDialogueScene");
       if (!b.scene.isActive() || dlg.scene.isActive()) { window.setTimeout(win, 300); return; }
       const foes = b.state.units.filter((u) => u.faction === "enemy");
-      const boss = foes.find((u) => ["archbold", "dawn_boss", "ravage_commander"].includes(u.id)) ?? foes[foes.length - 1];
+      const named = finaleBoss(node.id, path);
+      const boss = foes.find((u) => u.id === named) ?? foes[foes.length - 1];
       if (!boss) return;
       for (const u of foes) {
         u.state.secondWindUsed = true;

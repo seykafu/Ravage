@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
-import { ARCS, type DialogBeat, type StoryArc } from "../story/beats";
+import { ARCS, type CinematicId, type DialogBeat, type StageId, type StoryArc } from "../story/beats";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
 import { showRingTableau, type RingTableau } from "./story/RingTableau";
+import { CINEMATIC_MUSIC, playCinematic, showStage, type Stage } from "./story/Cinematics";
 import { speakBlip } from "../ui/voice";
 import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
@@ -98,6 +99,14 @@ export class StoryScene extends Phaser.Scene {
   private speakerText!: Phaser.GameObjects.Text;
   private portrait?: Phaser.GameObjects.Image;
   private tableau?: RingTableau;
+  // A staged picture behind the dialogue (DialogBeat.stage), and which.
+  private stage?: Stage;
+  private stageId?: StageId;
+  // A cinematic is playing over the scene: the dialogue waits for it.
+  private cineRunning = false;
+  private endCinePlayed = false;
+  // The dialogue's own furniture, hidden while a cinematic plays.
+  private uiParts: Phaser.GameObjects.GameObject[] = [];
   private beats: DialogBeat[] = [];
   private titleText?: Phaser.GameObjects.Text;
   private subtitleText?: Phaser.GameObjects.Text;
@@ -124,6 +133,11 @@ export class StoryScene extends Phaser.Scene {
     this.arcId = data.arcId;
     this.idx = 0;
     this.tableau = undefined;
+    this.stage = undefined;
+    this.stageId = undefined;
+    this.cineRunning = false;
+    this.endCinePlayed = false;
+    this.uiParts = [];
     this.titleText = undefined;
     this.subtitleText = undefined;
     // The arc as this save tells it: beats for another marriage drop out
@@ -240,9 +254,36 @@ export class StoryScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-ENTER", () => this.advance());
     this.input.on("pointerdown", () => this.advance());
 
-    getMusic(this).play(arcMusic[arc.music], { fadeMs: 800 });
+    this.uiParts = [pg, this.speakerText, this.bodyText, this.continueBtn, this.skipBtn,
+      ...[this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t)];
     this.cameras.main.fadeIn(450, 0, 0, 0);
+    // An arc can open on a cinematic (StoryArc.cinematic): the film first,
+    // then the dialogue fades up under it.
+    if (arc.cinematic) {
+      getMusic(this).play(arcMusic[CINEMATIC_MUSIC[arc.cinematic]], { fadeMs: 800 });
+      void this.runCinematic(arc.cinematic, true).then(() => {
+        getMusic(this).play(arcMusic[arc.music], { fadeMs: 1400 });
+        this.showBeat(this.beats[0]!);
+      });
+      return;
+    }
+    getMusic(this).play(arcMusic[arc.music], { fadeMs: 800 });
     this.showBeat(this.beats[0]!);
+  }
+
+  /** Play a cinematic over the scene with the dialogue hidden under it. */
+  private async runCinematic(id: CinematicId, restoreUi: boolean): Promise<void> {
+    this.cineRunning = true;
+    const parts = [...this.uiParts, ...(this.portrait ? [this.portrait] : [])];
+    for (const o of parts) (o as unknown as Phaser.GameObjects.Components.Alpha).setAlpha(0);
+    await playCinematic(this, id, 1000);
+    this.cineRunning = false;
+    if (restoreUi && this.sys.isActive()) {
+      // The title stays down when a stage or tableau has already claimed the top.
+      const heads = new Set<Phaser.GameObjects.GameObject>([this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t));
+      const back = parts.filter((o) => !(heads.has(o) && (this.stage || this.tableau)));
+      this.tweens.add({ targets: back, alpha: 1, duration: 600, ease: "Sine.easeOut" });
+    }
   }
 
   private showBeat(beat: DialogBeat): void {
@@ -257,6 +298,14 @@ export class StoryScene extends Phaser.Scene {
     this.speakingId = beat.portraitId;
     // A staged picture, from this beat to the end of the arc. The arc's
     // title steps aside for it.
+    if (beat.stage && beat.stage !== this.stageId) {
+      // A new stage replaces the old one, crossfading.
+      this.stage?.destroy(1300);
+      this.stage = showStage(this, beat.stage, -18);
+      this.stageId = beat.stage;
+      const heads = [this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t);
+      this.tweens.add({ targets: heads, alpha: 0, duration: 900 });
+    }
     if (beat.tableau && !this.tableau) {
       this.tableau = showRingTableau(this, beat.tableau.partner, -10, beat.tableau.kind);
       const heads = [this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t);
@@ -383,6 +432,8 @@ export class StoryScene extends Phaser.Scene {
   }
 
   private advance(): void {
+    // A cinematic owns the input while it plays (it has its own skip).
+    if (this.cineRunning) return;
     // Mid-typewriter: complete the current page instantly instead of
     // advancing. Prevents accidentally skipping a page if the player clicks
     // before the reveal finishes.
@@ -442,6 +493,16 @@ export class StoryScene extends Phaser.Scene {
   private finishArc(): void {
     const arc = ARCS[this.arcId];
     if (!arc) { this.scene.start("OverworldScene"); return; }
+    if (this.cineRunning) return;
+    // An arc can close on a cinematic (StoryArc.endCinematic) before it
+    // hands on.
+    if (arc.endCinematic && !this.endCinePlayed) {
+      this.endCinePlayed = true;
+      this.revealing = false;
+      getMusic(this).play(arcMusic[CINEMATIC_MUSIC[arc.endCinematic]], { fadeMs: 1200 });
+      void this.runCinematic(arc.endCinematic, false).then(() => this.finishArc());
+      return;
+    }
     this.cameras.main.fadeOut(450, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => this.routeNext(arc.next));
   }

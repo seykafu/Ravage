@@ -545,6 +545,26 @@ export const finales = [
   finale("finale_b29", "b29_epilogue", "vengeance", null, 15)
 ];
 
+// BOSS FINALES — the cut-scene closing every major boss fight
+// (Finale.ts BOSS_ENDS), the boss taking the last blow.
+export const bossFinales = [
+  finale("boss_b05", "b05_mountain_ndari", null, "ndari", 14),
+  finale("boss_b07", "b07_monastery", null, "selene_enemy", 13),
+  finale("boss_b11", "b11_cliffs", null, "kian_enemy", 14),
+  finale("boss_b13", "b13_dawn_rebellion", null, "royal_captain", 13),
+  finale("boss_b14", "b14_origin", null, "imperial_knight", 12),
+  finale("boss_b15", "b15_inner_coup", null, "turncoat", 12),
+  finale("boss_b16", "b16_proposal", null, "kings_knife", 12),
+  finale("boss_b19_vengeance", "b19_path_opener_vengeance", "vengeance", "imperial_knight", 13),
+  finale("boss_b19_revolution", "b19_path_opener_revolution", "revolution", "royal_captain", 12),
+  finale("boss_b19_mercy", "b19_path_opener_mercy", "mercy", "royal_captain", 13),
+  finale("boss_b20", "b20_dawn_war", "vengeance", "imperial_general", 14),
+  finale("boss_b22", "b22_grude_burns", "vengeance", "incendiary_captain", 13),
+  finale("boss_b23_mercy", "b23_path_climax_a", "mercy", "remnant_colonel", 13),
+  finale("boss_b24", "b24_path_climax_b", "restoration", "bell_warden", 13),
+  finale("boss_b27", "b27_orbital_descent", "duty", "ravage_herald", 13)
+];
+
 // RING — the wedding codas' ring at sunset (scenes/story/RingTableau),
 // played from its beat: one partner per kind of sheet.
 const ringShot = (partner, path, arc = `wed_${partner}`, kind = "ring") => ({
@@ -662,4 +682,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], ring, home: ring.slice(3) };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, ring, home: ring.slice(3) };

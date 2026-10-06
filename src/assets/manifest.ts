@@ -259,12 +259,24 @@ const campEntries: ManifestEntry[] = [
 // RingTableau; scripts/art/gen_ring_art.py, process_ring_art.py).
 const storyEntries: ManifestEntry[] = [
   { id: "backdrop:ring_cliff", path: "assets/story/ring_cliff.webp", kind: "image" },
-  { id: "story:ring", path: "assets/story/ring.png", kind: "image" }
+  { id: "story:ring", path: "assets/story/ring.png", kind: "image" },
+  // The story's cinematics and stages (scenes/story/Cinematics).
+  { id: "backdrop:harbor_night", path: "assets/story/harbor_night.webp", kind: "image" },
+  { id: "backdrop:open_sea", path: "assets/story/open_sea.webp", kind: "image" },
+  { id: "story:ship", path: "assets/story/ship.webp", kind: "image" },
+  { id: "story:ravage_ship", path: "assets/story/ravage_ship.webp", kind: "image" }
+];
+
+// The opening film plays the moment a new game starts: its throne hall
+// streams in first (~200KB).
+const openingEntries: ManifestEntry[] = [
+  { id: "backdrop:throne_hall", path: "assets/story/throne_hall.webp", kind: "image" }
 ];
 
 export const MANIFEST: ManifestEntry[] = [
   ...portraitEntries,
   ...unitAnimEntries,
+  ...openingEntries,
   // Early in the stream: ~230KB in all, and the camp is often the first
   // page after the title.
   ...campEntries,

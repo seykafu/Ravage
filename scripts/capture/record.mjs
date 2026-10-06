@@ -20,6 +20,9 @@ import path from "node:path";
 import { SHOTLISTS } from "./shots.mjs";
 
 const FPS = 30;
+// CAP_EVERY=N keeps one frame in N, named by shot, and skips the encode —
+// for checking a long list of shots by eye rather than cutting a video.
+const EVERY = Math.max(1, Number(process.env.CAP_EVERY ?? 1));
 // 127.0.0.1, not "localhost": Vite binds IPv4 only, and Chromium resolves
 // localhost to ::1 first — which fails with ERR_CONNECTION_REFUSED even
 // though the server is plainly up and serving on the same port.
@@ -134,6 +137,14 @@ await page.evaluate(async (fps) => {
       this.t += this.dt;
       g.loop.step(this.t);
     },
+    // A step that updates the game without drawing it (Phaser's own
+    // headless step) — for the frames a sampled run doesn't keep, which
+    // otherwise cost a full software-GL render each.
+    tick() {
+      const cb = g.loop.callback;
+      g.loop.callback = (time, delta) => g.headlessStep(time, delta);
+      try { this.step(); } finally { g.loop.callback = cb; }
+    },
     game: g,
     scene(key) { return g.scene.getScene(key); },
     activeKeys() {
@@ -168,16 +179,22 @@ for (const [si, shot] of shots.entries()) {
     // Settle: let the scene build without recording, so we never open on
     // a half-constructed frame.
     const settle = shot.settleFrames ?? 6;
-    for (let i = 0; i < settle; i++) await page.evaluate(() => window.__cap.step());
+    for (let i = 0; i < settle; i++) await page.evaluate((e) => (e > 1 ? window.__cap.tick() : window.__cap.step()), EVERY);
   }
 
   for (let i = 0; i < n; i++) {
     if (shot.each) {
       await page.evaluate(shot.each, { i, n, args: shot.args ?? null });
     }
+    if (EVERY > 1 && i % EVERY !== 0) {
+      await page.evaluate(() => window.__cap.tick());
+      continue;
+    }
     await page.evaluate(() => window.__cap.step());
     await page.screenshot({
-      path: path.join(framesDir, `f${String(frame).padStart(5, "0")}.png`),
+      path: path.join(framesDir, EVERY > 1
+        ? `${shot.name}_${String(i).padStart(4, "0")}.png`
+        : `f${String(frame).padStart(5, "0")}.png`),
       type: "png",
       animations: "allow"
     });
@@ -189,6 +206,8 @@ for (const [si, shot] of shots.entries()) {
 const secs = ((Date.now() - t0) / 1000).toFixed(0);
 console.log(`[cap] ${frame} frames in ${secs}s wall`);
 await browser.close();
+
+if (EVERY > 1) process.exit(0);
 
 // ---- encode -------------------------------------------------------------
 const silentMp4 = path.join(ROOT, `${outName}-silent.mp4`);
