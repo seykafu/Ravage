@@ -226,6 +226,8 @@ export const ASSET_VERSIONS: Record<string, string> = {
   "assets/sprites/swordsman/hit.png": "f79313ebea",
   "assets/sprites/swordsman/idle.png": "2c8d3e78a7",
   "assets/sprites/swordsman/walk.png": "3576f5bf38",
+  "assets/story/ring.png": "a943f5789e",
+  "assets/story/ring_cliff.webp": "4b988e4118",
   "assets/tiles/Obstacles.webp": "88b79ee6e0",
   "assets/tiles/cobblestone.webp": "763b8868e5",
   "assets/tiles/cracked_earth.webp": "2114e1c7bb",

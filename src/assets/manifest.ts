@@ -254,6 +254,14 @@ const campEntries: ManifestEntry[] = [
   { id: "backdrop:camp_sky", path: "assets/camp/sky.webp", kind: "image" }
 ];
 
+// The story's staged pictures (DialogBeat.tableau): the wedding codas' ring
+// at sunset — a painted clifftop and the ring itself (scenes/story/
+// RingTableau; scripts/art/gen_ring_art.py, process_ring_art.py).
+const storyEntries: ManifestEntry[] = [
+  { id: "backdrop:ring_cliff", path: "assets/story/ring_cliff.webp", kind: "image" },
+  { id: "story:ring", path: "assets/story/ring.png", kind: "image" }
+];
+
 export const MANIFEST: ManifestEntry[] = [
   ...portraitEntries,
   ...unitAnimEntries,
@@ -265,7 +273,8 @@ export const MANIFEST: ManifestEntry[] = [
   ...obstacleEntries,
   ...tallObstacleEntries,
   ...vfxEntries,
-  ...uiEntries
+  ...uiEntries,
+  ...storyEntries
 ];
 
 // --------- Runtime check: is a given asset id loaded? ------------------------
