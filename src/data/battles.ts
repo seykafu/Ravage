@@ -92,6 +92,10 @@ export interface BattleDialogue {
   // to Sadness2 for the Selene-injured / Amar-captured sequence).
   // BattleDialogueScene handles the fade in/out via getMusic().
   music?: MusicKey;
+  // Only when Amar married this partner (a RomanceOption id). The epilogue
+  // uses it for the spouse's lines: the squad around them changes with the
+  // marriage, and someone fielded as a friend mustn't get a husband's lines.
+  partner?: string;
 }
 
 export interface BattleNode {
@@ -3946,12 +3950,180 @@ export const BATTLES: BattleNode[] = [
             body: "Six of them, and they picked a smallhold with a bell. (He draws, almost lazily.) Somebody explain to them that the bell works." }
         ]
       },
+      // Walking on alone: the morning as it was. (Each marriage has its own
+      // close below — only one before_victory dialogue fires.)
       {
         id: "b29_after",
         trigger: { kind: "before_victory" },
+        partner: "none",
         beats: [
           { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
             body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." }
+        ]
+      },
+      // The one he married, mid-fight and at the end of it.
+      {
+        id: "b29_wed_selene",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "selene",
+        beats: [
+          { speaker: "Selene", portraitId: "selene",
+            body: "Three on the left. Tracks say they're hungry, not brave." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "Anything else?" },
+          { speaker: "Selene", portraitId: "selene",
+            body: "(She nocks.) Love you. Duck." }
+        ]
+      },
+      {
+        id: "b29_after_selene",
+        trigger: { kind: "before_victory" },
+        partner: "selene",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Selene", portraitId: "selene",
+            body: "(She checks him over the way she checks a trail: fast, all of it, twice.) Not a scratch. Good." }
+        ]
+      },
+      {
+        id: "b29_wed_corin",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "corin",
+        beats: [
+          { speaker: "Corin", portraitId: "corin", expression: "resolute",
+            body: "You're out of formation." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "I'm standing next to you." },
+          { speaker: "Corin", portraitId: "corin", expression: "resolute",
+            body: "(A pause he would call tactical.) ...Formation accepted." }
+        ]
+      },
+      {
+        id: "b29_after_corin",
+        trigger: { kind: "before_victory" },
+        partner: "corin",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Corin", portraitId: "corin", expression: "resolute",
+            body: "Casualties, none. Husband, intact. (He writes it down.) That goes in the report." }
+        ]
+      },
+      {
+        id: "b29_wed_ning",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "ning",
+        beats: [
+          { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+            body: "Bet you a pie I drop more of them than you do!" },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "You win that bet every time." },
+          { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+            body: "I know! (She lets fly.) That's half of why I married you. Free pie." }
+        ]
+      },
+      {
+        id: "b29_after_ning",
+        trigger: { kind: "before_victory" },
+        partner: "ning",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+            body: "Four for me, one for you, and Ranatoli frightened the last one off. (She takes his hand without looking.) That's a pie. You're paying." }
+        ]
+      },
+      {
+        id: "b29_wed_leo",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "leo",
+        beats: [
+          { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+            body: "Wave to the bandits, dear! They should see who's about to ruin their morning!" },
+          { speaker: "Amar", portraitId: "amar",
+            body: "Don't call me dear in front of the bandits." },
+          { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+            body: "Darling, then. Ash, dive!" }
+        ]
+      },
+      {
+        id: "b29_after_leo",
+        trigger: { kind: "before_victory" },
+        partner: "leo",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+            body: "Ash says that was the best morning of his life. (He slides down out of the saddle and into Amar, not entirely by accident.) Ash is wrong." }
+        ]
+      },
+      {
+        id: "b29_wed_maya",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "maya",
+        beats: [
+          { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
+            body: "Six bandits, one smallhold, a morning's work. We're overqualified, you know." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "We're on our honeymoon." },
+          { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+            body: "(Barely a smile.) Then bill them for it." }
+        ]
+      },
+      {
+        id: "b29_after_maya",
+        trigger: { kind: "before_victory" },
+        partner: "maya",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+            body: "Paid in bread. (She tears a loaf in two and hands him the bigger half.) Don't get used to the bigger half." }
+        ]
+      },
+      {
+        id: "b29_wed_veya",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "veya",
+        beats: [
+          { speaker: "Veya", portraitId: "veya", expression: "focused",
+            body: "Hold still. You're in my line." },
+          { speaker: "Amar", portraitId: "amar",
+            body: "Where do you want me?" },
+          { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+            body: "(She turns the lens a quarter-turn and fires past his ear.) Exactly there. Don't move. You're my favourite fixed point." }
+        ]
+      },
+      {
+        id: "b29_after_veya",
+        trigger: { kind: "before_victory" },
+        partner: "veya",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+            body: "Not a scratch. I measured. (She tucks a loose thread back into his collar.) Well within tolerance." }
+        ]
+      },
+      {
+        id: "b29_wed_ndara",
+        trigger: { kind: "round_start", round: 2 },
+        partner: "ndara",
+        beats: [
+          { portraitId: "narrator", body: "A runner pelts up the road from the war office, salutes the wrong person, and hands Amar a folded note in Ndara's square hand." },
+          { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+            body: "(Reading.) 'Supply estimate, one smallhold job: six bandits, one husband. Return the husband intact. — N.' (He pockets it.) Yes, Marshal." }
+        ]
+      },
+      {
+        id: "b29_after_ndara",
+        trigger: { kind: "before_victory" },
+        partner: "ndara",
+        beats: [
+          { speaker: "Ranatoli", portraitId: "ranatoli", expression: "satisfied",
+            body: "Last one's away over the fence and running like the sky's after him. (He lowers the shield.) Well. That's the whole crew, and it's not yet noon." },
+          { portraitId: "narrator", body: "Somewhere west, in an office with exactly one good chair, a woman reads a runner's two-word report — Returned intact — and, alone, allows herself the smile." }
         ]
       }
     ]

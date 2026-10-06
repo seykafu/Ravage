@@ -13,6 +13,7 @@ import { ensureUnitTexture, resolveSpriteClass } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import type { Tile, UnitDef } from "../combat/types";
 import { resolveCampBeat } from "../data/campTalk";
+import { ROMANCE_FLAG } from "../data/romance";
 import { resolveNextChapter } from "../data/nextChapter";
 import type { BattleNode } from "../data/battles";
 import { animKey, hasUnitAnimation } from "../assets/animations";
@@ -1009,7 +1010,7 @@ export class CampScene extends Phaser.Scene {
   private openCharacterTalk(characterId: string): void {
     sfxClick();
     const save = loadSave();
-    const beat = resolveCampBeat(characterId, save.completedBattles);
+    const beat = resolveCampBeat(characterId, save.completedBattles, String(save.flags[ROMANCE_FLAG] ?? "none"));
     this.setHover(null);
     this.scene.pause();
     this.scene.run("BattleDialogueScene", { beats: [beat], resumeKey: this.scene.key });

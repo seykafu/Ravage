@@ -531,10 +531,17 @@ export const eraFromCompletedBattles = (completedBattles: string[]): CampEra => 
 // even on character/era combos we haven't filled in yet.
 export const resolveCampBeat = (
   characterId: string,
-  completedBattles: string[]
+  completedBattles: string[],
+  // Who Amar married (save.flags[ROMANCE_FLAG]), when anyone.
+  partner?: string | null
 ): DialogBeat => {
   const talk = CAMP_TALK[characterId];
   const era = eraFromCompletedBattles(completedBattles);
+  // After the wedding the fire talks about little else.
+  const wed = talk && era === "endgame" ? weddingLine(characterId, partner) : null;
+  if (talk && wed) {
+    return { speaker: talk.name, portraitId: talk.portraitId, expression: wed.expression, body: wed.body };
+  }
   if (talk) {
     const lines = talk.eras[era];
     if (lines && lines.length > 0) {
@@ -559,4 +566,100 @@ export const resolveCampBeat = (
     portraitId: "narrator",
     body: `(They look up from the fire. Whatever they were thinking, they keep to themselves.)`
   };
+};
+
+// ---- After the wedding -------------------------------------------------------
+//
+// Once the war is won and Amar has married (save.flags[ROMANCE_FLAG]), the
+// camp's last nights belong to it: the one he married talks about married
+// life, Amar talks about them, and everyone else has an opinion about the
+// wedding. Registers per docs/VOICE.md. Ndara keeps the war office and
+// isn't at the fire, so she only appears in other people's lines.
+
+const SPOUSE_NAMES: Record<string, string> = {
+  selene: "Selene", corin: "Corin", ning: "Ning", leo: "Leo", maya: "Maya", veya: "Veya", ndara: "Ndara"
+};
+
+/** The one he married, at the fire. */
+const SPOUSE: Record<string, CampLine[]> = {
+  selene: [
+    { body: "He snores. Left side only. (She doesn't look up from the fletching.) I sleep on the right." },
+    { body: "Tracked him across an ocean once. (Beat.) Shorter walk now." }
+  ],
+  corin: [
+    { body: "Roster amended. Last watch: two names, one tent. (He holds the sheet a moment longer than reading it takes.) Procedure is satisfied.", expression: "resolute" },
+    { body: "Rose would have filed a complaint about the arch of lances. Unregulated. (He almost smiles.) She'd have stood under it first.", expression: "quiet_grief" }
+  ],
+  ning: [
+    { body: "Four hundred and twelve days from the hospital to the wedding. I counted. (Beat.) I haven't stopped counting. I'm just counting different things now.", expression: "eager_grin" },
+    { body: "He keeps helping at the press. He holds the rivets wrong. (Fiercely fond.) I'm not telling him. It's the best part of my morning." }
+  ],
+  leo: [
+    { body: "Married. Me. (He says it to the fire like it might argue.) Ash took it better than my father would have. Ash took it better than I did.", expression: "cocky_smirk" },
+    { body: "I had a whole speech. Good one. Jokes in it. (He fusses with a strap.) He said yes before the first joke. Wasted material.", expression: "ready" }
+  ],
+  maya: [
+    { body: "Joint accounts. I've audited worse. (She doesn't look up from the ledger.) He's in credit, if you're asking. He's always been in credit.", expression: "soft_genuine_smile" },
+    { body: "Someone asked me what he's worth to me. Professionally insulting question. (Beat.) I didn't give them a number. That was the answer.", expression: "calculating_side_glance" }
+  ],
+  veya: [
+    { body: "He wears the ring lens-side in, so the world bends warm at one edge. That's a flaw in the grind. (She is plainly delighted about it.) He knows that.", expression: "wry_smile" },
+    { body: "He got my ring size wrong by half a size. (She holds up her hand.) I haven't had it resized. Don't tell him.", expression: "focused" }
+  ]
+};
+
+/** Amar, about the one he married. */
+const AMAR: Record<string, CampLine[]> = {
+  selene: [
+    { body: "Selene still checks the treeline before she sits down. (He sits down beside where she will.) I've started checking it too. We're a pair.", expression: "warm_half_smile" },
+    { body: "She doesn't say much. She says enough. (He turns the ring on his finger.) That's all of it." }
+  ],
+  corin: [
+    { body: "Corin stands the last watch. I stand it with him. (A shrug.) It isn't a watch anymore. It's just where we talk.", expression: "warm_half_smile" },
+    { body: "He folds my shirts. Regulation fold. (He looks a little lost.) I don't know what to do about how much I like that." }
+  ],
+  ning: [
+    { body: "Ning's teaching me the rivet press. I'm bad at it. (He doesn't sound sorry.) I think she's noticed I'm bad on purpose.", expression: "warm_half_smile" },
+    { body: "She counts things when she's happy. Last night it was stars. She lost count at three hundred and started over." }
+  ],
+  leo: [
+    { body: "Leo tells everyone the proposal was his idea. (Beat.) It was. I just got there first.", expression: "warm_half_smile" },
+    { body: "Ash sleeps across the tent door now. I think he's guarding Leo from me. I think he's losing." }
+  ],
+  maya: [
+    { body: "Maya keeps the household ledger. There's a line in it she won't let me read. (He doesn't try to.) I think I know what it says.", expression: "warm_half_smile" },
+    { body: "She still watches every room we walk into. Now she tells me what she sees. (Quiet.) That's new. That's most of it." }
+  ],
+  veya: [
+    { body: "The lens in this ring bends the light warm on one side. (He looks through it at the fire.) Veya says it's a flaw. I'm keeping the flaw.", expression: "warm_half_smile" },
+    { body: "She measured how long I took to say yes. (Beat.) She won't tell me the number." }
+  ],
+  ndara: [
+    { body: "Ndara's letters come every week by runner. Supply reports. (He shows one.) Last line every time: return intact. I'm keeping all of them.", expression: "warm_half_smile" },
+    { body: "She ran a war from a chair and never raised her voice. She raised it once at the wedding, to say yes. (He smiles.) Whole tent heard it." }
+  ]
+};
+
+/** Everyone else, about the wedding ({name}: who he married). */
+const SQUAD: Record<string, CampLine[]> = {
+  ranatoli: [
+    { body: "I cried at the wedding. It was the wind. (He wipes his eyes.) It's still the wind. There's been a great deal of wind lately.", expression: "satisfied" },
+    { body: "Captain-my-Captain and {name}. (He raises his cup.) I told that boy years ago he'd feast one day. I never said with whom. I'm a modest prophet.", expression: "satisfied" }
+  ],
+  ning: [{ body: "Amar and {name}. (She starts counting on her fingers, then stops.) I don't need to count anything. That's how I know it's good.", expression: "eager_grin" }],
+  maya: [{ body: "Amar and {name}. (Dry.) I'd have priced it as a long shot. Good thing nobody asked me.", expression: "calculating_side_glance" }],
+  leo: [{ body: "Amar and {name}! I called it. I didn't, actually, but I'm saying I did, and nobody here can prove otherwise.", expression: "cocky_smirk" }],
+  selene: [{ body: "Amar and {name}. (She nods once.) Good tracks." }],
+  veya: [{ body: "I calculated the odds of {name} saying no. (She doesn't look up.) Zero, to four decimal places. I checked my work.", expression: "wry_smile" }],
+  corin: [{ body: "Amar and {name}. (He straightens.) Logged. Approved. (A beat, and the contraction slips.) I'm glad.", expression: "resolute" }]
+};
+
+const weddingLine = (characterId: string, partner?: string | null): CampLine | null => {
+  if (!partner || partner === "none" || !SPOUSE_NAMES[partner]) return null;
+  const pool = characterId === partner ? SPOUSE[partner]
+    : characterId === "amar" ? AMAR[partner]
+    : SQUAD[characterId];
+  if (!pool || pool.length === 0) return null;
+  const pick = pool[Math.floor(Math.random() * pool.length)]!;
+  return { ...pick, body: pick.body.replace("{name}", SPOUSE_NAMES[partner]!) };
 };

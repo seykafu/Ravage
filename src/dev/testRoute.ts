@@ -10,7 +10,7 @@ import { PROMOTIONS } from "../data/promotions";
 import { POST_ARC } from "../data/postArcs";
 import { ARCS } from "../story/beats";
 import type { ArcId } from "../data/contentIds";
-import { PATH_ROMANCES } from "../data/romance";
+import { PATH_ROMANCES, ROMANCE_FLAG } from "../data/romance";
 import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSave, type CharacterRecord } from "../util/save";
 
 // Dev-only: open one chapter on one road straight from the URL, with the
@@ -22,6 +22,8 @@ import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSav
 //                                              dialogue)
 //   /play/?test=wed_maya                       a story arc (here a wedding
 //                                              coda, on its partner's road)
+//   /play/?test=b29&partner=leo                the epilogue, married to Leo
+//                                              (any RomanceOption id, or none)
 //
 // `test` takes a battle id or its number prefix (b28, b19_path_opener_exile,
 // ...); `path` is any of the seven roads (vengeance by default once a
@@ -96,6 +98,10 @@ export const runTestRoute = (game: Phaser.Game): void => {
     if (promo && promoted.has(recordId)) rec = promoteCharacter(rec, promo);
     s = setCharacterRecord(s, recordId, rec);
   }
+  // Who Amar married (?partner=, implied by a wedding coda): the epilogue,
+  // the camp's last nights and the road home all read it.
+  const married = q.get("partner") ?? partner;
+  if (married) s = { ...s, flags: { ...s.flags, [ROMANCE_FLAG]: married } };
   setCurrentSlot(null);
   writeSave(s);
   console.info(`[test] ${node.id}${path ? ` on ${road}` : ""}${finale ? " — finale" : ""}`);

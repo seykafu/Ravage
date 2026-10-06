@@ -28,9 +28,14 @@ const RING = "story:ring";
 const SUN = { x: 0.73, y: 0.27 };
 /** The couple's feet, just above the dialog panel. */
 const FEET_Y = 428;
-const AMAR_X = 500, PARTNER_X = 720;
-/** Sprites at 5× their 32×40 sheets: big enough to read, still pixel art. */
-const SPRITE_SCALE = 5;
+/**
+ * Sprites at 2.5× their 32×40 sheets — about the camp's size. Larger, each
+ * art pixel became a block (at 5× a whole figure was a dozen fat pixels
+ * across); this keeps them crisp against the painting.
+ */
+const SPRITE_SCALE = 2.5;
+/** Shadow sizes go with the sprite scale. */
+const K = SPRITE_SCALE / 5;
 
 /**
  * Which sheet a character wears now: their saved (possibly promoted)
@@ -80,8 +85,16 @@ export interface RingTableau {
   readonly root: Phaser.GameObjects.Container;
 }
 
-export const showRingTableau = (scene: Phaser.Scene, partner: string, depth: number): RingTableau => {
+/**
+ * "ring": Amar steps toward them and the ring rises between them.
+ * "home": later — the two of them side by side, looking out at the
+ * sun going down, the ring catching it on his hand.
+ */
+export type TableauKind = "ring" | "home";
+
+export const showRingTableau = (scene: Phaser.Scene, who: string, depth: number, kind: TableauKind = "ring"): RingTableau => {
   const root = scene.add.container(0, 0).setDepth(depth).setAlpha(0);
+  root.setData("partner", who);
 
   // ---- the painting ----------------------------------------------------
   if (scene.textures.exists(CLIFF)) {
@@ -119,8 +132,8 @@ export const showRingTableau = (scene: Phaser.Scene, partner: string, depth: num
     const cls = classOf(scene, id);
     const tex = scene.textures.exists(`unit:${cls}:idle`) ? `unit:${cls}:idle` : cls;
     // The sun is behind them, low on the right: shadows fall long to the left.
-    const shadow = scene.add.ellipse(-26, 2, 120, 16, 0x1a0c08, 0.4);
-    const rim = scene.add.sprite(3, 0, tex).setOrigin(0.5, 0.9).setScale(SPRITE_SCALE).setFlipX(faceLeft)
+    const shadow = scene.add.ellipse(-26 * K, 2, 120 * K, 16 * K, 0x1a0c08, 0.4);
+    const rim = scene.add.sprite(1.5, 0, tex).setOrigin(0.5, 0.9).setScale(SPRITE_SCALE).setFlipX(faceLeft)
       .setTintFill(0xffb060).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
     const sprite = scene.add.sprite(0, 0, tex).setOrigin(0.5, 0.9).setScale(SPRITE_SCALE).setFlipX(faceLeft).setTint(0xffe2c0);
     const sync = (): void => { rim.setTexture(sprite.texture.key, sprite.frame.name); };
@@ -131,38 +144,48 @@ export const showRingTableau = (scene: Phaser.Scene, partner: string, depth: num
     root.add(box);
     return { box, sprite, cls };
   };
-  const amar = figure("amar", AMAR_X, false);
-  const them = figure(partner, PARTNER_X, true);
-
-  // ---- the sequence ----------------------------------------------------
   scene.tweens.add({ targets: root, alpha: 1, duration: 1400, ease: "Sine.easeOut" });
+  return kind === "home" ? stageHome(scene, root, figure, soft) : stageRing(scene, root, figure, soft, dot);
+};
+
+type Figure = (id: string, x: number, faceLeft: boolean) => { box: Phaser.GameObjects.Container; sprite: Phaser.GameObjects.Sprite; cls: string };
+
+/** The partner the tableau was opened for (kept on the root by showRingTableau). */
+const partnerOf = (root: Phaser.GameObjects.Container): string => root.getData("partner") as string;
+
+const stageRing = (
+  scene: Phaser.Scene, root: Phaser.GameObjects.Container, figure: Figure, soft: string, dot: string
+): RingTableau => {
+  const AMAR_X = 560, PARTNER_X = 680, STEP = 26;
+  const amar = figure("amar", AMAR_X, false);
+  const them = figure(partnerOf(root), PARTNER_X, true);
   // Amar steps toward them...
   const amarCls = amar.cls as ClassKind;
   scene.time.delayedCall(1300, () => {
     if (hasUnitAnimation(amarCls, "walk")) amar.sprite.play(animKey(amarCls, "walk"));
     scene.tweens.add({
-      targets: amar.box, x: AMAR_X + 56, duration: 700, ease: "Sine.easeInOut",
+      targets: amar.box, x: AMAR_X + STEP, duration: 700, ease: "Sine.easeInOut",
       onComplete: () => { if (hasUnitAnimation(amarCls, "idle")) amar.sprite.play(animKey(amarCls, "idle")); }
     });
   });
   // ...and holds it out.
   scene.time.delayedCall(2200, () => {
-    const at = { x: (AMAR_X + 56 + PARTNER_X) / 2, y: 186 };
+    const at = { x: (AMAR_X + STEP + PARTNER_X) / 2, y: 236 };
     const halo = scene.add.image(at.x, at.y, soft).setTint(0xffd890).setBlendMode(Phaser.BlendModes.ADD).setScale(0.15).setAlpha(0);
-    const hand = scene.add.image(AMAR_X + 56 + 40, FEET_Y - 88, soft).setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setScale(0.08).setAlpha(0);
+    const hand = scene.add.image(AMAR_X + STEP + 18, FEET_Y - 44, soft).setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setScale(0.05).setAlpha(0);
     root.add([halo, hand]);
-    scene.tweens.add({ targets: halo, alpha: 0.7, scale: 1.05, duration: 900, ease: "Cubic.easeOut" });
-    scene.tweens.add({ targets: hand, alpha: 0.9, scale: 0.16, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    scene.tweens.add({ targets: halo, alpha: 0.7, scale: 0.95, duration: 900, ease: "Cubic.easeOut" });
+    scene.tweens.add({ targets: hand, alpha: 0.9, scale: 0.1, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     if (scene.textures.exists(RING)) {
       scene.textures.get(RING).setFilter(Phaser.Textures.FilterMode.LINEAR);
-      const ring = scene.add.image(at.x, at.y, RING).setScale(0.18).setAlpha(0);
+      const ring = scene.add.image(at.x, at.y, RING).setScale(0.16).setAlpha(0);
       root.add(ring);
-      scene.tweens.add({ targets: ring, alpha: 1, scale: 0.42, duration: 900, ease: "Back.easeOut" });
+      scene.tweens.add({ targets: ring, alpha: 1, scale: 0.36, duration: 900, ease: "Back.easeOut" });
       scene.tweens.add({ targets: ring, y: at.y - 6, angle: 3, duration: 2400, delay: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     }
     const sparkles = scene.add.particles(at.x, at.y, dot, {
-      x: { min: -90, max: 90 }, y: { min: -80, max: 80 },
-      lifespan: { min: 600, max: 1400 }, scale: { start: 0.35, end: 0 },
+      x: { min: -80, max: 80 }, y: { min: -70, max: 70 },
+      lifespan: { min: 600, max: 1400 }, scale: { start: 0.3, end: 0 },
       alpha: { start: 1, end: 0 }, tint: [0xffffff, 0xffe6a0, 0xffc870],
       blendMode: Phaser.BlendModes.ADD, frequency: 110
     });
@@ -173,8 +196,28 @@ export const showRingTableau = (scene: Phaser.Scene, partner: string, depth: num
   });
   // The answer, before a word of it is said.
   scene.time.delayedCall(3100, () => {
-    scene.tweens.add({ targets: them.box, y: FEET_Y - 10, duration: 150, yoyo: true, repeat: 1, ease: "Sine.easeOut" });
+    scene.tweens.add({ targets: them.box, y: FEET_Y - 6, duration: 150, yoyo: true, repeat: 1, ease: "Sine.easeOut" });
   });
+  return { root };
+};
 
+// Later: side by side at the cliff's edge, both facing the sun, the
+// ring a small steady light on his hand, the evening's motes rising.
+const stageHome = (
+  scene: Phaser.Scene, root: Phaser.GameObjects.Container, figure: Figure, soft: string
+): RingTableau => {
+  figure("amar", 588, false);
+  figure(partnerOf(root), 648, false);
+  const glint = scene.add.image(588 + 14, FEET_Y - 40, soft).setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setScale(0.04).setAlpha(0);
+  root.add(glint);
+  scene.tweens.add({ targets: glint, alpha: 0.9, scale: 0.09, delay: 1600, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  const motes = scene.add.particles(0, 0, ensureDotTexture(scene), {
+    x: { min: 300, max: 1000 }, y: { min: 300, max: 430 },
+    speedY: { min: -14, max: -5 }, speedX: { min: -4, max: 6 },
+    lifespan: { min: 3000, max: 5200 }, scale: { start: 0.22, end: 0 },
+    alpha: { start: 0.9, end: 0 }, tint: [0xfff2c0, 0xffd890],
+    blendMode: Phaser.BlendModes.ADD, frequency: 160
+  });
+  root.add(motes);
   return { root };
 };

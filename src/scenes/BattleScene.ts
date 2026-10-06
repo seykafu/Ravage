@@ -137,6 +137,7 @@ import { DialogueDirector } from "./battle/DialogueDirector";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
 import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 import { finaleFor, playFinale, type FinaleHost, type Pt } from "./battle/Finale";
+import { ROMANCE_FLAG } from "../data/romance";
 import { TutorialDirector } from "./battle/Tutorial";
 
 interface BattleArgs {
@@ -745,9 +746,11 @@ export class BattleScene extends Phaser.Scene {
 
     // Mid-battle dialogue director — fresh per battle, so its fired /
     // round bookkeeping starts clean on every entry / retry.
+    // A spouse's lines (BattleDialogue.partner) only for that marriage.
+    const married = String(loadSave().flags[ROMANCE_FLAG] ?? "none");
     this.dialogue = new DialogueDirector(
       this,
-      node.dialogues ?? [],
+      (node.dialogues ?? []).filter((d) => !d.partner || d.partner === married),
       node.music,
       this.initiative,
       this.state
