@@ -9,9 +9,13 @@ import {
 } from "../../audio/Sfx";
 
 // ─────────────────────────────────────────────────────────────────────────
-// Finales — a short cut-scene on the battle board to close the last two
-// chapters of every road through the game.
+// Finales — a short cut-scene on the battle board to close every major
+// boss fight, and the last two chapters of every road through the game.
 //
+//   boss fights (B5 Ndari, B7 Selene, B11 Kian, B13, B14 Castor, B15
+//   Coyne, B16 Wren, the B19 openers with a boss, B20 Serrick, B22 Brask,
+//   B23 Vasse, B24 the bell, B27 the Herald): the blow, the fall or the
+//   yield, their last words in the air, one picture, the chapter's card
 //   war paths (vengeance, restoration, revolution, duty, mercy)
 //     B28 The Path Ends   the last blow, the path's own moment, then the
 //                         grounded flagship's shadow lifting off the board
@@ -225,10 +229,10 @@ export class Cine {
   // ---- light and air ---------------------------------------------------
 
   /** World particles at a point, a burst. */
-  burst(at: Pt, kind: "embers" | "gold" | "spark" | "white", count: number, depth: number = DEPTH.ATMOSPHERE): void {
+  burst(at: Pt, kind: "embers" | "gold" | "spark" | "white" | "mint", count: number, depth: number = DEPTH.ATMOSPHERE): void {
     if (this.skipped) return;
     const tint = kind === "embers" ? [0xffd07a, 0xff8a3c, 0xff5a20] : kind === "gold" ? [0xfff0b0, 0xf4c95a, 0xd8a03a]
-      : kind === "white" ? [0xffffff, 0xf0f4ff] : [0xfff6d0, 0xffc860];
+      : kind === "white" ? [0xffffff, 0xf0f4ff] : kind === "mint" ? [0xc8fff0, 0x7affd9, 0x3ac8a8] : [0xfff6d0, 0xffc860];
     const e = this.world(this.scene.add.particles(at.x, at.y, ensureDotTexture(this.scene), {
       speed: { min: 60, max: kind === "gold" ? 260 : 180 },
       angle: { min: 200, max: 340 },
@@ -552,6 +556,9 @@ export class Cine {
     this.burst(foot, "white", 18, DEPTH.ATMOSPHERE + 2);
     await this.wait(1400);
     void this.tween({ targets: beam, alpha: 0, duration: 1500, onComplete: () => beam.destroy() });
+    // The sword goes with the light: it is drawn at a fixed point, and the
+    // board is about to turn out from under it.
+    void this.tween({ targets: s, alpha: 0, duration: 1100, onComplete: () => s.destroy() });
   }
 
   /** The fall itself: ash and a rising soul (or only light, on mercy). */
@@ -559,6 +566,122 @@ export class Cine {
     if (this.skipped) return;
     if (!gentle) ashBurst(this.scene, (o) => this.world(o), at.x, at.y);
     soulWisp(this.scene, (o) => this.world(o), at.x, at.y, ensureDotTexture(this.scene));
+  }
+
+  // ---- the boss beats ------------------------------------------------------------
+
+  /** Last words, written in the air over the shot, then gone. */
+  async echo(text: string, ms = 2400, colour = "#ece2cc"): Promise<void> {
+    if (this.skipped) return;
+    const t = this.ui(this.scene.add.text(CX, BAR + 74, `“${text}”`, {
+      fontFamily: FAMILY_BODY, fontSize: "29px", color: colour, fontStyle: "italic", align: "center",
+      stroke: "#000", strokeThickness: 4, wordWrap: { width: 920 },
+      shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 12, fill: true }
+    }).setOrigin(0.5, 0).setDepth(DEPTH_CINE + 2).setAlpha(0));
+    void this.tween({ targets: t, alpha: 1, y: t.y - 6, duration: 600, ease: "Sine.easeOut" });
+    await this.wait(ms);
+    await this.tween({ targets: t, alpha: 0, y: t.y - 16, duration: 500, onComplete: () => t.destroy() });
+  }
+
+  /** A dactyl's great shadow sweeping over the board, and the wind behind it. */
+  async wingShadow(): Promise<void> {
+    if (this.skipped) return;
+    const g = this.ui(this.scene.add.graphics().setDepth(DEPTH_CINE - 18));
+    g.fillStyle(0x05040a, 0.55);
+    g.fillEllipse(0, 0, 150, 46);                              // body
+    g.fillTriangle(-30, -6, 40, -6, -150, -150);               // far wing
+    g.fillTriangle(-30, 6, 40, 6, -170, 120);                  // near wing
+    g.fillTriangle(70, -10, 70, 10, 130, 0);                   // head
+    g.fillTriangle(-70, -6, -70, 6, -150, 0);                  // tail
+    g.setPosition(GAME_WIDTH + 260, GAME_HEIGHT * 0.75).setAngle(-18).setScale(1.6);
+    sfxCineRise();
+    void this.tween({ targets: g, scaleY: 1.1, duration: 260, yoyo: true, repeat: 3, ease: "Sine.easeInOut" });
+    this.shake(900, 0.0025);
+    await this.tween({ targets: g, x: -300, y: GAME_HEIGHT * 0.12, duration: 1500, ease: "Sine.easeIn" });
+    g.destroy();
+    const c = this.host.boardCentre();
+    groundDust(this.scene, (o) => this.world(o), c.x, c.y, { depth: DEPTH.ATMOSPHERE, count: 14, spread: 160, squash: this.host.groundSquash() });
+  }
+
+  /** Mist rising where someone was, and nobody there when it clears. */
+  vanish(at: Pt): void {
+    if (this.skipped) return;
+    const e = this.world(this.scene.add.particles(at.x, at.y, ensureDotTexture(this.scene), {
+      x: { min: -40, max: 40 }, y: { min: -30, max: 10 },
+      speedY: { min: -40, max: -12 }, speedX: { min: -24, max: 24 },
+      lifespan: { min: 1600, max: 2600 }, scale: { start: 1.2, end: 3.2 },
+      alpha: { start: 0.42, end: 0 }, tint: [0xe8eef4, 0xd0d8e0], emitting: false
+    }).setDepth(DEPTH.ATMOSPHERE + 1));
+    e.explode(36);
+    this.scene.time.delayedCall(3000, () => e.destroy());
+  }
+
+  /** A name taken up by a crowd: rising from the ranks again and again. */
+  async chant(word: string, times: number): Promise<void> {
+    for (let i = 0; i < times && !this.skipped; i++) {
+      const size = Phaser.Math.Between(22, 44);
+      const t = this.ui(this.scene.add.text(Phaser.Math.Between(180, GAME_WIDTH - 180), Phaser.Math.Between(GAME_HEIGHT - BAR - 140, GAME_HEIGHT - BAR - 40), word, {
+        fontFamily: FAMILY_HEADING, fontSize: `${size}px`, color: "#f4d999", stroke: "#120a04", strokeThickness: 4
+      }).setOrigin(0.5).setDepth(DEPTH_CINE - 4).setAlpha(0).setLetterSpacing(4));
+      sfxCineChime(0.9 + (i % 4) * 0.12);
+      void this.tween({ targets: t, alpha: 0.95, duration: 220 });
+      void this.tween({ targets: t, y: t.y - 90, alpha: 0, delay: 500, duration: 900, ease: "Sine.easeIn", onComplete: () => t.destroy() });
+      await this.wait(170);
+    }
+    await this.wait(600);
+  }
+
+  /** A pillar of the Ravage's light over `at`, collapsing into it. */
+  async beamCollapse(at: Pt): Promise<void> {
+    if (this.skipped) return;
+    const g = this.world(this.scene.add.graphics().setDepth(DEPTH.ATMOSPHERE + 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0));
+    g.fillGradientStyle(0x7affd9, 0x7affd9, 0xc8fff0, 0xc8fff0, 0, 0, 0.75, 0.75);
+    g.fillRect(-32, -620, 64, 620);
+    g.setPosition(at.x, at.y + 20);
+    sfxCineRise();
+    await this.tween({ targets: g, alpha: 1, duration: 600 });
+    await this.wait(500);
+    sfxCineBell(0.45);
+    await this.tween({ targets: g, scaleX: 0, duration: 260, ease: "Cubic.easeIn" });
+    g.destroy();
+    this.flash(0x7affd9, 0.45, 600);
+    this.shake(320, 0.006);
+    this.burst(at, "mint", 40, DEPTH.ATMOSPHERE + 2);
+    await this.wait(700);
+  }
+
+  /** A glint of steel at `at` — a knife, catching the light once. */
+  glint(at: Pt): void {
+    if (this.skipped) return;
+    const g = this.world(this.scene.add.graphics().setDepth(DEPTH.ATMOSPHERE + 2).setBlendMode(Phaser.BlendModes.ADD));
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(-26, -1.5, 52, 3);
+    g.fillRect(-1.5, -26, 3, 52);
+    g.setPosition(at.x + 10, at.y - 34).setScale(0).setAngle(15);
+    sfxCineChime(1.6);
+    void this.tween({ targets: g, scale: 1, angle: 60, duration: 260, yoyo: true, ease: "Sine.easeOut", onComplete: () => g.destroy() });
+  }
+
+  /** Pages of a ledger, loose in the air. */
+  pages(at: Pt): void {
+    if (this.skipped) return;
+    const key = "cine_page";
+    if (!this.scene.textures.exists(key)) {
+      const pg = this.scene.make.graphics({}, false);
+      pg.fillStyle(0xf4ecd8, 1);
+      pg.fillRect(0, 0, 10, 13);
+      pg.fillStyle(0x8a7a62, 1);
+      for (let y = 3; y < 12; y += 3) pg.fillRect(2, y, 6, 1);
+      pg.generateTexture(key, 10, 13);
+      pg.destroy();
+    }
+    const e = this.world(this.scene.add.particles(at.x, at.y - 20, key, {
+      speed: { min: 50, max: 170 }, angle: { min: 200, max: 340 }, gravityY: 70,
+      lifespan: { min: 1600, max: 2600 }, rotate: { min: -180, max: 180 }, scale: { min: 0.9, max: 1.4 },
+      alpha: { start: 1, end: 0 }, emitting: false
+    }).setDepth(DEPTH.ATMOSPHERE + 1));
+    e.explode(22);
+    this.scene.time.delayedCall(2800, () => e.destroy());
   }
 }
 
@@ -723,6 +846,201 @@ const lastMorning: FinaleScript = async (c) => {
   await c.title("One Last Morning", "Nobody said the word 'war' once.", 2200);
 };
 
+// ---- the boss fights ------------------------------------------------------------
+//
+// Every major boss fight closes on a beat of its own: the last blow, the
+// fall (or the yield, or the escape), the words they leave in the air, one
+// picture of what the fight meant, and the chapter's card.
+
+interface BossEnd {
+  boss: string;
+  /** Walks away from it (yields, escapes, is carried off): no ash, no soul. */
+  lives?: boolean;
+  grade: Grade;
+  /** The moment itself, after the blow lands. */
+  beat?: (c: Cine, at: Pt) => Promise<void>;
+  title: string;
+  line: string;
+  colour?: string;
+}
+
+const bossFalls = (end: BossEnd): FinaleScript => async (c) => {
+  const at = lastFallen(c, end.boss);
+  c.begin();
+  sfxCineBoom();
+  c.flash(0xffffff, end.lives ? 0.4 : 0.6, 600);
+  c.shake(380, end.lives ? 0.003 : 0.007);
+  if (!end.lives) c.fall(at, false);
+  await c.focus(lastBlowShot(c, at), 1.65, 520);
+  c.grade(end.grade, 0.7, 300);
+  await c.wait(450);
+  if (end.beat) await end.beat(c, at);
+  await c.focus(c.host.boardCentre(), 1.04, 1200);
+  await c.orbit(1, 0.45);
+  await c.title(end.title, end.line, 2000, end.colour);
+};
+
+/** The squad cheering: everyone standing hops, a little out of step. */
+const cheer = (c: Cine): void => {
+  c.host.living("player").forEach((id, i) => c.host.scene.time.delayedCall(i * 120, () => { void c.host.hop(id, 8, 2); }));
+};
+
+const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
+  b05_mountain_ndari: () => ({
+    boss: "ndari", grade: "dusk",
+    beat: async (c) => {
+      // Ndara's dactyl, over the gate, and her question.
+      await c.wingShadow();
+      await c.echo("Ask your captain who he works for!");
+    },
+    title: "The Mountain Gate",
+    line: "Ndari falls holding the gate. His sister gets away on the wind."
+  }),
+  b07_monastery: () => ({
+    boss: "selene_enemy", lives: true, grade: "cold",
+    beat: async (c, at) => {
+      c.vanish(at);
+      await c.echo("Don't follow me past the bell tower, Amar.");
+    },
+    title: "The Ghost from Para",
+    line: "Selene goes over the balcony and into the mist. Amar says nothing."
+  }),
+  b11_cliffs: () => ({
+    boss: "kian_enemy", grade: "dusk",
+    beat: async (c) => {
+      c.sunSweep(2800);
+      await c.echo("Good half-step, your highness.", 2600);
+      c.rising("motes", 4000);
+    },
+    title: "Good Half-Step",
+    line: "Kian falls at sundown, on the stairs above Para Harbor."
+  }),
+  b13_dawn_rebellion: () => ({
+    boss: "royal_captain", grade: "mono",
+    beat: async (c) => {
+      // For Rose: petals, and quiet.
+      c.weather("petals", 6500);
+      await c.wait(1800);
+    },
+    title: "Rose",
+    line: "Four bolts. She held long enough for Dawn to understand.",
+    colour: "#f2d0c8"
+  }),
+  b14_origin: () => ({
+    boss: "imperial_knight", lives: true, grade: "cold",
+    beat: (c) => c.echo("Welcome to the family, your highness."),
+    title: "Welcome to the Family",
+    line: "Lord Castor's guard carries him off. Upstairs, Dawn's sentence is still waiting."
+  }),
+  b15_inner_coup: () => ({
+    boss: "turncoat", grade: "dusk",
+    beat: async (c, at) => {
+      c.pages(at);
+      await c.echo("Six strides of bad luck.");
+    },
+    title: "Six Strides Short",
+    line: "The man who sold Dawn's door had kept her books for nine years."
+  }),
+  b16_proposal: () => ({
+    boss: "kings_knife", grade: "cold",
+    beat: async (c, at) => {
+      c.glint(at);
+      await c.echo("Stop standing in the open.");
+    },
+    title: "The King's Knife",
+    line: "Wren falls on the open bridge. Her hired knives melt away."
+  }),
+  b19_path_opener_vengeance: () => ({
+    boss: "imperial_knight", grade: "mono",
+    beat: (c) => c.strikeName("Castor"),
+    title: "First Name",
+    line: "One name crossed off the list. Maya keeps the ledger now."
+  }),
+  b19_path_opener_revolution: () => ({
+    boss: "royal_captain", grade: "dusk",
+    beat: async (c, at) => {
+      c.flash(0xff9a40, 0.35, 900);
+      c.burst(at, "embers", 50);
+      c.rising("embers", 5200);
+      await c.echo("Burn well.", 2000, "#ffd8a8");
+    },
+    title: "Burn Well",
+    line: "The granary burns for the villages that grew it and never ate it."
+  }),
+  b19_path_opener_mercy: () => ({
+    boss: "royal_captain", lives: true, grade: "dawn",
+    beat: (c, at) => c.swordSetDown(at),
+    title: "The Open Hand",
+    line: "Nobody died who didn't have to. At the gate, Selene is watching."
+  }),
+  b20_dawn_war: () => ({
+    boss: "imperial_general", grade: "dusk",
+    beat: async (c) => {
+      cheer(c);
+      await c.chant("AMAR", 12);
+    },
+    title: "The Cheered Name",
+    line: "Across the field, the rebels are cheering a name. It isn't Dawn's."
+  }),
+  b22_grude_burns: () => ({
+    boss: "incendiary_captain", grade: "dusk",
+    beat: async (c) => {
+      // The last fires go out; morning comes up through the smoke.
+      c.rising("embers", 2600);
+      await c.wait(1200);
+      c.grade("dawn", 0.6, 2000);
+      c.sunSweep(2800);
+      await c.wait(1500);
+    },
+    title: "The Held City",
+    line: "What could be saved was saved, by hand, one corner at a time."
+  }),
+  b23_path_climax_a: (path) => path === "vengeance" ? {
+    boss: "remnant_colonel", grade: "mono",
+    beat: (c) => c.strikeName("Vasse"),
+    title: "Another Name",
+    line: "The list is getting shorter. So is the anger."
+  } : path === "mercy" ? {
+    boss: "remnant_colonel", lives: true, grade: "dawn",
+    beat: (c, at) => c.swordSetDown(at),
+    title: "The Yield",
+    line: "Vasse sits against the canyon wall, alive. His men walk west, unarmed."
+  } : {
+    boss: "remnant_colonel", grade: "dusk",
+    beat: async (c) => { c.rising("motes", 4000); await c.wait(1400); },
+    title: "The Narrows",
+    line: "The last fight with people is over. The east is still the wrong colour."
+  },
+  b24_path_climax_b: (path) => ({
+    boss: path === "revolution" ? "dawn_loyalist" : "bell_warden", lives: true, grade: "dawn",
+    beat: async (c) => {
+      // The bell, rung at last, rolling out over every roof.
+      const squad = c.host.living("player");
+      for (const [i, p] of [1, 0.89, 0.75].entries()) {
+        c.toll(c.host.unitPoint(squad[i] ?? "amar") ?? c.host.boardCentre(), p);
+        await c.wait(950);
+      }
+    },
+    title: "The Bell Before the Sky",
+    line: "The bell rings for every roof in the west. Within the hour, the sky changes."
+  }),
+  b27_orbital_descent: () => ({
+    boss: "ravage_herald", grade: "cold",
+    beat: (c, at) => c.beamCollapse(at),
+    title: "Measured",
+    line: "The Herald came down to see what held the shore. Now it has seen.",
+    colour: "#b8ffe8"
+  })
+};
+
+/** Who a boss finale is about (the dev test route lands the last blow on them). */
+export const finaleBoss = (battleId: string, path: SevenPath | null): string | null => {
+  if (battleId === "b28_path_final") {
+    return (path && path in PATH_ENDS ? PATH_ENDS[path as keyof typeof PATH_ENDS] : PATH_ENDS.restoration).boss;
+  }
+  return BOSS_ENDS[battleId]?.(path)?.boss ?? null;
+};
+
 /** The finale for a battle on a road, if it has one. */
 export const finaleFor = (battleId: string, path: SevenPath | null): FinaleScript | null => {
   switch (battleId) {
@@ -734,7 +1052,10 @@ export const finaleFor = (battleId: string, path: SevenPath | null): FinaleScrip
       const end = path && path in PATH_ENDS ? PATH_ENDS[path as keyof typeof PATH_ENDS] : PATH_ENDS.restoration;
       return pathEnds(end);
     }
-    default: return null;
+    default: {
+      const end = BOSS_ENDS[battleId]?.(path);
+      return end ? bossFalls(end) : null;
+    }
   }
 };
 

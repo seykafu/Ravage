@@ -1,16 +1,19 @@
 // First-battle guided tutorial — a play-by-play director for B1.
 //
-// A sequence of steps, each of which WAITS for a battle event
-// ("battleStart", the player's first turn, the first move landing...),
-// shows a pinned popup panel with a bobbing arrow pointed at the thing
-// being taught, and dismisses either on "Got it" or automatically when
-// the player performs the taught action. The battle is never blocked —
-// popups sit in the lower-left of the playfield and input passes
-// through everywhere else.
+// A short run of tips, each of which WAITS for a battle event (the battle
+// starting, the player's turn, the first move landing...), then shows a
+// card in the lower left with a bobbing arrow at the thing it teaches. A
+// tip closes on "Got it", on its ✕, or by itself when the player does what
+// it teaches. "Skip tutorial" ends the whole run. The battle never waits
+// on a tip, and clicks on the card belong to the card alone (BattleScene
+// asks covers() before reading a click as a board click).
 //
-// Shown once per save (flags["tutorial_b01_done"]); "Skip tutorial"
-// ends the whole sequence immediately. BattleScene owns the instance
-// and forwards events via notify().
+// Pacing: one idea per tip, and no more than two in a row — the rest wait
+// for the moment they describe (moving, attacking, the second unit's turn,
+// the enemy's turn, round two).
+//
+// Shown once per save (flags["tutorial_b01_done"]). BattleScene owns the
+// instance and forwards events via notify().
 
 import Phaser from "phaser";
 import { Button } from "../../ui/Button";
@@ -44,83 +47,82 @@ interface TutorialStep {
   waitFor: TutorialEvent | "immediate";
   // Round gate for roundStart triggers.
   minRound?: number;
-  // Optional event that auto-dismisses the step (the player DID the
+  // Only on a NEW occurrence of `waitFor` — never the turn already under
+  // way when the step comes up (Stances waits for the next unit's turn).
+  fresh?: boolean;
+  // Optional event that closes the step by itself (the player DID the
   // thing) — "Got it" always works too.
   completeOn?: TutorialEvent;
   arrow?: ArrowSpec;
 }
 
 // Layout facts mirrored from BattleScene: side panel x = GAME_WIDTH-280,
-// action buttons at top=438 in 30px rows with 4px gaps, goal text at
-// (16,46), toggles at (GAME_WIDTH-120,35) and (GAME_WIDTH-76,35).
+// action buttons from top=438 in 30px rows with 4px gaps (Move/Attack,
+// Ready/Defend, Item/Undo, then End Turn), goal text at (16,46), toggles
+// at (GAME_WIDTH-120,35) and (GAME_WIDTH-76,35).
 const BTN_X = GAME_WIDTH - 280;
 const BTN_ROW = (r: number): number => 438 + r * 34 + 15;
+const AT_BUTTON = (row: number): ArrowSpec => ({ x: BTN_X - 22, y: BTN_ROW(row), glyph: "➤", bobAxis: "x" });
 
 const STEPS: TutorialStep[] = [
   {
-    title: "The Field",
-    body: "Welcome to your first battle. Your objective sits in the top-left — for most fights: defeat every enemy. Lose your whole squad and the battle is lost.",
+    title: "Your First Battle",
+    body: "Defeat every enemy to win. Your goal is always shown here, top left. If your whole squad falls, the battle is lost.",
     waitFor: "battleStart",
     arrow: { x: 120, y: 78, glyph: "▲", bobAxis: "y" }
   },
   {
-    title: "Turn Order",
-    body: "The bar up top shows who acts next: your side first each round, fastest units leading. The gold arrow on the field marks whose turn it is right now.",
+    title: "Who Moves Next",
+    body: "This bar shows the turn order. Your side goes first each round. The gold arrow on the field marks whose turn it is.",
     waitFor: "immediate",
     arrow: { x: 430, y: 78, glyph: "▲", bobAxis: "y" }
   },
   {
-    title: "Movement",
-    body: "The blue region is everywhere the active unit can walk. Hover a tile to preview the path, click it to move — or use the MOVE button. Try it now.",
+    title: "Move",
+    body: "Blue tiles show where this unit can walk. Click one to move there. Changed your mind? Press UNDO MOVE.",
     waitFor: "playerTurn",
     completeOn: "moved",
-    arrow: { x: BTN_X - 22, y: BTN_ROW(0), glyph: "➤", bobAxis: "x" }
-  },
-  {
-    title: "Undo",
-    body: "Second thoughts? UNDO MOVE walks it back — position and AP both. Anything that commits (an attack, a stance, an item) locks the move in.",
-    waitFor: "immediate",
-    arrow: { x: BTN_X + 108, y: BTN_ROW(2), glyph: "➤", bobAxis: "x" }
+    arrow: AT_BUTTON(0)
   },
   {
     title: "Attack",
-    body: "Enemies in reach are marked red. Hover one to see the damage forecast — hit chance, crit, and their counter — then click to strike. Swords beat spears, spears beat shields, shields beat swords.",
+    body: "Enemies in reach glow red. Point at one to see the damage you'll do, then click it to strike.\nSwords beat spears. Spears beat shields. Shields beat swords.",
     waitFor: "immediate",
     completeOn: "attacked",
-    arrow: { x: BTN_X + 108, y: BTN_ROW(0), glyph: "➤", bobAxis: "x" }
+    arrow: AT_BUTTON(0)
   },
   {
-    title: "Action Points",
-    body: "Every action costs AP, shown in the side panel. A unit can move, attack, and more in one turn — spend in any order, then END TURN at the bottom passes to the next unit.",
+    title: "End the Turn",
+    body: "Every action costs AP (action points), shown in the panel. When this unit is done, press END TURN.",
     waitFor: "immediate",
-    arrow: { x: BTN_X - 22, y: 200, glyph: "➤", bobAxis: "x" }
+    arrow: AT_BUTTON(3)
   },
   {
     title: "Stances",
-    body: "Spare AP? READY counters the first enemy that attacks you. DEFEND halves incoming damage. They stack — and they last until your next turn.",
-    waitFor: "immediate",
-    arrow: { x: BTN_X - 22, y: BTN_ROW(1), glyph: "➤", bobAxis: "x" }
+    body: "Spare AP? READY hits back at the first enemy who attacks you. DEFEND halves the damage you take. Both last until your next turn.",
+    waitFor: "playerTurn",
+    fresh: true,
+    arrow: AT_BUTTON(1)
   },
   {
-    title: "Danger Sense",
-    body: "The ⚔ toggle (or the T key) shades every tile the enemy could strike next turn. Check it before you commit anyone somewhere lonely.",
-    waitFor: "immediate",
-    arrow: { x: GAME_WIDTH - 120, y: 70, glyph: "▲", bobAxis: "y" }
-  },
-  {
-    title: "Enemy Phase",
-    body: "The enemy moves now — watch where they commit. The ▶▶ button doubles their animation speed once you've seen enough.",
+    title: "Enemy Turn",
+    body: "Now the enemy moves. Watch where they go. The ▶▶ button speeds their turn up.",
     waitFor: "enemyPhase",
     completeOn: "playerTurn",
     arrow: { x: GAME_WIDTH - 76, y: 70, glyph: "▲", bobAxis: "y" }
   },
   {
-    title: "One More Thing",
-    body: "Drag with any mouse button (or WASD / arrows) to pan the battlefield — some maps run taller than the screen. And your progress saves every turn: leave any time and RESUME from the battle-prep screen. Good hunting.",
+    title: "Two Last Things",
+    body: "The ⚔ button (or the T key) shades every tile the enemy can hit next turn. Drag the map, or use WASD, to look around. The game saves every turn.",
     waitFor: "roundStart",
-    minRound: 2
+    minRound: 2,
+    arrow: { x: GAME_WIDTH - 120, y: 70, glyph: "▲", bobAxis: "y" }
   }
 ];
+
+const CARD_W = 440;
+const CARD_X = 20;
+const PAD = 18;
 
 export class TutorialDirector {
   private scene: Phaser.Scene;
@@ -131,10 +133,13 @@ export class TutorialDirector {
   private panelObjs: Phaser.GameObjects.GameObject[] = [];
   private arrowObj?: Phaser.GameObjects.Text;
   private arrowTween?: Phaser.Tweens.Tween;
-  // Steps with waitFor:"immediate" chain off the previous dismissal, but
-  // only once their PREDECESSOR closed. Queued events that arrived while
-  // a step was showing are consumed for completeOn only.
-  private pendingImmediate = false;
+  /** The card on screen, for covers(). */
+  private card?: Phaser.Geom.Rectangle;
+  // Whose phase it is and which round, as the battle last reported: a tip
+  // that comes up while its moment is already under way (the player's turn
+  // began while an earlier tip was open) shows at once, not a turn late.
+  private phase: "player" | "enemy" | null = null;
+  private round = 1;
 
   constructor(scene: Phaser.Scene, pin: WorldTag) {
     this.scene = scene;
@@ -146,7 +151,15 @@ export class TutorialDirector {
     return loadSave().flags["tutorial_b01_done"] !== true;
   }
 
+  /** Whether a screen point (design px) is on the tip card. */
+  covers(x: number, y: number): boolean {
+    return !!this.card && this.card.contains(x, y);
+  }
+
   notify(event: TutorialEvent, round = 1): void {
+    if (event === "playerTurn") this.phase = "player";
+    if (event === "enemyPhase") this.phase = "enemy";
+    if (event === "roundStart") this.round = round;
     if (this.done) return;
     const step = STEPS[this.idx];
     if (!step) return;
@@ -162,58 +175,76 @@ export class TutorialDirector {
 
   private show(step: TutorialStep): void {
     this.showing = true;
-    const W = 400;
-    const H = 128;
-    const X = 20;
+    // The body first: the card grows to fit it.
+    const body = this.scene.add.text(0, 0, step.body, {
+      fontFamily: FAMILY_BODY,
+      fontSize: "17px",
+      color: "#ece6d6",
+      wordWrap: { width: CARD_W - PAD * 2 },
+      lineSpacing: 5
+    });
+    const H = 50 + body.height + 58;
+    const X = CARD_X;
     const Y = GAME_HEIGHT - H - 24;
+    body.setPosition(X + PAD, Y + 46);
+    this.card = new Phaser.Geom.Rectangle(X, Y, CARD_W, H);
 
     const g = this.scene.add.graphics();
-    drawPanel(g, X, Y, W, H);
-    const title = this.scene.add.text(X + 16, Y + 12, step.title.toUpperCase(), {
+    drawPanel(g, X, Y, CARD_W, H);
+    const title = this.scene.add.text(X + PAD, Y + 15, step.title.toUpperCase(), {
       fontFamily: FAMILY_HEADING,
-      fontSize: "14px",
+      fontSize: "17px",
       color: "#f4d999",
       letterSpacing: 2
     });
-    const body = this.scene.add.text(X + 16, Y + 34, step.body, {
+    // Where we are in the run, so the end is always in sight.
+    const count = this.scene.add.text(X + CARD_W - 50, Y + 17, `${this.idx + 1} / ${STEPS.length}`, {
       fontFamily: FAMILY_BODY,
-      fontSize: "13px",
-      color: "#e6e0d0",
-      wordWrap: { width: W - 32 },
-      lineSpacing: 3
-    });
+      fontSize: "14px",
+      color: "#9a907e"
+    }).setOrigin(1, 0);
+    // ✕ closes this tip.
+    const close = this.scene.add.text(X + CARD_W - 16, Y + 12, "✕", {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "18px",
+      color: "#b8ab92"
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    close.on("pointerover", () => { sfxHover(); close.setColor("#f4d999"); });
+    close.on("pointerout", () => close.setColor("#b8ab92"));
+    close.on("pointerdown", () => { sfxClick(); this.dismiss(); });
+
+    const last = this.idx === STEPS.length - 1;
     const got = new Button(this.scene, {
-      x: X + W - 96, y: Y + H - 34, w: 82, h: 26,
-      label: "Got it ▸", primary: true, fontSize: 12,
+      x: X + CARD_W - 124, y: Y + H - 44, w: 108, h: 32,
+      label: last ? "Done ✓" : "Got it ▸", primary: true, fontSize: 14,
       onClick: () => { sfxClick(); this.dismiss(); }
     });
-    const skip = this.scene.add.text(X + 16, Y + H - 26, "Skip tutorial ✕", {
-      fontFamily: FAMILY_BODY,
-      fontSize: "11px",
-      color: "#7a7165"
-    }).setInteractive({ useHandCursor: true });
-    skip.on("pointerover", () => { sfxHover(); skip.setColor("#c9b07a"); });
-    skip.on("pointerout", () => skip.setColor("#7a7165"));
-    skip.on("pointerdown", () => { sfxClick(); this.finish(); });
+    const skip = new Button(this.scene, {
+      x: X + PAD - 2, y: Y + H - 44, w: 144, h: 32,
+      label: "Skip tutorial ✕", primary: false, fontSize: 13,
+      onClick: () => { sfxClick(); this.finish(); }
+    });
 
-    for (const o of [g, title, body, got, skip]) {
+    for (const o of [g, title, count, close, body, got, skip]) {
       this.pin(o as Phaser.GameObjects.GameObject);
-      (o as Phaser.GameObjects.Container).setDepth?.(1300);
+      // The panel under everything on it (the body was made first, to size it).
+      (o as Phaser.GameObjects.Container).setDepth?.(o === g ? 1300 : 1301);
       this.panelObjs.push(o as Phaser.GameObjects.GameObject);
     }
+    if (last) skip.setVisible(false);
 
-    // Fade the panel group in so steps don't teleport.
+    // Fade the card in so tips don't teleport.
     for (const o of this.panelObjs) {
-      const withAlpha = o as unknown as { setAlpha?: (a: number) => unknown; alpha?: number };
+      const withAlpha = o as unknown as { setAlpha?: (a: number) => unknown };
       withAlpha.setAlpha?.(0);
     }
-    this.scene.tweens.add({ targets: this.panelObjs, alpha: 1, duration: 180 });
+    this.scene.tweens.add({ targets: this.panelObjs, alpha: 1, duration: 200 });
 
     if (step.arrow) {
       const a = step.arrow;
       this.arrowObj = this.scene.add.text(a.x, a.y, a.glyph, {
         fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
+        fontSize: "28px",
         color: "#ffd45a",
         stroke: "#1a0e04",
         strokeThickness: 4
@@ -222,7 +253,7 @@ export class TutorialDirector {
       const prop = a.bobAxis === "x" ? "x" : "y";
       this.arrowTween = this.scene.tweens.add({
         targets: this.arrowObj,
-        [prop]: (a.bobAxis === "x" ? a.x : a.y) - 7,
+        [prop]: (a.bobAxis === "x" ? a.x : a.y) - 8,
         duration: 380,
         yoyo: true,
         repeat: -1,
@@ -239,8 +270,20 @@ export class TutorialDirector {
       this.finish();
       return;
     }
-    // Chain immediate steps straight on; event-gated steps wait.
-    if (next.waitFor === "immediate") this.show(next);
+    // Chain immediate steps straight on; event-gated steps wait — unless
+    // their moment is already here.
+    if (next.waitFor === "immediate" || this.isNow(next)) this.show(next);
+  }
+
+  /** Whether a step's moment is the one the battle is in right now. */
+  private isNow(step: TutorialStep): boolean {
+    if (step.fresh) return false;
+    switch (step.waitFor) {
+      case "playerTurn": return this.phase === "player";
+      case "enemyPhase": return this.phase === "enemy";
+      case "roundStart": return step.minRound !== undefined && this.round >= step.minRound;
+      default: return false;
+    }
   }
 
   private finish(): void {
@@ -253,6 +296,7 @@ export class TutorialDirector {
 
   private teardown(): void {
     this.showing = false;
+    this.card = undefined;
     if (this.arrowTween) { this.arrowTween.stop(); this.arrowTween = undefined; }
     if (this.arrowObj) { this.arrowObj.destroy(); this.arrowObj = undefined; }
     for (const o of this.panelObjs) o.destroy();

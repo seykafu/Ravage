@@ -4399,7 +4399,8 @@ export class BattleScene extends Phaser.Scene {
   private isOverUi(p: Phaser.Input.Pointer): boolean {
     const x = p.x / RENDER_SCALE;
     const y = p.y / RENDER_SCALE;
-    return x >= GAME_WIDTH - PANEL_W - 12 || y <= TOP_BAR_HEIGHT;
+    // The first battle's tip card, too: "Got it" isn't an order to move.
+    return x >= GAME_WIDTH - PANEL_W - 12 || y <= TOP_BAR_HEIGHT || !!this.tutorial?.covers(x, y);
   }
 
   // Put the camera on a unit and mark where it landed. Called when the
