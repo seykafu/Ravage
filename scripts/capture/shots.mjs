@@ -547,19 +547,23 @@ export const finales = [
 
 // RING — the wedding codas' ring at sunset (scenes/story/RingTableau),
 // played from its beat: one partner per kind of sheet.
-const ringShot = (partner, path) => ({
-  name: `ring_${partner}`, seconds: 6.5, settleFrames: 20,
+const ringShot = (partner, path, arc = `wed_${partner}`, kind = "ring") => ({
+  name: `${kind}_${partner}`, seconds: 6.5, settleFrames: 20,
   setup: fn(`
     const save = cap.save;
     let s = save.defaultSave();
     s = save.setSevenPath(s, "${path}");
+    s.flags["romance.partner"] = "${partner}";
     save.setCurrentSlot(1);
     save.writeSave(s);
-    cap.goto("StoryScene", { arcId: "wed_${partner}" });
+    cap.goto("StoryScene", { arcId: "${arc}" });
   `),
-  each: fn(`if (arg.i === 0) toBeat((b) => !!b.tableau);`)
+  each: fn(`if (arg.i === 0) toBeat((b) => b.tableau?.kind === "${kind}" && b.tableau.partner === "${partner}");`)
 });
-export const ring = [ringShot("maya", "revolution"), ringShot("leo", "mercy"), ringShot("ndara", "duty")];
+export const ring = [
+  ringShot("maya", "revolution"), ringShot("leo", "mercy"), ringShot("ndara", "duty"),
+  ringShot("selene", "vengeance", "post_epilogue", "home"), ringShot("leo", "mercy", "post_epilogue", "home")
+];
 
 // PROMOTED — every Tier 2 class in battle. The live units are promoted in
 // place (classKind swapped, views rebuilt), so no save surgery is needed.
@@ -658,4 +662,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], ring };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], ring, home: ring.slice(3) };

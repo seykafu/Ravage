@@ -42,10 +42,15 @@ export interface DialogBeat {
   // post_grude_burns — without splitting the scene into two arcs.
   music?: StoryArc["music"];
   // A staged picture over the arc's backdrop, from this beat to the end of
-  // the arc. "ring": the wedding codas' sunset — Amar and the one he marries
-  // on a clifftop over the sea, and the ring he holds out (scenes/story/
-  // RingTableau). `partner` is the RomanceOption id.
-  tableau?: { kind: "ring"; partner: string };
+  // the arc (scenes/story/RingTableau). "ring": the wedding codas' sunset —
+  // Amar and the one he marries on a clifftop over the sea, and the ring he
+  // holds out. "home": the same clifftop later, the two of them side by
+  // side watching the sun go down. `partner` is the RomanceOption id.
+  tableau?: { kind: "ring" | "home"; partner: string };
+  // Only in the story of this marriage (a RomanceOption id): the beat is
+  // skipped unless Amar married `partner`. Lets a shared arc (the epilogue's
+  // road home) carry each spouse's own lines.
+  partner?: string;
 }
 
 export interface StoryArc {
@@ -79,6 +84,10 @@ export interface StoryArc {
 const N = (body: string, ambient?: number): DialogBeat => ({ portraitId: "narrator", body, ambient });
 // The ring at sunset: narration over the clifftop picture (see DialogBeat.tableau).
 const RING = (partner: string, body: string): DialogBeat => ({ portraitId: "narrator", body, tableau: { kind: "ring", partner } });
+// The same clifftop, later — only in the story of this marriage.
+const HOME = (partner: string, body: string): DialogBeat => ({ portraitId: "narrator", body, partner, tableau: { kind: "home", partner } });
+// A beat only in the story of this marriage (see DialogBeat.partner).
+const WED = (partner: string, beat: DialogBeat): DialogBeat => ({ ...beat, partner });
 
 // Keyed by ArcId so missing/extra/typo'd arcs fail at compile time. Pair with
 // StoryArc.id: ArcId so the key and the inner id can't drift apart.
@@ -1613,6 +1622,49 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "another_path",
     beats: [
       N("The smallhold pays in bread, apples, and a jar of something the old woman insists is medicinal. The road home runs west through the long light, and for a while nobody has anything urgent to say, which is its own kind of luxury."),
+      WED("selene", { speaker: "Selene", portraitId: "selene",
+        body: "(She walks on his left, where the light is.) Rabbit went through here this morning. Fox after it. Owl after the fox." }),
+      WED("selene", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "And after the owl?" }),
+      WED("selene", { speaker: "Selene", portraitId: "selene",
+        body: "Us. Going home." }),
+      WED("corin", { speaker: "Corin", portraitId: "corin", expression: "resolute",
+        body: "March order, home. (He falls in at Amar's shoulder, half a step back, where he has always walked.) You have point. I have your back." }),
+      WED("corin", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "You've had it the whole time." }),
+      WED("corin", { speaker: "Corin", portraitId: "corin", expression: "resolute",
+        body: "(A beat; the contraction slips out.) I know. I'm not giving it back." }),
+      WED("ning", { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "(She's carrying all the apples, because she counted them and she's fastest.) Seventeen. That's three each and two over. The two over are ours. I've decided." }),
+      WED("ning", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Which two?" }),
+      WED("ning", { speaker: "Ning", portraitId: "ning", expression: "eager_grin",
+        body: "The best two. I've been watching them since the smallhold." }),
+      WED("leo", { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "(Walking, for once, with Ash ambling behind them like a very large dog.) I could fly us home in ten minutes." }),
+      WED("leo", { speaker: "Amar", portraitId: "amar",
+        body: "We're walking." }),
+      WED("leo", { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
+        body: "I know. (He takes Amar's hand.) I only offered so you'd say that." }),
+      WED("maya", { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "Bread, apples, one jar of something medicinal. (She's already pricing it.) And one morning with you that nobody tried to end. Best rate I've ever got." }),
+      WED("maya", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "You're keeping a ledger on the honeymoon." }),
+      WED("maya", { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
+        body: "I'm keeping a ledger on everything. (She doesn't let go of his arm.) This page is the good one." }),
+      WED("veya", { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "The sun's about four degrees off the water. (She glances at him.) Eleven minutes until the light's perfect. We'll be on the cliff in ten. I timed the walk." }),
+      WED("veya", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Of course you did." }),
+      WED("veya", { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
+        body: "One minute's margin. For you to stop and look at me the way you do. I've measured that too." }),
+      WED("ndara", N("Ndara is waiting at the last milestone with two horses and the ledger under her arm, closed. Nobody has ever seen it closed.")),
+      WED("ndara", { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
+        body: "Report." }),
+      WED("ndara", { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
+        body: "Returned intact." }),
+      WED("ndara", { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral",
+        body: "(She looks him over, once, the way she inspects a line.) Approved." }),
       N("There is a figure at the crossroads. She has been at a great many crossroads, and she does not appear to have aged since the crossing."),
       { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
         body: "Your highness. (She falls in beside him as though she has been walking there all afternoon.) Bread and apples. A road with nothing on it. I have crossed one more ocean than any of you knew existed, and this is the only cargo I have ever envied." },
@@ -1627,7 +1679,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
         body: "No. I am telling you the other roads are still there, and that I know the water to every one of them. (She looks at him sideways, the way the sea looks at a coast.) If you ever wish to see who you would have been — I keep a ship. It costs nothing. Say the word and the hold is three days back." },
       N("She does not press it, because she never presses anything. She eats the apple, tells Leo his dactyl is getting fat, and walks with them until the smallhold's lamps are out of sight behind them."),
-      N("The road forks at the bottom of the hill. It always did.")
+      N("The road forks at the bottom of the hill. It always did."),
+      HOME("selene", "By sunset they're home, on the cliff where he held out the ring. Selene sits with her back to nothing at all, for once, and watches the sun go down instead of the treeline. Neither of them says anything. Neither of them needs to."),
+      HOME("corin", "By sunset they're home, on the cliff where he held out the ring. Corin stands the evening watch beside him out of habit, and somewhere in the first quarter-hour it stops being a watch."),
+      HOME("ning", "By sunset they're home, on the cliff where he held out the ring. Ning eats the best apple and gives him the other best one, and counts the light going down over the water until she loses count, and doesn't start again."),
+      HOME("leo", "By sunset they're home, on the cliff where he held out the ring. Ash sleeps in the long grass behind them. Leo, for once, says nothing clever, and holds on."),
+      HOME("maya", "By sunset they're home, on the cliff where he held out the ring. Maya closes the ledger. The day's entry is one line long, and she doesn't let him read it, and he doesn't need to."),
+      HOME("veya", "By sunset they're home, on the cliff where he held out the ring. The light goes perfect at exactly the minute she said it would. Through the lens on his hand it bends warm at one edge, the way it always does."),
+      HOME("ndara", "By sunset they're home, on the cliff where he held out the ring. Ndara has left both horses at the gate and the ledger in the saddlebag. There is nothing left to sign. They watch the sun go down anyway, like people with all the time in the world.")
     ]
   },
   post_ending_vengeance: {

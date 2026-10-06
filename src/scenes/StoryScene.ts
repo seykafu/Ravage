@@ -14,6 +14,7 @@ import { ENEMY_PALETTES, PLAYER_PALETTES } from "../art/palettes";
 import { battleById } from "../data/battles";
 import { trackArcStarted } from "../util/analytics";
 import { getSevenPath, loadSave, unlockBattle, writeSave } from "../util/save";
+import { ROMANCE_FLAG } from "../data/romance";
 import type { ArcId, RouteRef } from "../data/contentIds";
 
 interface PortraitMeta {
@@ -97,6 +98,7 @@ export class StoryScene extends Phaser.Scene {
   private speakerText!: Phaser.GameObjects.Text;
   private portrait?: Phaser.GameObjects.Image;
   private tableau?: RingTableau;
+  private beats: DialogBeat[] = [];
   private titleText?: Phaser.GameObjects.Text;
   private subtitleText?: Phaser.GameObjects.Text;
   private continueBtn!: Button;
@@ -124,6 +126,10 @@ export class StoryScene extends Phaser.Scene {
     this.tableau = undefined;
     this.titleText = undefined;
     this.subtitleText = undefined;
+    // The arc as this save tells it: beats for another marriage drop out
+    // (DialogBeat.partner).
+    const married = String(loadSave().flags[ROMANCE_FLAG] ?? "none");
+    this.beats = (ARCS[this.arcId]?.beats ?? []).filter((b) => !b.partner || b.partner === married);
     // The scene is reused for every arc; these belonged to the last one.
     this.portrait = undefined;
     this.speakPulse = undefined;
@@ -236,7 +242,7 @@ export class StoryScene extends Phaser.Scene {
 
     getMusic(this).play(arcMusic[arc.music], { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
-    this.showBeat(arc.beats[0]!);
+    this.showBeat(this.beats[0]!);
   }
 
   private showBeat(beat: DialogBeat): void {
@@ -252,7 +258,7 @@ export class StoryScene extends Phaser.Scene {
     // A staged picture, from this beat to the end of the arc. The arc's
     // title steps aside for it.
     if (beat.tableau && !this.tableau) {
-      this.tableau = showRingTableau(this, beat.tableau.partner, -10);
+      this.tableau = showRingTableau(this, beat.tableau.partner, -10, beat.tableau.kind);
       const heads = [this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t);
       this.tweens.add({ targets: heads, alpha: 0, duration: 900 });
     }
@@ -404,7 +410,7 @@ export class StoryScene extends Phaser.Scene {
     // DevJump or save-state restore) is a no-op for the save mutation.
     const arc = ARCS[this.arcId];
     if (!arc) return;
-    const currentBeat = arc.beats[this.idx];
+    const currentBeat = this.beats[this.idx];
     if (currentBeat?.promote) {
       this.scene.pause();
       this.scene.run("PromotionScene", {
@@ -416,21 +422,21 @@ export class StoryScene extends Phaser.Scene {
       // event once and step to the next beat.
       this.events.once(Phaser.Scenes.Events.RESUME, () => {
         this.idx++;
-        if (this.idx >= arc.beats.length) {
+        if (this.idx >= this.beats.length) {
           this.finishArc();
           return;
         }
-        this.showBeat(arc.beats[this.idx]!);
+        this.showBeat(this.beats[this.idx]!);
       });
       return;
     }
     // Otherwise advance to the next beat (or end the arc).
     this.idx++;
-    if (this.idx >= arc.beats.length) {
+    if (this.idx >= this.beats.length) {
       this.finishArc();
       return;
     }
-    this.showBeat(arc.beats[this.idx]!);
+    this.showBeat(this.beats[this.idx]!);
   }
 
   private finishArc(): void {
