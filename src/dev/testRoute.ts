@@ -9,6 +9,8 @@ import { ROSTER_ORDER } from "../data/activeRoster";
 import { PROMOTIONS } from "../data/promotions";
 import { POST_ARC } from "../data/postArcs";
 import { ARCS } from "../story/beats";
+import type { ArcId } from "../data/contentIds";
+import { PATH_ROMANCES } from "../data/romance";
 import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSave, type CharacterRecord } from "../util/save";
 
 // Dev-only: open one chapter on one road straight from the URL, with the
@@ -18,6 +20,8 @@ import { defaultSave, setCharacterRecord, setCurrentSlot, setSevenPath, writeSav
 //   /play/?test=b28&path=vengeance&finale=1    B28 won on the spot, to watch
 //                                              its finale (after its closing
 //                                              dialogue)
+//   /play/?test=wed_maya                       a story arc (here a wedding
+//                                              coda, on its partner's road)
 //
 // `test` takes a battle id or its number prefix (b28, b19_path_opener_exile,
 // ...); `path` is any of the seven roads (vengeance by default once a
@@ -43,13 +47,23 @@ export const runTestRoute = (game: Phaser.Game): void => {
   const q = new URLSearchParams(window.location.search);
   const want = q.get("test");
   if (!want) return;
-  const node = BATTLES.find((b) => b.id === want) ?? BATTLES.find((b) => b.id.startsWith(`${want}_`));
+  // A story arc plays on the save of the whole campaign before the last
+  // battle (a wedding coda, say, with the squad as the war left them).
+  const arcId = want in ARCS ? (want as ArcId) : null;
+  const node = arcId
+    ? BATTLES.find((b) => b.id === "b28_path_final")
+    : BATTLES.find((b) => b.id === want) ?? BATTLES.find((b) => b.id.startsWith(`${want}_`));
   if (!node) {
-    console.warn(`[test] no battle "${want}"`);
+    console.warn(`[test] no battle or arc "${want}"`);
     return;
   }
   const askedPath = q.get("path") as SevenPath | null;
-  const path: SevenPath | null = askedPath && SEVEN.includes(askedPath) ? askedPath : null;
+  // A wedding coda defaults to a road its partner can be married on.
+  const partner = arcId?.startsWith("wed_") ? arcId.slice("wed_".length) : null;
+  const partnerRoad = partner
+    ? (Object.entries(PATH_ROMANCES).find(([, r]) => r && (r.woman.id === partner || r.man.id === partner))?.[0] as SevenPath | undefined)
+    : undefined;
+  const path: SevenPath | null = askedPath && SEVEN.includes(askedPath) ? askedPath : partnerRoad ?? null;
   const finale = q.get("finale") === "1";
 
   // The campaign up to this chapter, on the chosen road (one B19: its own).
@@ -96,6 +110,10 @@ export const runTestRoute = (game: Phaser.Game): void => {
     for (const sc of [...game.scene.scenes]) {
       const key = sc.scene.key;
       if (key !== "BootScene" && key !== "AssetStreamScene" && (sc.scene.isActive() || sc.scene.isPaused())) game.scene.stop(key);
+    }
+    if (arcId) {
+      game.scene.start("StoryScene", { arcId });
+      return;
     }
     if (!finale) {
       game.scene.start("BattlePrepScene", { battleId: node.id });

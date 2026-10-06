@@ -6,6 +6,7 @@ import { getMusic, MUSIC, type MusicKey } from "../audio/Music";
 import { ensurePortraitTexture, PORTRAIT_W, PORTRAIT_H } from "../art/PortraitArt";
 import { drawPanel } from "../ui/Panel";
 import { Button } from "../ui/Button";
+import { showRingTableau, type RingTableau } from "./story/RingTableau";
 import { speakBlip } from "../ui/voice";
 import { paginateBody, maxLinesFor } from "../ui/fitText";
 import { sfxClick, sfxPageTurn } from "../audio/Sfx";
@@ -95,6 +96,9 @@ export class StoryScene extends Phaser.Scene {
   private bodyText!: Phaser.GameObjects.Text;
   private speakerText!: Phaser.GameObjects.Text;
   private portrait?: Phaser.GameObjects.Image;
+  private tableau?: RingTableau;
+  private titleText?: Phaser.GameObjects.Text;
+  private subtitleText?: Phaser.GameObjects.Text;
   private continueBtn!: Button;
   private skipBtn!: Button;
   private bgImage!: Phaser.GameObjects.Image;
@@ -117,6 +121,9 @@ export class StoryScene extends Phaser.Scene {
   init(data: StoryArgs): void {
     this.arcId = data.arcId;
     this.idx = 0;
+    this.tableau = undefined;
+    this.titleText = undefined;
+    this.subtitleText = undefined;
     // The scene is reused for every arc; these belonged to the last one.
     this.portrait = undefined;
     this.speakPulse = undefined;
@@ -138,18 +145,20 @@ export class StoryScene extends Phaser.Scene {
     const bdName = arc.backdrop ?? "thuling";
     const bdSpec = BACKDROPS[bdName];
     const bgKey = ensureBackdropTexture(this, `bg_${bdName}_story`, bdSpec, `backdrop:${bdName}`);
-    this.bgImage = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    // The backdrop and its vignette sit under any staged picture (see
+    // DialogBeat.tableau), which sits under the panel and the text.
+    this.bgImage = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT).setDepth(-20);
     this.bgImage.setAlpha(0.85);
     // Slow Ken-Burns drift
     this.tweens.add({ targets: this.bgImage, x: GAME_WIDTH / 2 + 20, y: GAME_HEIGHT / 2 - 6, duration: 8000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
 
     // Vignette
-    const v = this.add.graphics();
+    const v = this.add.graphics().setDepth(-19);
     v.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.45, 0.45, 0.85, 0.85);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // Title banner
-    this.add.text(GAME_WIDTH / 2, 60, arc.title, {
+    this.titleText = this.add.text(GAME_WIDTH / 2, 60, arc.title, {
       fontFamily: FAMILY_DISPLAY,
       fontSize: "34px",
       color: "#f4d999",
@@ -159,7 +168,7 @@ export class StoryScene extends Phaser.Scene {
     }).setOrigin(0.5).setLetterSpacing(2);
 
     if (arc.subtitle) {
-      this.add.text(GAME_WIDTH / 2, 100, arc.subtitle, {
+      this.subtitleText = this.add.text(GAME_WIDTH / 2, 100, arc.subtitle, {
         fontFamily: FAMILY_BODY,
         fontSize: "17px",
         color: "#c9b07a",
@@ -240,6 +249,13 @@ export class StoryScene extends Phaser.Scene {
     // Portrait + speaker change only between beats, not between pages of the
     // same beat. Keep this work outside showCurrentPage().
     this.speakingId = beat.portraitId;
+    // A staged picture, from this beat to the end of the arc. The arc's
+    // title steps aside for it.
+    if (beat.tableau && !this.tableau) {
+      this.tableau = showRingTableau(this, beat.tableau.partner, -10);
+      const heads = [this.titleText, this.subtitleText].filter((t): t is Phaser.GameObjects.Text => !!t);
+      this.tweens.add({ targets: heads, alpha: 0, duration: 900 });
+    }
     if (this.portrait) { this.portrait.destroy(); this.portrait = undefined; }
     if (beat.portraitId && beat.portraitId !== "narrator") {
       const key = this.resolvePortraitKey(beat.portraitId, beat.expression);
