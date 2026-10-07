@@ -9,6 +9,10 @@ export type PortraitId =
   | "kian" | "ndari" | "nebu"
   | "dawn" | "fergus" | "ndara" | "archbold" | "khione" | "mira" | "tali"
   | "rose" | "coyne"
+  // The named generals and the Ravage's two speakers — their own faces
+  // (they wore the royal-guard / raider / reaver stand-ins until 2026-10).
+  | "castor" | "othren" | "wren" | "serrick" | "brask" | "vasse" | "sarto"
+  | "herald" | "ravage_commander"
   // Generic enemy-class portraits, valid as dialogue speakers for
   // minor named officers who reuse the stand-in art rather than
   // carrying a bespoke portrait: royal_guard for imperial officers

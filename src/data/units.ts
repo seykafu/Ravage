@@ -533,7 +533,7 @@ export const ENEMIES = {
     artSeed: 41,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "castor",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -581,7 +581,7 @@ export const ENEMIES = {
     artSeed: 67,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "wren",
     tags: new Set(["boss"]),
     level
   }),
@@ -604,7 +604,7 @@ export const ENEMIES = {
     artSeed: 88,
     palette: ENEMY_PALETTES.bandit,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "othren",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -654,7 +654,7 @@ export const ENEMIES = {
     artSeed: 97,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "serrick",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -696,7 +696,7 @@ export const ENEMIES = {
     artSeed: 103,
     palette: ENEMY_PALETTES.bandit,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "brask",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 3 }
@@ -764,6 +764,8 @@ export const ENEMIES = {
     statReferenceLevel: 15,
     artSeed: 107,
     palette: ENEMY_PALETTES.ravage,
+    portrait: true,
+    portraitId: "herald",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -779,6 +781,8 @@ export const ENEMIES = {
     statReferenceLevel: 15,
     artSeed: 109,
     palette: ENEMY_PALETTES.ravage,
+    portrait: true,
+    portraitId: "ravage_commander",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -800,7 +804,7 @@ export const ENEMIES = {
     artSeed: 111,
     palette: ENEMY_PALETTES.archbold,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "vasse",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
@@ -820,7 +824,7 @@ export const ENEMIES = {
     artSeed: 113,
     palette: ENEMY_PALETTES.royal_guard,
     portrait: true,
-    portraitId: "royal_guard",
+    portraitId: "sarto",
     tags: new Set(["boss"]),
     level,
     holdPositionUntil: { allyCount: 2 }
