@@ -49,7 +49,9 @@ const result = await page.evaluate(async ({ battleId, level, stale }) => {
   g.scene.start("BattleScene", { battleId });
   await new Promise((r) => setTimeout(r, 2500));
   const b = g.scene.getScene("BattleScene");
+  const after = save.loadSave();
   return {
+    saved: `top-up flag ${after.flags["levels.joinTopUp"]}; records ` + Object.entries(after.characters).map(([k, r]) => `${k} L${r.level}`).join(", "),
     players: b.state.units.filter((u) => u.faction === "player").map((u) => `${u.id} L${u.level} hp${u.stats.hp}`),
     enemies: b.state.units.filter((u) => u.faction === "enemy").map((u) => `${u.id} L${u.level}`)
   };
@@ -57,4 +59,5 @@ const result = await page.evaluate(async ({ battleId, level, stale }) => {
 console.log(battleId, "squad at L" + lvArg);
 console.log("  players:", result.players.join(", "));
 console.log("  enemies:", result.enemies.join(", "));
+console.log("  saved:", result.saved);
 await browser.close();

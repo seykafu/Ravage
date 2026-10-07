@@ -197,6 +197,8 @@ interface UnitView {
 }
 
 const PANEL_W = 280;
+// Set once a save has had its one-time level top-up (topUpLaggards).
+const LEVEL_TOPUP_FLAG = "levels.joinTopUp";
 
 /** The board laid out at one rotation (see BattleScene.computeLayout). */
 interface BoardLayout {
@@ -712,6 +714,7 @@ export class BattleScene extends Phaser.Scene {
         const assigned = getAssignedInventory(save, p.id);
         if (assigned.length > 0) p.state.inventory = assigned;
       }
+      this.topUpLaggards(players, arriveAt);
 
       enemies.forEach((e) => (e.state.facingX = -1));
       players.forEach((p) => (p.state.facingX = 1));
@@ -4406,6 +4409,29 @@ export class BattleScene extends Phaser.Scene {
   // to run underneath the panel, and reinforcements began spawning along
   // the east edge, clicking "Item" both opened the picker AND selected
   // the enemy standing under the panel.
+  // One-time top-up for saves from before the join-level fix: squad
+  // members who joined (or rejoined) under the old, broken catch-up are
+  // still far below the chapter — Veya and Corin at L1-5 in a L14+ war.
+  // The first battle a save starts after the fix brings anyone more than
+  // JOIN_SLACK under the chapter's level up to it, writes their records
+  // at once (so a retreat doesn't lose it), and marks the save so it
+  // never happens again. A new save is marked at its first battle, where
+  // nobody has a record yet.
+  private topUpLaggards(players: Unit[], arriveAt: number): void {
+    let save = loadSave();
+    if (save.flags[LEVEL_TOPUP_FLAG]) return;
+    for (const p of players) {
+      const rec = getCharacterRecord(save, p.id);
+      if (!rec || p.level >= arriveAt - JOIN_SLACK) continue;
+      const gained = catchUpToSquad(p, arriveAt);
+      if (gained <= 0) continue;
+      p.state.hp = p.stats.hp;
+      save = setCharacterRecord(save, p.id, { ...rec, level: p.level, stats: { ...p.stats } });
+      if (import.meta.env.DEV) console.info(`[Progression] ${p.name} topped up to the chapter's level: +${gained} (now L${p.level})`);
+    }
+    writeSave({ ...save, flags: { ...save.flags, [LEVEL_TOPUP_FLAG]: true } });
+  }
+
   private isOverUi(p: Phaser.Input.Pointer): boolean {
     const x = p.x / RENDER_SCALE;
     const y = p.y / RENDER_SCALE;
