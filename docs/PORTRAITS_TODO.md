@@ -36,6 +36,12 @@ Generated with the Codex pipeline (`gen_portrait_art.py` → review →
   Wired in `PORTRAIT_IDS`, the PortraitId union, their dialogue, and their
   units' `portraitId` (side panel, turn bar).
 
+- **At their real ages:** King Archbold (about sixty) and Madame Dawn
+  (about fifty) — Amar's father and mother read younger than he did —
+  and Mira (about forty, Tali's mother, who read as her sister). Each
+  set aged from its master, then every expression redrawn from the
+  aged master.
+
 Still on the stand-ins (unnamed, a line or two): the Imperial Captain
 (B18), the Holdout Captain (B19 mercy), Captain Halden (B21, no lines).
 

@@ -1,10 +1,11 @@
 """Generate portraits with Codex: expression fixes, missing expressions,
 and new faces for the named generals.
 
-Two kinds of job:
+Three kinds of job:
   edit  an existing portrait is the reference; the same character is
         redrawn with ONLY the expression changed (keeps a set consistent)
   new   a new character, in the house style of a reference portrait
+  age   an existing portrait redrawn as the same person, older
 
 Every render is on flat magenta (#FF00FF); process_portrait_art.py keys it
 out to the game's transparent 1024x1536 WebP. Raw renders land in
@@ -41,6 +42,12 @@ The character: {desc}
 
 """ + BG
 
+AGE = HEAD + """The attached image is a character portrait from our game. Create ONE new image of the SAME person, older. Keep everything that makes them who they are: the same face structure, the same eyes and eye colour, the same nose and mouth, the same skin tone, the same hair colour and style (now touched with age as described), the same outfit, armour and jewellery, the same painted art style and brushwork, the same warm lighting, and the same camera framing — the same crop, the same head size and position, the same pose and shoulders.
+
+Age them to: {expr}
+
+""" + BG
+
 # file -> (kind, reference, text)
 JOBS = {
     # ---- expression fixes: redrawn from the set's own master ----------------
@@ -71,6 +78,27 @@ JOBS = {
                            "grim resolve — jaw set, brows lowered, eyes hard and determined."),
     "ndari_knowing_smile": ("edit", P + "ndari_regal_neutral.webp",
                             "a knowing half-smile — one corner of the mouth raised, eyes amused, as if he knows something you don't."),
+    # ---- the parents and the widow, at their real ages ----------------------------
+    # Archbold and Dawn are Amar's father and mother; Mira is Lucian's
+    # widow and Tali's mother. Each master is aged first; their other
+    # expressions are then edits of the aged master (the *_aged jobs below
+    # run once the masters are in public/assets/portraits).
+    "archbold_neutral": ("age", P + "archbold_neutral.webp",
+                         "about sixty — a king who has ruled for thirty years: lines at the eyes and across the brow, deeper folds from nose to mouth, slightly hollowed cheeks, a heavier jaw; his long hair kept but heavily greyed, streaked with silver at the temples; a short, neat, grey-shot beard. The same cold, composed, unreadable expression."),
+    "dawn_measured_neutral": ("age", P + "dawn_measured_neutral.webp",
+                              "clearly about fifty — a woman who has led a rebellion for twenty-five years and has a grown son. The age must be obvious at a glance: crow's feet at the eyes, lines across the forehead and between the brows, deeper folds from nose to mouth, a softer jawline and neck, thinner lips; clear streaks of grey and silver through her long auburn hair, heaviest at the temples. Still handsome, sharp and composed — an older woman, not a young one. The same measured, unreadable expression."),
+    "mira": ("age", P + "mira.webp",
+             "clearly about forty — a widow and the mother of a ten-year-old girl. The age must be obvious at a glance: a mature woman's longer, leaner face, crow's feet and fine lines at the eyes and mouth, faint shadows under tired eyes, a few grey strands in her hair, worn in a plain grown woman's braid rather than a girl's. Kind, tired, gently sad — clearly the mother, not a sister."),
+    "archbold_offering_peace": ("edit", P + "archbold_neutral.webp",
+                                "offering peace — the face softened, brows lifted a little, a faint, tired, almost sincere smile; a king holding out his hand."),
+    "archbold_righteous_fury": ("edit", P + "archbold_neutral.webp",
+                                "righteous fury — brows drawn hard down, eyes blazing, mouth open mid-shout, the face of a king defied."),
+    "dawn_charismatic_warm_smile": ("edit", P + "dawn_measured_neutral.webp",
+                                    "a charismatic, warm smile — eyes bright, the smile of a leader winning a room."),
+    "dawn_ideologue_intensity": ("edit", P + "dawn_measured_neutral.webp",
+                                 "ideological intensity — eyes burning with conviction, brows tense, lips parted mid-speech, leaning into the words."),
+    "dawn_mask_slipping": ("edit", P + "dawn_measured_neutral.webp",
+                           "the mask slipping — a mother's grief showing through her composure for one moment: eyes glistening, brows lifting with old sorrow, the mouth trying to hold a polite smile and failing. A dignified, fully clothed older stateswoman; her coat exactly as modest as in the reference."),
     # ---- a face in the house style (was a near-photographic one) ----------------
     "coyne": ("new", P + "fergus_neutral.webp",
               "Quartermaster Coyne, who ran a rebel network's supplies for nine years and sold it out: a man in his late forties with greying dark hair swept back, a short greying beard, tired, clever, watchful eyes, ink stains on his fingers; a worn brown leather coat over a plain linen shirt, a ledger strap across his chest. Expression: guarded and calculating."),
@@ -100,7 +128,7 @@ PATH_RE = re.compile(r"([A-Za-z]:[\\/][^`'\"\n]*?generated_images[\\/][^`'\"\n]*
 
 def run(fid: str, work: str) -> str:
     kind, ref, text = JOBS[fid]
-    prompt = (EDIT if kind == "edit" else NEW).format(expr=text, desc=text)
+    prompt = {"edit": EDIT, "new": NEW, "age": AGE}[kind].format(expr=text, desc=text)
     ref_png = os.path.join(work, "ref", os.path.basename(ref).rsplit(".", 1)[0] + ".png")
     if not os.path.exists(ref_png):
         from PIL import Image
