@@ -176,6 +176,19 @@ export const catchUpToSquad = (
   return levelsToGain;
 };
 
+// The level someone joins a chapter at: the level of the chapter's own
+// enemies — the median of its roster, so a boss a level or two above the
+// rank and file doesn't lift it. BattleScene brings anyone joining (Veya
+// at B14, Corin at B17) or rejoining after a long absence (Selene and
+// Ranatoli at B23, still on their B1 records) up to it on arrival, when
+// they would otherwise come in more than JOIN_SLACK levels under it.
+export const JOIN_SLACK = 2;
+export const joinLevel = (enemyLevels: number[]): number => {
+  if (enemyLevels.length === 0) return 1;
+  const s = [...enemyLevels].sort((a, b) => a - b);
+  return Math.min(LEVEL_CAP, Math.round((s[(s.length - 1) >> 1]! + s[s.length >> 1]!) / 2));
+};
+
 // Compute the squad's average level for catch-up purposes. Excludes the
 // rejoining unit so they don't pull the average down themselves.
 export const squadAverageLevel = (squad: Unit[], excludeId?: string): number => {

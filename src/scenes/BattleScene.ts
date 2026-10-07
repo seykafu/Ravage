@@ -61,10 +61,12 @@ import {
 } from "../combat/Stances";
 import type { InterposeCandidate } from "./InterposeScene";
 import { executePlan, planEnemyTurn } from "../combat/AI";
+import { getActiveSquadIds } from "../data/activeRoster";
 import {
   awardXp,
   catchUpToSquad,
-  squadAverageLevel,
+  JOIN_SLACK,
+  joinLevel,
   xpRewardFor,
   type LevelUpReport
 } from "../combat/Progression";
@@ -195,6 +197,8 @@ interface UnitView {
 }
 
 const PANEL_W = 280;
+// Set once a save has had its one-time level top-up (topUpLaggards).
+const LEVEL_TOPUP_FLAG = "levels.joinTopUp";
 
 /** The board laid out at one rotation (see BattleScene.computeLayout). */
 interface BoardLayout {
@@ -652,11 +656,18 @@ export class BattleScene extends Phaser.Scene {
 
       // Hydrate player units from the save slot. Characters with a saved
       // record have their level / xp / current stats / post-promotion class
-      // restored from disk; first-time appearances use the factory baseline,
-      // and the catch-up rule fast-forwards veterans (e.g., Selene rejoining
-      // at L10 when the squad average has reached L13). See Progression.ts
-      // and docs/RAVAGE_DESIGN.md §4.
-      const squadAvg = squadAverageLevel(players);
+      // restored from disk; first-time appearances use the factory baseline.
+      // Then anyone joining the squad here — new (Veya at B14, Corin at
+      // B17) or back after a long absence (Selene and Ranatoli at B23, on
+      // their B1 records) — is brought up to the chapter's enemy level if
+      // they'd arrive well under it. See Progression.joinLevel.
+      //
+      // (This used to catch newcomers up to the squad average, but the
+      // average was taken BEFORE the records were read — every veteran
+      // still at their factory level — so it never fired, and Veya and
+      // Corin walked into L14 fights at L1.)
+      const squadBefore = new Set(getActiveSquadIds(save.completedBattles));
+      const arriveAt = joinLevel(enemies.map((e) => e.level));
       for (const p of players) {
         const rec = getCharacterRecord(save, p.id);
         if (rec) {
@@ -678,12 +689,13 @@ export class BattleScene extends Phaser.Scene {
           // this, a promoted unit's Tier 2 classKind (e.g., spearton_lord)
           // would route to a sprite folder that doesn't exist.
           if (rec.spriteClassOverride) p.spriteClassOverride = rec.spriteClassOverride;
-        } else if (p.level < squadAvg - 2) {
-          const gained = catchUpToSquad(p, squadAvg);
+        }
+        // Joining here, well under the chapter: arrive at its level.
+        if (!squadBefore.has(p.id) && p.level < arriveAt - JOIN_SLACK) {
+          const gained = catchUpToSquad(p, arriveAt);
           if (gained > 0) {
             p.state.hp = p.stats.hp; // top up after the catch-up HP gains
-
-            if (import.meta.env.DEV) console.info(`[Progression] ${p.name} catches up: +${gained} levels (now L${p.level})`);
+            if (import.meta.env.DEV) console.info(`[Progression] ${p.name} joins at the chapter's level: +${gained} levels (now L${p.level})`);
           }
         }
         // Mend back-fill — Ranatoli's L10 support ability. Granted here
@@ -702,6 +714,7 @@ export class BattleScene extends Phaser.Scene {
         const assigned = getAssignedInventory(save, p.id);
         if (assigned.length > 0) p.state.inventory = assigned;
       }
+      this.topUpLaggards(players, arriveAt);
 
       enemies.forEach((e) => (e.state.facingX = -1));
       players.forEach((p) => (p.state.facingX = 1));
@@ -4396,6 +4409,29 @@ export class BattleScene extends Phaser.Scene {
   // to run underneath the panel, and reinforcements began spawning along
   // the east edge, clicking "Item" both opened the picker AND selected
   // the enemy standing under the panel.
+  // One-time top-up for saves from before the join-level fix: squad
+  // members who joined (or rejoined) under the old, broken catch-up are
+  // still far below the chapter — Veya and Corin at L1-5 in a L14+ war.
+  // The first battle a save starts after the fix brings anyone more than
+  // JOIN_SLACK under the chapter's level up to it, writes their records
+  // at once (so a retreat doesn't lose it), and marks the save so it
+  // never happens again. A new save is marked at its first battle, where
+  // nobody has a record yet.
+  private topUpLaggards(players: Unit[], arriveAt: number): void {
+    let save = loadSave();
+    if (save.flags[LEVEL_TOPUP_FLAG]) return;
+    for (const p of players) {
+      const rec = getCharacterRecord(save, p.id);
+      if (!rec || p.level >= arriveAt - JOIN_SLACK) continue;
+      const gained = catchUpToSquad(p, arriveAt);
+      if (gained <= 0) continue;
+      p.state.hp = p.stats.hp;
+      save = setCharacterRecord(save, p.id, { ...rec, level: p.level, stats: { ...p.stats } });
+      if (import.meta.env.DEV) console.info(`[Progression] ${p.name} topped up to the chapter's level: +${gained} (now L${p.level})`);
+    }
+    writeSave({ ...save, flags: { ...save.flags, [LEVEL_TOPUP_FLAG]: true } });
+  }
+
   private isOverUi(p: Phaser.Input.Pointer): boolean {
     const x = p.x / RENDER_SCALE;
     const y = p.y / RENDER_SCALE;
