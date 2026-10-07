@@ -3,7 +3,8 @@
 // regression here breaks character balance for the entire second half.
 
 import { describe, it, expect } from "vitest";
-import { applyOneLevel, awardXp, catchUpToSquad, squadAverageLevel, xpRewardFor } from "../Progression";
+import { applyOneLevel, awardXp, catchUpToSquad, JOIN_SLACK, joinLevel, squadAverageLevel, xpRewardFor } from "../Progression";
+import { battleById } from "../../data/battles";
 import { createUnit } from "../Unit";
 import { LEVEL_CAP, XP_PER_LEVEL, type GrowthTable, type Unit, type UnitDef } from "../types";
 
@@ -202,5 +203,33 @@ describe("squadAverageLevel", () => {
 
   it("returns 1 for an empty squad (defensive)", () => {
     expect(squadAverageLevel([])).toBe(1);
+  });
+});
+
+// Newcomers arrive at the chapter's level: Veya at B14 and Corin at B17
+// were walking into L14 fights at L1 (BattleScene took the squad average
+// before reading anyone's saved level, so the catch-up never fired).
+describe("joinLevel — the level a newcomer arrives at", () => {
+  it("is the median of the chapter's enemies, so a boss above the rank and file doesn't lift it", () => {
+    expect(joinLevel([15, 14, 14, 14, 14, 14])).toBe(14);
+    expect(joinLevel([18, 17, 17, 16, 16])).toBe(17);
+    expect(joinLevel([])).toBe(1);
+  });
+
+  const enemyLevels = (id: string): number[] => (battleById(id)?.buildEnemies?.() ?? []).map((e) => e.level);
+  it("brings Veya (B14), Corin (B17) and the B23 rejoiners up to their chapter", () => {
+    expect(joinLevel(enemyLevels("b14_origin"))).toBe(14);
+    expect(joinLevel(enemyLevels("b17_lie"))).toBe(14);
+    expect(joinLevel(enemyLevels("b23_path_climax_a"))).toBe(17);
+    const veya = createUnit((battleById("b14_origin")?.buildPlayers?.() ?? []).find((d) => d.id === "veya")!, { x: 0, y: 0 });
+    expect(veya.level).toBeLessThan(14 - JOIN_SLACK);
+    catchUpToSquad(veya, 14);
+    expect(veya.level).toBe(14);
+    expect(veya.stats.hp).toBeGreaterThan(24);
+  });
+
+  it("leaves the early recruits alone (a level under their first enemies is the design)", () => {
+    // Maya at B3: L1 against L2 bandits — inside the slack.
+    expect(1).toBeGreaterThanOrEqual(joinLevel(enemyLevels("b03_dawn_bandits")) - JOIN_SLACK);
   });
 });
