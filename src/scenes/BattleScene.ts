@@ -112,7 +112,7 @@ import { ITEM_CATALOG, createItem, equipmentBonuses } from "../combat/items";
 import { applyDifficultyToEnemy } from "../combat/Difficulty";
 import { applyCinematicFX } from "../art/CinematicFX";
 import { announceRavaged, clearRavageAura, refreshRavageAura, syncRavageAura } from "./battle/RavageVfx";
-import { critShockwave, fireArrow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
+import { critShockwave, fireArrow, healGlow, hitSpark, lensBeam, missWhiff, slashArc } from "./battle/CombatVfx";
 import { reconcilePostBattleInventory } from "./InventoryScene";
 import { BATTLES } from "../data/battles";
 import { buildRetreatBeat } from "../data/retreatLines";
@@ -139,6 +139,7 @@ import { DialogueDirector } from "./battle/DialogueDirector";
 import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./battle/Atmosphere";
 import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 import { finaleFor, playFinale, type FinaleHost, type Pt } from "./battle/Finale";
+import { bossIntro, critCutIn, introducedBoss, wantsCutIn } from "./battle/CutIn";
 import { ROMANCE_FLAG } from "../data/romance";
 import { TutorialDirector } from "./battle/Tutorial";
 
@@ -475,6 +476,8 @@ export class BattleScene extends Phaser.Scene {
   // First-battle guided tutorial (B1 only, once per save). Constructed in
   // create() when wanted; scene hooks forward events via notify().
   private tutorial?: TutorialDirector;
+  // A boss's entrance card is playing (see create()); the board waits.
+  private introPlaying = false;
   // Mid-battle dialogue trigger evaluation + firing. Owns its own
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
@@ -514,6 +517,7 @@ export class BattleScene extends Phaser.Scene {
     this.battleId = data.battleId;
     this.resumeRequested = data.resume === true;
     this.tutorial = undefined;
+    this.introPlaying = false;
     this.pressBegunInScene = false;
     this.dragArmed = false;
     this.finalBlow = null;
@@ -1340,6 +1344,22 @@ export class BattleScene extends Phaser.Scene {
       this.activeArrow.setDepth(DEPTH.OVER_DARK + 0.3);
     }
 
+    // A named boss gets an entrance: their card, as the battle's title
+    // card fades, before anyone moves. (Not on a resume — the player has
+    // met them — and not in the first battle, whose tips have the floor.)
+    const boss = !this.resumeRequested && !this.tutorial
+      ? introducedBoss(this, this.state.units.filter((u) => u.faction === "enemy" && isAlive(u)))
+      : undefined;
+    if (boss) {
+      this.introPlaying = true;
+      this.time.delayedCall(2400, () => {
+        void bossIntro(this, (o) => this.pin(o), boss).then(() => {
+          this.introPlaying = false;
+          if (!this.fsm.isEnded()) this.beginCurrentTurn();
+        });
+      });
+      return;
+    }
     this.beginCurrentTurn();
   }
 
@@ -3859,6 +3879,7 @@ export class BattleScene extends Phaser.Scene {
     sfxConfirm();
     const px = this.projection.tileToWorld(target.state.position);
     this.spawnDamageNumber(px.x, px.y, `+${amount}`, 0x6fe08a);
+    healGlow(this, (o) => this.addWorld(o), px.x, px.y);
     this.pushLog(`${u.name} mends ${target.name} for ${amount}.`);
     this.refreshUnitView(target);
     const { totalAwarded, levelUps } = awardXp(u, BattleScene.MEND_XP);
@@ -4161,7 +4182,10 @@ export class BattleScene extends Phaser.Scene {
     u.state.apRemaining -= 1;
     this.pushLog(`${u.name} drinks a ${result.itemName} (+${result.healed} HP).`);
     const view = this.unitViews.get(u.id);
-    if (view) this.spawnDamageNumber(view.sprite.x, view.sprite.y, `+${result.healed}`, 0x6dffb2);
+    if (view) {
+      this.spawnDamageNumber(view.sprite.x, view.sprite.y, `+${result.healed}`, 0x6dffb2);
+      healGlow(this, (o) => this.addWorld(o), view.sprite.x, view.sprite.y);
+    }
     this.refreshUnitView(u);
     this.refreshSidePanel(u);
     this.clearActionButtons();
@@ -4505,6 +4529,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handlePointerUp(p: Phaser.Input.Pointer): void {
+    // The boss card is up: the battle hasn't started yet.
+    if (this.introPlaying) return;
     // Clicks that land on the UI belong to the UI alone.
     if (this.isOverUi(p)) { this.pressBegunInScene = false; return; }
     // Phantom release: the press happened while a dialogue (or other
@@ -5539,7 +5565,6 @@ export class BattleScene extends Phaser.Scene {
     // Committing action — the move that got us here can no longer be undone.
     this.undoStack.length = 0;
     if (u.faction === "player") this.tutorial?.notify("attacked");
-    await this.lunge(u, target);
 
     // Player path is interpose-aware: roll the attack outcome WITHOUT
     // applying damage so we can pause and ask the player about Interpose
@@ -5550,7 +5575,12 @@ export class BattleScene extends Phaser.Scene {
     const interposeAware = u.faction !== "player" && target.faction === "player";
 
     if (!interposeAware) {
+      // The outcome is rolled before the swing, so a critical blow can
+      // announce itself (critCutIn) before it lands; the board shows none
+      // of it until applyAttackEffects.
       const result = performAttack(this.state, u, target);
+      if (result.crit && wantsCutIn(this, u)) await critCutIn(this, (o) => this.pin(o), u);
+      await this.lunge(u, target);
       u.state.apRemaining -= 1;
       this.applyAttackEffects(u, target, result);
       if (result.crit) await this.delay(90);
@@ -5587,6 +5617,8 @@ export class BattleScene extends Phaser.Scene {
     // chose to interpose at all (interpose suppresses the counter — the
     // original defender's strike was deflected by their squadmate).
     const roll = rollAttackOnly(this.state, u, target, false);
+    if (roll.crit && wantsCutIn(this, u)) await critCutIn(this, (o) => this.pin(o), u);
+    await this.lunge(u, target);
     let actualDefender = target;
     let interposed = false;
     if (roll.hit && roll.damage >= target.state.hp) {

@@ -53,3 +53,31 @@ for c in spearton_lord robinhelm shinobi_master dactyl_king guardian prismarch k
   $P "$SRC/${c}_hit_src.png"    "$c" hit 2 "${hit[@]}"
   $P "$SRC/${c}_death_src.png"  "$c" death 4 --fit
 done
+
+# Bespoke sprites: one named character each (gen_anim_sheets.py BESPOKE) —
+# the bosses who all shared the "boss" sheet, and the Ravage's troops.
+# Same recipe as Tier 2: the idle fitted to its base class's idle, every
+# other state measured against that new idle. Each takes its base class's
+# per-state flags (a greatsword boss scales its attack from the recovery
+# pose, like "boss").
+declare -A BESPOKE=( [nebu]=boss [ndari]=boss [castor]=boss [wren]=shinobi [othren]=knight
+                     [serrick]=boss [archbold]=boss [dawn]=boss [herald]=boss [ravage_commander]=boss
+                     [ravage_trooper]=swordsman [ravage_lancer]=spearton [ravage_marksman]=archer )
+for c in "${!BESPOKE[@]}"; do
+  base="${BESPOKE[$c]}"
+  idle=(); attack=()
+  case "$base" in
+    boss) attack=(--scale-frame 4) ;;
+    shinobi) attack=(--body-scale 0.87) ;;
+  esac
+  walk=(); hit=(); death=()
+  [ "$c" = ravage_commander ] && idle=(--fit)
+  # Othren's idle is measured with his spear upright; his other states
+  # came out a size up against it. Set by eye against the knight's sheet.
+  [ "$c" = othren ] && { walk=(--body-scale 0.85); attack=(--body-scale 0.9); hit=(--body-scale 0.8); death=(--body-scale 0.9); }
+  $P "$SRC/${c}_idle_src.png"   "$c" idle 2 --ref-class "$base" --scale-median "${idle[@]}"
+  [ -f "$SRC/${c}_walk_src.png" ]   && $P "$SRC/${c}_walk_src.png"   "$c" walk 4 --scale-median --fit "${walk[@]}"
+  [ -f "$SRC/${c}_attack_src.png" ] && $P "$SRC/${c}_attack_src.png" "$c" attack 5 --fit "${attack[@]}"
+  [ -f "$SRC/${c}_hit_src.png" ]    && $P "$SRC/${c}_hit_src.png"    "$c" hit 2 --fit "${hit[@]}"
+  [ -f "$SRC/${c}_death_src.png" ]  && $P "$SRC/${c}_death_src.png"  "$c" death 4 --fit "${death[@]}"
+done

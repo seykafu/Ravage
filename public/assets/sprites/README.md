@@ -74,3 +74,16 @@ Each class must read at thumbnail size. Distinguishing features:
 - Don't add ground shadows in the sprite — the engine draws those.
 - Don't include weapon trails — those go in `vfx/`.
 - Don't rotate or scale frames — paint each pose by hand.
+
+## Bespoke sprites (one character each)
+
+Folders named for a character rather than a class — `nebu/`, `ndari/`,
+`castor/`, `wren/`, `othren/`, `serrick/`, `archbold/`, `dawn/`, `herald/`,
+`ravage_commander/`, and the Ravage's troops `ravage_trooper/`,
+`ravage_lancer/`, `ravage_marksman/` — are a named unit's own look. A
+UnitDef opts in with `sprite: "<folder>"` (BespokeSprite in
+`src/combat/types.ts`); the unit keeps its class's mechanics and wears this
+sheet whenever it has loaded, ahead of the class's. Each is generated from
+the character's portrait over a base class's poses
+(`scripts/art/gen_anim_sheets.py` BESPOKE) and rebuilt by
+`scripts/art/rebuild_unit_sheets.sh`.

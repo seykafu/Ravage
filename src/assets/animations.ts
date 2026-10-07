@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { ClassKind } from "../combat/types";
+import { BESPOKE_SPRITES, type SpriteClass } from "../combat/types";
 import { ASSET_SPEC, hasAsset, type UnitAnimState } from "./manifest";
 
 // Phaser-side animation registry. Once spritesheets are loaded by BootScene,
@@ -23,14 +23,14 @@ const ANIM_SPECS: Record<UnitAnimState, AnimSpec> = {
   death:  { frameRate: 6,  repeat: 0 }
 };
 
-export const animKey = (cls: ClassKind, state: UnitAnimState): string =>
+export const animKey = (cls: SpriteClass, state: UnitAnimState): string =>
   `anim:${cls}:${state}`;
 
-export const textureKey = (cls: ClassKind, state: UnitAnimState): string =>
+export const textureKey = (cls: SpriteClass, state: UnitAnimState): string =>
   `unit:${cls}:${state}`;
 
 // Returns true if real animation art exists for this class+state combo.
-export const hasUnitAnimation = (cls: ClassKind, state: UnitAnimState): boolean =>
+export const hasUnitAnimation = (cls: SpriteClass, state: UnitAnimState): boolean =>
   hasAsset(textureKey(cls, state));
 
 const STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
@@ -41,11 +41,12 @@ const STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
 // Tier 2s, ...) get animations without touching this file again.
 export const registerUnitAnimations = (scene: Phaser.Scene): void => {
   const anims = scene.anims;
-  const classes: ClassKind[] = [
+  const classes: SpriteClass[] = [
     "swordsman", "spearton", "knight", "archer",
     "shinobi", "sentinel", "dactyl_rider", "swordmaster", "boss",
     "lenscaster", "khan", "prismarch", "spearton_lord",
-    "robinhelm", "dactyl_king", "shinobi_master", "guardian"
+    "robinhelm", "dactyl_king", "shinobi_master", "guardian",
+    ...BESPOKE_SPRITES
   ];
 
   for (const cls of classes) {

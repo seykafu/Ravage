@@ -44,6 +44,28 @@ TIER2 = {
     "khan": ("knight", "corin_neutral"),
 }
 
+# Bespoke sprites: one named character each (the bosses, who all shared
+# the "boss" sheet, and the Ravage's troops, who wore human soldiers'
+# sheets). Same recipe as Tier 2 — the idle from a base class's idle
+# (scale, style, stance) plus a portrait (who they are), every other state
+# from that idle with the base class's render as a pose guide — but the
+# character is themself, not a promotion of the base class.
+BESPOKE = {
+    "nebu": ("boss", "nebu_neutral"),
+    "ndari": ("boss", "ndari_regal_neutral"),
+    "castor": ("boss", "castor"),
+    "wren": ("shinobi", "wren"),
+    "othren": ("knight", "othren"),
+    "serrick": ("boss", "serrick"),
+    "archbold": ("boss", "archbold_neutral"),
+    "dawn": ("boss", "dawn_measured_neutral"),
+    "herald": ("boss", "herald"),
+    "ravage_commander": ("boss", "ravage_commander"),
+    "ravage_trooper": ("swordsman", "herald"),
+    "ravage_lancer": ("spearton", "herald"),
+    "ravage_marksman": ("archer", "herald"),
+}
+
 LOOK = {
     "swordsman": "a young brown-haired swordsman in a red cape and a leather tunic over dark clothes, holding a short sword",
     "spearton": "a bronze-helmeted spearman in a brown tunic and leather armour, with a tall spear and a round bronze shield",
@@ -63,6 +85,20 @@ LOOK = {
     "guardian": "Ranatoli, a broad bearded man with short black hair, promoted to Guardian: heavy dark steel plate over chainmail, a navy scarf, a flanged steel mace in the right hand and a large round steel shield bearing a gold rampant lion on the left arm",
     "prismarch": "Veya, a woman with grey-streaked dark hair tied up and brass goggles pushed up on her head, promoted to Prismarch: a long blue-grey coat over a light blue shirt and a brown leather tool apron, holding a tall brass staff crowned with a glowing amber prism",
     "khan": "Corin, a man with short dark hair, promoted to Khan: red lacquered lamellar armour, a grey fur-trimmed mantle over the shoulders, a spiked steppe helm with a red horsehair plume, and a tall spear with a red tassel below the blade",
+    # Bespoke: the named bosses and the Ravage's troops.
+    "nebu": "King Nebu IV, a broad bearded king with long dark greying hair and a spiked gold crown, a gold-and-brown regal coat over dark plate, a fur-lined mantle, holding a heavy broadsword",
+    "ndari": "Ndari, a huge dark-skinned mountain warlord with long black hair and a thick black beard, a heavy black fur mantle over dark iron armour with a red sash, holding a heavy greatsword",
+    "castor": "Lord Castor, a man of about fifty with grey-templed short dark hair and a close-trimmed grey-shot beard, dark steel plate armour with gold trim, a gold sun emblem on the chest, a deep crimson cloak, holding a longsword",
+    "wren": "Wren, a lean woman with short choppy ash-brown hair in a dark grey hooded leather coat, a long knife in each hand",
+    "othren": "Marshal Othren, a broad older man with close-cropped iron-grey hair and grey stubble, a worn dark-green rebel officer's coat over leather and mail, holding a tall spear",
+    "serrick": "General Serrick, a heavy bald man with a thick iron-grey moustache, heavy gilded plate armour with a gold sun emblem and a crimson sash, holding a heavy greatsword",
+    "archbold": "King Archbold, a lean king of about sixty with long silver-streaked hair and a short grey beard, a long brown-and-gold royal mantle over dark armour, holding an ornate longsword",
+    "dawn": "Madame Dawn, a woman of about fifty with long auburn hair streaked with grey, a long dark-brown leather coat with brass fittings over a high collar, holding a slim rapier",
+    "herald": "the Herald of the Ravage, a tall, thin alien warrior: a smooth elongated teal-black carapace head with two glowing mint-green eye slits, a body of segmented teal-black armour plates studded with small mint lights, holding a long curved blade of dark metal edged with mint light",
+    "ravage_commander": "the Ravage Commander, a massive alien warlord: a heavy ridged teal-black carapace head crowned with jagged plates and three glowing mint-green eye slits, heavy layered teal-black armour plates with mint light in the cracks, holding a huge dark greatblade edged with mint light",
+    "ravage_trooper": "a Ravage trooper, a lean alien soldier: segmented teal-black carapace armour, a smooth eyeless helm-like head with one glowing mint-green visor slit, holding a short dark curved blade edged with mint light",
+    "ravage_lancer": "a Ravage lancer, an alien soldier: segmented teal-black carapace armour, a smooth helm-like head with a glowing mint-green visor slit, holding a tall dark lance with a mint-lit point and a small curved carapace shield",
+    "ravage_marksman": "a Ravage marksman, an alien soldier: teal-black carapace armour, a hooded carapace head with a glowing mint-green visor slit, holding a dark recurved bow strung with a line of mint light",
 }
 
 ATTACK = {
@@ -87,6 +123,9 @@ ATTACK = {
     "prismarch": "1 lifting the prism staff; 2 raising it toward the right; 3 the staff held out at arm's length, the prism blazing amber; 4 holding focus as the glow fades; 5 lowering the staff",
     "khan": "an overhand stab. 1 spear raised above the shoulder, point angled steeply down-forward; 2 stepping in; 3 impact, the spear driven down-forward at a steep angle, point low in front; 4 pulling the spear back up; 5 recovering to guard with the spear upright",
 }
+
+for _cls, (_base, _face) in BESPOKE.items():
+    ATTACK.setdefault(_cls, ATTACK[_base])
 
 STATE_BRIEF = {
     "idle": "a 2-frame IDLE: the character standing at ease, weapon held ready, in the same three-quarter side stance as the first reference; frame 2 is the same pose with a subtle breath, shoulders and chest raised a hair. Both frames otherwise identical in position and size.",
@@ -142,7 +181,22 @@ Layout rules:
 - Wide landscape image."""
 
 POSE_NOTE = """
-The SECOND attached image is a pose guide: the same animation drawn for this unit's pre-promotion class. Perform exactly its poses, in its order and at its pace, but draw the character of the FIRST image. Never copy the second image's costume or colours."""
+The SECOND attached image is a pose guide: the same animation drawn for the class this unit's sprite grew from. Perform exactly its poses, in its order and at its pace, but draw the character of the FIRST image. Never copy the second image's costume or colours."""
+
+
+BESPOKE_IDLE = """You are generating game sprite art. Use your built-in image generation tool to create ONE image. Do not write code, do not run commands, do not try to copy or save files: just generate the image, then reply with the full path of the generated image.
+
+The image: {brief}
+
+The character: {look}.
+- The FIRST attached image is a class sprite this character used to share with others. Match its art style exactly — the same chunky painted pixel-art look with a dark outline, lit from the upper left — and its proportions, stance and figure scale. But draw THIS character, not that one.
+- The SECOND attached image is the character's portrait: take their face, hair, skin tone, build, costume and colours from it.
+
+Layout rules:
+- Three-quarter side view facing RIGHT.
+- The 2 poses in ONE horizontal row, evenly spaced, same scale, feet on one shared baseline, full figure and whole weapon visible, not touching.
+- Background: one flat, solid, pure magenta (#FF00FF) everywhere. No gradient, no ground, no shadows, no effects, no text, no borders.
+- Wide landscape image."""
 
 
 def portrait(name: str) -> str:
@@ -161,15 +215,16 @@ def run(cls: str, state: str, work: str) -> str:
     n = FRAMES[state]
     brief = STATE_BRIEF[state].format(attack=ATTACK.get(cls, ""))
     images: list = []
-    if cls in TIER2 and state == "idle":
-        base, face = TIER2[cls]
-        prompt = TIER2_IDLE.format(brief=brief, look=LOOK[cls])
+    grown = TIER2.get(cls) or BESPOKE.get(cls)
+    if grown and state == "idle":
+        base, face = grown
+        prompt = (TIER2_IDLE if cls in TIER2 else BESPOKE_IDLE).format(brief=brief, look=LOOK[cls])
         images = [reference(base, work), portrait_png(face, work)]
     else:
         prompt = PROMPT.format(brief=brief, look=LOOK[cls], n=n)
         images = [reference(cls, work)]
-        if cls in TIER2:
-            guide = os.path.join(ROOT, "art_sources", "sprites", f"{TIER2[cls][0]}_{state}_src.png")
+        if grown:
+            guide = os.path.join(ROOT, "art_sources", "sprites", f"{grown[0]}_{state}_src.png")
             if os.path.exists(guide):
                 images.append(guide)
                 prompt += POSE_NOTE
