@@ -98,6 +98,9 @@ const PORTRAIT_IDS = [
   "kian", "ndari", "nebu",
   "dawn", "fergus", "ndara", "archbold", "khione", "mira", "tali",
   "rose", "coyne",
+  // The named generals, and the Ravage's Herald and Commander.
+  "castor", "othren", "wren", "serrick", "brask", "vasse", "sarto",
+  "herald", "ravage_commander",
   "narrator",
   // Generic enemy classes
   "bandit", "raider", "reaver", "royal_guard", "crown_archer"

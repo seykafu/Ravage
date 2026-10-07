@@ -14,37 +14,36 @@ consistency; Lucian is the first with a transparent background).
 | Naming | `<character>_<expression>.png`, exact slugs |
 | Workflow | One master per character, every expression as an EDIT of it |
 
-## 1. Missing expressions the script actively uses (fall back to neutral today)
+## 1-2. Done (2026-10-06, Codex — scripts/art/gen_portrait_art.py)
 
-| File to generate | Uses | Where it matters |
-|---|---|---|
-| `maya_alarmed.png` | 6 | Her clipped mid-fight warnings — grew with the war arc |
-| `kian_wounded.png` | 5 | Captivity + the cliff duel |
-| `ndari_grim_resolve.png` | 2 | His later commanding beats |
-| `kian_alarmed.png` | 1 | |
-| `kian_cold_contempt.png` | 1 | |
-| `kian_fatherly_smile.png` | 1 | |
-| `ndari_knowing_smile.png` | 1 | |
+Generated with the Codex pipeline (`gen_portrait_art.py` → review →
+`process_portrait_art.py`, raw renders in `art_sources/portraits/`):
 
-## 2. Named characters with NO portrait (all wear the royal-guard stand-in)
+- **Missing expressions, now in-set:** `kian_wounded`, `kian_fatherly_smile`,
+  `kian_alarmed`, `kian_cold_contempt`, `ndari_grim_resolve`,
+  `ndari_knowing_smile` (each an edit of the character's own master).
+- **Drifted expressions, redrawn from their set's master:** `maya_alarmed`
+  (read younger / rounder than the rest), `lucian_neutral` +
+  `lucian_grim_resolve` (closer crop, different beard and scar),
+  `khione_revelation` + `khione_serene_neutral` (different face, gold
+  hair), `rose_neutral`, `ning_neutral`.
+- **Coyne** redrawn in the house style (was near-photographic).
+- **The named generals have their own faces:** Lord Castor (`castor`),
+  Marshal Othren (`othren` — he wore TWO different stand-ins), Wren,
+  General Serrick, Captain Brask, Colonel Vasse, Warden Sarto; and the
+  Ravage's Herald and Commander (`herald`, `ravage_commander` — alien,
+  teal-black carapace and mint light; they wore a human bandit's face).
+  Wired in `PORTRAIT_IDS`, the PortraitId union, their dialogue, and their
+  units' `portraitId` (side panel, turn bar).
 
-Ranked by speaking beats. Each needs art + a small code wire-up (ask
-Claude once the PNG exists):
+- **At their real ages:** King Archbold (about sixty) and Madame Dawn
+  (about fifty) — Amar's father and mother read younger than he did —
+  and Mira (about forty, Tali's mother, who read as her sister). Each
+  set aged from its master, then every expression redrawn from the
+  aged master.
 
-| Character | Beats | Anchor for the prompt |
-|---|---|---|
-| Lord Castor | 6 | Grey-templed household-guard commander; courteous, duty-bound, faintly sad |
-| Wren | 3 | The King's Knife — plain-faced professional assassin, unsettlingly relaxed |
-| Marshal Othren | 2 | True-believer rebellion loyalist; older, granite conviction |
-| General Serrick | 1 | Career field general; heavy, immovable, correct |
-| Captain Brask | 1 | Incendiary-war specialist; quick-eyed, unbothered by fire |
-| Colonel Vasse | 1 | Survivor of a broken army fighting on out of grief |
-| Warden Sarto | 1 | Old shield-wall of one; thirty years keeping one bell |
-
-Deliberately faceless (design choice, revisit if wanted): **The Herald**
-and **The Ravage Commander** speak with no portrait at all — the fleet
-doesn't show faces. A single alien-commander portrait for B27/B28 would
-be striking if you ever want to overturn this.
+Still on the stand-ins (unnamed, a line or two): the Imperial Captain
+(B18), the Holdout Captain (B19 mercy), Captain Halden (B21, no lines).
 
 ## 3. Old-generation sets to regenerate (face drift + painted backgrounds)
 
