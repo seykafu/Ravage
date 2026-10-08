@@ -250,8 +250,9 @@ export class ChoiceScene extends Phaser.Scene {
     );
 
     // ---- Commit button (disabled until a path is selected) ----
+    // Wide enough for the longest label, "Commit to Restoration ▸".
     this.commitBtn = new Button(this, {
-      x: detX + detW - 240, y: GAME_HEIGHT - 64, w: 240, h: 46,
+      x: detX + detW - 320, y: GAME_HEIGHT - 64, w: 320, h: 46,
       label: "Select a path first", primary: true, fontSize: 18,
       enabled: false,
       onClick: () => this.commit()
