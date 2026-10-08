@@ -64,6 +64,16 @@ BESPOKE = {
     "ravage_trooper": ("swordsman", "herald"),
     "ravage_lancer": ("spearton", "herald"),
     "ravage_marksman": ("archer", "herald"),
+    # The rank and file who wore the heroes' own sheets: a bandit swordsman
+    # was Amar, a royal guard was Lucian, a crown archer was Ning.
+    "bandit_swordsman": ("swordsman", "bandit"),
+    "bandit_archer": ("archer", "raider"),
+    "bandit_spearton": ("spearton", "reaver"),
+    "royal_guard": ("spearton", "royal_guard"),
+    "crown_archer": ("archer", "crown_archer"),
+    # Story faces who borrowed class sheets that look nothing like them.
+    "kian": ("swordsman", "kian_neutral"),
+    "rose": ("shinobi", "rose_brisk"),
 }
 
 LOOK = {
@@ -99,6 +109,13 @@ LOOK = {
     "ravage_trooper": "a Ravage trooper, a lean alien soldier: segmented teal-black carapace armour, a smooth eyeless helm-like head with one glowing mint-green visor slit, holding a short dark curved blade edged with mint light",
     "ravage_lancer": "a Ravage lancer, an alien soldier: segmented teal-black carapace armour, a smooth helm-like head with a glowing mint-green visor slit, holding a tall dark lance with a mint-lit point and a small curved carapace shield",
     "ravage_marksman": "a Ravage marksman, an alien soldier: teal-black carapace armour, a hooded carapace head with a glowing mint-green visor slit, holding a dark recurved bow strung with a line of mint light",
+    "bandit_swordsman": "a road bandit: a scruffy unshaven man with a scarred face and a dirty red bandana, a patched brown leather jerkin over a grey shirt, mismatched bracers, holding a notched short sword; no cape",
+    "bandit_archer": "a bandit raider archer: a lean figure in a ragged rust-brown hood and cape over stitched leather, a scarf over the lower face, holding a rough shortbow, a crude quiver at the hip",
+    "bandit_spearton": "a bandit reaver: a heavyset bearded brute in a dented iron cap and a patched fur-and-leather coat, holding a crude long spear and a battered wooden round shield",
+    "royal_guard": "a royal guard of the King: a gold-plumed bronze crested helmet with a red horsehair crest, polished bronze-and-gold breastplate over a crimson tunic, holding a tall spear and a large round bronze shield with a gold sun",
+    "kian": "Kian, the King's enforcer: a handsome man in his thirties with dark swept-back hair, a black high-collared officer's uniform with gold trim and gold epaulettes, black boots, holding a straight steel longsword with a gold hilt",
+    "rose": "Rose, a rebel lieutenant: a young woman with long dark curly hair, a fitted dark leather jacket, a dusty-rose scarf across the chest, dark trousers and boots, a short blade in each hand",
+    "crown_archer": "a crown archer of the King: a young soldier with dark hair in a bun, a gilded bronze cuirass over a crimson tunic, gold-trimmed bracers, holding a tall gilded longbow, a red-fletched quiver on the back",
 }
 
 ATTACK = {

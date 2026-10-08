@@ -75,6 +75,7 @@ import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
   sfxAttackMiss,
+  sfxCineChime,
   sfxLensBeam,
   sfxCancel,
   sfxClick,
@@ -140,6 +141,7 @@ import { atmosphereForBackdrop, createAtmosphere, ensureDotTexture } from "./bat
 import { ashBurst, groundDust, hitStop, soulWisp, timeDilate } from "./battle/Impact";
 import { finaleFor, playFinale, type FinaleHost, type Pt } from "./battle/Finale";
 import { bossIntro, critCutIn, introducedBoss, wantsCutIn } from "./battle/CutIn";
+import type { EndMvp } from "./EndScene";
 import { ROMANCE_FLAG } from "../data/romance";
 import { TutorialDirector } from "./battle/Tutorial";
 
@@ -478,6 +480,8 @@ export class BattleScene extends Phaser.Scene {
   private tutorial?: TutorialDirector;
   // A boss's entrance card is playing (see create()); the board waits.
   private introPlaying = false;
+  // Who did what this battle, for the victory screen's best-of-the-battle.
+  private tally = new Map<string, { damage: number; kills: number; heals: number }>();
   // Mid-battle dialogue trigger evaluation + firing. Owns its own
   // fired-dialogue dedup + round bookkeeping; constructed fresh per
   // battle in create(). See src/scenes/battle/DialogueDirector.ts.
@@ -518,6 +522,7 @@ export class BattleScene extends Phaser.Scene {
     this.resumeRequested = data.resume === true;
     this.tutorial = undefined;
     this.introPlaying = false;
+    this.tally = new Map();
     this.pressBegunInScene = false;
     this.dragArmed = false;
     this.finalBlow = null;
@@ -3660,8 +3665,14 @@ export class BattleScene extends Phaser.Scene {
   // the victory screen. Not on the way to a game over.
   private endBattle(v: "player" | "enemy"): void {
     const save = loadSave();
-    const script = v === "player" && !hasExceededDeathLimit(save) ? finaleFor(this.battleId, getSevenPath(save)) : null;
-    if (!script) { this.transitionToEndScene(v); return; }
+    const won = v === "player" && !hasExceededDeathLimit(save);
+    const script = won ? finaleFor(this.battleId, getSevenPath(save)) : null;
+    if (!script) {
+      // A win without a finale still gets its moment: the squad cheers.
+      if (won) void this.victoryCheer().then(() => { if (this.scene.isActive()) this.transitionToEndScene(v); });
+      else this.transitionToEndScene(v);
+      return;
+    }
     void (async () => {
       // Let the last fall finish before the camera goes to it.
       for (let t = 0; t < 1600 && [...this.unitViews.values()].some((x) => x.animLock === "dying"); t += 50) {
@@ -3676,6 +3687,38 @@ export class BattleScene extends Phaser.Scene {
       }
       if (this.scene.isActive()) this.transitionToEndScene(v);
     })();
+  }
+
+  /** Everyone left standing hops and swings, to a rising chime. */
+  private async victoryCheer(): Promise<void> {
+    for (let t = 0; t < 1600 && [...this.unitViews.values()].some((x) => x.animLock === "dying"); t += 50) {
+      await this.delay(50);
+    }
+    if (!this.scene.isActive()) return;
+    const host = this.finaleHost();
+    // The fight is over: no move ranges or cursor under the cheer.
+    for (const h of [this.overlayG, this.dangerG, this.threatG, this.cursorG, this.pathG, this.activeRing, this.activeArrow]) h.setVisible(false);
+    this.hoverPreview.setVisible(false);
+    const squad = this.state.units.filter((u) => u.faction === "player" && isAlive(u));
+    [1, 1.26, 1.5].forEach((pitch, i) => this.time.delayedCall(i * 140, () => sfxCineChime(pitch)));
+    squad.forEach((u, i) => {
+      this.time.delayedCall(i * 110, () => {
+        const view = this.unitViews.get(u.id);
+        if (!view || !isAlive(u)) return;
+        playUnitState(this, view.sprite, u, "attack");
+        this.time.delayedCall(480, () => { if (isAlive(u)) playUnitState(this, view.sprite, u, "idle"); });
+        void host.hop(u.id, 10, 2);
+        const p = bodyCentre(view.sprite);
+        const burst = this.addWorld(this.add.particles(p.x, p.y - 24, ensureDotTexture(this), {
+          speed: { min: 40, max: 120 }, angle: { min: 220, max: 320 }, gravityY: 120,
+          lifespan: { min: 500, max: 900 }, scale: { start: 0.3, end: 0 },
+          tint: [0xfff0b0, 0xf4c95a, 0xffffff], blendMode: Phaser.BlendModes.ADD, emitting: false
+        }).setDepth(DEPTH.ATMOSPHERE));
+        burst.explode(12);
+        this.time.delayedCall(1000, () => burst.destroy());
+      });
+    });
+    await this.delay(1300 + squad.length * 110);
   }
 
   private finaleHost(): FinaleHost {
@@ -3842,7 +3885,7 @@ export class BattleScene extends Phaser.Scene {
         this.scene.start("GameOverScene", { battleId: this.battleId, deathsThisBattle: this.lastBattleDeaths });
         return;
       }
-      this.scene.start("EndScene", { battleId: this.battleId, outcome: v });
+      this.scene.start("EndScene", { battleId: this.battleId, outcome: v, mvp: v === "player" ? this.bestOfBattle() : undefined });
     });
   }
 
@@ -3875,6 +3918,7 @@ export class BattleScene extends Phaser.Scene {
       Math.max(1, Math.round(target.stats.hp * BattleScene.MEND_FRACTION))
     );
     target.state.hp += amount;
+    this.tallyOf(u.id).heals += amount;
     u.state.apRemaining -= 1;
     sfxConfirm();
     const px = this.projection.tileToWorld(target.state.position);
@@ -5332,12 +5376,40 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  private tallyOf(id: string): { damage: number; kills: number; heals: number } {
+    let t = this.tally.get(id);
+    if (!t) { t = { damage: 0, kills: 0, heals: 0 }; this.tally.set(id, t); }
+    return t;
+  }
+
+  /** The squad's best of the battle: kills weigh most, then damage, then healing. */
+  private bestOfBattle(): EndMvp | undefined {
+    let best: EndMvp | undefined;
+    let top = 0;
+    for (const u of this.state.units) {
+      if (u.faction !== "player") continue;
+      const t = this.tally.get(u.id);
+      if (!t) continue;
+      const score = t.kills * 30 + t.damage + t.heals * 0.8;
+      if (score > top) {
+        top = score;
+        best = { id: u.id, name: u.name, portraitId: u.portraitId ?? u.id, ...t };
+      }
+    }
+    return best;
+  }
+
   private applyAttackEffects(
     attacker: Unit,
     defender: Unit,
     result: { hit: boolean; crit: boolean; damage: number; defenderKilled: boolean },
     opts?: { interposedFrom?: Unit }
   ): void {
+    if (result.hit) {
+      const t = this.tallyOf(attacker.id);
+      t.damage += result.damage;
+      if (result.defenderKilled) t.kills += 1;
+    }
     const tv = this.unitViews.get(defender.id);
     const av = this.unitViews.get(attacker.id);
     if (!tv || !av) return;

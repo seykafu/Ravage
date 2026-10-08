@@ -41,7 +41,10 @@ export type ClassKind =
 // these are who they really are. A unit opts in with UnitDef.sprite.
 export const BESPOKE_SPRITES = [
   "nebu", "ndari", "castor", "wren", "othren", "serrick", "archbold", "dawn",
-  "herald", "ravage_commander", "ravage_trooper", "ravage_lancer", "ravage_marksman"
+  "herald", "ravage_commander", "ravage_trooper", "ravage_lancer", "ravage_marksman",
+  // The rank and file who wore the heroes' sheets, and two story faces.
+  "bandit_swordsman", "bandit_archer", "bandit_spearton", "royal_guard", "crown_archer",
+  "kian", "rose"
 ] as const;
 export type BespokeSprite = typeof BESPOKE_SPRITES[number];
 /** A sprite sheet folder: a class's, or a character's own. */

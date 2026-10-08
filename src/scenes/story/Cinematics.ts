@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { FAMILY_BODY, GAME_HEIGHT, GAME_WIDTH } from "../../util/constants";
 import { ensureDotTexture } from "../battle/Atmosphere";
 import { Reel, Z, type Fig } from "./Reel";
-import { sfxCineBell, sfxCineBoom, sfxCineChime, sfxCineRise, sfxClick } from "../../audio/Sfx";
+import { sfxCineBell, sfxCineBoom, sfxCineChime, sfxCineClang, sfxCineRise, sfxClick } from "../../audio/Sfx";
 import type { CinematicId, StageId, StoryArc } from "../../story/beats";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -451,7 +451,108 @@ export const showStage = (scene: Phaser.Scene, id: StageId, depth: number): Stag
 /** Above the dialog panel: where feet stand on a stage. */
 const STAGE_FEET = 426;
 
+/** Bolts streaking in from the left edge to (x, y), one after another. */
+const volley = (r: Reel, x: number, y: number, n: number, gap: number): void => {
+  for (let i = 0; i < n; i++) {
+    r.scene.time.delayedCall(i * gap, () => {
+      const g = r.add(r.scene.add.graphics(), Z.FRONT_FX);
+      const p = { v: 0 };
+      const y0 = y - 40 + i * 12;
+      r.scene.tweens.add({
+        targets: p, v: 1, duration: 140,
+        onUpdate: () => {
+          g.clear();
+          const bx = -20 + (x + 20) * p.v;
+          g.lineStyle(2, 0xe8e0d0, 1);
+          g.lineBetween(bx - 30, y0 + (y - y0) * p.v, bx, y0 + (y - y0) * p.v);
+        },
+        onComplete: () => {
+          g.destroy();
+          // A spark where it lands, gone at once.
+          const spark = r.glow(x, y - 30 + i * 6, 0xffe0c0, 0.16, 0.9, Z.FRONT_FX);
+          r.scene.tweens.add({ targets: spark, alpha: 0, scale: 0.3, duration: 240, ease: "Cubic.easeOut", onComplete: () => spark.destroy() });
+          sfxCineClang();
+        }
+      });
+    });
+  }
+};
+
 const STAGES: Record<StageId, (r: Reel) => void> = {
+  // The cliff above Para Harbor at sundown: Kian on the stair-head, the
+  // squad coming up the path to meet him, the light behind them all.
+  kian_duel: (r) => {
+    const cliff = r.painting("backdrop:cliffs", { zoom: 1.3, x: 0.68, y: 0.84 }, { zoom: 1.36, x: 0.7, y: 0.85 }, 30000, { fallback: 0x5a3a2a });
+    r.grade(0xffd0a0, 0.12, 0, "add");
+    if (cliff instanceof Phaser.GameObjects.Image) {
+      const sun = r.glow(0, 0, 0xffc070, 1.8, 0.4, Z.GRADE + 0.5);
+      r.onFrame(() => { const p = Reel.at(cliff, 0.11, 0.18); sun.setPosition(p.x, p.y); });
+    }
+    const RIM = 0xffb060;
+    const kian = r.figure("kian", 840, STAGE_FEET - 4, { left: true, rim: RIM, rimAlpha: 0.6 });
+    const amar = r.figure("amar", 360, STAGE_FEET, { rim: RIM, rimAlpha: 0.6 });
+    const squad = [
+      r.figure("maya", 290, STAGE_FEET - 8, { rim: RIM, rimAlpha: 0.5 }),
+      r.figure("ning", 230, STAGE_FEET - 4, { rim: RIM, rimAlpha: 0.5 }),
+      r.figure("leo", 170, STAGE_FEET - 10, { rim: RIM, rimAlpha: 0.5 }),
+      r.figure("lucian", 110, STAGE_FEET - 2, { rim: RIM, rimAlpha: 0.5 })
+    ];
+    // Amar walks out ahead of them; Kian lifts his blade.
+    r.scene.time.delayedCall(1200, () => { void amar.walkTo(560, STAGE_FEET, 1600); });
+    r.scene.time.delayedCall(3000, () => { void kian.strike(); });
+    for (const [i, f] of squad.entries()) r.scene.time.delayedCall(1500 + i * 150, () => { void f.walkTo(f.box.x + 60, f.box.y, 900); });
+    const dust = r.add(r.scene.add.particles(0, 0, ensureDotTexture(r.scene), {
+      x: { min: 0, max: W }, y: { min: 300, max: 430 }, speedX: { min: -80, max: -40 }, speedY: { min: -6, max: 6 },
+      lifespan: { min: 2000, max: 3200 }, scale: { start: 0.25, end: 0 }, alpha: { start: 0.5, end: 0 },
+      tint: 0xffe0b0, frequency: 120
+    }), Z.FRONT_FX);
+    void dust;
+  },
+  // Orinhal, the square below burning: the King's tax men run, and Leo
+  // walks his dactyl across to the partisans' side. The squad follows.
+  leo_defects: (r) => {
+    r.painting("backdrop:orinhal", { zoom: 1.12, x: 0.45, y: 0.6 }, { zoom: 1.16, x: 0.48, y: 0.62 }, 30000, { fallback: 0x3a2a24 });
+    const partisans = [
+      r.figure("archer", 900, STAGE_FEET - 6, { left: true, tint: 0xc8e0b8 }),
+      r.figure("archer", 980, STAGE_FEET - 14, { left: true, tint: 0xc8e0b8 }),
+      r.figure("bandit_swordsman", 1060, STAGE_FEET - 4, { left: true })
+    ];
+    void partisans;
+    const taxmen = [r.figure("royal_guard", 520, STAGE_FEET - 2, { left: true }), r.figure("royal_guard", 600, STAGE_FEET - 8, { left: true })];
+    for (const [i, t] of taxmen.entries()) r.scene.time.delayedCall(300 + i * 200, () => { void t.walkTo(-120, t.box.y, 2400); });
+    const leo = r.figure("leo", 300, STAGE_FEET);
+    r.scene.time.delayedCall(1600, () => { void leo.walkTo(780, STAGE_FEET, 2600); });
+    const followers = ["amar", "ning", "maya", "lucian"].map((id, i) => r.figure(id, -60 - i * 70, STAGE_FEET - (i % 2) * 8));
+    followers.forEach((f, i) => r.scene.time.delayedCall(3200 + i * 220, () => { void f.walkTo(560 - i * 70, f.box.y, 2400); }));
+    r.embers({ x: 0, y: 120, w: W, h: 260 }, 600000, Z.FRONT_FX, 160);
+  },
+  // The plaza, that night: four bolts, Rose between them and Dawn, and
+  // the squad running in too late.
+  rose_falls: (r) => {
+    const city = r.painting("backdrop:grude", { zoom: 1.5, x: 0.32, y: 0.78 }, { zoom: 1.55, x: 0.33, y: 0.78 }, 30000, { fallback: 0x1a1a2a });
+    r.grade(0x585890, 1, 0);
+    if (city instanceof Phaser.GameObjects.Image) {
+      const lamp = r.glow(0, 0, 0xffb060, 0.9, 0.45, Z.GRADE + 0.5);
+      r.onFrame(() => { const p = Reel.at(city, 0.4, 0.74); lamp.setPosition(p.x, p.y); });
+    }
+    // A little higher than the other stages: Rose lying down must clear
+    // the dialog panel.
+    const FEET = STAGE_FEET - 16;
+    // Moonlight on their edges, so they read against the dark.
+    const MOON = 0xb8c4ff;
+    const dawn = r.figure("dawn", 760, FEET - 4, { left: true, tint: 0xd8d0e8, rim: MOON, rimAlpha: 0.55 });
+    const rose = r.figure("rose", 520, FEET, { tint: 0xe0d8f0, rim: MOON, rimAlpha: 0.7 });
+    void dawn;
+    r.scene.time.delayedCall(700, () => { void rose.walkTo(690, FEET, 500); });
+    r.scene.time.delayedCall(1300, () => volley(r, 690, FEET - 40, 4, 160));
+    r.scene.time.delayedCall(1400, () => { rose.play("hit"); r.shake(220, 0.004); });
+    r.scene.time.delayedCall(2300, () => rose.collapse());
+    // Where she lies, a little pale light stays.
+    const still = r.glow(700, FEET - 10, MOON, 0.42, 0, Z.BACK_FX);
+    r.scene.time.delayedCall(2900, () => { void r.tween({ targets: still, alpha: 0.5, duration: 1400 }); });
+    const squad = ["amar", "maya", "leo"].map((id, i) => r.figure(id, -80 - i * 70, FEET - (i % 2) * 8, { tint: 0xd0d0e8, rim: MOON, rimAlpha: 0.45 }));
+    squad.forEach((f, i) => r.scene.time.delayedCall(2600 + i * 200, () => { void f.walkTo(470 - i * 80, f.box.y, 1400); }));
+  },
   // The squad at the throne-hall doors, before the first battle.
   throne: (r) => {
     r.painting("backdrop:throne_hall", { zoom: 1.08, x: 0.58, y: 0.5 }, { zoom: 1.0, x: 0.55, y: 0.5 }, 30000, { fallback: 0x2a1a14 });

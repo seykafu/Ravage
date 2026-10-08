@@ -4,7 +4,15 @@ import { Button } from "../ui/Button";
 import { drawPanel } from "../ui/Panel";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getMusic, MUSIC } from "../audio/Music";
-import { sfxClick, sfxConfirm, sfxHover } from "../audio/Sfx";
+import { sfxCineBoom, sfxCineChime, sfxClick, sfxConfirm, sfxHover } from "../audio/Sfx";
+import { ensureDotTexture } from "./battle/Atmosphere";
+import { ensureGlow } from "./story/figures";
+
+/** Each road's colour (the same seven the B18 finale raises round Amar). */
+const HUE: Record<SevenPath, number> = {
+  vengeance: 0xe0584a, restoration: 0xe8c45a, revolution: 0xd8743c, duty: 0x8fb0d8,
+  exile: 0xb8c8d8, mercy: 0xf0ece0, forgetting: 0x9ad0c4
+};
 import { SettingsButton } from "../ui/SettingsButton";
 import { loadSave, writeSave, setSevenPath, unlockBattle } from "../util/save";
 import type { SevenPath } from "../data/contentIds";
@@ -105,6 +113,8 @@ export class ChoiceScene extends Phaser.Scene {
   private cardHighlights = new Map<SevenPath, Phaser.GameObjects.Graphics>();
   private detailText!: Phaser.GameObjects.Text;
   private commitBtn?: Button;
+  // Everything on screen but the sea, for the commit moment to clear.
+  private chrome: Phaser.GameObjects.GameObject[] = [];
 
   constructor() { super("ChoiceScene"); }
 
@@ -123,12 +133,23 @@ export class ChoiceScene extends Phaser.Scene {
     this.commitBtn = undefined;
     // Open-water backdrop — the squad is on Khione's ship after the B17
     // escape. bg_grude reads as the harbour they're leaving behind.
-    const bgKey = ensureBackdropForKey(this, "bg_grude");
-    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-    bg.setAlpha(0.32);
+    // The open water at dusk, the coast that belongs to nobody somewhere
+    // past it: a slow drift, motes rising off the sea.
+    const sea = this.textures.exists("backdrop:open_sea");
+    const bgKey = sea ? "backdrop:open_sea" : ensureBackdropForKey(this, "bg_grude");
+    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH * 1.06, GAME_HEIGHT * 1.06);
+    bg.setAlpha(sea ? 0.5 : 0.32);
+    this.tweens.add({ targets: bg, x: GAME_WIDTH / 2 - 24, duration: 18000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
     const v = this.add.graphics();
-    v.fillStyle(0x05060a, 0.62);
+    v.fillStyle(0x05060a, 0.55);
     v.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    this.add.particles(0, 0, ensureDotTexture(this), {
+      x: { min: 0, max: GAME_WIDTH }, y: { min: GAME_HEIGHT * 0.5, max: GAME_HEIGHT },
+      speedY: { min: -26, max: -8 }, speedX: { min: -6, max: 6 }, lifespan: { min: 3000, max: 5200 },
+      scale: { start: 0.24, end: 0 }, alpha: { start: 0.7, end: 0 }, tint: [0xfff0c0, 0xffd890],
+      blendMode: Phaser.BlendModes.ADD, frequency: 140
+    });
+    const firstChrome = this.children.list.length;
 
     // Title + framing line.
     this.add.text(GAME_WIDTH / 2, 46, "SEVEN NAMES, ONE CHOICE", {
@@ -153,6 +174,7 @@ export class ChoiceScene extends Phaser.Scene {
 
     PATHS.forEach((p, i) => {
       const y = firstY + i * (cardH + cardGap);
+      const cardStart = this.children.list.length;
 
       // Selection highlight frame (hidden until selected).
       const hl = this.add.graphics();
@@ -197,6 +219,18 @@ export class ChoiceScene extends Phaser.Scene {
       // is idempotent, so the pair never double-applies.
       zone.on("pointerdown", () => this.selectPath(p));
       zone.on("pointerup", () => this.selectPath(p));
+      // The road's colour down the card's edge.
+      this.add.rectangle(colX, y, 4, cardH, HUE[p.path], 0.95).setOrigin(0, 0);
+      // The cards come in one at a time, a chime each.
+      for (const o of this.children.list.slice(cardStart)) {
+        const g = o as unknown as Phaser.GameObjects.Components.Transform & Phaser.GameObjects.Components.Alpha;
+        const hl0 = o === hl;
+        const x = g.x;
+        g.x = x - 420;
+        if (!hl0) g.setAlpha(0);
+        this.tweens.add({ targets: o, ...(hl0 ? { x } : { x, alpha: 1 }), duration: 420, delay: 250 + i * 110, ease: "Cubic.easeOut" });
+      }
+      this.time.delayedCall(250 + i * 110, () => sfxCineChime(0.9 + i * 0.1));
     });
 
     // ---- Right column: detail panel for the selected path ----
@@ -223,6 +257,7 @@ export class ChoiceScene extends Phaser.Scene {
       onClick: () => this.commit()
     });
 
+    this.chrome = this.children.list.slice(firstChrome);
     getMusic(this).play(MUSIC.emotional, { fadeMs: 1000 });
     this.cameras.main.fadeIn(600, 0, 0, 0);
     new SettingsButton(this, GAME_WIDTH - 32, 32);
@@ -278,8 +313,41 @@ export class ChoiceScene extends Phaser.Scene {
       routed = true;
       this.scene.start("CampScene", { nextChapter: choice.openerBattle });
     };
-    this.cameras.main.fadeOut(600, 0, 0, 0);
-    this.cameras.main.once("camerafadeoutcomplete", go);
-    this.time.delayedCall(750, go);
+    const leave = (): void => {
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.cameras.main.once("camerafadeoutcomplete", go);
+      this.time.delayedCall(750, go);
+    };
+    // The chosen name has its moment first; the latch and this last timer
+    // still guarantee the player leaves even if the moment never ends.
+    this.choiceMoment(choice, leave);
+    this.time.delayedCall(4500, go);
+  }
+
+  /** Everything else goes; the chosen road's name blooms in its colour. */
+  private choiceMoment(choice: PathCard, then: () => void): void {
+    const hue = HUE[choice.path];
+    const css = `#${hue.toString(16).padStart(6, "0")}`;
+    this.tweens.add({ targets: this.chrome, alpha: 0, duration: 450 });
+    const cx = GAME_WIDTH / 2, cy = GAME_HEIGHT / 2 - 10;
+    const glow = this.add.image(cx, cy, ensureGlow(this)).setTint(hue).setBlendMode(Phaser.BlendModes.ADD).setScale(0.2).setAlpha(0);
+    const ring = this.add.circle(cx, cy, 60).setStrokeStyle(3, hue, 0.9).setAlpha(0);
+    const name = this.add.text(cx, cy, choice.name.toUpperCase(), {
+      fontFamily: FAMILY_HEADING, fontSize: "76px", color: css, stroke: "#05040a", strokeThickness: 8,
+      shadow: { offsetX: 0, offsetY: 0, color: css, blur: 24, fill: true }
+    }).setOrigin(0.5).setAlpha(0).setScale(0.6).setLetterSpacing(10);
+    const honors = this.add.text(cx, cy + 66, choice.honors, {
+      fontFamily: FAMILY_BODY, fontSize: "22px", color: "#e6dcc4", fontStyle: "italic"
+    }).setOrigin(0.5).setAlpha(0);
+    this.time.delayedCall(350, () => {
+      sfxCineBoom();
+      sfxCineChime(1 + PATHS.indexOf(choice) * 0.1);
+      this.tweens.add({ targets: glow, alpha: 0.85, scale: 3.2, duration: 900, ease: "Cubic.easeOut" });
+      this.tweens.add({ targets: ring, alpha: 1, duration: 120 });
+      this.tweens.add({ targets: ring, scale: 9, alpha: 0, duration: 1300, delay: 120, ease: "Sine.easeOut" });
+      this.tweens.add({ targets: name, alpha: 1, scale: 1, duration: 700, ease: "Back.easeOut" });
+      this.tweens.add({ targets: honors, alpha: 1, duration: 600, delay: 400 });
+    });
+    this.time.delayedCall(2300, then);
   }
 }

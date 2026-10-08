@@ -250,6 +250,7 @@ export const PLAYERS = {
     shortName: "Ki",
     faction: "player",
     classKind: "knight",
+    sprite: "kian",
     // No knight sprite folder under public/assets/sprites/ yet. Render as
     // swordmaster (visually distinct from Amar's swordsman, fits Kian's
     // "elite blade in the king's service" framing) until proper knight
@@ -279,6 +280,7 @@ export const PLAYERS = {
     shortName: "Ro",
     faction: "player",
     classKind: "shinobi",
+    sprite: "rose",
     weapon: "sword",
     stats: { hp: 36, power: 12, armor: 4, speed: 14, movement: 5, ap: 3 },
     artSeed: 9,
@@ -310,6 +312,7 @@ export const ENEMIES = {
     shortName: "Bd",
     faction: "enemy",
     classKind: "swordsman",
+    sprite: "bandit_swordsman",
     weapon: "sword",
     stats: { hp: 22, power: 8, armor: 3, speed: 6, movement: 4, ap: 3 },
     statReferenceLevel: 2,
@@ -326,6 +329,7 @@ export const ENEMIES = {
     shortName: "Rd",
     faction: "enemy",
     classKind: "archer",
+    sprite: "bandit_archer",
     weapon: "bow",
     stats: { hp: 18, power: 7, armor: 2, speed: 7, movement: 4, ap: 2 },
     statReferenceLevel: 2,
@@ -342,6 +346,7 @@ export const ENEMIES = {
     shortName: "Rv",
     faction: "enemy",
     classKind: "spearton",
+    sprite: "bandit_spearton",
     weapon: "spear",
     stats: { hp: 26, power: 10, armor: 5, speed: 5, movement: 3, ap: 2 },
     statReferenceLevel: 3,
@@ -360,6 +365,7 @@ export const ENEMIES = {
     shortName: "RG",
     faction: "enemy",
     classKind: "spearton",
+    sprite: "royal_guard",
     weapon: "spear",
     stats: { hp: 30, power: 11, armor: 7, speed: 6, movement: 3, ap: 2 },
     statReferenceLevel: 6,
@@ -377,6 +383,7 @@ export const ENEMIES = {
     shortName: "Ca",
     faction: "enemy",
     classKind: "archer",
+    sprite: "crown_archer",
     weapon: "bow",
     stats: { hp: 22, power: 9, armor: 3, speed: 8, movement: 4, ap: 2 },
     statReferenceLevel: 6,
@@ -620,6 +627,7 @@ export const ENEMIES = {
     shortName: "Ki",
     faction: "enemy",
     classKind: "knight",
+    sprite: "kian",
     // Same sprite override as PLAYERS.kian — knight has no shipped
     // sprite folder, falls back to swordmaster.
     spriteClassOverride: "swordmaster",

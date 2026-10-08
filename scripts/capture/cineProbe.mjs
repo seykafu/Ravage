@@ -71,6 +71,9 @@ if (mode.startsWith("stage:")) {
   await page.evaluate((id) => {
     const st = window.__RAVAGE_GAME__.scene.getScene("StoryScene");
     const i = st.beats.findIndex((b) => b.stage === id);
+    // Raised fresh, from its first frame (a first-beat stage has been
+    // running through the wait above).
+    st.stage?.destroy(0); st.stage = undefined; st.stageId = undefined;
     st.idx = i;
     st.showBeat(st.beats[i]);
   }, id);
