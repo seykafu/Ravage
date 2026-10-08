@@ -23,6 +23,7 @@ import { GameOverScene } from "./scenes/GameOverScene";
 import { ChoiceScene } from "./scenes/ChoiceScene";
 import { RomanceScene } from "./scenes/RomanceScene";
 import { AnotherPathScene } from "./scenes/AnotherPathScene";
+import { RecapScene } from "./scenes/RecapScene";
 import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 import { installRenderScale } from "./util/renderScale";
@@ -76,6 +77,7 @@ const config: Phaser.Types.Core.GameConfig = {
     TitleScene,
     IntroVideoScene,
     SaveSlotScene,
+    RecapScene,
     StoryScene,
     OverworldScene,
     // Directly BEFORE CampScene so the camp's night sky renders under it.

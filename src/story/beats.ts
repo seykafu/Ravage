@@ -65,7 +65,11 @@ export interface DialogBeat {
 // paintings, the squad's battle sprites, plain words on screen. Skippable.
 export type CinematicId = "coup" | "escape" | "grude_burns" | "sky_fleet";
 // A staged picture behind the dialogue (DialogBeat.stage).
-export type StageId = "throne" | "voyage" | "burial" | "grude_arrival";
+export type StageId =
+  | "throne" | "voyage" | "burial" | "grude_arrival"
+  // Kian waiting on the cliff at sundown; Leo's dactyl crossing to the
+  // partisans at Orinhal; Rose falling in front of Dawn.
+  | "kian_duel" | "leo_defects" | "rose_falls";
 
 export interface StoryArc {
   id: ArcId;
@@ -506,7 +510,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "orinhal",
     next: "story:before_ravine",
     beats: [
-      N("The tax collectors break first. Townspeople emerge as the last of the King's men run. A woman finds her husband alive. The squad has to look away."),
+      STAGE("leo_defects", N("The tax collectors break first. Townspeople emerge as the last of the King's men run. A woman finds her husband alive. The squad has to look away.")),
       N("A figure in a gray cloak walks through the square as if she belongs there. She does not introduce herself to anyone but Amar."),
       { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral", body: "I'm Ndara. Not the bandit from the mountain village — same name, different woman, you'll get used to it. I serve a queen called Madame Dawn. She's been watching you a long time, Amar." },
       { speaker: "Amar", portraitId: "amar", body: "...Watching me how." },
@@ -667,7 +671,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "cliffs",
     next: "prep:b11_cliffs",
     beats: [
-      N("The road ends on a plateau above Para Harbor. Dawn's ship waits below, sails ready. The only way down: the cliff staircase, where Kian and the King's elite are waiting."),
+      STAGE("kian_duel", N("The road ends on a plateau above Para Harbor. Dawn's ship waits below, sails ready. The only way down: the cliff staircase, where Kian and the King's elite are waiting.")),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
         body: "Six guards visible. Kian on the lower landing. Two crown archers halfway down, covering every step. Elite, not Thuling watchmen. We push down and trade blows." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
@@ -878,7 +882,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_origin",
     beats: [
-      N("Dawn doesn't move for an hour. Ndara brings a cart; she, Amar, Maya, and Leo lift Rose in. Dawn walks beside it all the way home. Nobody speaks."),
+      STAGE("rose_falls", N("Dawn doesn't move for an hour. Ndara brings a cart; she, Amar, Maya, and Leo lift Rose in. Dawn walks beside it all the way home. Nobody speaks.")),
       N("All twelve targets are dead. By morning, flyers across the city name them. By sundown, the empire formally admits an armed rebellion exists. Dawn has been right about everything."),
       N("Rose is buried at first light beneath the lemon tree behind the candle-maker's shop. Dawn speaks for less than a minute: no tears, no tremor, the same flat briefing voice."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",

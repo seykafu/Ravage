@@ -62,7 +62,9 @@ done
 # pose, like "boss").
 declare -A BESPOKE=( [nebu]=boss [ndari]=boss [castor]=boss [wren]=shinobi [othren]=knight
                      [serrick]=boss [archbold]=boss [dawn]=boss [herald]=boss [ravage_commander]=boss
-                     [ravage_trooper]=swordsman [ravage_lancer]=spearton [ravage_marksman]=archer )
+                     [ravage_trooper]=swordsman [ravage_lancer]=spearton [ravage_marksman]=archer
+                     [bandit_swordsman]=swordsman [bandit_archer]=archer [bandit_spearton]=spearton
+                     [royal_guard]=spearton [crown_archer]=archer [kian]=swordsman [rose]=shinobi )
 for c in "${!BESPOKE[@]}"; do
   base="${BESPOKE[$c]}"
   idle=(); attack=()

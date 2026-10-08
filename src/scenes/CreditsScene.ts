@@ -6,6 +6,9 @@ import { sfxConfirm } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { getSevenPath, loadSave } from "../util/save";
 import { BATTLES } from "../data/battles";
+import { classOf } from "./story/figures";
+import { animKey, hasUnitAnimation } from "../assets/animations";
+import type { SpriteClass } from "../combat/types";
 
 interface CreditLine {
   kind: "title" | "header" | "name" | "spacer" | "quote";
@@ -83,8 +86,15 @@ const CREDITS: CreditLine[] = [
   { kind: "title", text: "FIN" }
 ];
 
+/** Who walks in the credits parade, in step; the lost follow faintly. */
+const PARADE = ["amar", "maya", "ning", "leo", "ranatoli", "selene", "veya", "corin"];
+const REMEMBERED = ["lucian", "rose"];
+const PARADE_GAP = 92;
+const PARADE_SPEED = 42; // px/sec
+
 export class CreditsScene extends Phaser.Scene {
   private scroll!: Phaser.GameObjects.Container;
+  private walkers: Phaser.GameObjects.Sprite[] = [];
   private finished = false;
   private speed = 28; // px/sec
   private endY = 0;
@@ -187,7 +197,8 @@ export class CreditsScene extends Phaser.Scene {
       fontSize: 14,
       onClick: () => this.exit()
     });
-    void titleBtn;
+    // Above the parade's band, which covers the bottom of the screen.
+    titleBtn.setDepth(7);
 
     // Speed-up by holding Space or clicking anywhere on the scroll area.
     this.input.keyboard?.on("keydown-SPACE", () => { this.speed = 120; });
@@ -195,6 +206,7 @@ export class CreditsScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-ENTER", () => this.exit());
     this.input.keyboard?.on("keydown-ESC", () => this.exit());
 
+    this.parade();
     getMusic(this).play(MUSIC.trailer, { fadeMs: 1400 });
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
@@ -202,9 +214,38 @@ export class CreditsScene extends Phaser.Scene {
     // We'll handle that in update().
   }
 
+  /**
+   * The squad walks home along the bottom of the screen while the names
+   * roll, and Lucian and Rose walk at the back, faint. The names come up
+   * from behind a dark band under their feet.
+   */
+  private parade(): void {
+    this.walkers = [];
+    const band = this.add.graphics().setDepth(5);
+    band.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.92, 0.92);
+    band.fillRect(0, GAME_HEIGHT - 170, GAME_WIDTH, 60);
+    band.fillStyle(0x000000, 0.92);
+    band.fillRect(0, GAME_HEIGHT - 110, GAME_WIDTH, 110);
+    const feet = GAME_HEIGHT - 70;
+    const ids = [...PARADE, ...REMEMBERED];
+    ids.forEach((id, i) => {
+      const cls = classOf(this, id) as SpriteClass;
+      const tex = this.textures.exists(`unit:${cls}:walk`) ? `unit:${cls}:walk` : this.textures.exists(`unit:${cls}:idle`) ? `unit:${cls}:idle` : cls;
+      const s = this.add.sprite(-60 - i * PARADE_GAP, feet, tex).setOrigin(0.5, 0.9).setScale(2.5).setDepth(6);
+      if (hasUnitAnimation(cls, "walk")) s.play(animKey(cls, "walk"));
+      if (REMEMBERED.includes(id)) s.setAlpha(0.42).setTint(0xb8c8e8);
+      this.walkers.push(s);
+    });
+  }
+
   update(_time: number, deltaMs: number): void {
     if (this.finished) return;
     const dt = deltaMs / 1000;
+    // The parade loops: whoever walks off the right rejoins at the back.
+    for (const s of this.walkers) {
+      s.x += PARADE_SPEED * dt;
+      if (s.x > GAME_WIDTH + 70) s.x = Math.min(...this.walkers.map((w) => w.x)) - PARADE_GAP;
+    }
     this.scroll.y -= this.speed * dt;
 
     // Once the entire credits have scrolled off the top, auto-return to title.

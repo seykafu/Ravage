@@ -207,8 +207,10 @@ export class SaveSlotScene extends Phaser.Scene {
     }
     // Route into the camp instead of straight to the world map. The
     // camp is the new home base — the world map is one click away
-    // via the "Where to Next?" hotspot. See CampScene.
-    this.scene.start("CampScene");
+    // via the "Where to Next?" hotspot. See CampScene. A returning
+    // player gets the last chapter recapped first (RecapScene, which
+    // goes straight on for a save with no battle won yet).
+    this.scene.start("RecapScene");
   }
 
   private async startNew(slot: SlotIndex): Promise<void> {

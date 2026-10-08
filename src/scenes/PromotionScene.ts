@@ -1,7 +1,9 @@
 import Phaser from "phaser";
 import { COLORS, FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../util/constants";
 import { Button } from "../ui/Button";
-import { sfxClick, sfxVictory } from "../audio/Sfx";
+import { sfxCineBell, sfxCineRise, sfxClick, sfxVictory } from "../audio/Sfx";
+import { animKey, hasUnitAnimation } from "../assets/animations";
+import { ensureDotTexture } from "./battle/Atmosphere";
 import { ABILITY_DISPLAY, CLASS_DISPLAY_NAMES, PROMOTIONS } from "../data/promotions";
 import { promoteCharacter } from "../combat/Progression";
 import { trackCharacterPromoted } from "../util/analytics";
@@ -70,8 +72,103 @@ export class PromotionScene extends Phaser.Scene {
       trackCharacterPromoted(this.characterId, promotion.toClass);
     }
 
-    this.renderPanel(this.characterId, before, after, promotion.toClass, promotion.newAbility);
-    sfxVictory();
+    // The transformation first — the class sprite they wore, light, and
+    // the one they wear now — then the panel of what changed.
+    const fromClass = this.spriteClass(before.classKind ?? this.guessTier1(promotion.toClass), before.spriteClassOverride);
+    const toClass = this.spriteClass(promotion.toClass, after.spriteClassOverride);
+    void this.transform(fromClass, toClass, promotion.toClass).then(() => {
+      this.renderPanel(this.characterId, before, after, promotion.toClass, promotion.newAbility);
+      sfxVictory();
+    });
+  }
+
+  /** The sheet a class is drawn with: its own once shipped, else its stand-in. */
+  private spriteClass(cls: ClassKind, override?: ClassKind): ClassKind | null {
+    if (this.textures.exists(`unit:${cls}:idle`)) return cls;
+    if (override && this.textures.exists(`unit:${override}:idle`)) return override;
+    return null;
+  }
+
+  /**
+   * The promotion itself: the old class sprite in a pillar of light, a
+   * white flash, the new sprite standing where it stood, its class name
+   * slammed in. Ends with the new sprite stepped aside to the panel's left,
+   * where it stays. A click jumps to the end.
+   */
+  private transform(from: ClassKind | null, to: ClassKind | null, toClass: ClassKind): Promise<void> {
+    if (!to) return Promise.resolve();
+    const W = GAME_WIDTH, H = GAME_HEIGHT;
+    const cx = W / 2, feet = H * 0.66;
+    return new Promise((done) => {
+      let finished = false;
+      const made: Phaser.GameObjects.GameObject[] = [];
+      const dim = this.add.rectangle(cx, H / 2, W, H, 0x000000, 0.86).setAlpha(0).setDepth(4);
+      made.push(dim);
+      this.tweens.add({ targets: dim, alpha: 1, duration: 300 });
+      // Above the panel's own dim, which is drawn after it.
+      const sprite = this.add.sprite(cx, feet, `unit:${from ?? to}:idle`).setOrigin(0.5, 0.9).setScale(5).setDepth(5);
+      if (from && hasUnitAnimation(from, "idle")) sprite.play(animKey(from, "idle"));
+      const pillar = this.add.graphics().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setDepth(4.5);
+      pillar.fillGradientStyle(0xfff4d0, 0xfff4d0, 0xffe6a0, 0xffe6a0, 0, 0, 0.55, 0.55);
+      pillar.fillRect(cx - 70, 0, 140, feet + 10);
+      pillar.fillStyle(0xfff0c0, 0.35);
+      pillar.fillEllipse(cx, feet + 4, 220, 50);
+      made.push(pillar);
+      const motes = this.add.particles(cx, feet, ensureDotTexture(this), {
+        x: { min: -60, max: 60 }, speedY: { min: -160, max: -60 }, speedX: { min: -20, max: 20 },
+        lifespan: { min: 700, max: 1300 }, scale: { start: 0.45, end: 0 }, alpha: { start: 1, end: 0 },
+        tint: [0xfff4c0, 0xffd870, 0xffffff], blendMode: Phaser.BlendModes.ADD, frequency: 30, emitting: false
+      }).setDepth(6);
+      made.push(motes);
+      const name = this.add.text(cx, 150, (CLASS_DISPLAY_NAMES[toClass] ?? toClass).toUpperCase(), {
+        fontFamily: FAMILY_DISPLAY, fontSize: "64px", color: "#f4d999", stroke: "#1a0e04", strokeThickness: 7,
+        shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 18, fill: true }
+      }).setOrigin(0.5).setAlpha(0).setScale(1.5).setLetterSpacing(6).setDepth(6);
+      made.push(name);
+
+      const finish = (): void => {
+        if (finished) return;
+        finished = true;
+        this.input.off("pointerdown", finish);
+        this.tweens.killTweensOf([sprite, ...made]);
+        motes.stop();
+        sprite.clearTint().setAlpha(1).setTexture(`unit:${to}:idle`);
+        if (hasUnitAnimation(to, "idle")) sprite.play(animKey(to, "idle"));
+        for (const o of made) o.destroy();
+        // Aside, to the panel's left, where it stays with the numbers.
+        this.tweens.add({ targets: sprite, x: W / 2 - 400, y: 470, scale: 4, duration: 420, ease: "Cubic.easeInOut" });
+        done();
+      };
+      this.time.delayedCall(250, () => this.input.once("pointerdown", finish));
+
+      // The light comes down; the old self brightens into it.
+      this.time.delayedCall(500, () => {
+        if (finished) return;
+        sfxCineRise();
+        this.tweens.add({ targets: pillar, alpha: 1, duration: 700 });
+        motes.start();
+        this.tweens.add({ targets: sprite, y: feet - 10, duration: 900, ease: "Sine.easeInOut" });
+        // Burning white in the light, shimmering.
+        sprite.setTintFill(0xfffaf0);
+        this.tweens.add({ targets: sprite, alpha: 0.8, duration: 150, yoyo: true, repeat: 2, ease: "Sine.easeInOut" });
+      });
+      // The flash; the new self.
+      this.time.delayedCall(1500, () => {
+        if (finished) return;
+        sfxCineBell(1.2);
+        const flash = this.add.rectangle(cx, H / 2, W, H, 0xffffff, 1).setBlendMode(Phaser.BlendModes.ADD).setDepth(7);
+        made.push(flash);
+        this.tweens.add({ targets: flash, alpha: 0, duration: 700, ease: "Cubic.easeOut" });
+        this.cameras.main.shake(260, 0.006);
+        sprite.setTexture(`unit:${to}:idle`).setTintFill(0xffffff).setAlpha(1).setY(feet);
+        if (hasUnitAnimation(to, "idle")) sprite.play(animKey(to, "idle"));
+        this.time.delayedCall(260, () => { if (!finished) sprite.clearTint(); });
+        this.tweens.add({ targets: pillar, alpha: 0, duration: 900, delay: 300 });
+        motes.stop();
+        this.tweens.add({ targets: name, alpha: 1, scale: 1, duration: 260, ease: "Cubic.easeIn" });
+      });
+      this.time.delayedCall(3000, finish);
+    });
   }
 
   private renderPanel(
@@ -212,7 +309,10 @@ export class PromotionScene extends Phaser.Scene {
       robinhelm: "archer",
       dactyl_king: "dactyl_rider",
       shinobi_master: "shinobi",
-      guardian: "sentinel"
+      guardian: "sentinel",
+      // Veya's — missing, it read "Prismarch → Prismarch", and the
+      // transformation started from the new sprite.
+      prismarch: "lenscaster"
     };
     return tier1Of[toClass] ?? toClass;
   }

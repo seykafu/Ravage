@@ -5,6 +5,7 @@ import { FAMILY_BODY, FAMILY_DISPLAY, GAME_HEIGHT, GAME_WIDTH } from "../util/co
 import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
+import { ensureDotTexture } from "./battle/Atmosphere";
 import { getCurrentSlot, slotsPastThePathFork } from "../util/save";
 
 export class TitleScene extends Phaser.Scene {
@@ -12,11 +13,46 @@ export class TitleScene extends Phaser.Scene {
     super("TitleScene");
   }
 
+  /** A band of light that sweeps across the title, every few seconds. */
+  private addTitleGlint(title: Phaser.GameObjects.Text): void {
+    // The glint is masked to the letters, which only WebGL can do.
+    if (this.game.renderer.type !== Phaser.WEBGL) return;
+    const key = "title_glint";
+    if (!this.textures.exists(key)) {
+      const tex = this.textures.createCanvas(key, 160, 4);
+      if (tex) {
+        const ctx = tex.getContext();
+        const g = ctx.createLinearGradient(0, 0, 160, 0);
+        g.addColorStop(0, "rgba(255,255,255,0)");
+        g.addColorStop(0.5, "rgba(255,250,225,0.85)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 160, 4);
+        tex.refresh();
+      }
+    }
+    const h = title.height + 40;
+    const glint = this.add.image(0, title.y, key).setDisplaySize(160, h).setAngle(18)
+      .setBlendMode(Phaser.BlendModes.ADD).setDepth(3);
+    glint.setMask(title.createBitmapMask());
+    const left = title.x - title.width / 2 - 200, right = title.x + title.width / 2 + 200;
+    glint.setX(left);
+    this.tweens.add({ targets: glint, x: right, duration: 1300, delay: 1800, repeat: -1, repeatDelay: 4200, ease: "Sine.easeInOut" });
+  }
+
   create(): void {
     installAudioUnlock(this);
 
     const bgKey = ensureBackdropTexture(this, "bg_title", BACKDROPS.thuling);
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH * 1.06, GAME_HEIGHT * 1.06);
+    // A slow drift across the painting, embers lifting off the bottom.
+    this.tweens.add({ targets: bg, x: GAME_WIDTH / 2 - 30, y: GAME_HEIGHT / 2 + 10, duration: 22000, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    this.add.particles(0, 0, ensureDotTexture(this), {
+      x: { min: 0, max: GAME_WIDTH }, y: GAME_HEIGHT + 10,
+      speedY: { min: -70, max: -25 }, speedX: { min: -10, max: 14 },
+      lifespan: { min: 4000, max: 7000 }, scale: { start: 0.32, end: 0 }, alpha: { start: 0.9, end: 0 },
+      tint: [0xffd07a, 0xff9a40, 0xff6a2a], blendMode: Phaser.BlendModes.ADD, frequency: 90
+    }).setDepth(1);
 
     // Title overlay vignette
     const v = this.add.graphics();
@@ -31,23 +67,34 @@ export class TitleScene extends Phaser.Scene {
       stroke: "#1a0e04",
       strokeThickness: 10,
       shadow: { offsetX: 0, offsetY: 6, color: "#000", blur: 22, fill: true, stroke: true }
-    }).setOrigin(0.5).setLetterSpacing(8);
+    }).setOrigin(0.5).setLetterSpacing(8).setDepth(2);
 
-    this.add.text(GAME_WIDTH / 2, 296, "A Tactical Story of Anthros", {
+    // The name forges in: wide and faint, drawing together, then a glint
+    // of light runs across it now and again.
+    title.setAlpha(0);
+    const spacing = { v: 30 };
+    title.setLetterSpacing(spacing.v);
+    this.tweens.add({ targets: title, alpha: 1, duration: 1400, ease: "Sine.easeOut" });
+    this.tweens.add({ targets: spacing, v: 8, duration: 1800, ease: "Cubic.easeOut", onUpdate: () => title.setLetterSpacing(spacing.v) });
+    this.addTitleGlint(title);
+
+    const subtitle = this.add.text(GAME_WIDTH / 2, 296, "A Tactical Story of Anthros", {
       fontFamily: FAMILY_BODY,
       fontSize: "22px",
       color: "#d9bf85",
       fontStyle: "italic",
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 8, fill: true }
-    }).setOrigin(0.5).setLetterSpacing(6);
+    }).setOrigin(0.5).setLetterSpacing(6).setAlpha(0).setDepth(2);
+    this.tweens.add({ targets: subtitle, alpha: 1, duration: 900, delay: 1100 });
 
-    // Soft pulsing glow under the title
+    // Soft pulsing glow under the title, once it has forged in.
     this.tweens.add({
       targets: title,
       alpha: { from: 0.92, to: 1 },
       yoyo: true,
       repeat: -1,
       duration: 2000,
+      delay: 1900,
       ease: "Sine.easeInOut"
     });
 
@@ -100,8 +147,9 @@ export class TitleScene extends Phaser.Scene {
         // Route into the camp (the new home base), not directly to
         // the world map. CampScene's "Where to Next?" hotspot opens
         // the world map one click in.
+        // Back in by way of the last chapter ("Previously on Ravage").
         this.cameras.main.once("camerafadeoutcomplete", () =>
-          this.scene.start("CampScene")
+          this.scene.start("RecapScene")
         );
       }
     });

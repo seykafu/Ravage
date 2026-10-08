@@ -41,9 +41,12 @@ export class Fig {
     private readonly rim?: Phaser.GameObjects.Sprite
   ) {}
 
+  /** Collapsed: stays down, whatever a move still finishing asks for. */
+  private down = false;
+
   play(state: UnitAnimState): void {
     // A cut can take the figure away under a move still finishing.
-    if (!this.sprite.active) return;
+    if (!this.sprite.active || this.down) return;
     if (hasUnitAnimation(this.cls as ClassKind, state)) this.sprite.play(animKey(this.cls as ClassKind, state), true);
   }
 
@@ -70,6 +73,12 @@ export class Fig {
     this.play("death");
     await this.reel.wait(650);
     await this.reel.tween({ targets: this.box, alpha: 0, duration: 500 });
+  }
+
+  /** Falls and stays down (the death's last frame held). */
+  collapse(): void {
+    this.play("death");
+    this.down = true;
   }
 
   /** A hop in place. */

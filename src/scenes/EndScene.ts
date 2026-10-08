@@ -13,10 +13,28 @@ import { ITEM_CATALOG } from "../combat/items";
 import type { ItemKind } from "../combat/types";
 import type { ArcId, BattleId } from "../data/contentIds";
 
+/** The squad's best of the battle (BattleScene.bestOfBattle). */
+export interface EndMvp {
+  id: string;
+  name: string;
+  portraitId: string;
+  damage: number;
+  kills: number;
+  heals: number;
+}
+
 interface EndArgs {
   battleId: BattleId;
   outcome: "player" | "enemy";
+  mvp?: EndMvp;
 }
+
+/** The face each one wears for the award. */
+const PROUD_FACE: Record<string, string> = {
+  amar: "warm_half_smile", lucian: "fatherly_smile", ning: "eager_grin", maya: "soft_genuine_smile",
+  leo: "cocky_smirk", ranatoli: "satisfied", veya: "wry_smile", corin: "resolute", kian: "knowing_smile",
+  rose: "brisk"
+};
 
 // Post-battle arc routing lives in src/data/postArcs.ts so the
 // campaign-integrity suite can assert every non-terminal battle
@@ -26,12 +44,65 @@ interface EndArgs {
 export class EndScene extends Phaser.Scene {
   private battleId!: BattleId;
   private outcome!: "player" | "enemy";
+  private mvp?: EndMvp;
 
   constructor() { super("EndScene"); }
 
   init(data: EndArgs): void {
     this.battleId = data.battleId;
     this.outcome = data.outcome;
+    this.mvp = data.mvp;
+  }
+
+  // The best of the battle: their portrait slides in at the top left with
+  // what they did, while the banner settles.
+  private showBestOfBattle(m: EndMvp): void {
+    const face = PROUD_FACE[m.portraitId];
+    const key = face && this.textures.exists(`portrait:${m.portraitId}:${face}`)
+      ? `portrait:${m.portraitId}:${face}`
+      : this.textures.exists(`portrait:${m.portraitId}`) ? `portrait:${m.portraitId}` : null;
+    const x0 = 24, y0 = 26, w = 250, h = 270;
+    const parts: Phaser.GameObjects.GameObject[] = [];
+    const band = this.add.graphics();
+    band.fillStyle(0x0b0709, 0.9);
+    band.fillPoints([
+      new Phaser.Math.Vector2(x0, y0), new Phaser.Math.Vector2(x0 + w + 30, y0),
+      new Phaser.Math.Vector2(x0 + w, y0 + h), new Phaser.Math.Vector2(x0, y0 + h)
+    ], true);
+    band.lineStyle(2, 0xd9b257, 0.9);
+    band.lineBetween(x0, y0 + h, x0 + w, y0 + h);
+    parts.push(band);
+    if (key) {
+      this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+      const src = this.textures.get(key).getSourceImage() as HTMLImageElement;
+      const img = this.add.image(x0 + w / 2 + 6, y0 + 8, key).setOrigin(0.5, 0);
+      img.setCrop(0, src.height * 0.02, src.width, src.height * 0.5);
+      img.setScale((h - 92) / (src.height * 0.5));
+      img.setY(y0 + 8 - src.height * 0.02 * img.scaleY);
+      parts.push(img);
+    }
+    const tag = this.add.text(x0 + 14, y0 + h - 80, "BEST OF THE BATTLE", {
+      fontFamily: FAMILY_HEADING, fontSize: "13px", color: "#d9b257", letterSpacing: 4
+    });
+    const name = this.add.text(x0 + 14, y0 + h - 60, m.name.toUpperCase(), {
+      fontFamily: FAMILY_HEADING, fontSize: "24px", color: "#f8f0d8", stroke: "#000", strokeThickness: 3
+    });
+    const bits = [
+      m.kills ? `${m.kills} defeated` : "",
+      m.damage ? `${m.damage} damage` : "",
+      m.heals ? `${m.heals} healed` : ""
+    ].filter(Boolean).join("  ·  ");
+    const stats = this.add.text(x0 + 14, y0 + h - 26, bits, {
+      fontFamily: FAMILY_BODY, fontSize: "15px", color: "#c9b896", fontStyle: "italic"
+    });
+    parts.push(tag, name, stats);
+    for (const o of parts) {
+      const g = o as unknown as Phaser.GameObjects.Components.Transform & Phaser.GameObjects.Components.Alpha;
+      g.setAlpha(0);
+      g.x -= 40;
+      this.tweens.add({ targets: o, alpha: 1, x: g.x + 40, duration: 500, delay: 650, ease: "Cubic.easeOut" });
+    }
+    this.time.delayedCall(700, () => sfxConfirm());
   }
 
   private resolvePostArc(): ArcId | undefined {
@@ -69,6 +140,7 @@ export class EndScene extends Phaser.Scene {
     }).setOrigin(0.5);
     banner.setAlpha(0);
     this.tweens.add({ targets: banner, alpha: 1, y: 200, duration: 700, ease: "Sine.easeOut" });
+    if (isVictory && this.mvp) this.showBestOfBattle(this.mvp);
 
     // Battle subtitle
     if (node) {
