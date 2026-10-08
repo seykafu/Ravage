@@ -6,6 +6,7 @@
 //   node scripts/capture/cineProbe.mjs <arcId> <seconds> [every=15] [mode]
 //     mode "start"       from the arc's first frame (its opening cinematic)
 //     mode "stage:<id>"  skip any opening film, jump to the beat raising <id>
+//     mode "beat:<n>"    skip any opening film, show beat n (0-based)
 //     mode "end"         jump to the last beat and close the arc (its end film)
 // Frames land in release/capture/cine/<arcId>-<mode>/.
 
@@ -77,6 +78,16 @@ if (mode.startsWith("stage:")) {
     st.idx = i;
     st.showBeat(st.beats[i]);
   }, id);
+} else if (mode.startsWith("beat:")) {
+  // A beat's text on screen (the script, as the player reads it).
+  const n = Number(mode.slice("beat:".length));
+  await page.keyboard.press("Escape");
+  await step(90);
+  await page.evaluate((n) => {
+    const st = window.__RAVAGE_GAME__.scene.getScene("StoryScene");
+    st.idx = n;
+    st.showBeat(st.beats[n]);
+  }, n);
 } else if (mode === "end") {
   await page.keyboard.press("Escape");
   await step(90);
