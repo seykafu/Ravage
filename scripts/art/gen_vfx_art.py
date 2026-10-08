@@ -1,8 +1,8 @@
 """Generate painted combat effects (slashes, impacts, healing) with Codex.
 
-Effects are drawn on PURE BLACK, not magenta: the game blends them
-additively, where black is simply nothing — no keying, no fringe on the
-glow. Each render is one row of N frames; process_vfx_art.py cuts it into
+Effects are drawn on PURE BLACK, not magenta: light on black keys cleanly
+to transparency by brightness (process_vfx_art.py) — no magenta fringe on
+the glow. Each render is one row of N frames; process_vfx_art.py cuts it into
 the engine strip.
 
 Usage:

@@ -1,5 +1,5 @@
-// Combat VFX — attack effects. Painted strips (Codex, on black, drawn
-// additively — scripts/art/gen_vfx_art.py) where they have loaded; the
+// Combat VFX — attack effects. Painted strips (Codex, keyed to light on
+// transparency — scripts/art/gen_vfx_art.py) where they have loaded; the
 // code-drawn versions below are the fallback and stay as the arrow, the
 // lens beam, the crit ring and the miss.
 //
@@ -37,8 +37,10 @@ export const PAINTED = {
 } as const;
 
 /**
- * Play one painted strip once at (x, y), additively, and drop it. False when
- * the strip hasn't loaded (the caller draws its fallback).
+ * Play one painted strip once at (x, y) and drop it. False when the strip
+ * hasn't loaded (the caller draws its fallback). Normal blending: the strips
+ * carry their glow in their alpha (additive blending on the world camera
+ * paints black wherever the board's buffer is transparent).
  */
 export const playPainted = (
   scene: Phaser.Scene,
@@ -55,7 +57,6 @@ export const playPainted = (
     scene.anims.create({ key: anim, frames: scene.anims.generateFrameNumbers(key, {}), frameRate: o.fps ?? 24, repeat: 0 });
   }
   const s = world(scene.add.sprite(x, y, key, 0))
-    .setBlendMode(Phaser.BlendModes.ADD)
     .setDepth(o.depth ?? DEPTH_IMPACT)
     .setScale(o.scale)
     .setRotation(o.rotation ?? 0)
