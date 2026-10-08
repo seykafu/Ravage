@@ -19,6 +19,9 @@ export interface ButtonOpts {
 // overlap and steal each other's clicks.
 const HIT_PAD = 2;
 
+// Least space kept between a label and the button's left and right edges.
+const LABEL_PAD = 12;
+
 // History note: an earlier version made the Container itself interactive with
 // a custom Rectangle hit area. That worked geometrically but Phaser's
 // Container hit-test path occasionally mis-mapped pointer coordinates so the
@@ -54,6 +57,7 @@ export class Button extends Phaser.GameObjects.Container {
       strokeThickness: 2,
       shadow: { offsetX: 0, offsetY: 2, color: "#000", blur: 4, fill: true }
     }).setOrigin(0.5).setLetterSpacing(0.5);
+    this.fitLabel();
 
     // Transparent rectangle that owns the input. Centred on the visible rect.
     // Origin (0.5, 0.5) so size = visual size + 2*HIT_PAD reaches symmetrically
@@ -145,6 +149,14 @@ export class Button extends Phaser.GameObjects.Container {
 
   setLabel(s: string): void {
     this.text.setText(s);
+    this.fitLabel();
+  }
+
+  // A label too long for the button shrinks to fit inside its border
+  // rather than running past it.
+  private fitLabel(): void {
+    const room = this.opts.w - LABEL_PAD * 2;
+    this.text.setScale(this.text.width > room ? room / this.text.width : 1);
   }
 
   private redraw(): void {
