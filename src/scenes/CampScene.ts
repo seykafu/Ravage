@@ -1019,7 +1019,7 @@ export class CampScene extends Phaser.Scene {
   private openWagon(): void {
     const next = resolveNextChapter(loadSave());
     if (!next) {
-      const t = this.ui(this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, "Nothing to prep — the squad's caught up to the road's end.", {
+      const t = this.ui(this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 120, "Nothing to prep — there are no more chapters to play.", {
         fontFamily: FAMILY_BODY,
         fontSize: "14px",
         color: "#c9b07a",
@@ -1058,9 +1058,9 @@ export class CampScene extends Phaser.Scene {
     const blocks: string[] = [];
     for (const f of fallen) {
       if (f.id === "lucian") {
-        blocks.push("Lucian — foreman of Thuling, husband to Mira, father to Tali. Took the bolt that should have ended Ning. Died in the cabin of Madame Dawn's ship with Amar's hand in his. The festival flag from his front room hangs over the marker. Mira and Tali rode for the cousin's farm. Amar will write to them every season for the rest of his life.");
+        blocks.push("Lucian — foreman of Thuling, husband to Mira, father to Tali. Took a bolt meant for Ning. Died in the cabin of Madame Dawn's ship, holding Amar's hand. The festival flag from his front room hangs over the marker. Mira and Tali escaped to the cousin's farm. Amar will write to them every season for the rest of his life.");
       } else if (f.id === "rose") {
-        blocks.push("Rose — Madame Dawn's lieutenant for thirty-two years, the steady hand who trained Maya. She stepped in front of four bolts meant for Dawn and was gone before the last crossbowman fell. She rests in Grude beneath the courtyard's lemon tree; this stone is the squad's. The plaza will carry her name.");
+        blocks.push("Rose — Madame Dawn's lieutenant for thirty-two years, and the woman who trained Maya. She stepped in front of four bolts meant for Dawn and died before the last crossbowman fell. She is buried in Grude under the courtyard's lemon tree; this marker is the squad's own. The plaza will be named after her.");
       } else {
         blocks.push(`${f.name} — fell in the line of duty.`);
       }

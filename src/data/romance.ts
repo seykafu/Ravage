@@ -41,11 +41,11 @@ export interface PathRomance {
 
 const MAYA: RomanceOption = {
   id: "maya", name: "Maya", portraitId: "maya",
-  blurb: "Eleven years of watching you. She stopped measuring a long way back."
+  blurb: "She spied on Amar for eleven years. It stopped being a job long ago."
 };
 const SELENE: RomanceOption = {
   id: "selene", name: "Selene", portraitId: "selene",
-  blurb: "She crossed an ocean on your trail. She'd have crossed another."
+  blurb: "She followed Amar across an ocean, and she would do it again."
 };
 const NING: RomanceOption = {
   id: "ning", name: "Ning", portraitId: "ning",
@@ -53,19 +53,19 @@ const NING: RomanceOption = {
 };
 const VEYA: RomanceOption = {
   id: "veya", name: "Veya", portraitId: "veya",
-  blurb: "She spent a career helping men see farther. You looked closer instead."
+  blurb: "She made lenses for powerful men. Amar was the one who noticed her."
 };
 const NDARA: RomanceOption = {
   id: "ndara", name: "Ndara", portraitId: "ndara",
-  blurb: "Thirty steady years. She woke up and chose where to stand."
+  blurb: "Thirty years of service. After the coma, she made her own choice."
 };
 const LEO: RomanceOption = {
   id: "leo", name: "Leo", portraitId: "leo",
-  blurb: "Two people who walked out of their fathers' houses, side by side."
+  blurb: "Like Amar, he broke with his father. They've stood together since."
 };
 const CORIN: RomanceOption = {
   id: "corin", name: "Corin", portraitId: "corin",
-  blurb: "The account his sister opened. He'd like to keep it open forever."
+  blurb: "He joined Amar for his sister's sake. He'd like to stay for good."
 };
 
 export const PATH_ROMANCES: Partial<Record<SevenPath, PathRomance>> = {

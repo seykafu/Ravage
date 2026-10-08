@@ -72,7 +72,7 @@ export class GameOverScene extends Phaser.Scene {
     banner.setAlpha(0);
     this.tweens.add({ targets: banner, alpha: 1, y: 220, duration: 800, ease: "Sine.easeOut" });
 
-    const subtitle = this.add.text(GAME_WIDTH / 2, 290, "The squad's losses crossed the line.", {
+    const subtitle = this.add.text(GAME_WIDTH / 2, 290, "The squad has lost too many fighters.", {
       fontFamily: FAMILY_BODY,
       fontSize: "20px",
       color: "#c9b07a"
@@ -94,8 +94,8 @@ export class GameOverScene extends Phaser.Scene {
     const refunded = Math.max(0, deaths - this.deathsThisBattle);
     const chapterName = node ? `${node.title} — ${node.subtitle}` : "this chapter";
     const body =
-      `The squad can absorb a hard fight or two — but a campaign can't bury more than ` +
-      `${MAX_PERMITTED_DEATHS}. Madame Dawn's people will keep moving without you.
+      `The squad can recover from a hard fight or two, but the campaign is lost after more than ` +
+      `${MAX_PERMITTED_DEATHS} losses. Madame Dawn's people will have to go on without the squad.
 
 ` +
       `Total losses: ${deaths} of ${MAX_PERMITTED_DEATHS} permitted` +
@@ -104,7 +104,7 @@ export class GameOverScene extends Phaser.Scene {
 
 ` +
       `Take the chapter again and those ${this.deathsThisBattle > 0 ? this.deathsThisBattle : "recent"} ` +
-      `losses are struck from the ledger — you'd go back in at ${refunded} of ${MAX_PERMITTED_DEATHS}. ` +
+      `losses are taken off the count, so you'd go back in at ${refunded} of ${MAX_PERMITTED_DEATHS}. ` +
       `Or start the whole road over from the palace.`;
 
     this.add.text(panelX + 28, panelY + 22, body, {

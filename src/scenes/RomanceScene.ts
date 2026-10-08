@@ -64,7 +64,7 @@ export class RomanceScene extends Phaser.Scene {
       stroke: "#1a0e04",
       strokeThickness: 4
     }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH / 2, 104, "The war is over. The rest of your life is listening.", {
+    this.add.text(GAME_WIDTH / 2, 104, "The war is over. Who will Amar spend his life with?", {
       fontFamily: FAMILY_BODY,
       fontSize: "16px",
       color: "#c9b07a",
@@ -164,8 +164,8 @@ export class RomanceScene extends Phaser.Scene {
     }
     this.detailText.setText(
       sel === "alone"
-        ? "No ring. A long table, and every chair at it filled. It is not a lesser ending."
-        : `Ask ${sel.name}. Some questions end wars twice.`
+        ? "Amar doesn't marry. He spends his life with the squad around his table."
+        : `Amar asks ${sel.name} to marry him.`
     );
     if (!this.commitBtn) {
       this.commitBtn = new Button(this, {

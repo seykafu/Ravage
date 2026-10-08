@@ -54,24 +54,24 @@ const PATHS: PathCard[] = [
     path: "vengeance",
     name: "Vengeance",
     honors: "for Selene",
-    blurb: "Archbold dies by your hand. No throne, no terms. A debt.",
-    full: "Selene's answer. You do not take a crown or rebuild a country. You take a life: Archbold's, personally, and everyone who shielded him on the way to it. It will not bring Lucian back or unburn Thuling. It is not supposed to. It is the one thing in this whole war that is honestly, only about what was taken from you.",
+    blurb: "Amar kills Archbold himself. No throne and no deals.",
+    full: "Selene's answer. Amar doesn't take a crown or rebuild a country. He hunts down Archbold and kills him personally, along with everyone who protects him on the way. It won't bring Lucian back or undo the burning of Thuling, and it isn't meant to. It's the one choice in this war that is only about what was taken from Amar.",
     openerBattle: "b19_path_opener_vengeance"
   },
   {
     path: "restoration",
     name: "Restoration",
     honors: "for Lucian",
-    blurb: "Rebuild Anthros as a free state. The slow, unglamorous work.",
-    full: "Lucian's answer. Not revenge and not revolution. Repair. You ride for the Anthros border and start putting the colony back together one held road, one fed village at a time, under no flag but the one people raise for you. It is the longest road and the least heroic, and it is the only one Lucian would have walked beside you.",
+    blurb: "Rebuild Anthros as a free state, slowly, one village at a time.",
+    full: "Lucian's answer. Instead of revenge or revolution, Amar sets out to repair the damage. He rides for the Anthros border and starts rebuilding the colony, securing one road and feeding one village at a time, under whatever flag the people choose to raise for him. It's the slowest path and the least heroic, and it's the one Lucian would have chosen with him.",
     openerBattle: "b19_path_opener_restoration"
   },
   {
     path: "revolution",
     name: "Revolution",
     honors: "for Maya",
-    blurb: "Burn every throne. Anthros, Grude, no kings at all, anywhere.",
-    full: "Maya's answer. Dawn was right that the system has to fall. She just wanted to spend Anthros to do it. Maya wants to do it without the lie: burn the granaries, break the crowns, both of them, and trust the people to build what comes after. It is the most dangerous path and the one with the widest horizon. Maya has been planning it since before she met you.",
+    blurb: "Bring down every throne, in Anthros and Grude. No kings anywhere.",
+    full: "Maya's answer. Dawn was right that the system has to fall, but she was willing to sacrifice Anthros to do it. Maya wants to do it honestly: burn the granaries, bring down both crowns, and trust the people to build whatever comes next. It's the most dangerous path and the one that could change the most. Maya has been planning it since before she met Amar.",
     openerBattle: "b19_path_opener_revolution"
   },
   {
@@ -79,31 +79,31 @@ const PATHS: PathCard[] = [
     name: "Duty",
     honors: "for Khonu",
     blurb: "Take the captaincy. Serve the cause from inside the army.",
-    full: "Khonu's answer: your father's old sergeant, the one who taught you a soldier serves something larger than himself. You put on the colours again, accept a command in Dawn's army despite what you know, and try to be the officer who reads the list before he signs it. Working the system from the inside, paying its costs honestly, hoping you can bend it more than it bends you.",
+    full: "Khonu's answer. Khonu was Amar's father's old sergeant, who taught him that a soldier serves something bigger than himself. Amar puts on a uniform again and accepts a command in Dawn's army, despite what he knows, and tries to be an officer who reads the orders before he signs them. He works to change the system from the inside, and hopes he changes it more than it changes him.",
     openerBattle: "b19_path_opener_duty"
   },
   {
     path: "exile",
     name: "Exile",
     honors: "for Tev",
-    blurb: "Ride north alone. Let the war have its heir back as nobody.",
-    full: "Tev's answer: the deserter who told you, on a cold night long ago, that the bravest thing is sometimes to simply refuse. You leave the squad, the crown, and the name on the Grude road and ride for the cold country alone. They will send killers after you. You will bury them and ride on, and the names you carried will lose their syllables one by one, until you are just a man on a horse going somewhere no one is waiting.",
+    blurb: "Ride north alone, leave the war behind, and become nobody.",
+    full: "Tev's answer. Tev was the deserter who told Amar, one cold night long ago, that sometimes the bravest thing is to refuse. Amar leaves the squad, the crown and his name behind on the Grude road and rides north alone. The empire will send killers after him. He will bury them and keep going, slowly forgetting the names he carried, until he is just a man on a horse with nobody waiting for him.",
     openerBattle: "b19_path_opener_exile"
   },
   {
     path: "mercy",
     name: "Mercy",
     honors: "for Yul",
-    blurb: "Refuse no surrender. Spare what can be spared. Heal, don't hunt.",
-    full: "Yul's answer: the field-surgeon who patched both sides and never once asked which a wounded man fought for. You ride under your own banner and offer terms to every garrison that will take them, build hospitals out of armouries, and refuse to add one more body to a war already drowning in them. The hardest discipline of all: to hold power and keep choosing not to spend it in blood.",
+    blurb: "Accept every surrender, spare everyone possible, heal the wounded.",
+    full: "Yul's answer. Yul was the field surgeon who treated both sides and never asked which side a wounded man fought for. Amar rides under his own banner, offers terms to every garrison that will accept them, turns armouries into hospitals, and refuses to add to the war's dead. It's the hardest path: having power and choosing, again and again, not to use it to kill.",
     openerBattle: "b19_path_opener_mercy"
   },
   {
     path: "forgetting",
     name: "Forgetting",
     honors: "for Sera",
-    blurb: "Stop being Amar. A cottage, a boat, a name no one is hunting.",
-    full: "Sera's answer: the woman from the hospital who told you that the kindest thing the head wound did was let you put a life down. You ride for the southern coast and stop pretending to be anyone at all. A fisherman's cottage. A boat. A name that is not Amar. The squad will find you, and leave a sword by the door, and not stay. And you will spend a long evening looking at it, and choosing, again, to let it lie.",
+    blurb: "Stop being Amar. Live by the sea under a name no one is hunting.",
+    full: "Sera's answer. Sera was the woman at the hospital who told Amar the kindest thing his head wound did was let him leave his old life behind. He rides for the southern coast and stops trying to be anyone. He lives in a fisherman's cottage with a boat, under a name that isn't Amar. The squad will find him, leave a sword by the door, and go. He will spend a long evening looking at it, and decide again to leave it there.",
     openerBattle: "b19_path_opener_forgetting"
   }
 ];
@@ -161,7 +161,7 @@ export class ChoiceScene extends Phaser.Scene {
       shadow: { offsetX: 0, offsetY: 4, color: "#000", blur: 14, fill: true }
     }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 84,
-      "The open water gives you the first quiet of your life. Pick the name you can still answer to.",
+      "For the first time in his life, nobody is giving Amar orders. Choose the path he takes.",
       { fontFamily: FAMILY_BODY, fontSize: "16px", color: "#c9b07a" }
     ).setOrigin(0.5);
 
@@ -242,7 +242,7 @@ export class ChoiceScene extends Phaser.Scene {
     drawPanel(dpg, detX, detY, detW, detH);
 
     this.detailText = this.add.text(detX + 24, detY + 24,
-      "Select a path on the left.\n\nEach is one of the seven names you hold at once: the answer a different person would give to the question you've carried since a hospital bed in Thuling: what now?\n\nThe choice is final. Choose the one you can live as.",
+      "Select a path on the left.\n\nEach path belongs to one of the seven people Amar remembers. It is the answer that person would give to the question he has asked since he woke in a hospital bed in Thuling: what now?\n\nThe choice is final.",
       {
         fontFamily: FAMILY_BODY, fontSize: "17px", color: "#e6e0d0",
         wordWrap: { width: detW - 48 }, lineSpacing: 7
