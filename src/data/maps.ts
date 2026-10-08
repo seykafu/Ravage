@@ -79,17 +79,15 @@ export const palaceMap: MapDef = buildMap("palace_coup", "Royal Throne Hall", pa
     { x: 10, y: 12 }, // unseen comrade right
     { x: 6,  y: 12 }  // unseen comrade left
   ],
-  // Nebu on the throne at (9, 0); Royal Guards flanking him on row 1;
-  // Crown Archers + a second rank of guards on rows 3–4 controlling
-  // the long north-south sight lines.
+  // Nebu on the throne at (9, 0), one guard on the dais steps below
+  // him, two out in the hall. B1 is a new player's first fight, so the
+  // guards start a couple of turns' walk from the squad: there is time
+  // to learn to move before the first blow lands.
   enemy: [
     { x: 9,  y: 0 },  // King Nebu on the throne
-    { x: 6,  y: 1 },  // Royal Guard flanking left
-    { x: 12, y: 1 },  // Royal Guard flanking right
-    { x: 3,  y: 4 },  // Royal Guard mid-hall west
-    { x: 14, y: 4 },  // Royal Guard mid-hall east
-    { x: 6,  y: 5 },  // Crown Archer firing south
-    { x: 11, y: 5 }   // Crown Archer firing south
+    { x: 6,  y: 5 },  // Royal Guard mid-hall west
+    { x: 12, y: 5 },  // Royal Guard mid-hall east
+    { x: 9,  y: 2 }   // Royal Guard below the throne
   ]
 });
 
