@@ -131,17 +131,17 @@ export const ARCS: Record<ArcId, StoryArc> = {
     cinematic: "coup",
     next: "story:pre_palace",
     beats: [
-      N("The same night. Far from the palace, one lamp is still burning in a quiet study."),
+      N("On the same night, far from the palace, a lamp is still burning in a quiet study."),
       N("This is Madame Dawn. She leads rebels and spies in half the cities of the world. Tonight she is not in the fight. She is waiting to hear how it goes."),
       N("She finishes a letter she will never send, folds it twice, and puts it under a stone."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral", body: "Tell me again." },
-      { speaker: "Lieutenant", body: "Eight of them, inside the palace by midnight. The King sleeps with his door open an inch. Pride, not strategy. They'll go straight for him." },
+      { speaker: "Lieutenant", body: "Eight of them, inside the palace by midnight. The King sleeps with his door open an inch. He's too proud to think anyone would try. They'll go straight for him." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral", body: "And the one leading them." },
-      { speaker: "Lieutenant", body: "Amar. First in. Last out, if any of them come out." },
-      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping", body: "He thinks the plan is all his own. Let him keep thinking that. (She looks at the lamp.) He'll need something that's his." },
+      { speaker: "Lieutenant", body: "Amar. He goes in first and comes out last, if any of them come out." },
+      { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping", body: "He thinks the plan is all his own. Let him keep thinking that. He'll need something in his life that's really his." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral", body: "Move our people out of the harbor one tide early. If King Nebu lives past morning, he'll hunt for whoever helped. He'll find us." },
       N("Far away, in the King's palace, a young man named Amar tightens the strap on his arm guard. He has planned this night for ten months."),
-      N("He has never heard the name Madame Dawn. He will.")
+      N("He has never heard of Madame Dawn, but he will later on.")
     ]
   },
   // -------- Pre-Battle 1 (Palace Coup) --------
@@ -159,14 +159,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "prep:b01_palace_coup",
     beats: [
       STAGE("throne", N(
-        "Back in the palace. The other five rebels are spread through the back corridors. You, Selene and Ranatoli reached the throne hall first."
+        "Back in the palace, the other five rebels are spread through the back corridors. Amar, Selene and Ranatoli have reached the throne hall first."
       )),
       N(
-        "Behind these doors: King Nebu and his royal guard. Win here, and the coup is won."
+        "Behind the doors are King Nebu and his royal guard. If the rebels win this fight, the coup succeeds."
       ),
       { speaker: "Selene", portraitId: "selene", body: "If we don't break their line in the first minute, we never will. I'll hold the right." },
       { speaker: "Ranatoli", portraitId: "ranatoli", expression: "lecturing", body: "Steel up, Amar. We bleed together or we feast together. Anything in between is shame." },
-      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Bleed only where you have to. We're taking a country tonight." }
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Don't bleed if you don't have to. We're taking a country tonight." }
     ]
   },
   // -------- Post-Battle 1 --------
@@ -178,11 +178,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "rusty_house",
     next: "story:thuling_arrival",
     beats: [
-      N("You wake in white sheets. There is no pain. There is no memory."),
+      N("Amar wakes up in a hospital bed. He feels no pain, and he can't remember anything."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Easy. You took a hard one to the head. The King's own physicians have looked after you. You're going to be fine." },
-      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You're a key man, Amar. The harvest plan, the steel quotas. His Majesty has spent ten years on what you carry. We need you back on your feet." },
+      { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You're a key man, Amar. The harvest plan, the steel quotas. His Majesty has spent ten years on the plans in your head. We need you back on your feet." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...The harvest." },
-      N("You smile because Kian is watching. You don't tell him that the word means nothing to you, that you can't remember it at all.")
+      N("Amar smiles because Kian is watching. He doesn't tell Kian that the word means nothing to him and that he can't remember any of it.")
     ]
   },
   // -------- Story interlude: arriving in Thuling --------
@@ -196,7 +196,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     beats: [
       N("Amar reaches Thuling at dawn in the back of a supply wagon. Kian rides up front. At the town gate, Kian watches Amar climb down, then turns his horse back toward Para without getting off it."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "I'll be back at sundown to check on you. Your foreman at the forge is named Lucian. Tell him the King sent you. He hates that. You'll know him by the scowl." },
-      N("Inside the forge a broad-shouldered man hammers a horseshoe flat, with force that ends arguments before they start. Nearby a lean younger woman bags crossbow bolts, humming."),
+      N("Inside the forge, a broad-shouldered man hammers a horseshoe flat with heavy strokes. Nearby, a lean younger woman bags crossbow bolts and hums to herself."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "You'll be Amar. Word came up the road. I'm Lucian. I run the line. That's Ning, on the rivet press. She'll ignore you a day, then never stop talking." },
       { speaker: "Amar", portraitId: "amar", body: "Amar. Kian said the King thought I'd be of use here. I don't —" },
       N("Amar almost says \"I don't remember much yet.\" He stops himself just in time. Lucian notices the pause and says nothing about it."),
@@ -204,8 +204,8 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", body: "You don't have to. Pick up the hammer. We'll find out together what you do know." },
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin", body: "Don't drop it on your foot. Mira did that her first day. Lucian's wife. She still walks crooked." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Ning. ENOUGH about my wife's damn foot." },
-      N("By the end of the first day, Amar is working both the farmland and the forge. His hands remember things he can't explain."),
-      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Pinch the hammer here. Lighter grip. The arm wants to pull through, not push down." },
+      N("By the end of the first day, Amar is working both the farmland and the forge. He's good at work he doesn't remember ever learning."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Hold the hammer here. Lighter grip. Let your arm pull through instead of pushing down." },
       { speaker: "Lucian", portraitId: "lucian", body: "...You already knew that." },
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Lucky guess." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Sure. Lucky guess." },
@@ -216,7 +216,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Lucian", portraitId: "lucian", body: "Of?" },
       { speaker: "Amar", portraitId: "amar", body: "Of children." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Of children who learn how to swing hammers, apparently." },
-      N("Kian shadows you between shifts. He smiles. He always smiles."),
+      N("Between shifts, Kian keeps following Amar around. He is always smiling."),
       N("On the morning of the third day, bandits attack the wagons in the eastern field.")
     ]
   },
@@ -229,10 +229,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "story:before_dawn_bandits",
     beats: [
       { speaker: "Lucian", portraitId: "lucian", body: "Hand." },
-      N("He hands you a rag. He doesn't ask where the wound came from. He doesn't ask why it was so easy for you to drop the second bandit when his back was open."),
+      N("Lucian hands Amar a rag. He doesn't ask where the wound came from, or why it was so easy for Amar to drop the second bandit when Lucian's back was exposed."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You handled yourself well. Some of that looked... rehearsed." },
-      { speaker: "Amar", portraitId: "amar", body: "Anyone bleeds when you cut them right. I think I just got lucky." },
-      N("You show Kian the cut on your waist. You made it yourself this morning, more neatly than a farmer should know how. He believes you. For now."),
+      { speaker: "Amar", portraitId: "amar", body: "Anyone goes down if you hit them in the right place. I think I just got lucky." },
+      N("Amar shows Kian the cut on his waist. He made it himself this morning, more neatly than a farmer would know how. Kian believes him, for now."),
       { speaker: "Lucian", portraitId: "lucian", body: "Amar." },
       { speaker: "Amar", portraitId: "amar", body: "Yes?" },
       { speaker: "Lucian", portraitId: "lucian", body: "Next time you cut yourself for show, do it on the off-hand. People notice when you favor the wrong arm." },
@@ -254,13 +254,13 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "tavern",
     next: "prep:b03_dawn_bandits",
     beats: [
-      N("Lucian buys the drink. Ning tries to pay for the second and loses the argument. Before a third, a runner comes in. He doesn't sit down."),
+      N("Lucian buys the drink. Ning tries to pay for the second round and loses the argument. Before they can order a third, a runner rushes in with news."),
       { speaker: "Runner", body: "Eastern road. Twenty of them, at least. They're wearing a sash: orange, bone-white, orange. Same on every arm." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "That's not bandit. Bandits don't wear matching anything." },
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "What does it mean?" },
       { speaker: "Lucian", portraitId: "lucian", body: "Means somebody's paying them. Somebody who wants to be recognized." },
-      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we recognize them back. South of the road, behind the fences. Ning takes the fence line. Lucian and I take the wagons, one each side." },
-      N("On the way out you pass a stranger at the corner table. She doesn't look up. She has already set coins down for a bill nobody has brought yet.")
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we go and meet them. South of the road, behind the fences. Ning takes the fence line. Lucian and I take the wagons, one each side." },
+      N("On the way out, Amar passes a stranger at the corner table. She doesn't look up. She has already put down coins for a bill nobody has brought her yet.")
     ]
   },
   // -------- Post-Battle 3 (Maya stays) --------
@@ -282,8 +282,8 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Maya", portraitId: "maya", body: "I'm Maya. I was traveling east. I've changed my mind." },
       { speaker: "Ning", portraitId: "ning", expression: "eager_grin", body: "Stay. Please stay. You knew where everyone was going to be before they did." },
       { speaker: "Lucian", portraitId: "lucian", body: "Why us." },
-      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile", body: "Because the boy in front cuts like a man who learned in a palace, and that's the kind of company I keep." },
-      N("Amar doesn't blink. Lucian does: once, slowly, the way he does when he's saving something to think about later."),
+      { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile", body: "Because the boy in front fights like he was trained in a palace, and that's the kind of company I keep." },
+      N("Amar doesn't react. Lucian blinks once, slowly, the way he does when he's saving something to think about later."),
       { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile", body: "Welcome." }
     ]
   },
@@ -300,14 +300,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "thuling",
     next: "prep:b04_swamp",
     beats: [
-      N("A small errand: take a package to a farm two days north. It was Lucian's idea. He wants Maya out of town before the man with the sashes hears she's traveling with you."),
-      N("At the gate, a rider waits. Polished armor in a town that doesn't polish armor."),
+      N("The squad has a small errand: take a package to a farm two days north. It was Lucian's idea. He wants Maya out of town before the man with the sashes hears she's traveling with them."),
+      N("A rider is waiting at the gate. His armor is polished, which nobody in Thuling bothers to do."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Amar! The General's compliments. He thought you might want company on the marsh road. Bandits, you know how it is." },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "...Who is he." },
       { speaker: "Lucian", portraitId: "lucian", body: "King's man. Old friend of Amar's, supposedly. Says it often enough I've started to believe him." },
-      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "He's watching you the way I watch a card player I haven't read yet." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "He's watching you closely. Like he's still trying to work you out." },
       { speaker: "Amar", portraitId: "amar", body: "He's watching me the way he always has. Stay near Lucian. Marsh road is narrow. Single file once we hit the puddles." },
-      N("The marsh swallows the morning sun three minutes after you enter it.")
+      N("Three minutes into the marsh, the squad can no longer see the morning sun.")
     ]
   },
   // -------- Post-Battle 4 (Lucian asks for the truth) --------
@@ -321,13 +321,13 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_mountain",
     beats: [
-      N("Six bodies in the reeds, none of them yours. At the fire, Kian binds a real cut on his forearm. He'll show it to the General as proof he was useful."),
+      N("Six attackers lie dead in the reeds. Nobody in the squad was killed. At the fire, Kian binds a real cut on his forearm. He'll show it to the General as proof he was useful."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "Amar. That fourth one, the archer at the tree. You set him up like you already knew where he'd hide." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Boy's been sparring with old soldiers since he could lift a stick. He saw me pull the same move at the wagons last week. Picks things up." },
       { speaker: "Kian", portraitId: "kian", body: "Mm." },
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "I'll take first watch. The General will want a full report. I want it accurate." },
-      N("Kian takes his bedroll to the far edge of camp, still close enough to listen if he wants. Lucian waits until the fire pops twice."),
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Now. The real question." },
+      N("Kian takes his bedroll to the far edge of camp, still close enough to listen if he wants. Lucian waits a minute before he speaks."),
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Now. Here's what I actually want to ask." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded", body: "Lucian — " },
       { speaker: "Lucian", portraitId: "lucian", body: "I'm not asking who you were. I'm asking what we do when he stops believing the lie I just told for you." },
       { speaker: "Amar", portraitId: "amar", body: "I don't know." },
@@ -344,12 +344,12 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "mountain",
     next: "prep:b05_mountain_ndari",
     beats: [
-      N("General Fergus has work for your squad. The kind of work that pays in gold and uses up the men who do it."),
+      N("General Fergus has work for Amar's squad. It pays well in gold, and it gets a lot of the men who do it killed."),
       { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father's sending me with you. Don't argue, it's not worth it. He doesn't argue twice." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Mountain bandits. A village they already burned. The leaders are siblings: Ndara, who plans, and her brother Ndari, who fights out in front of her." },
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "Ndara? Like Madame Dawn's Ndara? That one?" },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Different woman. Same kind of trouble. The brother is the one you'll see first. He likes the front of a fight. The sister is the one you have to actually catch." },
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Bring everything. We won't be picking over bodies. They'll be picking over ours." }
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Bring everything you've got. If we're not ready, it'll be our bodies they're looting." }
     ]
   },
   // -------- Post-Battle 5 (Ndara escapes; Ndari falls covering her) --------
@@ -360,14 +360,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_caravan",
     beats: [
-      N("Ndari falls at the gate, holding the line so his sister can run. He goes down still grinning, like he'd known the odds all along."),
+      N("Ndari falls at the gate, holding it so his sister can get away. He is still grinning when he goes down, as if he knew he wouldn't make it."),
       { speaker: "Ndari", portraitId: "ndari", expression: "scornful", body: "Tell her I held it. Tell her she owes me a drink." },
-      N("Ndara escapes on a Dactyl as the last torches burn out. Her question hangs in the cold air."),
+      N("Ndara escapes on a Dactyl as the last torches burn out. Before she goes, she calls out a question to Amar."),
       { speaker: "Ndara", portraitId: "ndara", expression: "grim", body: "Why are you fighting on King Nebu's side, Amar?" },
-      N("Leo doesn't seem to have heard. Lucian heard. Lucian sees you flinch."),
+      N("Leo doesn't seem to have heard. Lucian did, and he sees Amar flinch."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "She didn't mistake you for anyone. And you've known that since she said it." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "Lucian — " },
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Not tonight. The rest can wait. But for the first time, Amar, you have a witness." }
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Not tonight. The rest can wait. But you're not the only one who knows anymore, Amar. I heard it too." }
     ]
   },
   // -------- Pre-Battle 6 (Caravan ambush briefing) --------
@@ -382,14 +382,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "rusty_house",
     next: "prep:b06_caravan",
     beats: [
-      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "A simple one this time. Two wagons, grain and steel, three days east through the foothills. Drop them at Brielwatch and come home. The kind of work that buys a soldier a roof." },
+      { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "A simple one this time. Two wagons, grain and steel, three days east through the foothills. Drop them at Brielwatch and come home. The kind of job that pays a soldier's rent." },
       { speaker: "Lucian", portraitId: "lucian", body: "Brielwatch hasn't seen a bandit raid since spring." },
       { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Then it'll be a quiet week for you. Take the road early, take it slow. The drivers are civilians. Keep them whole." },
       N("On the way out of the keep, Maya falls in beside Amar without looking at him."),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "Three days east, one road. Anyone who wanted to find us would know exactly where we'd be on the third afternoon." },
       { speaker: "Amar", portraitId: "amar", body: "You think it's a setup." },
       { speaker: "Maya", portraitId: "maya", body: "I think Fergus has never used the word 'simple' to mean simple." },
-      N("On the third afternoon, in the canyon east of Brielwatch, the ambush springs.")
+      N("On the third afternoon, in the canyon east of Brielwatch, they are ambushed.")
     ]
   },
   // -------- Post-Battle 6 (the ledger) --------
@@ -404,14 +404,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_monastery",
     beats: [
-      N("Eight bodies on the road. The drivers check each other over twice, amazed that everyone is still alive. The wagons roll on after a short argument over who pays for the second wagon's broken axle."),
+      N("Eight attackers lie dead on the road. The drivers check each other over twice, amazed that everyone is still alive. After a short argument over who pays for the second wagon's broken axle, the wagons roll on."),
       { speaker: "Amar", portraitId: "amar", body: "Maya. The captain. Search him." },
       N("Maya has already searched him. A leather ledger is in her hand. She passes it to Lucian, not Amar. She knows the squad still looks to Lucian first, out of habit."),
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Three columns. Route, schedule, payment date. The handwriting in the margin. Amar, you'd know this. You said you wouldn't, but you would." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "...That's the King's accounting handwriting. Officer code. Only palace clerks learn it." },
-      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Then this wasn't a bandit ambush. This was a contract." },
+      { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "Then this wasn't bandits. Someone was paid to do this." },
       { speaker: "Ning", portraitId: "ning", expression: "startled", body: "Why us?" },
-      { speaker: "Lucian", portraitId: "lucian", body: "Because somebody in Nebu's court wanted this ledger to arrive on a dead man. We keep it." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Because somebody in Nebu's court wanted us dead, and this ledger says they paid for it. We keep it." },
       N("The ledger goes into Lucian's saddlebag. The squad rides for Brielwatch. Nobody mentions the ledger again until Fergus's next contract arrives.")
     ]
   },
@@ -430,7 +430,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Fergus", portraitId: "fergus", body: "An abandoned monastery in the high passes, north of Drennig, two days' climb. Raiders moved in last winter, started taking tax collectors. The Crown wants it cleared." },
       { speaker: "Amar", portraitId: "amar", body: "How many?" },
       { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Half a dozen, maybe. A leader. Bring rope. The inner chapel sits behind a bell tower, and whoever's holding it knows the climb." },
-      N("Lucian counts the words Fergus didn't use. \"Wanted poster.\" \"Bounty.\" \"Name.\" Lucian says nothing. The squad sets out before noon."),
+      N("Lucian notices what Fergus left out: no wanted poster, no bounty, no name. He says nothing. The squad sets out before noon."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "He didn't tell us who's leading them. If there were a bounty to collect, he would have." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we'll find out at the door." },
       N("The road to the monastery is two days of steep, winding trail above a frozen river. By the second night, the squad can see torchlight at the top of the bell tower.")
@@ -448,15 +448,15 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "field_night_camp",
     next: "story:before_orinhal",
     beats: [
-      N("Selene, Amar's comrade from the coup, jumps from the balcony into the mist before Leo can turn his Dactyl. Left behind: five bodies, and a question Amar can't answer in front of the others."),
-      N("The camp is colder than the road. Maya takes first watch. Ning falls asleep over her stew. Leo finally lies down. Lucian and Amar stay up. The fire pops twice."),
+      N("Selene, Amar's comrade from the coup, jumps from the balcony into the mist before Leo can turn his Dactyl. Five raiders lie dead, and Amar is left with a question he can't answer in front of the others."),
+      N("That night the camp is cold. Maya takes first watch. Ning falls asleep over her stew. Leo finally lies down. Lucian and Amar stay up by the fire."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "She knew you. From the gate to the balcony, she knew you, and you knew her. And you fought her at half strength. I've seen you hit bandits half her size harder." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded", body: "Lucian." },
       { speaker: "Lucian", portraitId: "lucian", body: "I'm not asking. I'm telling you I'm not asking. I'm telling you that whatever you say next, I have already decided what to do about it. Speak when you're ready." },
-      N("Amar speaks for an hour. The coup. His seven comrades. The hospital in Thuling. Selene by name, Ranatoli by name, the five others he hasn't seen since. The throne hall. The plan."),
+      N("Amar talks for an hour. He tells Lucian about the coup and his seven comrades: Selene and Ranatoli by name, and the five others he hasn't seen since. The throne hall, the plan, the hospital in Thuling."),
       N("Lucian listens until Amar is done. He does not interrupt once. He does not move. When Amar finally stops talking, the fire has gone down to embers."),
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "I thought it was something like that. I have a wife and daughter, Amar. Mira's forty-one, Tali's eight. Edge of Thuling, in a house these hands built." },
-      { speaker: "Lucian", portraitId: "lucian", body: "If you're rebuilding this country into somewhere a girl named Tali can grow up without flinching, tell me when it's time to move. Until then, I'll cover you." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "I thought it was something like that. I have a wife and daughter, Amar. Mira's forty-one, Tali's eight. Edge of Thuling, in a house I built myself." },
+      { speaker: "Lucian", portraitId: "lucian", body: "If you're going to make this country somewhere a girl named Tali can grow up without being scared, tell me when it's time to move. Until then, I'll cover for you." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked", body: "I haven't asked anything of you." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "I know. That's why I'm offering. Sleep, Amar. We've got work in the morning." },
       // Lucian's Tier 2 promotion fires here, after the offer. The promote
@@ -468,7 +468,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
         speaker: "Lucian",
         portraitId: "lucian",
         expression: "grim_resolve",
-        body: "And Amar, tomorrow, on the climb back, walk on my shield side. I'm done covering one flank at a time.",
+        body: "And Amar, tomorrow, on the climb back, walk on my shield side. From now on I've got your back the whole way.",
         promote: "lucian"
       },
       N("Tomorrow the squad climbs back down the pass to Thuling. Two days later, Fergus has another contract waiting at the keep: a tax dispute three days' ride northeast, in a mining town called Orinhal.")
@@ -488,11 +488,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
     next: "prep:b08_orinhal",
     beats: [
       { speaker: "Fergus", portraitId: "fergus", expression: "false_sincerity", body: "Tax riot in a mining town. Disperse the crowd, arrest the ringleaders, restore the King's peace. Routine work for soldiers of your rank." },
-      { speaker: "Lucian", portraitId: "lucian", body: "Orinhal hasn't paid full tax in three years. It's a starvation case, not a riot." },
+      { speaker: "Lucian", portraitId: "lucian", body: "Orinhal hasn't paid full tax in three years. They're starving. That's not a riot." },
       { speaker: "Fergus", portraitId: "fergus", body: "The orders aren't yours to weigh, Lucian. Disperse the crowd." },
-      N("Two days on the road. Maya rides at the back of the column without speaking. She always rides like that when she's three steps ahead of everyone else."),
-      N("At the Orinhal gate they find a famine, not a riot. Unarmed foremen and families stand between the King's tax collectors and the last winter grain. Beyond, green cloaks: Madame Dawn's partisans."),
-      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father would have had me arrest them. (a long pause) I'm not arresting anyone today." },
+      N("They spend two days on the road. Maya rides at the back of the column and doesn't speak. She always does that when she's worked something out before everyone else."),
+      N("At the Orinhal gate they find starving people and no riot. Unarmed foremen and families stand between the King's tax collectors and the last of the winter grain. Behind them are fighters in green cloaks: Madame Dawn's partisans."),
+      { speaker: "Leo", portraitId: "leo", expression: "wounded_pride", body: "My father would have had me arrest them... I'm not arresting anyone today." },
       N("Leo dismounts, walks his Dactyl to the partisan side, and looks back at the squad. The squad follows.")
     ]
   },
@@ -510,13 +510,13 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "orinhal",
     next: "story:before_ravine",
     beats: [
-      STAGE("leo_defects", N("The tax collectors break first. Townspeople emerge as the last of the King's men run. A woman finds her husband alive. The squad has to look away.")),
+      STAGE("leo_defects", N("The tax collectors are the first to run. Townspeople come out as the last of the King's men flee. A woman finds her husband alive. The squad has to look away.")),
       N("A figure in a gray cloak walks through the square as if she belongs there. She does not introduce herself to anyone but Amar."),
       { speaker: "Ndara", portraitId: "ndara", expression: "military_neutral", body: "I'm Ndara. Not the bandit from the mountain village — same name, different woman, you'll get used to it. I serve a queen called Madame Dawn. She's been watching you a long time, Amar." },
       { speaker: "Amar", portraitId: "amar", body: "...Watching me how." },
-      { speaker: "Ndara", portraitId: "ndara", body: "She wants to meet when you're ready. She'll be ready before you are. Ride safely, all of you." },
+      { speaker: "Ndara", portraitId: "ndara", body: "She wants to meet when you're ready. She's been ready for a while. Ride safely, all of you." },
       N("Ndara leaves before Amar can answer. Lucian puts the squad's contract pay in a leather sack. On the way out, he walks the line of foremen at the gate and presses a coin into each man's hand."),
-      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "We got paid to come here and put you down. Wrong job. This settles the difference." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "We got paid to come here and put you down. We shouldn't have taken that job. Here, this is yours." },
       // Leo's promotion fires after his choice has played out — turning
       // his Dactyl from the King's tax detail to the partisans is the
       // moment he earns Tier 2.
@@ -524,7 +524,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
         speaker: "Leo",
         portraitId: "leo",
         expression: "wounded_pride",
-        body: "I'm not riding back to the keep tonight. I'll meet you on the road home. There's something I have to do without my father's name on my back.",
+        body: "I'm not riding back to the keep tonight. I'll meet you on the road home. There's something I have to do on my own, without my father's name behind me.",
         promote: "leo"
       },
       N("Leo doesn't say where he's going. He's back at the campfire by midnight. His Dactyl's covering is freshly repainted in the squad's own colors, not Fergus's crest.")
@@ -544,10 +544,10 @@ export const ARCS: Record<ArcId, StoryArc> = {
     beats: [
       N("The squad never reaches the keep. Fergus's outrider stops them on the road north of Orinhal with a new contract, sealed and dated three hours ago."),
       { speaker: "Outrider", body: "Bandit column moving on the border village of Tharin. Twenty men, mounted. The General orders intercept and destroy. Coordinates inside the seal." },
-      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "He's not letting us return to report Orinhal. He's keeping us moving until we miss a step." },
-      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "Refuse, and he knows we know. So we go. At least we go knowing." },
-      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we go knowing. Maya, you read the map for traps. Ning, full quiver. Leo, fly ahead. We don't get caught with our backs to anything." },
-      N("The coordinates lead to a narrow ravine an hour east. The squad rides in slowly, weapons half-drawn. Thirty seconds past the river bend, archers on the cliffs open an arrow lane, and the trap snaps shut behind them.")
+      { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance", body: "He doesn't want us back to report on Orinhal. He's going to keep us moving until we slip up." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve", body: "If we refuse, he'll know we're onto him. So we go. At least we know what we're walking into." },
+      { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we go ready. Maya, you read the map for traps. Ning, full quiver. Leo, fly ahead. Don't let anything get behind us." },
+      N("The coordinates lead to a narrow ravine an hour east. The squad rides in slowly, weapons half-drawn. Thirty seconds past the river bend, archers on the cliffs start shooting down the ravine, and the way back is blocked behind them.")
     ]
   },
   // -------- Post-Battle 9 (Lucian wounded; Maya speaks) --------
@@ -564,20 +564,20 @@ export const ARCS: Record<ArcId, StoryArc> = {
     music: "emotional",
     backdrop: "field_night_camp",
     beats: [
-      N("An hour's ride from the river crossing, they stop. Lucian took a bolt: shallow, but bent. Maya cuts it out with a knife nobody knew she had. Ning can't look away."),
-      { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. That whole lane. He pushed me into the rock." },
-      { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) The lane was for whoever was standing in it. You were standing in it. Stop apologizing and finish that damn bandage." },
-      N("A prisoner names Fergus. The General knew about Amar. He kept sending the squad on impossible contracts until one day it wouldn't come back. Lucian chose his side weeks ago."),
+      N("An hour's ride from the river crossing, they stop. Lucian took a crossbow bolt. It's shallow but bent. Maya cuts it out with a knife nobody knew she had. Ning can't look away."),
+      { speaker: "Ning", portraitId: "ning", expression: "startled", body: "That bolt was for me. I was right in the line of fire. He pushed me into the rock." },
+      { speaker: "Lucian", portraitId: "lucian", expression: "dying", body: "(through gritted teeth) They were shooting at whoever stood there. That happened to be you. Stop apologizing and finish that damn bandage." },
+      N("A prisoner names Fergus. The General knew about Amar. He kept sending the squad on impossible contracts, hoping that one day they wouldn't come back. Lucian chose his side weeks ago."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral", body: "All right. I'll do this once and then we move." },
       // Maya's promotion fires when she steps out of the alias.
       {
         speaker: "Maya",
         portraitId: "maya",
         expression: "steel_cold_confession_face",
-        body: "My name really is Maya. The rest — Madame Dawn sent me eleven months ago, to watch Amar. Now you know. So we ride at first light, or we're all dead in Thuling by tomorrow night. I'm sorry about the lying. Not about the rest.",
+        body: "My name really is Maya. As for the rest, Madame Dawn sent me eleven months ago to watch Amar. Now you know. We ride at first light, or we're all dead in Thuling by tomorrow night. I'm sorry I lied to you. I'm not sorry I came.",
         promote: "maya"
       },
-      N("Nobody speaks for a long time. Lucian, of all people, smiles."),
+      N("For a while, nobody says anything. Then, to everyone's surprise, Lucian smiles."),
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Maya. If I had a sister, I'd want her exactly that complicated. We ride." },
       // Ning's promotion fires after she processes the bolt incident —
       // the moment she stops being the bowyer's apprentice afraid of
@@ -587,11 +587,11 @@ export const ARCS: Record<ArcId, StoryArc> = {
         speaker: "Ning",
         portraitId: "ning",
         expression: "focused_bow",
-        body: "Then I'm walking rear watch tonight. Nobody's taking another bolt for me. I felt what that feels like. Once is all I need.",
+        body: "Then I'm taking rear watch tonight. Nobody's taking another bolt for me. I know what that feels like now, and once was enough.",
         promote: "ning"
       },
       { speaker: "Amar", portraitId: "amar", expression: "resolute", body: "Then we ride. Lucian, you take Mira and Tali to the cousin's farm. Catch up to us on the road." },
-      N("Lucian rides for his house at the edge of Thuling. The squad turns west. The plan: get Mira and Tali, then reach Dawn's harbor by first light. The plan is about to change.")
+      N("Lucian rides for his house at the edge of Thuling. The squad turns west. The plan is to get Mira and Tali, then reach Dawn's harbor by first light. That plan is about to change.")
     ],
     next: "story:before_leaving_thuling"
   },
@@ -609,17 +609,17 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "thuling",
     next: "prep:b10_leaving_thuling",
     beats: [
-      N("Three in the morning. The squad rides back into Thuling at a hard pace. The streets are wrong: too quiet, too lit. The night watch is doubled. Torches in places torches don't usually go."),
+      N("At three in the morning, the squad rides hard back into Thuling. Something is wrong. The streets are too quiet and too brightly lit. The night watch has been doubled, and there are torches where there usually aren't any."),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
         body: "Kian beat us here. The watch is his. He's at Lucian's door already." },
       { speaker: "Lucian", portraitId: "lucian", expression: "alarmed",
         body: "Mira. Tali." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Then we don't ride past. We ride through. Maya, take the back lane and get Mira and Tali out the rear gate while we hold the front. Lucian, you're with me." },
+        body: "Then we go straight through. Maya, take the back lane and get Mira and Tali out the rear gate while we hold the front. Lucian, you're with me." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
         body: "He'll have the front blockaded. Twelve men minimum. He'll talk first. He always talks first." },
       { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
-        body: "Then let him talk. We listen with arrows on the string." },
+        body: "Then let him talk. I'll have an arrow ready while he does." },
       { speaker: "Leo", portraitId: "leo", expression: "ready",
         body: "Maya, give me three minutes' head start. I'll ride my Dactyl over the back gate and clear whatever's between you and the lane." },
       N("Maya peels off west. Leo rides east behind the row of houses. The rest of the squad walks their horses slowly up to Lucian's front door. They hear Kian's voice before they round the last corner.")
@@ -646,14 +646,14 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "We can send for the cat. I'll write the cousin's wife once we reach Grude." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
         body: "(small smile) ...That'd be all right. Thank you, Maya." },
-      N("Amar rides at the front, not trusting himself to speak. They reach the cliffs at sundown. The whole ride, he's looked for a way this ends without Kian falling. He hasn't found one."),
+      N("Amar rides at the front and doesn't talk. They'll reach the cliffs by sundown. The whole way, he's been looking for a way this can end without Kian dying. He hasn't found one."),
       { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
         body: "Amar. Four hours to the cliffs. Talk to us. Please. You haven't said a word since the gate." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
         body: "When we're on the water, Ning. Not before. Maya — the staircase down to Dawn's ship. What do we know?" },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-        body: "Two narrow landings. Three archers up top. Two guards per landing. Kian in the middle of the lower one. In from the plateau, out through the ship. The middle's the bad part." },
-      N("The squad rides on toward Para Harbor in the long blue hour before sunrise. The road climbs.")
+        body: "Two narrow landings. Three archers up top, two guards on each landing, and Kian in the middle of the lower one. We come down from the plateau and leave on the ship. The middle is the hard part." },
+      N("The squad rides on toward Para Harbor before sunrise, on a road that keeps climbing.")
     ]
   },
   // -------- Pre-Battle 11 (the cliff plateau at sundown) --------
@@ -671,24 +671,24 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "cliffs",
     next: "prep:b11_cliffs",
     beats: [
-      STAGE("kian_duel", N("The road ends on a plateau above Para Harbor. Dawn's ship waits below, sails ready. The only way down: the cliff staircase, where Kian and the King's elite are waiting.")),
+      STAGE("kian_duel", N("The road ends on a plateau above Para Harbor. Dawn's ship is waiting below with its sails ready. The only way down is the cliff staircase, where Kian and the King's elite soldiers are waiting.")),
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-        body: "Six guards visible. Kian on the lower landing. Two crown archers halfway down, covering every step. Elite, not Thuling watchmen. We push down and trade blows." },
+        body: "I can see six guards. Kian's on the lower landing. Two crown archers halfway down cover every step. These are elite soldiers, not the Thuling watch. We push down and fight our way through." },
       { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
         body: "I'll take the rear and the bottleneck on the upper stair. Anything that gets behind the squad goes through me first." },
       { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
         body: "Lucian. Your shoulder. You're not at full strength and you know it." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
-        body: "(simple) I know, Ning. I've thought about it. I'm taking the rear." },
-      N("Amar takes one breath alone at the cliff edge. The gold light recalls his life before the hospital. He thinks of his father, of Selene, of Lucian and his daughter."),
+        body: "I know, Ning. I've thought about it. I'm taking the rear." },
+      N("Amar stands alone at the cliff edge for a moment. The golden evening light reminds him of his life before the hospital. He thinks of his father, of Selene, and of Lucian and his daughter."),
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Down the staircase together. Nobody breaks formation. Maya leads, Ning covers from above, Leo flanks east on the Dactyl, Lucian holds rear. I take Kian. Nobody else. Confirm." },
+        body: "Down the staircase together. Nobody breaks formation. Maya leads, Ning covers from above, Leo flanks east on the Dactyl, Lucian holds rear. I take Kian. Nobody else goes near him. Confirm." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "Confirmed." },
       { speaker: "Ning", portraitId: "ning", body: "Confirmed." },
       { speaker: "Leo", portraitId: "leo", expression: "ready", body: "Confirmed." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile", body: "Confirmed, your highness." },
-      N("Lucian smiles the way he does when he means more than he says. Amar catches it, holds his eye a second longer than usual, and turns toward the stairs. The squad heads down.")
+      N("Lucian smiles the way he does when he means more than he's saying. Amar notices, looks at him a moment longer than usual, and turns toward the stairs. The squad heads down.")
     ]
   },
   // -------- Post-Battle 11 (Lucian's death, the boat, the crossing) --------
@@ -713,7 +713,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
     cinematic: "escape",
     next: "story:before_ravage",
     beats: [
-      N("The squad boards at moonrise. The captain, Khione, says only her name and orders the lines cut. Kian's body is still on the landing. No one looks back."),
+      N("The squad boards at moonrise. The captain, Khione, says only her name and orders the lines cut. They leave Kian's body on the landing."),
       N("Below decks, the captain's mate brings a lantern and a bowl of water. For the first time in twelve hours, the squad stops moving. That's when Maya sees the blood spreading across the back of Lucian's tunic."),
       { speaker: "Maya", portraitId: "maya", expression: "alarmed",
         body: "Lucian. Off your feet. NOW. Ning, the bandages from my pack, the brown cord, MOVE." },
@@ -728,22 +728,22 @@ export const ARCS: Record<ArcId, StoryArc> = {
         body: "Stop. Three things. One: Mira and Tali. Write them every season, especially when there's nothing to say. They need a man who remembers their father. Promise me." },
       { speaker: "Amar", portraitId: "amar", body: "Every season. I promise." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
-        body: "Two. Maya's the smartest of us, including you. Listen to her. Three. Fight for the people beside you, not colony, empire, or throne. Kian was right about that." },
+        body: "Two. Maya's the smartest of us, including you. Listen to her. Three. Fight for the people beside you. Not for a colony, or an empire, or a throne. Kian was right about that." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "Lucian." },
       { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
         body: "(soft) ...You'll be all right, Amar. There's a good man under there. I saw him the first day, at the forge. Take care of them. Take care of yourself." },
-      N("Lucian's breathing slows. Ning holds his hand. Maya presses the wound long after it stops mattering. Leo guards the door. Lucian dies looking at Amar. The boat keeps moving."),
-      N("An hour later the harbor lights are gone, open sea all around. Khione finds Amar at the stern and speaks, for the first time since giving her name."),
+      N("Lucian's breathing slows. Ning holds his hand. Maya keeps pressing on the wound long after it stops helping. Leo guards the door. Lucian dies looking at Amar."),
+      N("An hour later the harbor lights are gone, and there is open sea all around. Khione finds Amar at the stern and speaks to him for the first time since giving her name."),
       { speaker: "Khione", portraitId: "khione", expression: "neutral",
-        body: "Madame Dawn sends her sympathies. Fourteen months at sea. Grude by late summer next year. The food is plain, the wine good. We do not stop." },
+        body: "Madame Dawn sends her sympathies. We will be fourteen months at sea and reach Grude by late summer next year. The food is plain. The wine is good. We do not stop." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
         body: "Captain. I want a sea burial for Lucian. Off the western rail, before the sun comes up. With the squad present and the ship stopped." },
       { speaker: "Khione", portraitId: "khione", expression: "neutral",
-        body: "We do not stop, your highness. But we will slow. The squad will be present. The western rail at dawn." },
-      STAGE("burial", N("In the gray hour the squad gathers at the rail. Lucian goes into the sea wrapped in the Thuling flag Maya carried from his house. Ning lets him go. Silence.")),
-      N("The ship turns west. At the stern, Amar takes out the practice sword Lucian carved the night they met at the forge. He holds it, and doesn't put it back."),
-      N("Khione confirms it: fourteen months west across open water. The squad is free to roam the ship. The dactyl has nowhere to fly. The crossing has begun.")
+        body: "We do not stop, your highness, but we will slow down. The squad will be there. The western rail, at dawn." },
+      STAGE("burial", N("At first light the squad gathers at the rail. Lucian is lowered into the sea wrapped in the Thuling flag Maya brought from his house. Ning is the one who lets him go.")),
+      N("The ship turns west. At the stern, Amar takes out the practice sword Lucian carved the night they met at the forge. He keeps holding it and doesn't put it away."),
+      N("Khione confirms it: fourteen months west across open water. The squad can go anywhere on the ship. The dactyl has nowhere to fly. The long crossing begins.")
     ]
   },
   // -------- Pre-Battle 12 (the long crossing + first sight of Grude) --------
@@ -761,25 +761,25 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "prep:b12_ravage",
     beats: [
-      STAGE("voyage", N("The first month is grief. The squad drifts through it the way the ship drifts on still water: slowly, quietly, carried along.")),
-      N("The second month is reading. Maya works through the Grude pamphlets she stowed before boarding, court rulings and council lists, making notes in three inks. She shares nothing yet."),
+      STAGE("voyage", N("For the first month, the squad grieves for Lucian. Nobody does much of anything.")),
+      N("In the second month, Maya reads. She works through the Grude pamphlets she packed before boarding, court rulings and council lists, making notes in three inks. She doesn't share any of it yet."),
       N("In the fourth month Ning teaches herself to make arrows for shifting wind. Khione silently hands her a windrose, a chart of the wind's turns. Ning works it out alone."),
-      N("The seventh month: Leo and the dactyl Ash, whom the squad calls Kid, walk the whole ship. Ash stops fearing the deck. Leo stops fearing he was wrong to leave his father."),
-      N("The ninth month: Amar takes out Lucian's wooden practice sword, holds it an hour, and carves a single word into the grip. He shows no one what it says."),
-      N("In the eleventh month Maya breaks her own rule: she sits across from Amar with a stack of Grude maps and one folded paper. She doesn't open it. Neither speaks."),
+      N("In the seventh month, Leo walks the whole ship with the dactyl Ash, whom the squad calls Kid. Ash stops being afraid of the deck, and Leo stops worrying that he was wrong to leave his father."),
+      N("In the ninth month, Amar takes out Lucian's wooden practice sword, holds it an hour, and carves a single word into the grip. He shows no one what it says."),
+      N("In the eleventh month, Maya breaks her own rule. She sits down across from Amar with a stack of Grude maps and one folded paper. She doesn't open it, and for a while neither of them speaks."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "I promised I'd wait until you asked. You haven't asked. So I'm asking instead. Can I tell you one thing about your old life? One. Before we land." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "...One thing. Yes." },
       { speaker: "Maya", portraitId: "maya",
         body: "The man you called your father was your mother's brother. Your father died before you were born. Your mother didn't. Her letter's under the map. I wanted you to have it before Dawn decides when you're ready." },
-      N("Amar doesn't ask whose letter it is. He doesn't have to. He sits with Maya for a long time without speaking. The lantern burns down. Maya leaves the letter under the map and goes to bed without looking back."),
-      STAGE("grude_arrival", N("Three months later Khione brings the ship into Grude's east port. The city climbs a hill in terraces, taller than anything they've seen. It smells like a different country.")),
+      N("Amar doesn't ask whose letter it is. He already knows. He sits with Maya for a long time without speaking, until the lantern burns low. Then Maya leaves the letter under the map and goes to bed."),
+      STAGE("grude_arrival", N("Three months later, Khione brings the ship into Grude's east port. The city is built up a hill in terraces, taller than anything the squad has ever seen. Even the smell is unfamiliar.")),
       { speaker: "Khione", portraitId: "khione", expression: "neutral",
-        body: "Ten minutes to dockside. Madame Dawn's papers pass every customs platform on this coast. The customs captain will not look twice. (Pause.) Unless he has been told what to look for." },
+        body: "Ten minutes to dockside. Madame Dawn's papers pass every customs platform on this coast. The customs captain will not look twice... unless he has been told what to look for." },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-        body: "He's been told. Crossbows raised a hundred meters out. Routine customs doesn't do that. Amar, formation. Ning, fletching check. Leo, dactyl on the gangway with us, not in the hold. We walk off in arrowhead." },
-      N("The gangway lowers. The squad steps off into the empire. The alarm bell at the customs platform starts ringing before Amar is off the gangway.")
+        body: "He's been told. They raised crossbows when we were still a hundred meters out. Customs doesn't do that. Amar, formation. Ning, check your arrows. Leo, the dactyl comes down the gangway with us, not in the hold. We walk off in an arrowhead." },
+      N("The gangway lowers, and the squad starts down into Grude. Before Amar is off the gangway, the alarm bell at the customs platform starts ringing.")
     ]
   },
   // -------- Post-Battle 12 (Dawn's safe house, the rest of the speech) --------
@@ -799,30 +799,30 @@ export const ARCS: Record<ArcId, StoryArc> = {
     beats: [
       N("Dawn's safe house is the upstairs of a candle-maker's shop. The candle-maker nods to Khione and doesn't look at the squad. Two flights up, Ndara stands pouring tea."),
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
-        body: "The mountain village. At Orinhal I said the bandit there was a different Ndara. It was me. My brother Ndari held the gate, and died holding it. (She keeps pouring.) I'm Dawn's lieutenant. I'm sorry. Drink your tea." },
+        body: "About the mountain village. At Orinhal I told you the bandit there was a different Ndara. It was me. My brother Ndari held the gate, and died holding it. I'm Dawn's lieutenant. I'm sorry. Drink your tea." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked",
         body: "...Ndara. He said your name on the ridge, before he fell. I've been thinking about him for eleven months." },
       { speaker: "Ndara", portraitId: "ndara",
         body: "So have I. Tea, your highness." },
-      N("Maya takes the tea first, her signal that the room is safe. The squad sits. Dawn enters and stands at the window, back to them, a long moment before speaking."),
+      N("Maya takes her tea first, as a signal that the room is safe. The squad sits. Dawn comes in and stands at the window with her back to them for a long moment before she speaks."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Eighty years ago King Archbold's great-grandfather wanted Anthros's iron, so he crowned Nebu, a Para noble. Anthros is a colony. Your iron forged the swords on that dock." },
+        body: "Eighty years ago King Archbold's great-grandfather wanted Anthros's iron, so he crowned Nebu, a Para noble. Anthros is a colony. The swords on that dock were made from your iron." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "(quietly, to the squad) I've known for nine years. I'm sorry. There was never a day when telling you would have made any of us safer. There should have been. There wasn't." },
+        body: "(quietly, to the squad) I've known for nine years. I'm sorry. Telling you would never have made any of us safer. I wish it could have." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Your father's coup was against Grude's rule. Grude killed him. I found you in that hospital ward. Maya, Lucian, Ndara, Kian: all of them were bringing you here." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "(quietly) ...You said \"my son\" from the window." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "(holds his eyes) I did. The rest keeps until morning, Amar. There's a great deal of it. Lucian's brother meets you here tomorrow at noon. Sleep first." },
+        body: "I did. The rest can wait until morning, Amar. There's a great deal of it. Lucian's brother is meeting you here tomorrow at noon. Get some sleep first." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked",
         body: "Lucian had a brother in Grude?" },
       { speaker: "Madame Dawn", portraitId: "dawn",
-        body: "Lucian had a brother in Grude: Aren, my inland courier. He has a letter Lucian wrote before the bolt. (Pause.) Tomorrow, Amar. Sleep tonight." },
-      N("No one speaks for a long time. Ning picks up tea first; Leo follows; Maya is halfway through hers. Amar watches the harbor lights. Dawn leaves before midnight. Ndara stays."),
+        body: "He did. Aren, my inland courier. He has a letter Lucian wrote before he was shot. Tomorrow, Amar. Sleep tonight." },
+      N("For a long time, no one says anything. Ning drinks her tea, then Leo; Maya is already halfway through hers. Amar watches the harbor lights. Dawn leaves before midnight. Ndara stays."),
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
         body: "(quiet) I'll take the watch. None of you have slept since the ship. Nothing comes through that door tonight. Sleep." },
-      N("The squad sleeps under a roof for the first time in fourteen months. The dactyl, in the courtyard below, settles at last. The harbor lights go out one by one. The empire continues around them in the dark.")
+      N("The squad sleeps under a roof for the first time in fourteen months. In the courtyard below, the dactyl finally settles down. Out in the harbor, the lights go out one by one.")
     ]
   },
   // -------- Pre-Battle 13 (the rebellion plan + Rose's introduction) --------
@@ -841,26 +841,26 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "prep:b13_dawn_rebellion",
     beats: [
-      N("Three weeks in the safe house, and the squad has begun to live in Grude. Dawn promised Amar a talk about his past. Neither has brought it up."),
-      N("Then, on a Tuesday at sundown, Dawn comes into the common room with a folded map under her arm. She asks the squad up to her study. The quiet three weeks are over."),
+      N("The squad has spent three weeks in the safe house and is getting used to life in Grude. Dawn promised Amar a talk about his past, but neither of them has brought it up."),
+      N("Then, on a Tuesday at sundown, Dawn comes into the common room with a folded map under her arm. She asks the squad to come up to her study."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Tonight nine years of work lands in one hour. Twelve strikes: the King's nephews, wardens, ledger-keepers, the prison master. We won't kill the empire tonight. We'll prove it can die. I'm not ordering anyone. I'm inviting you." },
+        body: "Nine years of work comes down to one hour tonight. Twelve strikes: the King's nephews, wardens, ledger-keepers, the prison master. We won't bring down the empire tonight, but we'll show everyone that it can fall. I'm not ordering anyone. I'm asking." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
         body: "We're in. What's our target?" },
       { speaker: "Madame Dawn", portraitId: "dawn",
-        body: "The youngest nephew's residence, off Oran Lane. Lightly garrisoned. The boy's never known fear, his captain's an incompetent. Rose has mapped the plaza. She'll lead you in." },
-      N("Dawn's study door opens on a woman the squad doesn't know: mid-thirties, teal officer's coat, throwing blades. She nods without smiling. She has the Maya look: careful, measuring."),
+        body: "The youngest nephew's residence, off Oran Lane. Lightly garrisoned. The boy has never had to be afraid of anything, and his captain is incompetent. Rose has mapped the plaza. She'll lead you in." },
+      N("The study door opens on a woman the squad doesn't know. She's in her mid-thirties, with a teal officer's coat and throwing blades. She nods without smiling. Like Maya, she watches everything carefully."),
       { speaker: "Madame Dawn", portraitId: "dawn",
-        body: "Squad, this is Rose. She has been one of my lieutenants for twelve years. She and Maya trained as officers together. Rose, the squad you've been writing reports about for eleven months." },
+        body: "Squad, this is Rose. She has been one of my lieutenants for twelve years. She and Maya trained as officers together. Rose, this is the squad you've been writing reports about for eleven months." },
       { speaker: "Rose", portraitId: "rose", expression: "neutral",
-        body: "(small nod) Amar. Maya. Ning. Leo. I've read everything Maya sent for eleven months. Tonight will be hard. The plaza layout once more, then we move." },
+        body: "(small nod) Amar. Maya. Ning. Leo. I've read everything Maya sent for eleven months. Tonight will be hard. We'll go over the plaza layout once more, then we move." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "Rose. Hi. (Quiet, between them.) ...It's good to see you in person. Eleven years through letters. It's a lot." },
+        body: "Rose. Hi. (quietly, to Rose) ...It's good to see you in person. Eleven years of only letters. It's a lot." },
       { speaker: "Rose", portraitId: "rose", expression: "brisk",
-        body: "(half-smile, only at Maya) It is. Talk later. We move at 11:14." },
+        body: "(half-smiling at Maya) It is. We'll talk later. We move at 11:14." },
       N("Rose walks the squad through the plaza plan three times: positions, angles, cover. She is precise and quick. Dawn watches and never interrupts. Rose is the person she trusts most in the world."),
       { speaker: "Rose", portraitId: "rose", expression: "brisk",
-        body: "Eight minutes from approach to plaza-clear. We move." },
+        body: "Eight minutes from the approach until the plaza is clear. Let's go." },
       N("The squad collects their weapons. At the door, Madame Dawn pulls Amar aside for a few quiet words Maya doesn't hear. Rose is already on the stairs. Far off, the river bell begins to ring second watch.")
     ]
   },
@@ -882,22 +882,22 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_origin",
     beats: [
-      STAGE("rose_falls", N("Dawn doesn't move for an hour. Ndara brings a cart; she, Amar, Maya, and Leo lift Rose in. Dawn walks beside it all the way home. Nobody speaks.")),
-      N("All twelve targets are dead. By morning, flyers across the city name them. By sundown, the empire formally admits an armed rebellion exists. Dawn has been right about everything."),
-      N("Rose is buried at first light beneath the lemon tree behind the candle-maker's shop. Dawn speaks for less than a minute: no tears, no tremor, the same flat briefing voice."),
+      STAGE("rose_falls", N("Dawn stays by Rose's body for an hour without moving. Ndara brings a cart, and she, Amar, Maya and Leo lift Rose into it. Dawn walks beside it all the way home.")),
+      N("All twelve targets are dead. By morning, flyers across the city name them. By sundown, the empire formally admits an armed rebellion exists. Everything has gone the way Dawn said it would."),
+      N("Rose is buried at first light beneath the lemon tree behind the candle-maker's shop. Dawn speaks for less than a minute. She doesn't cry, and she uses the same flat voice she uses for briefings."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Rose Eseldra. Thirty-two years with me. She trained Maya. She took four bolts for me. The plaza takes her name. The lemon tree stays. I have meetings." },
-      N("For four days Dawn vanishes into meetings. She ignores Maya's knock and lets Ndara's tea go cold. Then Amar finds her on the courtyard bench, sits beside her, and neither speaks."),
+        body: "Rose Eseldra. Thirty-two years with me. She trained Maya, and she took four bolts for me. The plaza will carry her name. The lemon tree stays. I have meetings." },
+      N("For four days Dawn shuts herself away in meetings. She ignores Maya's knock and leaves Ndara's tea to go cold. Then Amar finds her on the courtyard bench and quietly sits beside her."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "(eventually) She wanted to retire next year. A cottage on the south coast. The plan worked, Amar. Twelve for twelve; Rose our only loss. The math doesn't help." },
+        body: "She wanted to retire next year, to a cottage on the south coast. The plan worked, Amar. Twelve targets, twelve dead, and Rose the only one we lost. The math doesn't help." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "...Dawn. You don't have to do the math. Not tonight." },
       { speaker: "Madame Dawn", portraitId: "dawn",
-        body: "I do, though. Thirty-two years. If I don't count what she was worth, who will? (She lifts the cup.) Go to bed, Amar. Thank you for sitting." },
-      N("Amar sits with her until dark. Near midnight Dawn puts her face in her hands. He looks away until she lifts it. Leaving, she pauses at the door."),
+        body: "I do, though. Thirty-two years. If I don't count what she was worth, who will? Go to bed, Amar. Thank you for sitting with me." },
+      N("Amar sits with her until dark. Near midnight, Dawn puts her face in her hands. He looks away until she raises her head again. As she leaves, she stops at the door."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Amar. Tomorrow afternoon, the study. Maya and Ndara as well. There's a great deal you don't know about who you are, and it can't wait any longer. ...Sleep well." },
-      N("She goes inside. Amar stays in the courtyard another hour. The empire continues, somewhere beyond the candle-maker's wall, in the dark.")
+      N("She goes inside. Amar stays out in the courtyard for another hour.")
     ]
   },
   // -------- Pre-Battle 14 (the study; the parentage reveal) --------
@@ -917,16 +917,16 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "study",
     next: "prep:b14_origin",
     beats: [
-      N("Dawn's study fills the safe house's top floor: one window, papers, a map of the western sea under four stones. She has set out four chairs. She does not stand."),
+      N("Dawn's study takes up the safe house's top floor. It has one window, piles of papers, and a map of the western sea held down by four stones. She has set out four chairs, and she stays seated."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Sit. Amar, the chair by the window, where I can see you. You've earned that. Maya and Ndara already know. They're here so you won't carry this alone." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
-        body: "Three weeks you've put this off, Dawn. A year at sea, eleven years before that. Say it plainly. I'm tired of learning my own life last." },
+        body: "You've put this off for three weeks, Dawn. A year at sea, and eleven years before that. Just say it. I'm tired of being the last to find out about my own life." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "Plainly, then. Softening it would only be more managing.\n\nI am your mother, Amar. I carried you, named you, held you every night for your first eleven months." },
+        body: "Plainly, then. If I soften it, I'm only managing you again.\n\nI am your mother, Amar. I carried you, named you, and held you every night for your first eleven months." },
       N("Amar does not say anything. The light from the one window is on his face, exactly as Dawn arranged it. Nobody in the room looks away from him, because Dawn told them not to."),
       { speaker: "Amar", portraitId: "amar", expression: "shocked",
-        body: "(quietly) ...You said \"my son\" from the window at the harbor. I told myself it was a way of speaking." },
+        body: "(quietly) ...You said \"my son\" from the window at the harbor. I told myself it was just a figure of speech." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Your father is alive. Archbold. King of Grude. You've been at war with him since the harbor." },
       { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
@@ -934,31 +934,31 @@ export const ARCS: Record<ArcId, StoryArc> = {
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
         body: "I told you what I was told. She lied to me too, Amar. Eleven years, and she lied to me too." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "Maya's earned her anger. Yes, I lied to her. What she didn't know, nobody could torture out of her. (Beat.) I'm not proud of it. I'd do it again." },
+        body: "Maya has every right to be angry. Yes, I lied to her. If she didn't know, nobody could torture it out of her. I'm not proud of it, but I'd do it again." },
       { speaker: "Ndara", portraitId: "ndara", expression: "neutral",
-        body: "(evenly, to Amar) I've known since before the mountain village. Holding it never made it lighter. Let her finish." },
+        body: "(to Amar) I've known since before the mountain village. Keeping it to myself never got any easier. Let her finish." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Thirty-two years ago I was a council member's daughter at Archbold's court. I read the ledgers: what Anthros was for. Iron, harvests, starvation by design. I carried the empire's heir." },
+        body: "Thirty-two years ago I was a council member's daughter at Archbold's court. I read the ledgers and saw what Anthros was for: iron, harvests, and people starved on purpose. And I was carrying the empire's heir." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
-        body: "I could not raise you inside what I meant to destroy. At eleven months I sent you to my brother in Anthros. You believed he was your father." },
+        body: "I could not raise you inside the empire I meant to destroy. When you were eleven months old, I sent you to my brother in Anthros. You believed he was your father." },
       { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-        body: "You arranged all of it. The forge. Lucian. Maya. Kian, somehow. You've been moving me around a board since before I could walk. Everyone I've ever loved was a piece you placed." },
+        body: "You arranged all of it. The forge. Lucian. Maya. Kian, somehow. You've been deciding where I go since before I could walk. Everyone I've ever loved, you put there." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "I placed them. What grew was yours. (Beat.) I won't apologize for reaching for my son. Rose was the newest cost. She will not be the last. You should know what you are joining —" },
+        body: "I put them there. What you made of them was your own. I won't apologize for trying to reach my son. Rose is the latest one this has cost. She will not be the last. You should know what you are joining —" },
       N("Dawn stops. A faint knocking comes up through the floorboards. Downstairs, the candle-maker is tapping a ceiling beam with a broom handle, fast and uneven. Three taps, two, three. Ndara is already on her feet."),
       { speaker: "Ndara", portraitId: "ndara", expression: "commanding",
         body: "That is the far-watch signal. Soldiers on the street, moving with purpose, more than a patrol. They have found the house." },
       { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-        body: "Then the rest waits. Amar, down the stairs and into the street before they're lined up at the door. Whoever you turn out to be, you're still the one they came for. Move." },
-      N("On the workshop landing below, a broad woman in a scorched leather apron calmly lifts a bronze rig off the wall rack. Veya: Archbold's court lens-maker, until Dawn stole her from the palace two winters ago. She made every sighting-glass the rebellion uses."),
+        body: "Then the rest will have to wait. Amar, get down the stairs and into the street before they're lined up at the door. Whoever you turn out to be, you're still the one they came for. Move." },
+      N("On the workshop landing below, a broad woman in a scorched leather apron calmly lifts a bronze rig off the wall rack. This is Veya, Archbold's court lens-maker until Dawn stole her away from the palace two winters ago. She made every sighting-glass the rebellion uses."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "(from the stairs, without turning) Veya goes with you. She has been asking me to send her into the field since the plaza. I have run out of reasons to keep her indoors." },
       { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
-        body: "Household guard. Vasse-forge plate, court pattern. I sat through nine years of their inspections. Light goes through the throat seam if you ask it politely. Stay out of my line of fire and I'll show you." },
+        body: "That's the household guard. Vasse-forge plate, court pattern. I sat through nine years of their inspections. There's a weak spot at the throat seam, and my light goes right through it. Stay out of my line of fire and I'll show you." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "You grind lenses and you're volunteering for a street fight. Why?" },
       { speaker: "Veya", portraitId: "veya", expression: "grim_resolve",
-        body: "Because I spent a career helping men see farther so they could take more. After the plaza, my name's on their lists anyway. So. From here I aim the other way. Downstairs, your highness. They're at the door." }
+        body: "Because I spent my whole career helping men see farther so they could take more. After the plaza, my name's on their lists anyway. So now I'm aiming at them instead. Downstairs, your highness. They're at the door." }
     ]
   },
   // -------- Post-Battle 14 (the unfinished conversation) --------
@@ -975,23 +975,23 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_inner_coup",
     beats: [
-      N("In the emptied street, Ndara counts what the enemy left behind: nothing. The household guard carried away even their fallen. This is not the enemy the squad fought in Anthros."),
+      N("Out in the empty street, Ndara checks what the enemy left behind. There's nothing. The household guard even carried away their dead. They are far more disciplined than the soldiers the squad fought in Anthros."),
       N("When they go back up, Dawn has moved the four chairs against the wall. She is at the window with her hands folded, watching the street where Lord Castor's men were."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "You've heard the part that matters. The rest waits. But here's the sentence the candle-maker's broom cut off." },
+        body: "You've heard the part that matters. The rest can wait. But here's what I was about to say when the candle-maker's signal came." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
-        body: "Everything you did as a man of Anthros, you also did as the empire's heir, attacking his own father's house. Both are true, and will be for the rest of your life. Decide what that man does next." },
+        body: "Everything you did as a man of Anthros, you also did as the empire's heir, attacking your own father's house. Both are true, and they'll stay true for the rest of your life. You have to decide what you do next." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
-        body: "...Lucian told me to fight for the people next to me. Not a colony. Not an empire. (Beat.) It's the only thing anyone's told me in two years that didn't come with strings on it." },
+        body: "...Lucian told me to fight for the people next to me. Not for a colony or an empire. It's the only advice anyone's given me in two years that didn't come with strings attached." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
         body: "Then Lucian was a better strategist than I am. Keep what he told you. You'll want something of your own when this gets worse." },
       N("In the workshop, Veya wipes the rig's front lens with her apron and sets it back on the rack. Four of Castor's guards went down and not one of them reached her. She is trying very hard not to look pleased about it."),
       { speaker: "Veya", portraitId: "veya", expression: "wry_smile",
         body: "Throat seam. Told you. Nine years I signed off on that plate, and the court never once asked me where it fails. Their loss is your gain, if you'll have a middle-aged optician with strong opinions." },
-      N("Nobody says no. Ning is already asking her how the rig works. From tonight, the squad is five."),
-      N("Maya catches Amar on the stairs afterward. She is not calculating anything; for once she just looks tired."),
+      N("Nobody objects. Ning is already asking her how the rig works. From tonight, there are five in the squad."),
+      N("Maya stops Amar on the stairs afterward. For once she doesn't seem to be working anything out. She just looks tired."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "Eleven years on a false story and I never found the hole in it. If Dawn can fool me, who's fooling Dawn? (Beat.) Go to sleep, Amar. One of us should." },
+        body: "Eleven years I believed a false story, and I never caught it. If Dawn can fool me, who's fooling Dawn? Go to sleep, Amar. One of us should." },
       N("The squad sleeps under the candle-maker's roof again. Somewhere in this city, a king now knows his son is here. Downstairs, Maya does not sleep. Very quietly, she starts going through everyone Dawn trusts.")
     ]
   },
@@ -1010,22 +1010,22 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "study",
     next: "prep:b15_inner_coup",
     beats: [
-      N("Maya works six days, barely sleeping. She lays out three months of stolen supply records across the study floor, looking for the one person who touched them all."),
+      N("Maya works for six days and barely sleeps. She lays out three months of stolen supply records across the study floor, looking for the one person who touched them all."),
       { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
-        body: "Madame Dawn. Three months of supply records. Every message in this house crosses one desk before it reaches yours. One man sees all of it. Not you. Not me. Coyne." },
+        body: "Madame Dawn, I've gone through three months of supply records. Every message in this house crosses one desk before it reaches yours. One man sees all of it, and it isn't you or me. It's Coyne." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Nine years Coyne ran my supply line. He buried my couriers. (A pause.) ...And he's the only answer to how Castor found that door. Say the rest, Maya." },
+        body: "Coyne has run my supply line for nine years. He buried my couriers... And he's the only way Castor could have found that door. Say the rest, Maya." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "I didn't. I need you to send someone steady to bring Coyne in before he reads the room. Quietly, no alarm, before he can —" },
-      N("The study door opens without a knock. One of Dawn's couriers, out of breath from the stairs. The worst news is written on their face."),
+        body: "I didn't. I need you to send someone steady to bring Coyne in before he realizes we know. Quietly, no alarm, before he can —" },
+      N("The study door opens without a knock. One of Dawn's couriers comes in, out of breath from the stairs. It's clear from their face that something is badly wrong."),
       { speaker: "Courier", body: "Madame, it's Ndara. The courtyard. She's down, she's breathing, but she won't — she won't wake up, Madame, we can't wake her." },
-      N("Ndara worked out the same name an hour earlier. Alone as always, she went to question Coyne herself. The squad finds her on the cobblestones. Coyne is gone."),
+      N("Ndara had worked out the same name an hour earlier. As usual, she went alone to question Coyne herself. The squad finds her lying on the cobblestones. Coyne is gone."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
         body: "(very quietly) Carry Ndara upstairs. A cot, not the floor. Khione will sit with her." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
         body: "Find me Coyne. He hasn't left. The river and harbour gates are watched, and he knows it. He'll take the courtyard's back gate. He won't be alone." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Then he doesn't reach it. Squad — courtyard. Now. Move." }
+        body: "Then we stop him before he gets there. Squad, to the courtyard. Now. Move." }
     ]
   },
   // -------- Post-Battle 15 (Ndara does not wake; Dawn hardens) --------
@@ -1042,23 +1042,23 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_proposal",
     beats: [
-      N("Coyne is buried outside the walls, unmarked, in silence. Dawn does not attend. The lemon tree has seen blood at its roots twice this month. It goes on being a lemon tree."),
-      N("Ndara is moved to the bright upstairs room. Khione sits with her for two nights. On the third morning Khione finds Amar on the stairs and tells him the truth."),
+      N("Coyne is buried outside the walls in an unmarked grave, with no ceremony. Dawn does not attend."),
+      N("Ndara is moved to the bright upstairs room. Khione sits with her for two nights. On the third morning Khione finds Amar on the stairs and tells him how Ndara really is."),
       { speaker: "Khione", portraitId: "khione", expression: "neutral",
-        body: "Her body mends. The head wound is beyond any physician I would trust. She may wake tomorrow. She may wake in a season. She may not wake. (Beat.) I am sorry. I know what she is to this house." },
-      N("That afternoon Dawn gathers the squad in the study. She offers no chairs. The four from the day she named Amar's parents are stacked against the wall. Her careful, inviting tone is gone."),
+        body: "Her body is healing. But no physician I would trust can treat the head wound. She may wake tomorrow, or in a few months, or never. I am sorry. I know what she means to this house." },
+      N("That afternoon Dawn calls the squad to the study. This time there are no chairs; the four from the day she named Amar's parents are stacked against the wall. She no longer speaks gently."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
-        body: "For thirty years I asked people to follow me. Rose is buried behind the shop. Ndara won't wake. (Beat.) I'm done asking." },
+        body: "For thirty years I've asked people to follow me. Now Rose is buried behind the shop and Ndara won't wake up. I'm done asking." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "So I'm telling you. The rebellion has enough martyrs. What it needs is a face — the throne of Anthros, and its heir standing in the open. We'll speak of what that costs tomorrow." },
+        body: "So I'm telling you. The rebellion has enough martyrs. What it needs is a face: the heir to the throne of Anthros, out in the open where people can see him. We'll talk about what that costs tomorrow." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "...You buried Rose three weeks ago telling me grief shouldn't be rushed. Now you can't get to the next move fast enough." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "Yes. (Beat.) Being betrayed under my own roof taught me what a kind plan costs, and who ends up paying for it. Tomorrow, Amar." },
-      N("Dawn leaves the study first, which she has never done. The squad stands among the stacked chairs. Maya is the one who finally speaks, and she speaks quietly, and only to the people in the room."),
+        body: "Yes. Someone betrayed me under my own roof. Doing this the kind way costs too much, and other people end up paying for it. Tomorrow, Amar." },
+      N("Dawn leaves the study first, which she has never done before. The squad stays standing by the stacked chairs. Finally Maya speaks, quietly, to the squad alone."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "She's not wrong. That's the part that should frighten you. (Beat.) Whatever she offers tomorrow — walk in already knowing your answer. If you hear her out first, you'll say yes." },
-      N("The squad sleeps badly. Upstairs, Ndara breathes and does not wake, and the rebellion waits for morning with a harder woman at its head.")
+        body: "Honestly? She has a point, and that worries me. Whatever she asks you tomorrow, decide your answer before you go in. If you let her talk you through it first, you'll end up saying yes." },
+      N("The squad sleeps badly. Upstairs, Ndara keeps breathing but does not wake. In the morning, Dawn will tell Amar what she wants from him.")
     ]
   },
   // -------- Pre-Battle 16 (Dawn's proposal) --------
@@ -1075,24 +1075,24 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "study",
     next: "prep:b16_proposal",
     beats: [
-      N("Dawn's table holds the map of Anthros this time, not the western sea: Para, Thuling, the eastern range, and more villages in her precise hand than Amar knew existed."),
+      N("This time Dawn's table has a map of Anthros on it instead of the western sea. It shows Para, Thuling, the eastern range, and more villages, in her neat writing, than Amar knew existed."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "Archbold will fall. Then Anthros has no throne. A hundred million frightened people, and the next strong man walks right in. I've watched it happen on three continents." },
+        body: "Archbold will fall. When he does, Anthros will have no throne. A hundred million frightened people, and the next strongman will walk right in. I've seen it happen on three continents." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "ideologue_intensity",
-        body: "When the empire falls, Anthros will need a face. Blood a farmer can point to. You're the only heir alive who is both the royal line and the rebellion. I've spent thirty years arranging that." },
+        body: "When the empire falls, Anthros will need a face: someone with royal blood that ordinary farmers will accept. You're the only heir alive who is both the royal line and the rebellion. I've spent thirty years arranging that." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
         body: "You're asking me to be a king." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
         body: "Anthros will have a throne whether you take it or not. Everyone else who could take it is worse. Yes. I am asking my son to be a king." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
-        body: "Lucian died telling me not to fight for thrones. You're asking me to pick up the exact thing he told me to put down." },
+        body: "Lucian died telling me not to fight for thrones. Now you're asking me to take one." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "Your foreman was advising a soldier. I'm advising a king. Fight only for the people you can see, and the people you can't see starve. (Beat.) Decide whose son you are. Mine, his, or your own." },
+        body: "Lucian was giving advice to a soldier. I'm giving advice to a future king. If you only fight for the people in front of you, everyone else in Anthros goes hungry. You have to decide what you actually want, Amar. Not what he wanted, and not what I want." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Then my answer is not yet. Not no. Not yes. (Beat.) Everyone who's ever told me who I am had half the picture. When I answer you, I'll be holding all of it." },
+        body: "Then my answer is not yet. I'm not saying no, and I'm not saying yes. Everyone who's told me who I am only knew part of it. When I answer you, I want to know everything." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "\"Not yet\" I can work with. Earn it. Tonight a courier crosses the river with the names of cells loyal to your father. Take the squad. Bring me the courier's crate." },
-      N("The errand will not be routine. Neither Dawn nor Amar knows that yet. The squad walks out with a rolled-up map and an unanswered question.")
+        body: "\"Not yet\" I can work with. But you'll have to earn it. Tonight a courier crosses the river with the names of cells loyal to your father. Take the squad. Bring me the courier's crate." },
+      N("The errand will not be routine, though neither Dawn nor Amar knows that yet. The squad leaves with a rolled-up map, and Amar still hasn't given her an answer.")
     ]
   },
   // -------- Post-Battle 16 (after the bridge; Khione's warning) --------
@@ -1109,19 +1109,19 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_lie",
     beats: [
-      N("The crate arrives with the colony cell-names, as Dawn promised. A success to everyone but the squad. They walked onto that bridge as people. They walked off it as numbers in Archbold's ledger."),
+      N("The squad delivers the crate with the colony cell names, as Dawn promised. Everyone calls it a success except the squad. The ambush on the bridge proved that Archbold has put a price on their heads."),
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
         body: "He sent an assassin. Three weeks ago I didn't have a father. Now I know what he'll pay to be rid of a son. One professional and two hired men." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "Your father's simple. He wants you dead. At least you know where you stand. Dawn's wanted you on a throne since before you could walk. (Beat.) Think about which of those frightens you more." },
-      N("Amar can't sleep. He goes up to sit with Ndara, still in her coma. Khione is already in the chair by the cot, as most nights, watching a marshal who held steady for thirty years lie still."),
+        body: "Your father's easy to understand. He wants you dead, so at least you know where you stand. Dawn's wanted you on a throne since before you could walk. Ask yourself which of those scares you more." },
+      N("Amar can't sleep, so he goes up to sit with Ndara, who is still in a coma. Khione is already in the chair by the cot, as she is most nights, watching over the marshal who served Dawn for thirty years."),
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "You have the look, your highness. (She does not turn from the cot.) Nineteen years I have sailed for Dawn. I love her the way I love the sea. I have never once called her safe." },
+        body: "I can see it on your face, your highness. I have sailed for Dawn for nineteen years. I love her dearly. But I have never once thought of her as safe." },
       { speaker: "Amar", portraitId: "amar", expression: "guarded",
-        body: "If you're circling something, Khione, walk to it. It's been a long night already." },
+        body: "If you're getting at something, Khione, just say it. It's been a long night already." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "Your mother has never told anyone the whole story. Kian told you half of it, on the cliff stairs. I carry all of it. Before you answer her about thrones, come find me on my ship." },
-      N("Khione goes back to watching Ndara breathe. Amar sits with his mother's question and the answer Khione has promised. Below, Dawn sleeps, her plan finally moving. The squad lies awake.")
+        body: "Your mother has never told anyone the whole story. Kian told you half of it, on the cliff stairs. I know all of it. Before you give her your answer about the throne, come find me on my ship." },
+      N("Khione goes back to watching Ndara. Amar sits there thinking about his mother's question and what Khione has promised to tell him. Downstairs, Dawn sleeps now that her plan is moving. The squad lies awake.")
     ]
   },
   // -------- Pre-Battle 17 (Khione tells the whole of it) --------
@@ -1139,31 +1139,31 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "prep:b17_lie",
     beats: [
-      N("Amar goes to the quay before dawn. Maya goes too. She hasn't let him walk anywhere alone since the bridge. On deck, Khione doesn't look surprised to see two."),
+      N("Amar goes to the quay before dawn, and Maya goes with him. She hasn't let him go anywhere alone since the bridge. On deck, Khione doesn't look surprised to see both of them."),
       { speaker: "Khione", portraitId: "khione", expression: "serene_neutral",
-        body: "You came, and brought the squad. Good. This is not a thing to carry alone. I will tell it plainly; it is the only way I know." },
+        body: "You came, and brought the squad. Good. This is not something you should hear alone. I will tell it plainly. It is the only way I know how." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "Dawn's rebellion was never built to free Anthros. It was built to spend it. She wants her son crowned. That much is true. But her road to the crown needs Anthros to burn, and she made her peace with that fire long ago." },
+        body: "Dawn's rebellion was never meant to free Anthros. It was meant to sacrifice it. She does want her son crowned. That much is true. But her plan to crown you needs Anthros to burn, and she accepted that long ago." },
       { speaker: "Amar", portraitId: "amar", expression: "shocked",
-        body: "Spend it how. (Beat.) All of it, Khione. Say all of it." },
+        body: "Sacrifice it how? Tell me all of it, Khione. Everything." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "When an heir raises an army, Archbold must answer it. His answer will be to burn Anthros. And the fire is not the price of Dawn's plan, Amar. The fire is the plan. Grude watches its king burn a country, and turns on him, and the empire ends." },
+        body: "When an heir raises an army, Archbold must respond, and he will respond by burning Anthros. Dawn is counting on that, Amar. The burning is the plan. Grude watches its king burn a country, turns on him, and the empire ends." },
       { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
-        body: "She split the plan into pieces. I held one. Ndara held one. Rose held one. Nobody but Dawn ever saw the whole. (Flat.) Thuling burns too, Amar. Kian guessed a hundred thousand dead. He was guessing low." },
+        body: "She split the plan into pieces. I knew one part, Ndara knew one, Rose knew one. Only Dawn ever saw the whole thing. Thuling burns too, Amar. Kian guessed a hundred thousand dead. That was a low guess." },
       { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-        body: "She held me for eleven months. Crossed an ocean for me. Called me her son. (Beat.) And the whole time, the road to my crown ran through Lucian's town." },
+        body: "She held me for eleven months. She crossed an ocean for me and called me her son. And the whole time, her plan to crown me meant burning Lucian's town." },
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "Both things are true, your highness. That is your mother: real love and real arithmetic. Neither one has ever changed the other. (Beat.) Decide nothing here. Dawn's house has ears." },
-      N("Word travels fast: the rebellion won't let its heir stroll onto a boat. Loyalists line the quay before Khione's gangway, Marshal Othren at their centre, and he won't step aside."),
-      N("At the end of the line, on foot beside a grey warhorse, stands a lancer in dark red armour. A small silver rose is pinned to his cloak. Captain Corin Eseldra: nine years in Dawn's cavalry, Rose's younger brother. He is looking at the rose, not the squad."),
+        body: "Both things are true, your highness. Your mother truly loves you, and she has truly done the sums. Neither has ever changed the other. Do not decide anything here. Dawn's people may be listening." },
+      N("Word travels fast, and the rebellion won't let its heir just walk onto a boat. Dawn's loyalists line the quay in front of Khione's gangway, with Marshal Othren in the middle. He won't step aside."),
+      N("At the end of the line, on foot beside a grey warhorse, stands a lancer in dark red armour. A small silver rose is pinned to his cloak. This is Captain Corin Eseldra, Rose's younger brother, nine years in Dawn's cavalry. He is looking down at the rose instead of at the squad."),
       { speaker: "Corin", portraitId: "corin", expression: "torn",
-        body: "Marshal. One question before I hold this dock for you. The plan the heir is running from — the one that burns a colony. Was my sister's post at the plaza part of it? (Silence.) That silence is my answer." },
+        body: "Marshal. One question before I hold this dock for you. The plan the heir is running from — the one that burns a colony. Was my sister's post at the plaza part of it? ...You're not answering. That's answer enough." },
       { speaker: "Corin", portraitId: "corin", expression: "resolute",
-        body: "Rose took four bolts believing Dawn would never spend her. She was spent anyway. (He walks his horse across the line.) One lance for the gangway, your highness. My sister trained your Maya. The account is open." },
+        body: "Rose took four bolts believing Dawn would never sacrifice her. Dawn sacrificed her anyway. (He walks his horse across the line.) My lance is yours to the gangway, your highness. My sister trained your Maya. The account is open." },
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "(quietly, to Amar) He stands the way she did. Exactly the way she did. Take the lance." },
+        body: "(quietly, to Amar) He even stands like she did. Exactly like her. Take the lance." },
       { speaker: "Amar", portraitId: "amar", expression: "resolute",
-        body: "Then we don't need Othren to step aside. Captain, welcome aboard. Squad: gangway, ship, open water. We'll decide what comes next somewhere my mother hasn't mapped." }
+        body: "Then we don't need Othren to step aside. Captain, welcome aboard. Squad, up the gangway and onto the ship. We'll decide what comes next once we're out of my mother's reach." }
     ]
   },
   // -------- Post-Battle 17 (the break; Dawn lets him go) --------
@@ -1181,25 +1181,25 @@ export const ARCS: Record<ArcId, StoryArc> = {
     backdrop: "grude",
     next: "story:before_path_chosen",
     beats: [
-      N("Khione casts off. Madame Dawn walks alone onto the emptying quay. She has not come to stop the ship. She waits until the gap is too wide for anything she says to sound like bargaining."),
+      N("Khione casts off. Madame Dawn walks alone onto the emptying quay. She hasn't come to stop the ship. She waits until it's too far out for anything she says to sound like bargaining."),
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "I deny nothing. Khione has it exact. Thirty years I've searched for a plan that frees Anthros without burning it. There is none. I've grieved longer than you've lived." },
+        body: "I deny nothing. Khione told it exactly. For thirty years I've looked for a way to free Anthros without burning it. There isn't one. I've grieved over it longer than you've been alive." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-        body: "You reached that ship because I let you reach it. Othren is mine. Khione has been mine for nineteen years. (Beat.) I have spent thirty years learning to spend everything. It turns out I cannot spend you. Go, Amar. Outrun my arithmetic if you can." },
+        body: "You reached that ship because I let you. Othren is mine. Khione has been mine for nineteen years. For thirty years I've taught myself to sacrifice anything. It turns out I cannot sacrifice you. Go, Amar. Stay ahead of my plans if you can." },
       { speaker: "Amar", portraitId: "amar", expression: "wounded",
-        body: "(across the widening water) You could have told me. Any night of the crossing. Any morning in the study. You could have set the whole of it on the table and let me choose with my eyes open." },
+        body: "(across the water) You could have told me. Any night of the crossing, any morning in the study. You could have told me all of it and let me choose knowing the truth." },
       { speaker: "Madame Dawn", portraitId: "dawn", expression: "mask_slipping",
-        body: "Yes. I could have. Every one of those mornings I chose silence, and I knew what I was choosing. (The gap widens.) I loved you entirely, and I lied to you entirely. You will have to carry both. So will I." },
-      N("The water widens. Neither of them waves. They hold each other's eyes until the mist takes the dock. Then Dawn is gone, Grude with her, and the ship turns for open sea."),
+        body: "Yes, I could have. Every one of those mornings I chose not to, and I knew what I was doing. I loved you completely, and I lied to you completely. You will have to live with both. So will I." },
+      N("The ship pulls away. Neither of them waves. They keep looking at each other until the dock disappears into the mist. Then Dawn and Grude are out of sight, and the ship turns for the open sea."),
       { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-        body: "(after a long quiet) It's not her board anymore. Nobody's holding the map. (Beat.) Whatever you choose, we're beside you. That part was Lucian's orders." },
-      N("At the stern rail Corin stands alone, the silver rose clasp in his palm, watching the country where his sister is buried grow smaller. Nobody bothers him for a long while. Then Amar comes and stands beside him. Neither speaks. That is the right amount."),
+        body: "She doesn't get to decide for you anymore. Nobody does. Whatever you choose, we're with you. That part was Lucian's orders." },
+      N("At the stern rail, Corin stands alone with the silver rose clasp in his palm, watching the country where his sister is buried get smaller. Nobody bothers him for a long while. Then Amar comes and stands beside him without saying anything."),
       { speaker: "Corin", portraitId: "corin", expression: "quiet_grief",
         body: "Nine years we lived two streets apart, and the rebellion kept us apart. I never saw her lemon tree. (He pins the clasp back on.) I ride with you now, your highness. Wherever that turns out to be." },
-      N("Below decks is a bright cabin Khione lets no one ask about. A cot is lashed to the wall. On it, breathing steady and unreachable, lies Ndara. Khione carried her aboard two nights before the quay, while 'readying the ship'. The readying included the rebellion's marshal."),
+      N("Below decks is a bright cabin that Khione won't let anyone ask about. A cot is lashed to the wall, and on it lies Ndara, breathing steadily, still in her coma. Khione brought her aboard two nights before the fight on the quay, while she was supposedly 'readying the ship'."),
       { speaker: "Khione", portraitId: "khione", expression: "ancient_sadness",
-        body: "She sails with us. Dawn had begun to spend even her. A marshal in a coma still makes a useful story. (Beat.) Some things I refuse to leave behind. Sit with her sometimes. She always knew who was in the room." },
-      N("The ship runs west; Grude sinks behind. Ahead, nothing is written: no warrant, no map, no army. Only the sea, the squad, a lancer learning his sister secondhand, a sleeping marshal, and a question only Amar can answer.")
+        body: "She sails with us. Dawn had begun to sacrifice even her. A marshal in a coma still makes a useful story. I would not leave her behind. Sit with her sometimes. She always knew who was in the room." },
+      N("The ship sails west, and Grude drops out of sight behind them. Nobody has given them orders, a map or an army. Aboard are the squad, Corin, the sleeping Ndara, and a decision only Amar can make.")
     ]
   },
 
