@@ -241,7 +241,7 @@ export class BattleDialogueScene extends Phaser.Scene {
       const ch = this.fullText[i - 1] ?? "";
       if (i % 2 === 0 && /[a-zA-Z0-9]/.test(ch)) speakBlip(this.speakingId);
       if (i < this.fullText.length) {
-        this.time.delayedCall(14, reveal);
+        this.time.delayedCall(20, reveal);
       } else {
         this.revealing = false;
         this.setSpeaking(false);

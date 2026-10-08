@@ -21,8 +21,8 @@ import type { DialogBeat, PortraitId } from "../story/beats";
 
 const RETREAT_LINES: Record<string, string[]> = {
   amar: [
-    "That's the last of what I had. Pulling back. Hold the line without me. I'll be standing again by the next bell.",
-    "Down, not done. Keep the formation tight. I'll regroup at the rear and you will not miss a step."
+    "I've got nothing left. Pulling back. Hold the line without me. I'll be on my feet again by the next fight.",
+    "I'm down, but I'm all right. Keep the formation tight. I'll regroup at the rear. You can manage without me."
   ],
   lucian: [
     "...That one had my name on it. Falling back, and don't any of you do something stupid trying to cover the hole I leave.",
@@ -33,8 +33,8 @@ const RETREAT_LINES: Record<string, string[]> = {
     "That's everything I've got. Falling back to the rear. Nobody else goes down, you hear me? Nobody."
   ],
   maya: [
-    "I misjudged the angle. Withdrawing before it costs more than me. Cover the gap, east side, quickly.",
-    "Down, and it was my own error to own. Pull the line tight without me. We still win this. Go."
+    "I misjudged the angle. Pulling out before it costs us more. Cover the gap, east side, quickly.",
+    "I'm down, and that was my own mistake. Tighten the line without me. We can still win this. Go."
   ],
   leo: [
     "The dactyl's worse off than I am. We're out, we're out. Regrouping. Finish it for both of us.",
@@ -42,26 +42,26 @@ const RETREAT_LINES: Record<string, string[]> = {
   ],
   kian: [
     "Enough. I'm down. Hold what I was holding, and finish it cleanly. No flourishes.",
-    "Falling back. Mind the line I leave. The King's men always read a gap before you do."
+    "Falling back. Watch the gap I'm leaving. The King's men always spot a gap before you do."
   ],
   rose: [
-    "Down. Not done, just down. Go. The work doesn't clear itself and I'll be up before it's finished.",
+    "I'm down, but I'm not finished. Go. Somebody has to get the job done, and I'll be up before it is.",
     "I'm out of this one. Hold for Dawn. I'll be back on my feet before anyone needs the report."
   ],
   selene: [
-    "...Cut deeper than I let it. Falling back. Hold the line. Finish what we came in for.",
+    "...That cut went deeper than I thought. Falling back. Hold the line. Finish what we came for.",
     "I'm down. Don't break formation over me. Do the thing. I'll find you after."
   ],
   veya: [
-    "Rig's cracked and so am I. Withdrawing. Mind the seams without me, they won't aim themselves.",
-    "That's my lens arm gone. I grind, I don't bleed well. Back before the next inspection."
+    "The rig's cracked and so am I. Withdrawing. Someone else will have to aim for the armour seams.",
+    "That's my lens arm out. I grind lenses; I'm no good at bleeding. Back before the next inspection."
   ],
   corin: [
     "Horse is done and so is my shoulder. Falling back. Hold the line the way she taught Maya to.",
     "Unhorsed. I'll live, which is more than I planned for today. Ride on. Finish it."
   ],
   ranatoli: [
-    "Bleed only what you can spare, and I have spared quite enough. Falling back. Hold.",
+    "I've lost about all the blood I can spare. Falling back. Hold.",
     "Down, not dead. Cover the gap I'm leaving. We feast together yet, all of us."
   ]
 };

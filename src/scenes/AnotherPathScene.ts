@@ -74,8 +74,8 @@ export class AnotherPathScene extends Phaser.Scene {
 
     this.add.text(GAME_WIDTH / 2, 98,
       eligible.length > 0
-        ? "Khione knows the water to every road you didn't take. Which life should she sail back?"
-        : "No save has reached the fork yet — there is no road to sail back to.", {
+        ? "Khione can take the squad back to the Seven Paths choice. Which save should she take back?"
+        : "No save has reached the Seven Paths choice yet, so there is nothing to go back to.", {
       fontFamily: FAMILY_BODY, fontSize: "16px", color: "#c9b07a",
       fontStyle: "italic", align: "center", wordWrap: { width: 900 }
     }).setOrigin(0.5);
@@ -182,7 +182,7 @@ export class AnotherPathScene extends Phaser.Scene {
       }
     });
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 26,
-      "Either answer is a real one. The war is over in both.", {
+      "Either choice is fine. The war is over in both.", {
       fontFamily: FAMILY_BODY, fontSize: "13px", color: "#7a7165", fontStyle: "italic"
     }).setOrigin(0.5);
   }
