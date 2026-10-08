@@ -1,4 +1,7 @@
-// Combat VFX — procedural, code-drawn attack effects. No image assets.
+// Combat VFX — attack effects. Painted strips (Codex, keyed to light on
+// transparency — scripts/art/gen_vfx_art.py) where they have loaded; the
+// code-drawn versions below are the fallback and stay as the arrow, the
+// lens beam, the crit ring and the miss.
 //
 // Three effects, all spawned into WORLD space (callers pass BattleScene's
 // addWorld so nothing double-renders on the UI camera):
@@ -22,6 +25,52 @@ type WorldTag = <T extends Phaser.GameObjects.GameObject>(obj: T) => T;
 // between — above sprites, below the numbers.
 const DEPTH_ARROW = 36;
 const DEPTH_IMPACT = 38;
+
+// ---- painted strips -----------------------------------------------------------
+
+/** The painted effects, 128x128 frames on black (manifest: vfx:paint_*). */
+export const PAINTED = {
+  slash: "vfx:paint_slash",
+  slashCrit: "vfx:paint_slash_crit",
+  impact: "vfx:paint_impact",
+  heal: "vfx:paint_heal"
+} as const;
+
+/**
+ * Play one painted strip once at (x, y) and drop it. False when the strip
+ * hasn't loaded (the caller draws its fallback). Normal blending: the strips
+ * carry their glow in their alpha (additive blending on the world camera
+ * paints black wherever the board's buffer is transparent).
+ */
+export const playPainted = (
+  scene: Phaser.Scene,
+  world: WorldTag,
+  key: string,
+  x: number,
+  y: number,
+  o: { scale: number; rotation?: number; flipX?: boolean; tint?: number; fps?: number; depth?: number }
+): boolean => {
+  if (!scene.textures.exists(key)) return false;
+  const anim = `anim:${key}`;
+  if (!scene.anims.exists(anim)) {
+    scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+    scene.anims.create({ key: anim, frames: scene.anims.generateFrameNumbers(key, {}), frameRate: o.fps ?? 24, repeat: 0 });
+  }
+  const s = world(scene.add.sprite(x, y, key, 0))
+    .setDepth(o.depth ?? DEPTH_IMPACT)
+    .setScale(o.scale)
+    .setRotation(o.rotation ?? 0)
+    .setFlipX(!!o.flipX);
+  if (o.tint !== undefined) s.setTint(o.tint);
+  s.play(anim);
+  s.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => s.destroy());
+  return true;
+};
+
+/** Healing light rising over a unit (Mend, a potion). */
+export const healGlow = (scene: Phaser.Scene, world: WorldTag, x: number, y: number): void => {
+  playPainted(scene, world, PAINTED.heal, x, y - 10, { scale: 0.5, fps: 14 });
+};
 
 // Build the arrow texture once per scene: a fletched shaft with a bright
 // head, drawn pointing +x so rotation math is just the flight angle.
@@ -183,6 +232,13 @@ export const slashArc = (
   angle: number,
   crit: boolean
 ): void => {
+  // The painted sweep runs upper-left to lower-right: mirrored for a blow
+  // to the left, tipped a little toward a blow up or down the board.
+  const left = Math.cos(angle) < 0;
+  const tilt = Math.sin(angle) * 0.35 * (left ? -1 : 1);
+  if (playPainted(scene, world, crit ? PAINTED.slashCrit : PAINTED.slash, x, y - 4, {
+    scale: crit ? 0.62 : 0.46, flipX: left, rotation: tilt, fps: crit ? 22 : 26
+  })) return;
   const g = world(scene.add.graphics({ x, y }));
   g.setDepth(DEPTH_IMPACT);
   const radius = crit ? 24 : 18;
@@ -216,6 +272,9 @@ export const hitSpark = (
   y: number,
   crit: boolean
 ): void => {
+  if (playPainted(scene, world, PAINTED.impact, x, y, {
+    scale: crit ? 0.52 : 0.36, tint: crit ? 0xffe2a0 : undefined, fps: 22, depth: DEPTH_IMPACT + 0.1
+  })) return;
   const rays = crit ? 8 : 5;
   const color = crit ? 0xffd45a : 0xfff2d9;
   for (let i = 0; i < rays; i++) {

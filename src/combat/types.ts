@@ -35,6 +35,18 @@ export type ClassKind =
   // Special
   | "boss";
 
+// Bespoke battle sprites — one named character each, drawn from their
+// portrait (scripts/art/gen_anim_sheets.py BESPOKE). The bosses all shared
+// the "boss" sheet and the Ravage's troops wore human soldiers' sheets;
+// these are who they really are. A unit opts in with UnitDef.sprite.
+export const BESPOKE_SPRITES = [
+  "nebu", "ndari", "castor", "wren", "othren", "serrick", "archbold", "dawn",
+  "herald", "ravage_commander", "ravage_trooper", "ravage_lancer", "ravage_marksman"
+] as const;
+export type BespokeSprite = typeof BESPOKE_SPRITES[number];
+/** A sprite sheet folder: a class's, or a character's own. */
+export type SpriteClass = ClassKind | BespokeSprite;
+
 // "both" = Ready AND Defensive active simultaneously. Stances STACK: each
 // costs 1 AP and a unit may hold both in the same turn (the braced
 // counter-stance — full turtle at the cost of the whole offense). Read
@@ -190,6 +202,9 @@ export interface UnitDef {
   // E.g., Kian is class "knight" mechanically (gets the +2 mount bonus) but
   // renders as "swordmaster" until knight sprites ship.
   spriteClassOverride?: ClassKind;
+  // The unit's own battle sprite, when they have one (BespokeSprite):
+  // drawn whenever its sheet has loaded, ahead of the class's.
+  sprite?: BespokeSprite;
   // AI hold-position rule. When set, this unit's turn ends without action
   // (skips move + attack) until the count of OTHER alive units in the same
   // faction drops to `allyCount` or below. Used for kingly bosses who only

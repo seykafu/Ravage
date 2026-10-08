@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { PixelCanvas, darkenColor, lightenColor } from "./PixelCanvas";
 import { Rng } from "../util/rng";
-import type { ClassKind, Unit, WeaponKind } from "../combat/types";
+import type { ClassKind, SpriteClass, Unit, WeaponKind } from "../combat/types";
 import { TILE_SIZE, UNIT_ART_SCALE } from "../util/constants";
 
 // Sprite is drawn at 32×40 then composited at TILE_SIZE-aligned width.
@@ -188,7 +188,9 @@ const warnedFallback = new Set<string>();
 // Veya, Corin (and Kian) everywhere with zero code changes. The
 // spriteClassOverride is a stand-in for classes whose folders haven't
 // shipped, not a permanent identity.
-export const resolveSpriteClass = (scene: Phaser.Scene, u: Unit): ClassKind => {
+export const resolveSpriteClass = (scene: Phaser.Scene, u: Unit): SpriteClass => {
+  // A named character's own sheet beats the class they share with others.
+  if (u.sprite && scene.textures.exists(`unit:${u.sprite}:idle`)) return u.sprite;
   if (scene.textures.exists(`unit:${u.classKind}:idle`)) return u.classKind;
   return u.spriteClassOverride ?? u.classKind;
 };

@@ -10,7 +10,7 @@
 //
 // All paths are relative to /public, served at /<path>.
 
-import type { ClassKind } from "../combat/types";
+import { BESPOKE_SPRITES, type ClassKind } from "../combat/types";
 import { DEFAULT_VARIANT_FOR, PORTRAIT_EXPRESSIONS } from "./expressions";
 import { ASSET_VERSIONS } from "./assetVersions.gen";
 
@@ -148,7 +148,7 @@ const CLASSES: ClassKind[] = [
 
 const ANIM_STATES: UnitAnimState[] = ["idle", "walk", "attack", "hit", "death"];
 
-const unitAnimEntries: ManifestEntry[] = CLASSES.flatMap((cls) =>
+const unitAnimEntries: ManifestEntry[] = [...CLASSES, ...BESPOKE_SPRITES].flatMap((cls) =>
   ANIM_STATES.map((state) => ({
     id: `unit:${cls}:${state}`,
     path: `assets/sprites/${cls}/${state}.png`,
@@ -215,10 +215,14 @@ const tallObstacleEntries: ManifestEntry[] = TALL_OBSTACLE_IDS.map((id) => ({
 
 // VFX
 const vfxEntries: ManifestEntry[] = [
-  { id: "vfx:slash",    path: "assets/vfx/slash.png",     kind: "spritesheet", frame: ASSET_SPEC.vfx.slash },
-  { id: "vfx:hitSpark", path: "assets/vfx/hit_spark.png", kind: "spritesheet", frame: ASSET_SPEC.vfx.hitSpark },
-  { id: "vfx:arrow",    path: "assets/vfx/arrow.png",     kind: "image" }
+  // Painted effects (gen_vfx_art.py): 128x128 frames on black, additive.
+  { id: "vfx:paint_slash",      path: "assets/vfx/slash.png",      kind: "spritesheet", frame: { w: 128, h: 128 } },
+  { id: "vfx:paint_slash_crit", path: "assets/vfx/slash_crit.png", kind: "spritesheet", frame: { w: 128, h: 128 } },
+  { id: "vfx:paint_impact",     path: "assets/vfx/impact.png",     kind: "spritesheet", frame: { w: 128, h: 128 } },
+  { id: "vfx:paint_heal",       path: "assets/vfx/heal.png",       kind: "spritesheet", frame: { w: 128, h: 128 } },
 ];
+// (The old pixel slash / hit-spark / arrow entries pointed at files that
+// never shipped; the painted strips above replaced them.)
 
 // UI overrides. The procedural parchment panel is fine, but if you drop a
 // real PNG here it'll be used instead.
