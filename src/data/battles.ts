@@ -2566,7 +2566,7 @@ export const BATTLES: BattleNode[] = [
           trigger: { kind: "round_start", round: 2 },
           beats: [
             { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-              body: "Two rulers, throwing away other people's sons in one afternoon. Remember this field, Amar. One day somebody's going to ask you why the thrones have to go." }
+              body: "Two rulers, sacrificing other people's sons in one afternoon. Remember this field, Amar. One day somebody's going to ask you why the thrones have to go." }
           ]
         }]
       },
