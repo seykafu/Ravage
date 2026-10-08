@@ -90,6 +90,7 @@ if (only.includes("victory")) {
       if (b && b.scene.isPaused()) b.scene.resume();
     });
   }
+  await shot("battle_board");
   await page.evaluate(() => {
     const b = window.__RAVAGE_GAME__.scene.getScene("BattleScene");
     b.tally.set("maya", { damage: 74, kills: 3, heals: 0 });
