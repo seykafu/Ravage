@@ -56,11 +56,15 @@ const PRUNE = [
   "video/intro_poster.jpg",
   // Marketing-page gameplay snippet (derived from Footage.mp4).
   "video/gameplay.mp4",
-  "video/gameplay_poster.jpg"
+  "video/gameplay_poster.jpg",
+  // Fire Emblem reference material kept locally (git-ignored): copyrighted,
+  // never ships.
+  "video/FE FW Official.jpeg",
+  "video/FE FW.avif"
 ];
 // Whole directories the GAME never loads (landing-page art lives in
 // public/ so Vercel serves it, but it has no business in the download).
-const PRUNE_DIRS = ["assets/key"];
+const PRUNE_DIRS = ["assets/key", "video/FW OST"];
 for (const rel of PRUNE) rmSync(join(out, rel), { force: true });
 for (const rel of PRUNE_DIRS) rmSync(join(out, rel), { recursive: true, force: true });
 

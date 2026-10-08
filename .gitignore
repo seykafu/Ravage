@@ -11,3 +11,8 @@ tsconfig.tsbuildinfo
 .env.*.local
 dist-itch/
 release/
+
+# Fire Emblem reference material: copyrighted, never commit or deploy.
+/public/video/FE FW Official.jpeg
+/public/video/FE FW.avif
+/public/video/FW OST/
