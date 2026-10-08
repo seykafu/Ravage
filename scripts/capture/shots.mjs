@@ -682,4 +682,4 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, ring, home: ring.slice(3) };
+export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, landing: [bossFinales[1], bossFinales[4]], ring, home: ring.slice(3) };

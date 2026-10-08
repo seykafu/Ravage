@@ -64,7 +64,7 @@ const PRUNE = [
 ];
 // Whole directories the GAME never loads (landing-page art lives in
 // public/ so Vercel serves it, but it has no business in the download).
-const PRUNE_DIRS = ["assets/key", "video/FW OST"];
+const PRUNE_DIRS = ["assets/key", "assets/screens", "video/FW OST"];
 for (const rel of PRUNE) rmSync(join(out, rel), { force: true });
 for (const rel of PRUNE_DIRS) rmSync(join(out, rel), { recursive: true, force: true });
 
