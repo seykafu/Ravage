@@ -213,9 +213,9 @@ export const BATTLES: BattleNode[] = [
     title: "First Battle",
     subtitle: "The Palace Coup",
     intro:
-      "Year 2640 of the Anthros Monarch. For ten months you have planned this: storm King Nebu's palace at the heart of Para and end his selfish rule before the harvest fails again. Tonight your seven comrades are scattered through the back corridors. You and the lead group reached the throne hall first. Steel in hand. No retreat.",
+      "Year 2640 of the Anthros Monarch. For ten months, Amar and seven comrades have planned to storm King Nebu's palace in Para and end his selfish rule before the harvest fails again. Tonight the others are spread through the back corridors. Amar and the lead group reach the throne hall first. They have to break the royal guard and reach the King.",
     outro:
-      "The royal guard beats you back. You wake in a hospital outside the palace with no memory of who you are — alive, but bound to a fight you can't even remember starting.",
+      "The royal guard overpowers the squad and captures Amar. He wakes in a hospital outside the palace, alive, with no memory of who he is or of the coup he started.",
     music: MUSIC.enteringStronghold,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_palace_coup",
@@ -265,27 +265,27 @@ export const BATTLES: BattleNode[] = [
         music: MUSIC.sadness2,
         beats: [
           { portraitId: "narrator",
-            body: "The last royal guard goes down hard against the third pillar from the throne. The torches flicker once and steady. For one breath the throne hall is silent and the squad thinks it's over." },
+            body: "The last royal guard falls against the third pillar from the throne. For a moment the hall goes quiet, and the squad thinks the fight is over." },
           { speaker: "Selene", portraitId: "selene", expression: "breaking",
             body: "Amar, the side doors. The SIDE doors, get to —" },
           { portraitId: "narrator",
-            body: "Three palace guards step out on Amar's blind side. He turns too late. Gauntlets grab his wrist and throat. His sword falls; he doesn't see where." },
+            body: "Three palace guards step out on Amar's blind side. He turns too late. They grab his wrist and throat, and he drops his sword." },
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
             body: "Selene — !" },
           { portraitId: "narrator",
-            body: "Ranatoli is already moving: two strides, shield into the nearest guard's ribs. Six more step from the corridors behind him. They take him down without a word." },
+            body: "Ranatoli rushes in and slams his shield into the nearest guard's ribs. Six more guards come out of the corridors behind him and take him down." },
           { speaker: "Ranatoli", portraitId: "ranatoli", expression: "alarmed",
             body: "Hold on — Amar — hold ON, damn it —" },
           { portraitId: "narrator",
-            body: "Selene kills the closest guard before they swarm her. Arm pinned, knee wrenched wrong. She doesn't cry out. She finds Amar's eyes and shakes her head once. Don't." },
+            body: "Selene kills the closest guard before the rest overpower her. They pin her arm and wrench her knee. She doesn't cry out. She catches Amar's eye and shakes her head once, telling him not to try." },
           { portraitId: "narrator",
-            body: "The rest of the squad: Khonu dead at the south doors, Yul on the eastern stairs, Tev in the stables. Sera, no word for a long time." },
+            body: "The others are lost too. Khonu dies at the south doors, Yul on the eastern stairs, Tev in the stables. No one will hear from Sera for a long time." },
           { speaker: "King Nebu IV", portraitId: "nebu", expression: "cruel_amusement",
-            body: "Eight of you, ten months, and this: a boy kneeling in MY throne hall. Remove him. The other two: cells. Tomorrow I decide which name I remember." },
+            body: "Eight of you, ten months, and all I see is a boy kneeling in MY throne hall. Take him away. Cells for the other two. Tomorrow I'll decide which of you is worth remembering." },
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
             body: "(quietly, to no one) ...This was supposed to be the night." },
           { portraitId: "narrator",
-            body: "A heavy sack closes over Amar's head. The throne hall vanishes." }
+            body: "A guard pulls a heavy sack over Amar's head, and everything goes dark." }
         ]
       }
     ]
@@ -296,9 +296,9 @@ export const BATTLES: BattleNode[] = [
     title: "Second Battle",
     subtitle: "Bandits in the Farmland",
     intro:
-      "Bandits attack the farmland outside Thuling. You and the workers you've come to call friends — Lucian the foreman, Ning the bowmaker's apprentice — must defend the wagons until Kian's knight arrives. You shouldn't know how to fight this well. You do anyway. Keep pretending you don't.",
+      "Bandits attack the farmland outside Thuling. Amar and two workers he now counts as friends, Lucian the foreman and Ning the bowmaker's apprentice, must defend the wagons until Kian's knight arrives. Amar fights far better than a farmhand should, and he doesn't know why. He has to keep hiding it.",
     outro:
-      "Lucian hands you a rag for the cut on your hand. He says nothing. The smell of wet hay and iron has stirred something in you — a memory, or an instinct — and you can't afford to let him see it on your face.",
+      "The bandits are driven off. Lucian hands Amar a rag for the cut on his hand and says nothing. During the fight, the smell of wet hay and iron reminded Amar of something, a memory or an instinct. He can't let Lucian see that on his face.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_farmland",
@@ -330,7 +330,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Ning", portraitId: "ning", expression: "startled",
             body: "Lucian, I haven't drawn on a person before. The fences and the haybales, fine, but a person — fuck — a person is —" },
           { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
-            body: "Then today's the day, Ning. Same draw. Same release. The arrow doesn't know what it's hitting. You do. Make it count." },
+            body: "Then today's the day, Ning. Same draw, same release as on the haybales. I know it feels different. Just make the shot count." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
             body: "...I've got the line." }
         ]
@@ -345,7 +345,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "ally_attacks", allyId: "amar" },
         beats: [
           { portraitId: "narrator",
-            body: "Amar swings once, clean, with a small step beforehand that no forge worker would know to take. Lucian sees it. He doesn't look surprised. He doesn't let his face show anything at all." },
+            body: "Amar swings once, cleanly, after a small step that no forge worker would know to take. Lucian sees it. He doesn't look surprised, and he keeps his face completely blank." },
           { speaker: "Lucian", portraitId: "lucian",
             body: "...Hm." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
@@ -360,9 +360,9 @@ export const BATTLES: BattleNode[] = [
     title: "Third Battle",
     subtitle: "Madame Dawn's Bandits",
     intro:
-      "Two days after the wagon attack, a second wave comes down the eastern road — fewer, better armed, all wearing the same dyed sash. The town calls them \"Dawn's lot,\" after the queen across the sea who never forgave King Nebu for taking her land. Lucian forms the line. A stranger drops from the orchard and joins it without asking.",
+      "Two days after the wagon attack, more raiders come down the eastern road. There are fewer of them, but they're better armed, and all wear the same dyed sash. The town calls them \"Dawn's lot,\" after the queen across the sea who never forgave King Nebu for taking her land. Lucian forms a line to stop them. A stranger jumps down from the orchard and joins it without asking.",
     outro:
-      "The stranger says her name is Maya. She's quiet and watchful, with a sharp mind for tactics. Ning likes her before she's even finished her first sentence. Lucian says nothing, which from Lucian means approval. She stays.",
+      "The raiders are beaten back. The stranger says her name is Maya. She's quiet and watchful, and she clearly knows tactics. Ning likes her right away. Lucian doesn't object, which for Lucian means he approves. Maya stays with the squad.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -407,7 +407,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "amar" },
         beats: [
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "Your footwork. You step like a man who learned in a courtyard, not a wagon yard." },
+            body: "Your footwork. That's courtyard training. Nobody learns to step like that hauling wagons." },
           { speaker: "Amar", portraitId: "amar",
             body: "I learned on the farm. We do wagon-rotation drills." },
           { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
@@ -422,9 +422,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fourth Battle",
     subtitle: "Ambush in the Swamp",
     intro:
-      "Three minutes into the marsh, the trees block out the sun. Single file: Maya leading, Amar and Lucian in the middle, Kian clanking on the right, Ning watching the rear. The farm's delivery rides in Lucian's saddlebag. Bandits wait in the trees on every side — and Maya draws first.",
+      "Three minutes into the marsh, the trees block out the sun. The squad walks single file: Maya in front, Amar and Lucian in the middle, Kian in his armor on the right, Ning at the rear. Lucian carries the farm's delivery in his saddlebag. Bandits are hiding in the trees on every side. Maya spots them and draws first.",
     outro:
-      "Lucian makes up a story for Kian — something about reflexes learned on the farm. Kian nods and says nothing. That night by the fire, Lucian makes up a different story, this one just for you. Then he asks you to tell him the real one.",
+      "The squad gets through the ambush. Lucian makes up a story for Kian about reflexes Amar learned on the farm. Kian nods and says nothing. That night by the fire, Lucian makes up a second story, this one just for Amar. Then he asks Amar to tell him the real one.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_swamp",
@@ -497,7 +497,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Lucian", portraitId: "lucian",
             body: "Kian. Cover the western reed line. Amar takes center." },
           { speaker: "Kian", portraitId: "kian",
-            body: "I take orders from generals, Lucian. Not foremen." },
+            body: "I take orders from generals, Lucian. You're a foreman." },
           { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
             body: "Then take this one as a favor. Cover the western reed line." }
         ]
@@ -510,9 +510,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fifth Battle",
     subtitle: "The Mountain Bandits — Ndara & Ndari",
     intro:
-      "General Fergus sends your squad against marauders led by siblings: Ndari at the front, Ndara behind him. The village is already ruined; snow falls on broken roofs. Leo — Fergus's son, a Dactyl Rider — asks to ride with you. You can't guess why a father would send his own son into this. Set the question aside. Climb.",
+      "General Fergus sends the squad against marauders led by a brother and sister: Ndari at the front, Ndara behind him. The mountain village is already in ruins, with snow falling on the broken roofs. Leo, Fergus's son and a Dactyl Rider, asks to come along. Amar can't see why a father would send his own son into this. For now, the squad climbs toward Ndari.",
     outro:
-      "Ndari falls. Ndara escapes on a Dactyl. Her last question — Why are you fighting on Nebu's side? — hangs in the cold air. Lucian sees you flinch. He stays quiet tonight. Tomorrow he'll have a great deal to say.",
+      "Ndari dies at the gate, and Ndara escapes on a Dactyl. Before she goes, she shouts down at Amar, asking why he is fighting on Nebu's side. Lucian sees Amar flinch. He stays quiet tonight, but tomorrow he'll have a lot to say.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
@@ -578,11 +578,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Ndari slumps at the gate against the post, watching the path. The last bandits scatter. Above, a dactyl turns east. Then its rider stops, hovers, looks down." },
+            body: "Ndari slumps against the gatepost, still watching the path. The last bandits run. Overhead, a dactyl heads east, then stops and hovers while its rider looks down." },
           { speaker: "Ndara", portraitId: "ndari", expression: "grim_resolve",
             body: "(shouted, over the wing-beats) WHY ARE YOU FIGHTING ON NEBU'S SIDE, AMAR! ASK YOUR CAPTAIN WHO HE WORKS FOR! ASK HIM WHO ORDERED THE FOURTH HARVEST!" },
           { portraitId: "narrator",
-            body: "She doesn't wait for an answer. The dactyl turns and is gone behind the ridge. Lucian says nothing. He sees Amar's face change, and notes it for later." }
+            body: "She doesn't wait for an answer. The dactyl turns and disappears behind the ridge. Lucian sees Amar's expression change. He doesn't say anything, but he'll remember it." }
         ]
       }
     ]
@@ -593,9 +593,9 @@ export const BATTLES: BattleNode[] = [
     title: "Sixth Battle",
     subtitle: "The Caravan",
     intro:
-      "A routine escort east — two wagons of grain and steel. Then arrows fall from both canyon ledges and mounted bandits seal the road behind you. This ambush was planned. The drivers drop flat. Maya takes the south flank without being told, like she's done it a hundred times. Lucian's eyes narrow. He knows what this is.",
+      "The squad is escorting two wagons of grain and steel east on a routine job. Then archers fire from both canyon ledges, and mounted bandits block the road behind them. The ambush was planned. The drivers drop flat, and the squad has to protect them and the wagons. Maya takes the south flank without being told, as if she's done it a hundred times. Lucian notices.",
     outro:
-      "The road is yours — wagons intact, drivers alive. Under the bandit captain's body, Amar finds a ledger: route times, payment dates, and a margin note in court accounting code only palace officers can read. Someone inside Nebu's court paid for this ambush. The squad keeps the ledger.",
+      "The squad clears the road with the wagons intact and the drivers alive. Under the bandit captain's body, Amar finds a ledger: route times, payment dates, and a note in a court accounting code only palace officers can read. Someone inside Nebu's court paid for this ambush. The squad keeps the ledger.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_caravan",
@@ -666,7 +666,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "ally_killed_target", allyId: "amar", targetId: "crv_sp1" },
         beats: [
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
-            body: "Hold up. That one had a leather pouch on his hip. I saw it when he raised his shield. Maya, search him before we lose the body to the road dust." },
+            body: "Hold up. That one had a leather pouch on his hip. I saw it when he raised his shield. Maya, search him now, before we have to move on." },
           { speaker: "Maya", portraitId: "maya",
             body: "Already on it." }
         ]
@@ -679,9 +679,9 @@ export const BATTLES: BattleNode[] = [
     title: "Seventh Battle",
     subtitle: "The Ghost from Para",
     intro:
-      "Fergus's orders: raiders in a mountain monastery, kidnapped tax collectors — clear it out. Two days' climb, then the squad breaks the south gate and pushes in. In the inner hall, the raiders' leader looks up. Amar knows her from a wanted poster. Selene. One of the seven from the coup.",
+      "Fergus orders the squad to clear out raiders who have kidnapped tax collectors and are holding a mountain monastery. After a two-day climb, the squad breaks the south gate and pushes in. In the inner hall, the raiders' leader looks up. Amar knows her from a wanted poster. It's Selene, one of the seven from the coup.",
     outro:
-      "Selene goes over the bell tower balcony — rope already coiled on her shoulder — and vanishes into the mist before Leo can turn his Dactyl. The raiders scatter. Lucian fought the whole battle on Amar's blind side, covering a man at half strength. He doesn't ask why. Not yet.",
+      "Selene jumps from the bell tower balcony with a rope already over her shoulder, and disappears into the mist before Leo can turn his Dactyl. The raiders scatter. Lucian stayed on Amar's blind side all battle, covering for him while he fought at half strength. He hasn't asked why yet.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_monastery",
@@ -763,7 +763,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
             body: "Sh!!" },
           { portraitId: "narrator",
-            body: "Selene catches herself mid-syllable. Her eyes say it: *I thought you were dead.* His answer: *They have to keep thinking it.* The squad hasn't noticed a thing." },
+            body: "Selene stops herself mid-word. She clearly thought he was dead. With a look, Amar warns her that everyone has to keep thinking so. The squad hasn't noticed a thing." },
           { speaker: "Selene", portraitId: "selene", expression: "cold_contempt",
             body: "(louder, for the room) ...You shouldn't be here, soldier. None of you should." },
           { speaker: "Amar", portraitId: "amar",
@@ -780,9 +780,9 @@ export const BATTLES: BattleNode[] = [
     title: "Eighth Battle",
     subtitle: "The Town of Orinhal",
     intro:
-      "Fergus's orders: break up the riot, arrest the ringleaders. But the squad rides in at noon and finds no riot — just a starving town. Unarmed foremen and families stand between the King's tax collectors and the last winter grain. Then green cloaks: Madame Dawn's partisans, holding the line. Leo dismounts and walks his Dactyl over to them. The squad follows.",
+      "Fergus orders the squad to break up a riot in Orinhal and arrest the ringleaders. But they ride in at noon and find no riot, just a starving town. Unarmed foremen and their families stand between the King's tax collectors and the last of the winter grain. Madame Dawn's partisans, in green cloaks, are holding the line with them. Leo dismounts and walks his Dactyl over to them. The squad follows.",
     outro:
-      "The tax collectors break first. Dawn's lieutenant — a gray-cloaked woman called Ndara, not the bandit from the mountain — says Dawn has been watching Amar and wants to meet when he's ready. She's gone before he can answer. Lucian hands the squad's share of silver back to the townspeople.",
+      "The tax collectors break and run. Dawn's lieutenant, a gray-cloaked woman also called Ndara but not the bandit from the mountain, says Dawn has been watching Amar and wants to meet when he's ready. She leaves before he can answer. Lucian gives the squad's share of the silver back to the townspeople.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_orinhal",
@@ -827,7 +827,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 2 },
         beats: [
           { portraitId: "narrator",
-            body: "Round two: the arrows stop. The foremen stand between the squad and the King's tax men. Not one has run. They're watching what kind of soldiers Anthros sends." },
+            body: "The arrows stop. The foremen are still standing between the squad and the King's tax men, and none of them have run. They're waiting to see what kind of soldiers Anthros has sent." },
           { speaker: "Leo", portraitId: "leo", expression: "ready",
             body: "Captain. I'm dismounting. I'm taking the dactyl to the partisans. The squad is welcome to follow. I'll explain to my father later. Or I won't. Either's fine." },
           { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
@@ -835,7 +835,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Leo", portraitId: "leo", expression: "resolute",
             body: "I know, Lucian. The townspeople behind us are unarmed. The tax men in front of us are not. I know which side I'm on. The rest of you do what you have to." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "(after a beat) ...The squad's with you, Leo. Lucian, pivot the line. We're fighting south now." }
+            body: "...The squad's with you, Leo. Lucian, turn the line around. We're fighting south now." }
         ]
       },
       // adjacent_eot Maya/Leo — quieter character moment after the
@@ -865,9 +865,9 @@ export const BATTLES: BattleNode[] = [
     title: "Ninth Battle",
     subtitle: "The Price of Doubt",
     intro:
-      "News of Orinhal beats the squad to Thuling. Fergus sends them right back out to stop a bandit column. It's a trap: a King's regiment in commoners' clothes, dug into a ravine, archers on the high ground, a river blocking retreat. Fire from three directions in thirty seconds. Maya's face hardens in a way none of them have seen.",
+      "News of Orinhal reaches Thuling before the squad does. Fergus sends them straight back out to stop a bandit column. It's a trap: the bandits are a King's regiment in commoners' clothes, dug into a ravine, with archers on the high ground and a river blocking retreat. Within thirty seconds they're firing from three directions. Maya turns grim in a way none of them have seen.",
     outro:
-      "Lucian takes a bolt saving Ning and fights one-armed. Clear of the ravine, the truth lands: Fergus knew about the coup and has been sending the squad to die. Maya is no peasant — Madame Dawn planted her months ago. Dawn offers safety. Another night in Thuling is suicide.",
+      "Lucian takes a bolt saving Ning and fights on one-armed. Out of the ravine, the squad learns the truth: Fergus knew about the coup and has been sending them to die. Maya isn't a peasant. Madame Dawn planted her months ago. Dawn offers them safety. Another night in Thuling would get them killed.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
@@ -922,7 +922,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { portraitId: "narrator",
-            body: "Three bolts in thirty seconds, from three directions. Fergus's 'bandit column' is on the rim, in the trees, behind the river. Royal kit under the commoners' clothes." },
+            body: "Three bolts land in thirty seconds, from three directions. Fergus's 'bandit column' is on the rim, in the trees, and across the river. They're wearing royal gear under their commoners' clothes." },
           { speaker: "Maya", portraitId: "maya", expression: "alarmed",
             body: "These aren't bandits. Lucian, TOP RIM, three archers, dug in. Crown gear under the cloaks. This is a regiment. Fergus marched us straight into a goddamn regiment." },
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
@@ -965,9 +965,9 @@ export const BATTLES: BattleNode[] = [
     title: "Tenth Battle",
     subtitle: "Leaving Thuling",
     intro:
-      "The streets you walked every day. Kian waits outside Lucian's house with twelve guardsmen and a warrant sealed by the King. Lucian's wife and daughter are inside. Kian's known about Amar since the second week, he says. Hoped he was wrong. The warrant is for Amar alone; the squad walks if he surrenders. Lucian is already drawing his spear.",
+      "The squad is trying to leave Thuling. Kian is waiting outside Lucian's house with twelve guardsmen and a warrant sealed by the King. Lucian's wife and daughter are inside. Kian says he has known about Amar since the second week, and hoped he was wrong. The warrant is for Amar alone; the others can go if he surrenders. Lucian is already drawing his spear.",
     outro:
-      "The blockade breaks at the third barricade. Mira and Tali, Lucian's family, reach a cousin's farm. Kian doesn't chase. He shouts after the squad: \"The cliffs, Amar. We'll finish what your father started — before Madame Dawn turns you into a weapon.\"",
+      "The squad breaks through at the third barricade. Mira and Tali, Lucian's family, make it to a cousin's farm. Kian doesn't chase them. He shouts after the squad: \"The cliffs, Amar. We'll finish what your father started, before Madame Dawn can use you as a weapon.\"",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -1024,11 +1024,11 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
             body: "Amar, or whatever you call yourself. The warrant is for you alone. Surrender, and everyone else walks. Refuse, and I burn the house with them in it. Choose." },
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
-            body: "Mira and Tali are out the back gate. They have been for ten minutes. You burn an empty house, Kian. You always did love announcing things." },
+            body: "Mira and Tali went out the back gate ten minutes ago. Burn it if you like, Kian. The house is empty. You always did love announcing things." },
           { speaker: "Kian", portraitId: "kian", expression: "alarmed",
             body: "...Lucian. You knew? How long have you known?" },
           { speaker: "Lucian", portraitId: "lucian", expression: "fatherly_smile",
-            body: "About Amar? Maybe a year. About you? Since the practice yard. Move, or move out of the way." },
+            body: "About Amar? Maybe a year. About you? Since the practice yard. Now fight us or get out of the way." },
           { speaker: "Kian", portraitId: "kian", expression: "cold_contempt",
             body: "Then we do it the hard way. Hold the line, gentlemen. Nobody walks west tonight." }
         ]
@@ -1042,11 +1042,11 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
             body: "Why now? You had a year to turn me in. Why tonight?" },
           { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
-            body: "Because tonight Madame Dawn offered you a ship. The King doesn't care about a peasant who used to be a prince. The King cares very much about a piece on Dawn's board." },
+            body: "Because tonight Madame Dawn offered you a ship. The King doesn't care about a peasant who used to be a prince. He cares a great deal about a prince working for Dawn." },
           { speaker: "Amar", portraitId: "amar",
             body: "And what do YOU care about, Kian." },
           { speaker: "Kian", portraitId: "kian", expression: "wounded",
-            body: "(quietly) I trained a frightened thirteen-year-old. I watched him die in his throne hall and hoped whoever woke in the hospital wasn't him. Now move, your highness." }
+            body: "(quietly) I trained a frightened thirteen-year-old. When he went down in that throne hall, I hoped whoever woke up in the hospital wouldn't be him anymore. Now move, your highness." }
         ]
       },
       // before_victory: Kian doesn't pursue once the squad breaks
@@ -1056,9 +1056,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The squad breaks the south barricade: Maya first, Ning covering, Leo wide east. Lucian backs through the gap, spear levelled. Kian could close the line. He doesn't." },
+            body: "The squad breaks the south barricade. Maya goes first, Ning covers, and Leo swings wide east. Lucian backs through the gap, spear levelled. Kian could close the line, but he doesn't." },
           { speaker: "Kian", portraitId: "kian", expression: "wounded",
-            body: "(calling after them) The cliffs above Para Harbor! We finish it where your father's fight ended: stone, open sky, you and me. Bring your friends. They won't help." },
+            body: "(calling after them) The cliffs above Para Harbor! We'll finish this where your father's fight ended, out in the open, just you and me. Bring your friends. They won't help." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
             body: "(over his shoulder, not slowing) The cliffs, Kian. Sundown." },
           { portraitId: "narrator",
