@@ -232,7 +232,7 @@ export const ARCS: Record<ArcId, StoryArc> = {
       N("Lucian hands Amar a rag. He doesn't ask where the wound came from, or why it was so easy for Amar to drop the second bandit when Lucian's back was exposed."),
       { speaker: "Kian", portraitId: "kian", expression: "knowing_smile", body: "You handled yourself well. Some of that looked... rehearsed." },
       { speaker: "Amar", portraitId: "amar", body: "Anyone goes down if you hit them in the right place. I think I just got lucky." },
-      N("Amar shows Kian the cut on his waist. He made it himself this morning, more neatly than a farmer would know how. Kian believes him, for now."),
+      N("Amar shows Kian the cut on his hand. He made it himself this morning, more neatly than a farmer would know how. Kian believes him, for now."),
       { speaker: "Lucian", portraitId: "lucian", body: "Amar." },
       { speaker: "Amar", portraitId: "amar", body: "Yes?" },
       { speaker: "Lucian", portraitId: "lucian", body: "Next time you cut yourself for show, do it on the off-hand. People notice when you favor the wrong arm." },

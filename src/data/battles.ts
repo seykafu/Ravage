@@ -967,7 +967,7 @@ export const BATTLES: BattleNode[] = [
     intro:
       "The squad is trying to leave Thuling. Kian is waiting outside Lucian's house with twelve guardsmen and a warrant sealed by the King. Lucian's wife and daughter are inside. Kian says he has known about Amar since the second week, and hoped he was wrong. The warrant is for Amar alone; the others can go if he surrenders. Lucian is already drawing his spear.",
     outro:
-      "The squad breaks through at the third barricade. Mira and Tali, Lucian's family, make it to a cousin's farm. Kian doesn't chase them. He shouts after the squad: \"The cliffs, Amar. We'll finish what your father started, before Madame Dawn can use you as a weapon.\"",
+      "The squad breaks through the south barricade and out the western gate. Mira and Tali, Lucian's family, make it to a cousin's farm. Kian doesn't chase them. He shouts after the squad: \"The cliffs, Amar. We'll finish what your father started, before Madame Dawn can use you as a weapon.\"",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
