@@ -2,7 +2,7 @@
 // choice and its commit, the promotion transformation, and a won battle's
 // cheer + best-of-the-battle card — each captured on the virtual clock.
 //
-// Usage: node scripts/capture/screensProbe.mjs [only=title,credits,recap,choice,promo,victory]
+// Usage: node scripts/capture/screensProbe.mjs [only=title,credits,recap,choice,promo,prep,victory]
 // Frames land in release/capture/screens/.
 
 import { chromium } from "playwright";
@@ -77,6 +77,34 @@ if (only.includes("promo")) {
   // (The panel is made in a promise callback, after the step loop's last
   // frame: one more step draws it.)
   await step(2); await shot("promo_panel");
+}
+if (only.includes("prep")) {
+  // A brand-new save: the first-visit pointer to Inventory + Trade, then
+  // B1's opening board (the King and his three guards).
+  await page.evaluate(async () => {
+    const save = await import("/src/util/save.ts");
+    save.setCurrentSlot(2); save.writeSave(save.defaultSave());
+  });
+  await go("BattlePrepScene", { battleId: "b01_palace_coup" });
+  await step(45); await shot("prep_b01_tip");
+  console.log("prep tip objects:", await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattlePrepScene").inventoryTip.length));
+  await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattlePrepScene").dismissInventoryTip());
+  await go("BattlePrepScene", { battleId: "b01_palace_coup" });
+  await step(30); await shot("prep_b01_after");
+  await go("BattleScene", { battleId: "b01_palace_coup" });
+  for (let i = 0; i < 8; i++) {
+    await step(20);
+    await page.evaluate(() => {
+      const g = window.__RAVAGE_GAME__;
+      const d = g.scene.getScene("BattleDialogueScene");
+      if (d && d.scene.isActive()) d.scene.stop();
+      const b = g.scene.getScene("BattleScene");
+      if (b && b.scene.isPaused()) b.scene.resume();
+    });
+  }
+  await shot("b01_board");
+  console.log("b01 enemies:", await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattleScene").state.units
+    .filter((u) => u.faction === "enemy").map((u) => `${u.id}@${u.state.position.x},${u.state.position.y}`).join(" ")));
 }
 if (only.includes("victory")) {
   await go("BattleScene", { battleId: "b12_ravage" });

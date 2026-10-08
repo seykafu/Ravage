@@ -9,10 +9,10 @@ import type { ClassKind, ItemKind, UnitDef, WeaponKind } from "../combat/types";
 import { ensureUnitTexture } from "../art/UnitArt";
 import { createUnit } from "../combat/Unit";
 import { ITEM_CATALOG } from "../combat/items";
-import { sfxClick } from "../audio/Sfx";
+import { sfxClick, sfxHover } from "../audio/Sfx";
 import { SettingsButton } from "../ui/SettingsButton";
 import { createScrollableText } from "../ui/scrollableText";
-import { clearSuspendedBattle, getAssignedInventory, getSevenPath, loadSave } from "../util/save";
+import { clearSuspendedBattle, getAssignedInventory, getSevenPath, loadSave, writeSave } from "../util/save";
 import type { BattleId } from "../data/contentIds";
 
 interface PrepArgs {
@@ -46,6 +46,10 @@ const classLabel = (k: ClassKind): string => {
   }
 };
 
+// Set once the player has opened Inventory + Trade (or waved the pointer
+// off): the first-visit pointer to it doesn't come back.
+const INVENTORY_TIP_FLAG = "tip_prep_inventory_seen";
+
 const weaponLabel = (w: WeaponKind): string => {
   switch (w) {
     case "sword": return "Sword";
@@ -59,6 +63,7 @@ const weaponLabel = (w: WeaponKind): string => {
 
 export class BattlePrepScene extends Phaser.Scene {
   private battleId!: BattleId;
+  private inventoryTip: Phaser.GameObjects.GameObject[] = [];
   constructor() { super("BattlePrepScene"); }
   private fromCamp = false;
   init(data: PrepArgs): void {
@@ -303,14 +308,15 @@ export class BattlePrepScene extends Phaser.Scene {
     // / trading post modal as a paused overlay. Sits between the map
     // and march buttons so the player naturally reaches for it after
     // reading the brief and before committing to battle.
+    const invBtn = { x: GAME_WIDTH - 460, y: GAME_HEIGHT - 56, w: 200, h: 40 };
     new Button(this, {
-      x: GAME_WIDTH - 460, y: GAME_HEIGHT - 56,
-      w: 200, h: 40,
+      ...invBtn,
       label: "Inventory + Trade",
       primary: false,
       fontSize: 14,
       onClick: () => {
         sfxClick();
+        this.dismissInventoryTip();
         this.scene.pause();
         this.scene.run("InventoryScene", {
           battleId: node.id,
@@ -356,10 +362,74 @@ export class BattlePrepScene extends Phaser.Scene {
       }
     });
 
+    // A new player's first look at this screen: the squad's starting
+    // potions sit unassigned in the pool, and the Inventory button is easy
+    // to walk past on the way to "March to Battle".
+    this.inventoryTip = [];
+    if (saveSnapshot.flags[INVENTORY_TIP_FLAG] !== true && (saveSnapshot.squadInventory?.length ?? 0) > 0) {
+      this.showInventoryTip(invBtn);
+    }
+
     getMusic(this).play(node.prepMusic, { fadeMs: 800 });
     this.cameras.main.fadeIn(450, 0, 0, 0);
 
     new SettingsButton(this, GAME_WIDTH - 32, 32);
+  }
+
+  /** A card over the Inventory button, an arrow at it, and a pulse round it. */
+  private showInventoryTip(btn: { x: number; y: number; w: number; h: number }): void {
+    const W = 380, PAD = 18;
+    const cx = btn.x + btn.w / 2;
+    const X = Math.min(GAME_WIDTH - W - 20, cx - W / 2);
+    const body = this.add.text(0, 0,
+      "Your squad's potions are waiting in the shared pool. Open Inventory + Trade and give each fighter a few before you march. Items left in the pool don't come into battle.", {
+        fontFamily: FAMILY_BODY, fontSize: "15px", color: "#ece6d6", wordWrap: { width: W - PAD * 2 }, lineSpacing: 4
+      });
+    const H = 40 + body.height + 52;
+    const Y = btn.y - 40 - H;
+    body.setPosition(X + PAD, Y + 38);
+    const g = this.add.graphics();
+    drawPanel(g, X, Y, W, H);
+    const title = this.add.text(X + PAD, Y + 13, "NEW HERE?", {
+      fontFamily: FAMILY_HEADING, fontSize: "15px", color: "#f4d999", letterSpacing: 2
+    });
+    const got = new Button(this, {
+      x: X + W - 112, y: Y + H - 42, w: 96, h: 30,
+      label: "Got it", primary: true, fontSize: 13,
+      onClick: () => { sfxClick(); this.dismissInventoryTip(); }
+    });
+    // The arrow bobs between the card and the button.
+    const arrow = this.add.text(cx, btn.y - 18, "▼", {
+      fontFamily: "Arial, sans-serif", fontSize: "24px", color: "#ffd45a", stroke: "#1a0e04", strokeThickness: 4
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: arrow, y: arrow.y - 7, duration: 380, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    // A gold outline breathing round the button itself.
+    const ring = this.add.graphics();
+    ring.lineStyle(2, 0xffd45a, 1);
+    ring.strokeRect(btn.x - 4, btn.y - 4, btn.w + 8, btn.h + 8);
+    this.tweens.add({ targets: ring, alpha: 0.25, duration: 650, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+
+    this.inventoryTip = [g, title, body, got, arrow, ring];
+    for (const o of this.inventoryTip) {
+      const v = o as unknown as Phaser.GameObjects.Components.Depth & Phaser.GameObjects.Components.Alpha;
+      // The panel under everything on it (the body was made first, to size it).
+      v.setDepth(o === g ? 50 : 51);
+      if (o !== ring) v.setAlpha(0);
+    }
+    this.tweens.add({ targets: this.inventoryTip.filter((o) => o !== ring), alpha: 1, duration: 300, delay: 500 });
+    this.time.delayedCall(500, () => sfxHover());
+  }
+
+  private dismissInventoryTip(): void {
+    if (this.inventoryTip.length === 0) return;
+    for (const o of this.inventoryTip) {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    }
+    this.inventoryTip = [];
+    const s = loadSave();
+    s.flags[INVENTORY_TIP_FLAG] = true;
+    writeSave(s);
   }
 }
 

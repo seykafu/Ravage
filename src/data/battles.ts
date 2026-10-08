@@ -222,16 +222,16 @@ export const BATTLES: BattleNode[] = [
     playable: true,
     map: palaceMap,
     buildPlayers: () => [PLAYERS.amarHidden(), PLAYERS.ranatoli(), PLAYERS.selene()],
+    // Kept small: this is a new player's first fight (and the tutorial).
+    // Three of the King's guards, and the King, who stays on his throne
+    // until only one of them is left (holdPositionUntil).
     buildEnemies: () => [
       ENEMIES.kingNebu(),
       ENEMIES.royalGuard("rg1", 121),
       ENEMIES.royalGuard("rg2", 122),
-      ENEMIES.royalArcher("ra1", 123),
-      ENEMIES.royalArcher("ra2", 124),
-      ENEMIES.royalGuard("rg3", 125),
-      ENEMIES.royalGuard("rg4", 126)
+      ENEMIES.royalGuard("rg3", 123)
     ],
-    difficultyLabel: "Grand Engagement",
+    difficultyLabel: "The Throne Hall",
     // Spoils: 2 potions from the throne-hall medic kits the squad strips
     // off the fallen guards before reinforcements arrive. Modest because
     // narratively the squad is captured immediately after — they don't
