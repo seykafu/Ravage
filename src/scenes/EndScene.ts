@@ -168,8 +168,8 @@ export class EndScene extends Phaser.Scene {
     drawPanel(pg, panelX, panelY, panelW, panelH);
 
     const outroText = isVictory
-      ? (node?.outro ?? "The field is yours.")
-      : "The line broke. You wake to the smell of damp stone and someone else's bandages. Try again — the harvest will not wait.";
+      ? (node?.outro ?? "The squad won the battle.")
+      : "The squad's line broke and they had to retreat. Their wounds will heal. Try the battle again.";
 
     // Reserve the bottom strip for the spoils row + divider so the outro
     // text wraps above it instead of running underneath it. Strip height

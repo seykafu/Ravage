@@ -83,7 +83,7 @@ const coup: Script = async (r) => {
   const amar = r.figure("amar", -60, FEET, dark);
   const ranatoli = r.figure("ranatoli", -160, FEET - 6, dark);
   const selene = r.figure("selene", -250, FEET - 16, dark);
-  r.caption("Eight rebels. Ten months of planning. One night.", 3400, true);
+  r.caption("Eight rebels have spent ten months planning for this night.", 3400, true);
   void r.pan(pal, { zoom: 1.42, x: 0.55, y: 0.72 }, 8000);
   await Promise.all([amar.walkTo(690, FEET, 1000), ranatoli.walkTo(570, FEET - 6, 1000), selene.walkTo(440, FEET - 16, 1000)]);
 
@@ -146,7 +146,7 @@ const coup: Script = async (r) => {
   for (const f of [a, s, t]) { f.box.setAlpha(0); void r.tween({ targets: f.box, alpha: 1, duration: 450 }); }
   r.embers({ x: 0, y: H * 0.45, w: W, h: H * 0.5 }, 5000, Z.FRONT_FX, 70);
   await r.wait(500);
-  await r.slam("The Palace Coup", "Steel in hand. No retreat.", 1700);
+  await r.slam("The Palace Coup", "The rebels storm the palace.", 1700);
   await r.fadeOut(600);
   await r.narrate("Far from the palace, someone else is awake tonight.", 1300, { size: 28 });
 };
@@ -253,7 +253,7 @@ const escape: Script = async (r) => {
   await r.wait(r.place("Para Harbor", "Moonrise, the night after the cliffs.", 4200) + 200);
   await r.wait(r.caption("Kian is dead. The King's soldiers are already on the road.", 3400) + 100);
   await r.wait(r.caption("Madame Dawn's ship is the squad's only way out.", 3200) + 100);
-  await r.wait(r.caption("Ahead: fourteen months of open sea. At the end of it, Grude, the heart of the empire.", 4000) + 100);
+  await r.wait(r.caption("Ahead are fourteen months at sea, and then Grude, the capital of the empire.", 4000) + 100);
   await r.slam("The Escape to Grude", undefined, 1800, "#e4ecf4");
   await r.fadeOut(900);
 };
@@ -339,7 +339,7 @@ const skyFleet: Script = async (r) => {
     await r.wait(3000);
   }
   await r.wait(1200);
-  await r.wait(r.caption("No kingdom on any map had ever seen anything like them.", 3400) + 100);
+  await r.wait(r.caption("Nobody in any kingdom had ever seen anything like them.", 3400) + 100);
   await r.slam("The Sky Speaks", undefined, 1800, "#9affe4");
   await r.fadeOut(1000);
 };

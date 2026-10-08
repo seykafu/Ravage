@@ -719,7 +719,7 @@ const seventhChoice: FinaleScript = async (c) => {
   void c.fadeAway(names, 900);
   await c.focus(c.host.boardCentre(), 1.05, 1000);
   await c.orbit(1, 0.42);
-  await c.title("Seven Names. One Choice.", "The path begins where the keel touches sand.", 2200);
+  await c.title("Seven Names. One Choice.", "When the ship reaches the shore, Amar will choose his path.", 2200);
 };
 
 // B19, exile — alone on the pass. The world drains to the cold, the snow
@@ -736,7 +736,7 @@ const longRoadNorth: FinaleScript = async (c) => {
   await c.dissolve(names, 2000);
   await c.focus(amarOr(c), 0.92, 1600);
   await c.orbit(1, 0.36);
-  await c.title("Alone Means Alone", "The names wear away. The one the empire hunts does not.", 2200, "#e4ecf4");
+  await c.title("Alone Means Alone", "Amar forgets the other names. The empire still hunts his own.", 2200, "#e4ecf4");
 };
 
 // B19, forgetting — the shore at dusk: the bounty men down at the
@@ -749,7 +749,7 @@ const fishermansShore: FinaleScript = async (c) => {
   await c.wait(900);
   await c.focus(c.host.boardCentre(), 1.08, 1200);
   await c.orbit(2, 0.4);
-  await c.title("A Name That Is Not Amar", "Come morning, the sword stays. He goes out with the boat.", 2200);
+  await c.title("A Name That Is Not Amar", "In the morning he leaves the sword and goes out on the boat.", 2200);
 };
 
 // B28 — the last blow, the road's own answer to it, and then what every
@@ -767,7 +767,7 @@ const PATH_ENDS: Record<"vengeance" | "restoration" | "revolution" | "duty" | "m
     boss: "archbold", gentle: false,
     beat: (c) => c.strikeName("Archbold"),
     title: "The Last Name",
-    line: "The list ends on the marble where the kings of Grude were crowned."
+    line: "Archbold, the last name on the list, dies where Grude's kings were crowned."
   },
   restoration: {
     boss: "ravage_commander", gentle: false,
@@ -781,25 +781,25 @@ const PATH_ENDS: Record<"vengeance" | "restoration" | "revolution" | "duty" | "m
       await c.wait(500);
     },
     title: "It Holds",
-    line: "The slow work doesn't cheer. It just holds."
+    line: "The squad holds the line until the fighting stops."
   },
   revolution: {
     boss: "dawn_boss", gentle: false,
     beat: (c, at) => c.crownShatters(at),
     title: "No Thrones",
-    line: "On the marble where every crown in the west was set, nothing is set."
+    line: "Dawn falls on the coronation marble, and no one is crowned there."
   },
   duty: {
     boss: "ravage_commander", gentle: false,
     beat: (c) => c.barrage(5),
     title: "The Order Held",
-    line: "For once the report and the truth are the same document."
+    line: "The line holds. For once, the official report is accurate."
   },
   mercy: {
     boss: "archbold", gentle: true,
     beat: (c, at) => c.swordSetDown(at),
     title: "Steel Set Down",
-    line: "The war ends with the sound of steel set down, not driven in."
+    line: "Archbold surrenders his sword to Amar and lives. The war is over."
   }
 };
 
@@ -896,7 +896,7 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.echo("Ask your captain who he works for!");
     },
     title: "The Mountain Gate",
-    line: "Ndari falls holding the gate. His sister gets away on the wind."
+    line: "Ndari falls holding the gate. His sister Ndara escapes on a dactyl."
   }),
   b07_monastery: () => ({
     boss: "selene_enemy", lives: true, grade: "cold",
@@ -925,14 +925,14 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.wait(1800);
     },
     title: "Rose",
-    line: "Four bolts. She held long enough for Dawn to understand.",
+    line: "Rose steps in front of four bolts meant for Dawn, and dies.",
     colour: "#f2d0c8"
   }),
   b14_origin: () => ({
     boss: "imperial_knight", lives: true, grade: "cold",
     beat: (c) => c.echo("Welcome to the family, your highness."),
     title: "Welcome to the Family",
-    line: "Lord Castor's guard carries him off. Upstairs, Dawn's sentence is still waiting."
+    line: "Lord Castor's guards carry him off. Upstairs, Dawn has more to tell Amar."
   }),
   b15_inner_coup: () => ({
     boss: "turncoat", grade: "dusk",
@@ -941,7 +941,7 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.echo("Six strides of bad luck.");
     },
     title: "Six Strides Short",
-    line: "The man who sold Dawn's door had kept her books for nine years."
+    line: "Coyne, who sold out Dawn's safe house, had kept her books for nine years."
   }),
   b16_proposal: () => ({
     boss: "kings_knife", grade: "cold",
@@ -950,13 +950,13 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.echo("Stop standing in the open.");
     },
     title: "The King's Knife",
-    line: "Wren falls on the open bridge. Her hired knives melt away."
+    line: "Wren falls on the open bridge, and her hired killers run."
   }),
   b19_path_opener_vengeance: () => ({
     boss: "imperial_knight", grade: "mono",
     beat: (c) => c.strikeName("Castor"),
     title: "First Name",
-    line: "One name crossed off the list. Maya keeps the ledger now."
+    line: "Castor is the first name crossed off. Maya keeps the list now."
   }),
   b19_path_opener_revolution: () => ({
     boss: "royal_captain", grade: "dusk",
@@ -967,7 +967,7 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.echo("Burn well.", 2000, "#ffd8a8");
     },
     title: "Burn Well",
-    line: "The granary burns for the villages that grew it and never ate it."
+    line: "The granary burns. The villages that grew the grain never got any of it."
   }),
   b19_path_opener_mercy: () => ({
     boss: "royal_captain", lives: true, grade: "dawn",
@@ -982,7 +982,7 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.chant("AMAR", 12);
     },
     title: "The Cheered Name",
-    line: "Across the field, the rebels are cheering a name. It isn't Dawn's."
+    line: "Across the field, the rebels are cheering Amar's name instead of Dawn's."
   }),
   b22_grude_burns: () => ({
     boss: "incendiary_captain", grade: "dusk",
@@ -995,13 +995,13 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       await c.wait(1500);
     },
     title: "The Held City",
-    line: "What could be saved was saved, by hand, one corner at a time."
+    line: "The squad saves what they can of the city, one street at a time."
   }),
   b23_path_climax_a: (path) => path === "vengeance" ? {
     boss: "remnant_colonel", grade: "mono",
     beat: (c) => c.strikeName("Vasse"),
     title: "Another Name",
-    line: "The list is getting shorter. So is the anger."
+    line: "Another name off the list, and Amar's anger is fading."
   } : path === "mercy" ? {
     boss: "remnant_colonel", lives: true, grade: "dawn",
     beat: (c, at) => c.swordSetDown(at),
@@ -1011,7 +1011,7 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
     boss: "remnant_colonel", grade: "dusk",
     beat: async (c) => { c.rising("motes", 4000); await c.wait(1400); },
     title: "The Narrows",
-    line: "The last fight with people is over. The east is still the wrong colour."
+    line: "That was the last fight against human soldiers. The east is still glowing."
   },
   b24_path_climax_b: (path) => ({
     boss: path === "revolution" ? "dawn_loyalist" : "bell_warden", lives: true, grade: "dawn",
@@ -1024,13 +1024,13 @@ const BOSS_ENDS: Record<string, (path: SevenPath | null) => BossEnd | null> = {
       }
     },
     title: "The Bell Before the Sky",
-    line: "The bell rings for every roof in the west. Within the hour, the sky changes."
+    line: "The alarm bell rings out across the west. Within the hour, the sky changes."
   }),
   b27_orbital_descent: () => ({
     boss: "ravage_herald", grade: "cold",
     beat: (c, at) => c.beamCollapse(at),
     title: "Measured",
-    line: "The Herald came down to see what held the shore. Now it has seen.",
+    line: "The Herald came down to find out what was holding the shore. Now it knows.",
     colour: "#b8ffe8"
   })
 };
