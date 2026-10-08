@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readMs } from "../../ui/readTime";
 import type { ClassKind } from "../../combat/types";
 import type { UnitAnimState } from "../../assets/manifest";
 import { animKey, hasUnitAnimation } from "../../assets/animations";
@@ -434,14 +435,18 @@ export class Reel {
     }).setOrigin(0.5).setAlpha(0), Z.TEXT);
     if (o.boom) sfxCineBoom();
     await this.tween({ targets: t, alpha: 1, duration: 500, ease: "Sine.easeOut" });
-    await this.wait(hold);
+    await this.wait(Math.max(hold, readMs(text) - 500));
     await this.tween({ targets: t, alpha: 0, duration: 350 });
     t.destroy();
   }
 
-  /** A caption under the picture (in the lower bar's space), for `ms`. */
-  caption(text: string, ms: number, top = false): void {
-    if (this.skipped) return;
+  /**
+   * A caption under the picture (in the lower bar's space), for `ms` or
+   * long enough to read, whichever is longer. Returns how long it stays.
+   */
+  caption(text: string, ms: number, top = false): number {
+    if (this.skipped) return 0;
+    ms = Math.max(ms, readMs(text));
     const t = this.add(this.scene.add.text(W / 2, top ? 104 : H - 112, text, {
       fontFamily: FAMILY_BODY, fontSize: "25px", color: "#f3ecd9", align: "center",
       wordWrap: { width: W - 280 }, stroke: "#000", strokeThickness: 4,
@@ -449,11 +454,13 @@ export class Reel {
     }).setOrigin(0.5, top ? 0 : 1).setAlpha(0), Z.TEXT);
     void this.tween({ targets: t, alpha: 1, duration: 500 });
     void this.tween({ targets: t, alpha: 0, delay: ms - 450, duration: 450, onComplete: () => t.destroy() });
+    return ms;
   }
 
-  /** A place card, lower left: "PARA" over "The King's palace, midnight". */
-  place(title: string, sub: string, ms: number): void {
-    if (this.skipped) return;
+  /** A place card, lower left: "PARA" over "The King's palace, midnight". Returns how long it stays. */
+  place(title: string, sub: string, ms: number): number {
+    if (this.skipped) return 0;
+    ms = Math.max(ms, readMs(`${title} ${sub}`));
     const x = 80, y = H - 150;
     const rule = this.add(this.scene.add.rectangle(x, y + 4, 0, 2, 0xc9a24a, 0.9).setOrigin(0, 0.5), Z.TEXT);
     const t = this.add(this.scene.add.text(x, y, title.toUpperCase(), {
@@ -465,6 +472,7 @@ export class Reel {
     void this.tween({ targets: [t, s], alpha: 1, duration: 700 });
     void this.tween({ targets: rule, width: Math.max(260, t.width + 20), duration: 900, ease: "Cubic.easeOut" });
     void this.tween({ targets: [t, s, rule], alpha: 0, delay: ms - 600, duration: 600 });
+    return ms;
   }
 
   /** The big title: slams in, the frame shakes, it holds. */
@@ -486,7 +494,8 @@ export class Reel {
       }).setOrigin(0.5, 0).setAlpha(0), Z.TEXT);
       void this.tween({ targets: s, alpha: 1, delay: 300, duration: 700 });
     }
-    await this.wait(hold);
+    // The subtitle comes in a beat after the title: it gets its reading time.
+    await this.wait(Math.max(hold, sub ? readMs(sub) + 300 : 0));
     await this.tween({ targets: s ? [t, s] : t, alpha: 0, duration: 600 });
   }
 

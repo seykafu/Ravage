@@ -4,6 +4,7 @@ import { BATTLES, resolveBattleForPath } from "../data/battles";
 import { ensureBackdropForKey } from "../art/BackdropArt";
 import { getSevenPath, loadSave } from "../util/save";
 import { sfxCineBoom } from "../audio/Sfx";
+import { readMs } from "../ui/readTime";
 
 // "Previously on Ravage" — a returning player's way back in.
 //
@@ -64,9 +65,9 @@ export class RecapScene extends Phaser.Scene {
     this.tweens.add({ targets: outro, alpha: 1, duration: 900, delay: 1700 });
     this.tweens.add({ targets: hint, alpha: 0.75, duration: 600, delay: 2200 });
 
-    // Long enough to read the outro at an easy pace; a click goes sooner.
-    const readMs = 3200 + (node.outro?.length ?? 0) * 38;
-    this.time.delayedCall(readMs, () => this.leave());
+    // Long enough to read the outro at an easy pace once it is in (1.7s);
+    // a click goes sooner.
+    this.time.delayedCall(1700 + readMs(node.outro ?? "") + 1500, () => this.leave());
     this.time.delayedCall(500, () => {
       this.input.once("pointerdown", () => this.leave());
       this.input.keyboard?.once("keydown", () => this.leave());

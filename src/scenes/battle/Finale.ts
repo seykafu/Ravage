@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readMs } from "../../ui/readTime";
 import type { SevenPath } from "../../data/contentIds";
 import { FAMILY_BODY, FAMILY_DISPLAY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../../util/constants";
 import { DEPTH } from "../../render/depth";
@@ -223,7 +224,8 @@ export class Cine {
       }).setOrigin(0.5, 0).setDepth(DEPTH_CINE + 2).setAlpha(0));
       void this.tween({ targets: s, alpha: 1, delay: 700, duration: 900 });
     }
-    await this.wait(900 + hold);
+    // The line under the title gets its reading time once it has faded in.
+    await this.wait(Math.max(900 + hold, 700 + readMs(sub ?? main)));
   }
 
   // ---- light and air ---------------------------------------------------
@@ -579,7 +581,7 @@ export class Cine {
       shadow: { offsetX: 0, offsetY: 3, color: "#000", blur: 12, fill: true }
     }).setOrigin(0.5, 0).setDepth(DEPTH_CINE + 2).setAlpha(0));
     void this.tween({ targets: t, alpha: 1, y: t.y - 6, duration: 600, ease: "Sine.easeOut" });
-    await this.wait(ms);
+    await this.wait(Math.max(ms, readMs(text)));
     await this.tween({ targets: t, alpha: 0, y: t.y - 16, duration: 500, onComplete: () => t.destroy() });
   }
 

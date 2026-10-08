@@ -250,14 +250,10 @@ const escape: Script = async (r) => {
     // Out of the harbour, toward the moon's road on the water.
     void r.tween({ targets: at, fx: 0.69, fy: 0.33, scale: 0.06, duration: 15500, ease: "Sine.easeIn" });
   }
-  r.place("Para Harbor", "Moonrise, the night after the cliffs.", 4200);
-  await r.wait(4400);
-  r.caption("Kian is dead. The King's soldiers are already on the road.", 3400);
-  await r.wait(3500);
-  r.caption("Madame Dawn's ship is the squad's only way out.", 3200);
-  await r.wait(3300);
-  r.caption("Ahead: fourteen months of open sea. At the end of it, Grude, the heart of the empire.", 4000);
-  await r.wait(4100);
+  await r.wait(r.place("Para Harbor", "Moonrise, the night after the cliffs.", 4200) + 200);
+  await r.wait(r.caption("Kian is dead. The King's soldiers are already on the road.", 3400) + 100);
+  await r.wait(r.caption("Madame Dawn's ship is the squad's only way out.", 3200) + 100);
+  await r.wait(r.caption("Ahead: fourteen months of open sea. At the end of it, Grude, the heart of the empire.", 4000) + 100);
   await r.slam("The Escape to Grude", undefined, 1800, "#e4ecf4");
   await r.fadeOut(900);
 };
@@ -287,14 +283,10 @@ const grudeBurns: Script = async (r) => {
     });
   }
   r.embers({ x: 0, y: H * 0.3, w: W, h: H * 0.5 }, 15000, Z.FRONT_FX, 26);
-  r.place("Grude", "The capital. That same night.", 4200);
-  await r.wait(4400);
-  r.caption("While the squad held the road, the fire reached the capital.", 3300);
-  await r.wait(3400);
-  r.caption("Captain Brask's fire teams are burning Grude, street by street.", 3400);
-  await r.wait(3500);
-  r.caption("The granaries are gone. If the upper district falls, the city starves.", 3600);
-  await r.wait(3700);
+  await r.wait(r.place("Grude", "The capital. That same night.", 4200) + 200);
+  await r.wait(r.caption("While the squad held the road, the fire reached the capital.", 3300) + 100);
+  await r.wait(r.caption("Captain Brask's fire teams are burning Grude, street by street.", 3400) + 100);
+  await r.wait(r.caption("The granaries are gone. If the upper district falls, the city starves.", 3600) + 100);
   await r.slam("Grude Burns", undefined, 1700, "#ffb070");
   await r.fadeOut(900);
 };
@@ -306,8 +298,7 @@ const skyFleet: Script = async (r) => {
   r.letterbox();
   const sky = r.painting("backdrop:open_sea", { zoom: 1.12, x: 0.45, y: 0.4 }, { zoom: 1.0, x: 0.5, y: 0.45 }, 17000, { fade: 1200, fallback: 0x3a4a6a });
   void sky;
-  r.place("The Eastern Sea", "Sunrise, after the bell.", 4000);
-  await r.wait(3000);
+  await r.wait(r.place("The Eastern Sea", "Sunrise, after the bell.", 4000) + 200);
   // The light goes wrong.
   sfxCineRise();
   r.grade(0x4a5470, 1, 3200);
@@ -348,8 +339,7 @@ const skyFleet: Script = async (r) => {
     await r.wait(3000);
   }
   await r.wait(1200);
-  r.caption("No kingdom on any map had ever seen anything like them.", 3400);
-  await r.wait(3500);
+  await r.wait(r.caption("No kingdom on any map had ever seen anything like them.", 3400) + 100);
   await r.slam("The Sky Speaks", undefined, 1800, "#9affe4");
   await r.fadeOut(1000);
 };
