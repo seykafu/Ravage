@@ -1082,9 +1082,9 @@ export const BATTLES: BattleNode[] = [
     title: "Eleventh Battle",
     subtitle: "The Truth About Anthros",
     intro:
-      "Sundown over Para Harbor. The cliff staircase down to Madame Dawn's ship is the only way out — and Kian waits on the lower landing, the King's elite guards blocking every step. He looks tired in a way you've never seen. He waves the weapons down; he has something to say first. Behind you, Lucian draws his spear anyway.",
+      "It is sundown at Para Harbor. The only way down to Madame Dawn's ship is the cliff staircase, and Kian waits on the lower landing with the King's elite guards blocking the steps. He looks more tired than Amar has ever seen him. He has his men lower their weapons because he wants to talk first. Lucian draws his spear anyway.",
     outro:
-      "Kian falls to a combined strike on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The cost was high — but they won't feel the full weight of it until later, in the cabin, after the boat is moving.",
+      "Kian falls to a combined attack on the lower landing. The squad clears the staircase and reaches the ship at moonrise. The fight cost them more than they know yet. They will find out later, in the cabin, once the ship is under way.",
     music: MUSIC.finalBoss,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_cliffs",
@@ -1144,13 +1144,13 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
             body: "Make it short, Kian." },
           { speaker: "Kian", portraitId: "kian", expression: "wounded",
-            body: "Anthros is a colony of Grude. Grude's king, Archbold, put Nebu in to hold it. Your father knew. The coup was against the empire. You died because Grude noticed." },
+            body: "Anthros is a colony of Grude. Archbold, Grude's king, put Nebu on the throne to hold it. Your father knew. His coup was against the empire, and Grude noticed. That's what nearly killed you." },
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
             body: "...He's not lying. Dawn told me about the colony six months ago. I never told you because the squad would have ridden for Grude that night without a plan." },
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
             body: "(quietly) Kian. Why are you telling me this NOW. With a sword in your hand." },
           { speaker: "Kian", portraitId: "kian", expression: "wounded",
-            body: "Dawn will use you, Amar. Your face starts a war, a hundred thousand peasants die. I can't stop you going. I can stop you leaving in one piece." },
+            body: "Dawn will use you, Amar. She'll use your face to start a war, and a hundred thousand peasants will die. I can't stop you going. I can stop you leaving in one piece." },
           { speaker: "Lucian", portraitId: "lucian", expression: "grim_resolve",
             body: "Then stop talking, Kian. The boat leaves at moonrise." }
         ]
@@ -1166,7 +1166,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
             body: "I know, Kian." },
           { speaker: "Kian", portraitId: "kian", expression: "knowing_smile",
-            body: "(quietly) Whatever happens next, don't fight for the colony, the empire, or anyone's flag. Fight for the people on this staircase. They're the only thing that's yours." }
+            body: "(quietly) Whatever happens after this, don't fight for the colony or the empire or anyone's flag. Fight for the people on this staircase. They're the only ones really on your side." }
         ]
       },
       // before_victory: Kian's last words as he falls. The line lands
@@ -1177,11 +1177,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Three directions at once: Maya above, Ning's arrow, Amar in front. Kian doesn't block the third. He gives Amar his old practice-yard look: you got it right." },
+            body: "Maya attacks from above, Ning shoots, and Amar comes from the front. Kian doesn't block Amar. He gives him his old practice-yard look, the one that meant he got it right." },
           { speaker: "Kian", portraitId: "kian", expression: "fatherly_smile",
             body: "(softly) Good half-step, your highness." },
           { portraitId: "narrator",
-            body: "Kian falls on the landing. At the rear, fighting one-armed, Lucian takes a bolt between the ribs. No one sees. No sound. He keeps walking to the ship." }
+            body: "Kian falls on the landing. At the rear, Lucian, fighting one-armed, is hit between the ribs by a bolt. Nobody sees, and he makes no sound. He keeps walking to the ship." }
         ]
       }
     ]
@@ -1192,9 +1192,9 @@ export const BATTLES: BattleNode[] = [
     title: "Twelfth Battle",
     subtitle: "The Ravage",
     intro:
-      "Fourteen months at sea end at first light. Khione brings the ship into Grude's east port under the empire's own customs flag — Dawn's papers work anywhere. The squad has seconds to take in a city taller than anything in Para. Then alarm bells: someone in a captain's cloak has recognized them. Archbold knew just when to send his welcome.",
+      "After fourteen months at sea, the ship reaches Grude's east port at first light. Khione brings it in under the empire's own customs flag, using Dawn's papers. The squad barely has time to look at a city taller than anything in Para before alarm bells ring. A man in a captain's cloak has recognized them. King Archbold's soldiers were waiting, and the squad has to fight its way off the dock.",
     outro:
-      "Not heroes. Survivors of a colony. Dawn meets you at the inner gate. Yes, the bells were for you. Yes, Captain Volos answers to King Archbold of Grude. Yes, your father's coup eleven years ago targeted an empire, not a kingdom. Come inside before the second wave.",
+      "The squad breaks through the customs dock and into the city. Madame Dawn meets them at the inner gate. She confirms it: the alarm bells were for them, and Captain Volos works for King Archbold of Grude. The coup Amar's father led eleven years ago was aimed at the whole empire. Dawn takes them inside before a second wave of soldiers arrives.",
     music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -1248,13 +1248,13 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { portraitId: "narrator",
-            body: "Alarm bells from the customs platform: Captain Volos at the podium, six elite, two crossbows drawn. The squad is behind the crates in ten seconds. Maya signals wordlessly." },
+            body: "Alarm bells ring from the customs platform. Captain Volos is at the podium with six elite, two with crossbows drawn. The squad is behind the crates in ten seconds. Maya gives silent hand signals." },
           { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-            body: "(half-shouted) Amar. Look at his kit. Same as the guard you killed in Para. Same drill for eighty years. You're not fighting a kingdom, my son. You're fighting an empire." },
+            body: "(half-shouted) Amar, look at his gear. It's the same as the guard you killed in Para. Same drill for eighty years. This isn't just a kingdom you're fighting, my son. It's an empire." },
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "She's right. Same crossbow stance. Same manual. Amar, focus. Crown archers first. Volos only once his line thins." },
+            body: "She's right. Same crossbow stance, same manual. Amar, focus. Crown archers first. Leave Volos until his line thins." },
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
-            body: "(quietly, to himself, while drawing) ...Eighty years." }
+            body: "(to himself, drawing his sword) ...Eighty years." }
         ]
       },
       // Round 3: a smaller follow-up beat — Dawn finishes the thought
@@ -1282,11 +1282,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "maya", unitB: "amar" },
         beats: [
           { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
-            body: "Amar. Before Dawn gives you her speech, there's something I've waited fourteen months to tell you. (Quick, while parrying.) Your father wasn't only Anthros's prince. Your mother wasn't only the woman who raised you." },
+            body: "(parrying) Amar. Before Dawn gives you her speech, there's something I've waited fourteen months to tell you. Your father wasn't only Anthros's prince. And your mother wasn't only the woman who raised you." },
           { speaker: "Amar", portraitId: "amar", expression: "shocked",
             body: "Maya — wait —" },
           { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-            body: "(strike, recover) Wait nothing. Fight first, listen on the way to the safe house. Short version: half of you is from this side of the sea. I'll fill in the rest when nobody is shooting at us." }
+            body: "(striking) No waiting. Fight now, and listen on the way to the safe house. Short version: half of you comes from this side of the sea. I'll tell you the rest when nobody's shooting at us." }
         ]
       },
       // before_victory: Dawn at the inner gate as the squad pushes
@@ -1296,13 +1296,13 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The line breaks at the customs platform. Volos falls to Maya's attack; the crossbows scatter. At the inner gate, Dawn waits under the arch, hood down, hands empty." },
+            body: "The line breaks at the customs platform. Maya brings Volos down and the crossbowmen scatter. Madame Dawn waits under the arch of the inner gate, hood down, hands empty." },
           { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
             body: "Faster than I expected. The second wave is twelve minutes behind you. Ndara has tea upstairs; your packs are inside. Maya, your old room, end of the hall." },
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
-            body: "(quietly) ...You knew which room was hers. You knew which room was hers eleven months before I did. How long has she been yours, Dawn." },
+            body: "(quietly) ...You knew which room was hers. You knew that eleven months before I did. How long has she been working for you, Dawn?" },
           { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
-            body: "(soft) Eleven years, Amar. Same as you. Come inside. Both wars are about to find us, and we have a lot to talk about before they do." }
+            body: "(softly) Eleven years, Amar. The same as you. Come inside. Both wars will reach us soon, and we have a lot to talk about before they do." }
         ]
       }
     ]
@@ -1323,9 +1323,9 @@ export const BATTLES: BattleNode[] = [
     title: "Thirteenth Battle",
     subtitle: "Madame Dawn's Rebellion",
     intro:
-      "Three weeks in Grude. Tonight, nine years of Dawn's planning come due: twelve strikes in one hour on nephews, customs wardens and bookkeepers. The squad's target is the youngest nephew's house on the marble plaza off Oran Lane. It's lightly guarded; he's never had reason to fear. Rose leads, calm, after weeks of mapping.",
+      "The squad has been in Grude for three weeks. Tonight Dawn puts nine years of planning into action: twelve strikes in one hour on the King's nephews, customs wardens and bookkeepers. The squad's target is the youngest nephew's house on the marble plaza off Oran Lane. It is lightly guarded, because he has never had reason to worry. Rose, who spent weeks mapping it, leads them in.",
     outro:
-      "The captain falls. The plaza is the squad's. Then the back door of the house opens: four crossbows the scouting missed, aimed at Dawn. Rose takes all four bolts. She is dead before she hits the cobblestones. Dawn crosses the plaza, kneels in Rose's blood, and stays there all night.",
+      "The captain falls and the squad takes the plaza. Then the back door of the house opens, and four crossbowmen the scouts had missed aim at Dawn. Rose takes all four bolts and is dead before she hits the cobblestones. Dawn crosses the plaza, kneels in Rose's blood, and stays there all night.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -1385,7 +1385,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Rose", portraitId: "rose", expression: "brisk",
             body: "Maya, north flank with me. Ning, south archer first; she reloads slow. Leo, dactyl at the captain. Amar, center. Eight minutes. Any longer and Dawn's cover wears thin." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Confirmed. Rose, when did you sleep last." },
+            body: "Confirmed. Rose, when did you last sleep?" },
           { speaker: "Rose", portraitId: "rose", expression: "brisk",
             body: "(half-smile) Tomorrow morning, Amar. Plenty of time. Move." }
         ]
@@ -1399,15 +1399,15 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "rose" },
         beats: [
           { speaker: "Rose", portraitId: "rose", expression: "neutral",
-            body: "(between strikes) Maya and I trained twelve years together under Dawn. She can pass for a peasant; I can't. She went undercover, I got strikes. Same training, different jobs." },
+            body: "(between strikes) Maya and I trained together under Dawn for twelve years. She can pass for a peasant and I can't, so she went undercover and I ended up leading strikes." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
             body: "...You knew about me as long as Maya did, then." },
           { speaker: "Rose", portraitId: "rose", expression: "neutral",
-            body: "Longer. Maya's reports came to me, your highness. (Soft.) I'm glad you made it. After eleven months, the man Maya described wasn't the one I expected. Easier." },
+            body: "Longer. Maya's reports came to me, your highness. I'm glad you made it. After eleven months of her reports, you weren't the man I'd expected. You were easier." },
           { speaker: "Amar", portraitId: "amar",
-            body: "Easier than what." },
+            body: "Easier than what?" },
           { speaker: "Rose", portraitId: "rose",
-            body: "Than the version your father was, near the end. Move. The captain just shifted his stance." }
+            body: "Easier than your father was, near the end. Move. The captain just shifted his stance." }
         ]
       },
       // ally_killed_target Amar drops the captain — fires Rose's
@@ -1418,7 +1418,7 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "ally_killed_target", allyId: "amar", targetId: "royal_captain" },
         beats: [
           { speaker: "Rose", portraitId: "rose", expression: "brisk",
-            body: "Clean. Half-step before the thrust. Your father's. (Half-smile.) Madame Dawn will have noticed from the alley." }
+            body: "(half-smiling) Clean. That half-step before the thrust was your father's. Madame Dawn will have seen it from the alley." }
         ]
       },
       // before_victory: Rose's death. The second wave through the
@@ -1435,19 +1435,19 @@ export const BATTLES: BattleNode[] = [
         music: MUSIC.death,
         beats: [
           { portraitId: "narrator",
-            body: "The captain's body settles into the marble. The crown archers' bolts go quiet. The squad takes one breath and the plaza is theirs." },
+            body: "The captain falls dead on the marble, and the crown archers stop shooting. For a moment, the plaza belongs to the squad." },
           { portraitId: "narrator",
-            body: "Then the back door, supposedly bricked up, swings open. Four crossbows in royal blue aim at the mouth of the alley. Madame Dawn is standing there, hood down." },
+            body: "Then the back door, which was supposed to be bricked up, swings open. Four crossbowmen in royal blue aim at the mouth of the alley, where Madame Dawn stands with her hood down." },
           { speaker: "Rose", portraitId: "rose", expression: "falling",
             body: "DAWN — " },
           { portraitId: "narrator",
-            body: "Rose covers twenty paces in three strides. She doesn't draw, doesn't call again. She plants herself at Dawn's shoulder, back to the four crossbows, front to Dawn." },
+            body: "Rose covers twenty paces in three strides. She doesn't draw her weapon or call out again. She plants herself right in front of Dawn, with her back to the four crossbows." },
           { portraitId: "narrator",
-            body: "Four bolts, four hits. Rose holds long enough for Dawn to understand, then drops without a sound. Maya, Ning, Leo, Amar kill the crossbowmen in seconds. Too late." },
+            body: "All four bolts hit Rose. She stays on her feet long enough for Dawn to understand, then falls without a sound. Maya, Ning, Leo and Amar kill the crossbowmen within seconds, but it's too late." },
           { speaker: "Madame Dawn", portraitId: "dawn", expression: "measured_neutral",
             body: "(quietly) ...Rose. Rose. Rose, look at me. Rose. Rose. Rose." },
           { portraitId: "narrator",
-            body: "Dawn does not raise her voice or weep. She kneels in the blood, takes Rose's hand, and holds it. Nobody moves. Maya looks away first." }
+            body: "Dawn doesn't raise her voice or cry. She kneels in the blood, takes Rose's hand and holds it. Maya is the first of the squad to look away." }
         ]
       }
     ]
@@ -1465,9 +1465,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fourteenth Battle",
     subtitle: "The Origin",
     intro:
-      "Dawn is barely an hour into telling Amar where he comes from when the candle-maker downstairs taps the warning signal. King Archbold's household guard has found the safe house. They want Amar alive: a living heir is useful. Lord Castor's orders: take the emperor's son breathing. Maya is already at the door.",
+      "Dawn has been telling Amar where he comes from for barely an hour when the candle-maker downstairs taps the warning signal. King Archbold's household guard has found the safe house. Lord Castor's orders are to take the emperor's son alive, because a living heir is useful. Maya is already at the door.",
     outro:
-      "Castor's guards retreat, carrying their commander. They failed to take Amar, but the message is clear: the empire knows who he is, and will keep coming. In the study, Dawn finishes her sentence. Half of Amar's blood is the rebellion's. The other half is the throne it exists to break.",
+      "Castor's guards retreat, carrying their commander. They failed to take Amar, but now it's clear the empire knows who he is and will keep coming for him. In the study, Dawn finishes what she was saying. Amar's mother's side is the rebellion. His father's side is the throne the rebellion is trying to overthrow.",
     // GrudeBattle1 — the city's own battle palette. The Grude act now
     // alternates it with the Spine variant (B12 G, B13 spine, B14 G,
     // B15 stronghold, B16 G, B17 spine, B18 G) instead of running
@@ -1518,9 +1518,9 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Lord Castor", portraitId: "castor",
             body: "Squad of the Anthros coup: you harbour one Amar. By authority of King Archbold of Grude, I will take him, unharmed, tonight. Stand aside and nobody bleeds." },
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "\"Unharmed.\" Hear that, Amar? Two years, every officer who came at us wanted you dead. This one's ordered to keep you breathing. That's how much changed in Dawn's study tonight." },
+            body: "\"Unharmed.\" Hear that, Amar? For two years, every officer who came after us wanted you dead. This one's under orders to keep you alive. That's how much changed in Dawn's study tonight." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "It changes nothing about the next ten minutes. Castor, you can carry that order back up the street or you can carry your men. Squad: break their line. Nobody takes me anywhere tonight." }
+            body: "That doesn't change the next ten minutes. Castor, you can take that order back up the street, or you can carry your men back. Squad, break their line. Nobody's taking me anywhere tonight." }
         ]
       },
       // adjacent_eot Amar/Castor — the personal exchange. Castor is
@@ -1532,11 +1532,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "imperial_knight" },
         beats: [
           { speaker: "Lord Castor", portraitId: "castor",
-            body: "You fight like your mother's side, hold a line like your father's. I served his household guard twenty years. You belong in the capital, not a safe-house floor." },
+            body: "You fight like your mother's side and hold a line like your father's. I served in his household guard for twenty years. You belong in the capital, not on a safe-house floor." },
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
-            body: "I had a name. A forge. A country I bled for. You don't get to be the third person this month telling me who I am." },
+            body: "I had a name. I had a forge, and a country I bled for. You don't get to be the third person this month to tell me who I am." },
           { speaker: "Lord Castor", portraitId: "castor",
-            body: "(quietly) No. I suppose I don't. But the King will, Amar, sooner than you would like. Mind the archers behind me. My orders said unharmed. They did not say comfortable." }
+            body: "(quietly) No, I suppose I don't. But the King will, Amar, and sooner than you would like. Mind the archers behind me. My orders say unharmed. They say nothing about going easy on you." }
         ]
       },
       // before_victory: Castor falls, the retrieval breaks. He goes
@@ -1547,11 +1547,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Lord Castor takes a knee, hand pressed to his side. No rally. His men close around him and withdraw up the street. Household guard do not rout." },
+            body: "Lord Castor drops to one knee, his hand pressed to his side. He doesn't try to rally. His men close around him and pull back up the street in good order." },
           { speaker: "Lord Castor", portraitId: "castor",
-            body: "Tonight goes in a report, not a grave. The King can wait till spring. Welcome to the family, your highness. Larger and worse than you think." },
+            body: "Nobody has to die over tonight. It goes in a report, and the King can wait until spring. Welcome to the family, your highness. It's bigger and worse than you think." },
           { portraitId: "narrator",
-            body: "The detail clears the street and is gone. The candle-maker's warning rhythm stops. Only breathing in the empty street, and Dawn's unfinished sentence waiting upstairs." }
+            body: "The guard detail leaves the street. The candle-maker stops tapping the warning. Upstairs, Dawn still hasn't finished what she was telling Amar." }
         ]
       }
     ]
@@ -1569,9 +1569,9 @@ export const BATTLES: BattleNode[] = [
     title: "Fifteenth Battle",
     subtitle: "A Coup Within a Coup",
     intro:
-      "Maya found it: for three months, every message passed through Quartermaster Coyne. He's the leak that led Castor's men to the safe house. Ndara worked it out first and faced him alone. They found her in the courtyard, breathing, not waking. Coyne waits at the back gate with bought rebels and imperial agents.",
+      "Maya has found the leak. For three months, every message went through Quartermaster Coyne, and he led Castor's men to the safe house. Ndara worked it out first and faced him alone. She was found in the courtyard, breathing but not waking up. Coyne is at the back gate with bribed rebels and imperial agents.",
     outro:
-      "Coyne goes down at the gate he never reached. The safe house is theirs again — and Dawn knows now it was never safe. Ndara breathes upstairs and does not wake. For thirty years Dawn has asked people to follow her. After tonight, the asking stops.",
+      "Coyne falls before he reaches the gate. The squad has the safe house back, and Dawn now knows it was never safe. Upstairs, Ndara is breathing but still hasn't woken. For thirty years Dawn has asked people to follow her. After tonight, she stops asking and starts giving orders.",
     // Entering the Stronghold — B1's palace-coup theme, returning on
     // purpose: the mole hunt is a coup inside Dawn's own stronghold,
     // and the leitmotif says so before any dialogue does.
@@ -1625,9 +1625,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
-            body: "Coyne. Three months of manifests, every one past your desk. Ndara had you before I did. You put her on a courtyard stone. You get nothing." },
+            body: "Coyne. Three months of manifests, and every one crossed your desk. Ndara caught you first, and you left her lying in the courtyard. Don't expect any mercy." },
           { speaker: "Quartermaster Coyne", portraitId: "coyne",
-            body: "Down, not dead. That's why I'll sleep. Nine years I watched Dawn spend people like coin and call it arithmetic. Rose. She'll spend you too. Archbold pays in advance." },
+            body: "She's hurt, not dead. That's why I can still sleep. For nine years I watched Dawn treat people as numbers and sacrifice them. Rose was one. She'll sacrifice you too. At least Archbold pays up front." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
             body: "You sold out the safe house, Coyne. Castor's men were in that street because of you. Whatever Dawn is, you didn't fix it. You just picked the side that pays more. Squad: he does not reach that gate." }
         ]
@@ -1639,9 +1639,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "turncoat" },
         beats: [
           { speaker: "Quartermaster Coyne", portraitId: "coyne",
-            body: "You're the worst-kept secret here: the emperor's lost boy. Ask yourself while you cut me down: when Dawn's plan costs another Rose, whose sums do you follow? Hers or yours?" },
+            body: "Everyone here knows who you are: the emperor's lost son. So think about this while you cut me down. When Dawn's plan gets another Rose killed, whose judgment will you trust? Hers, or yours?" },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
-            body: "Neither. Lucian's. Fight, Coyne. You don't get to poison the well and call it a warning." }
+            body: "Neither. Lucian's. Now fight, Coyne. You don't get to betray all of us and then call it a warning." }
         ]
       },
       // before_victory: Coyne falls short of the gate. He dies the
@@ -1651,11 +1651,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Coyne drops six strides from the back gate. His turncoats lower their blades. Bought men don't die for a corpse. The imperial agents withdraw in good order." },
+            body: "Coyne falls six strides from the back gate. The rebels he bribed lower their blades, since nobody is going to pay them now. The imperial agents pull back in good order." },
           { speaker: "Quartermaster Coyne", portraitId: "coyne",
-            body: "Nine years keeping her books... ended by six strides of bad luck. Tell Dawn: I was never the real leak. I was just the first to say her sums out loud." },
+            body: "Nine years keeping her books... and I miss the gate by six strides. Tell Dawn I was never the real leak. I was just the first one to say out loud what her plans cost." },
           { portraitId: "narrator",
-            body: "He says nothing more. Upstairs, Ndara breathes and does not wake. Somewhere, Dawn learns the man who sold out her safe house ran her supply line nine years." }
+            body: "Coyne doesn't say anything else. Upstairs, Ndara is still unconscious. Somewhere in the city, Dawn learns that the man who betrayed her safe house had run her supply line for nine years." }
         ]
       }
     ]
@@ -1676,9 +1676,9 @@ export const BATTLES: BattleNode[] = [
     title: "Sixteenth Battle",
     subtitle: "Dawn's Proposal",
     intro:
-      "Amar still hasn't answered Dawn's proposal: claim the Anthros throne. That night she sends the squad across the river on an errand. Halfway over the bridge, the far lamps die one by one, and two figures step out behind you. Archbold has stopped trying to take his son alive. The woman walking toward Amar is Wren, the King's Knife.",
+      "Amar still hasn't answered Dawn's proposal that he claim the Anthros throne. That night she sends the squad across the river on an errand. Halfway over the bridge, the lamps at the far end go out one by one, and two figures step out behind the squad. King Archbold has stopped trying to take his son alive. The woman walking toward Amar is Wren, the King's Knife.",
     outro:
-      "Wren falls on the bridge meant to be Amar's grave. The empire's message lands anyway: whatever he does, it won't leave him alone. Hide, they hunt him. Take the throne, they fight him. Dawn was right: he can only choose which cost. She'll ask again. His answer is closer.",
+      "Wren falls on the bridge where she meant to kill Amar. Even so, the empire has made its point: it won't leave him alone. If he hides, they will hunt him. If he takes the throne, they will fight him. Dawn was right that he can only choose which price to pay. She will ask him again, and he is closer to an answer.",
     // GrudeBattle1 — see B14's note on the Grude-act alternation.
     music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
@@ -1721,11 +1721,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Wren", portraitId: "wren",
-            body: "Don't run. The bridge only goes so far. Castor's orders: bring you home unharmed. Mine are shorter. The King decided a dead heir is a scandal he can bury. You'd have made a tolerable prince." },
+            body: "Don't run. The bridge only goes so far. Castor was ordered to bring you home unharmed. My orders are simpler. The King has decided a dead heir is a scandal he can cover up. You'd have made a tolerable prince." },
           { speaker: "Maya", portraitId: "maya", expression: "alarmed",
-            body: "Two behind, three ahead. The talker is Wren, the whole problem. Drop her, the contract dissolves; the rest are paid men. Tight formation. She doesn't get you alone." },
+            body: "Two behind us, three ahead. The one talking is Wren, and she's the real problem. Drop her and the rest give up; they're only paid men. Keep a tight formation. Don't let her get you alone." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "My father sent a knife to a bridge. (A breath.) Then I have my answer to half of Dawn's question already. Squad, break the east end. Wren is mine." }
+            body: "My father sent his Knife to kill me on a bridge. Well, that answers half of Dawn's question already. Squad, break through at the east end. Wren is mine." }
         ]
       },
       // adjacent_eot Amar/Wren — the assassin is not a believer; she's
@@ -1736,9 +1736,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "kings_knife" },
         beats: [
           { speaker: "Wren", portraitId: "wren",
-            body: "Your father pays me because I never ask if a name deserves it. Your mother will hand you a list soon. Read it before you sign? Castor wouldn't. I don't. You?" },
+            body: "Your father pays me because I never ask whether a name deserves it. Your mother will hand you a list soon. Will you read it before you sign? Castor wouldn't. I don't. Will you?" },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-            body: "I've buried people off other people's lists for two years, Wren. I've started reading. (Steel up.) That's the difference between us, and it's about to be a wide one." }
+            body: "I've spent two years burying people from other people's lists, Wren. I've started reading them. That's the difference between us, and you're about to find out how much it matters." }
         ]
       },
       // before_victory: Wren falls. She dies the way she lived — a
@@ -1748,11 +1748,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Wren goes down mid-bridge, right where she wanted Amar. The hired knives melt away; nobody's paying them now. The bridge is the squad's." },
+            body: "Wren falls mid-bridge, right where she meant to kill Amar. The hired knives run off, since nobody is paying them now. The squad holds the bridge." },
           { speaker: "Wren", portraitId: "wren",
-            body: "Faster than Castor said. Good. Your father will send someone after me, and after them. Take the crown or don't, your highness, but stop standing in the open." },
+            body: "Faster than Castor said. Good. Your father will send someone after me, and someone after them. Take the crown or don't, your highness, but stop standing out in the open." },
           { portraitId: "narrator",
-            body: "The squad carries Dawn's crate across. Errand finished, courier met. Technically a success. Every one of them is counting what Wren promised: killer after killer. Nobody likes the total." }
+            body: "The squad carries Dawn's crate across and meets the courier, so the errand is done. But all of them are thinking about what Wren said: the King will keep sending killers, one after another." }
         ]
       }
     ]
@@ -1774,9 +1774,9 @@ export const BATTLES: BattleNode[] = [
     title: "Seventeenth Battle",
     subtitle: "Dawn's Lie",
     intro:
-      "Khione tells Amar the truth. Dawn's rebellion was never meant to free Anthros. It was meant to spend it: crown Amar, make King Archbold burn the colony, and let a hundred million deaths turn Grude against its crown. Kian was right: Amar is the spark. The squad runs for Khione's ship. Marshal Othren's loyalists hold the dock.",
+      "Khione tells Amar the truth. Dawn's rebellion was never meant to free Anthros. Her plan is to crown Amar, provoke King Archbold into burning the colony, and let a hundred million deaths turn Grude against its own crown. Kian was right that Dawn would use Amar to start a war. The squad runs for Khione's ship, but Marshal Othren's loyalists hold the dock.",
     outro:
-      "Khione casts off. Grude falls behind, and with it Dawn: the mother who crossed an ocean for Amar, and the strategist who put a price on his homeland. She loves him. She lied to him. Both true. Ahead, for the first time, is a road no one has planned for him.",
+      "Khione's ship casts off and leaves Grude behind, and Dawn with it. She is the mother who crossed an ocean for Amar, and also the strategist who was willing to sacrifice his homeland. She loves him, and she lied to him. For the first time, Amar is heading somewhere nobody has planned for him.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -1834,11 +1834,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Marshal Othren", portraitId: "othren",
-            body: "Far enough. Nothing against you, but the man in your formation is the cause now. Dawn won't lose her heir to a boat. Turn around, Amar." },
+            body: "That's far enough. This isn't personal, but the man in your formation is the whole cause now. Dawn won't lose her heir to a boat. Turn around, Amar." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "I know the plan, Othren. It ends with Thuling on fire, Orinhal on fire, every village Maya can name on fire. I won't be the torch." },
+            body: "I know the plan, Othren. It ends with Thuling burning, Orinhal burning, every village Maya can name burning. I won't be the one who starts it." },
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "He won't be talked round; he's wanted this for weeks. Othren's the anchor: break him or break past. Gangway's the win. Squad, south. We're getting on that ship." }
+            body: "We won't talk him round; he's wanted this for weeks. Othren holds their line together, so beat him or get past him. The gangway is the goal. Squad, south. We're getting on that ship." }
         ]
       },
       // adjacent_eot Amar/Othren — the believer says the quiet part
@@ -1851,9 +1851,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "dawn_loyalist" },
         beats: [
           { speaker: "Marshal Othren", portraitId: "othren",
-            body: "Nine years I've pictured it, Amar. Thuling burns, innocents with it, and Grude's cities rise and pull down their emperor for good. I sleep well. I've counted the cost." },
+            body: "I've pictured it for nine years, Amar. Thuling burns, innocent people with it, and then Grude's cities rise up and bring down their emperor for good. I sleep fine. I've counted the cost." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-            body: "Then you and Coyne would have had a great deal to say to each other. He counted too. (Steel up.) I'm done being a number in everyone's sum, Othren. Mine or hers or yours. Move." }
+            body: "Then you and Coyne would've had a lot to talk about. He counted too. I'm done being a number in other people's plans, Othren. Hers, yours, anyone's. Move." }
         ]
       },
       // adjacent_eot Corin/Othren — the marshal and the captain he
@@ -1863,9 +1863,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "corin", unitB: "dawn_loyalist" },
         beats: [
           { speaker: "Marshal Othren", portraitId: "othren",
-            body: "Eseldra. Nine years I kept you mounted, fed, promoted. Your sister would put you back in this line by the ear." },
+            body: "Eseldra. For nine years I kept you mounted, fed and promoted. Your sister would drag you back into this line by the ear." },
           { speaker: "Corin", portraitId: "corin", expression: "battle_fury",
-            body: "Say her name with the number, Marshal. Rose: four bolts, for a plan she never saw whole. You counted her and slept. I'm off your books. Stand down, or I ride through you." }
+            body: "Then say her name, Marshal, and how she died. Rose took four bolts for a plan she never saw in full. You counted her and slept. I'm not one of your numbers now. Stand down, or I ride through you." }
         ]
       },
       // before_victory: the squad reaches the gangway. Othren, down or
@@ -1875,11 +1875,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The line breaks. The gangway is clear, Khione at the rail, hand out. Othren's loyalists don't chase. Their orders were to hold the dock, not hunt Dawn's son. The only mercy." },
+            body: "The loyalist line breaks and the gangway is clear. Khione is at the rail, holding out her hand. Othren's loyalists don't chase the squad. Their orders were to hold the dock, not to hunt down Dawn's son." },
           { speaker: "Marshal Othren", portraitId: "othren",
-            body: "(calling after them) She'll let you go. Your mother plans every road. You're just another line in her sums. ...Fair winds, your highness. I always wished you that." },
+            body: "(calling after them) She'll let you go. Your mother has planned for every road you could take. You're just one more part of her plan. ...Fair winds, your highness. I always wished you that." },
           { portraitId: "narrator",
-            body: "The squad crosses onto Khione's ship. Grude slides away. For the first time since Thuling, no one at the next harbor has already written what Amar will do." }
+            body: "The squad boards Khione's ship, and Grude falls away behind them. For the first time since Thuling, nobody at the next harbor has already decided what Amar will do." }
         ]
       }
     ]
@@ -1899,9 +1899,9 @@ export const BATTLES: BattleNode[] = [
     title: "Eighteenth Battle",
     subtitle: "Seven Names, One Choice",
     intro:
-      "Three days out from Grude, the empire tries once more. A fast imperial ship catches Khione's at dusk and throws grappling hooks. The King's household troops come aboard with one order: the heir does not reach the far shore. Nowhere to retreat. Beat them, and Amar's next decision will be truly his.",
+      "Three days out from Grude, the empire tries one more time. A fast imperial ship catches Khione's at dusk and throws grappling hooks. The King's household troops come aboard with one order: the heir must not reach the far shore. There is nowhere to retreat. If the squad beats them, Amar's next decision will be his own.",
     outro:
-      "The last boarder goes over the rail and the imperial ship turns away. Ahead is a coast nobody owns. There Amar will finally answer the question he has carried since a hospital bed in Thuling. Seven names. One choice. The path begins where the keel touches sand.",
+      "The last boarder goes over the rail and the imperial ship turns away. Ahead is a coast nobody owns. When they land there, Amar will finally answer the question he has been asking himself since he woke in a hospital bed in Thuling. He has seven answers to choose from, and he can only pick one.",
     music: MUSIC.grudeBattle1,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -1948,9 +1948,9 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
             body: "Heir of Anthros! King Archbold's order: you don't reach the far shore. Surrender, and it's quick. Fight, and it won't be. The sea is the King's." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "My father's men said it was decided before: at the hospital, the cliff, the bridge. (Draws.) Not on this ship. Squad, hold mid-deck. Keep them off the wheel." },
+            body: "My father's men keep saying it was already decided: at the hospital, the cliff, the bridge. Not on this ship, it isn't. Squad, hold mid-deck. Keep them off the wheel." },
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "Seven boarders: rails and front. Tight line at the masts; let the crates take the arrows. Leo, up front. Ning, archers first. Win, and Amar gets his quiet minute." }
+            body: "Seven boarders, over the rails and at the front. Form a tight line at the masts and let the crates take the arrows. Leo, up front. Ning, archers first. Win this, and Amar gets his quiet minute." }
         ]
       },
       // adjacent_eot Amar/Imperial Captain — the captain is a professional
@@ -1961,9 +1961,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "pc_cap" },
         beats: [
           { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
-            body: "Twenty years I've carried the King's orders. There's always another bridge. He doesn't stop. The only men Archbold leaves alone are the ones who stop mattering, your highness." },
+            body: "I've carried the King's orders for twenty years. There's always another attempt. He doesn't stop. The only men Archbold leaves alone are the ones who stop mattering, your highness." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-            body: "Funny. (Steel up.) That's one of the seven things I'm deciding between. I'll let you know which way I land, but you won't be on this deck to hear it. Move, Captain." }
+            body: "Funny. That's one of the seven choices I'm deciding between. I'd tell you which one I pick, but you won't be on this deck to hear it. Move, Captain." }
         ]
       },
       // before_victory: the boarding party breaks. The captain, down or
@@ -1974,11 +1974,11 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The boarding party breaks the way a wave breaks: all at once, then gone. The imperial ship cuts its lines and runs. Khione never let go of the wheel." },
+            body: "The boarding party breaks all at once. The imperial ship cuts its grappling lines and runs. Khione never let go of the wheel." },
           { speaker: "Imperial Captain", portraitId: "royal_guard", expression: "neutral",
-            body: "Faster than the King expected. He'll send another; he always does. Not before that coast. A man gets few hours nobody owns. Spend yours better than mine, heir." },
+            body: "Faster than the King expected. He'll send another; he always does. But not before that coast. A man gets few hours that are truly his own. Use yours better than I used mine, heir." },
           { portraitId: "narrator",
-            body: "The deck is quiet. Ahead, the coast that belongs to nobody. Amar has seven names in his mouth and, for the first time, no one to answer for him." }
+            body: "The deck is quiet. Ahead is the coast that belongs to nobody. Amar has seven possible answers in mind, and for the first time, nobody else is going to answer for him." }
         ]
       }
     ]
@@ -1992,8 +1992,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Hunter's First Step",
-    intro: "Selene's answer. The squad rides inland from the landfall coast with a list in Amar's saddlebag, written in his own hand. The first name on it is Lord Castor — the King's knight-captain, the man who took Amar off a Grude street to hand him to his father's knife. His column crosses the canyon road tonight.",
-    outro: "Castor's blood is the first you've spilled in your own name — not the rebellion's, not the empire's. Yours. The squad says nothing on the ride back. At the fire, Maya quietly hands you the list. There's a second name on it now, and the handwriting isn't yours.",
+    intro: "Amar has chosen Selene's answer: vengeance. The squad rides inland from the coast with a list in Amar's saddlebag, written in his own hand. The first name on it is Lord Castor, the King's knight-captain, who tried to take Amar off a Grude street and hand him to his father. Castor's column crosses the canyon road tonight.",
+    outro: "Castor is the first person Amar has killed for his own reasons, rather than for the rebellion or the empire. At the campfire, Maya quietly hands Amar the list. A second name has been added to it, and it isn't in Amar's handwriting.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_caravan",
@@ -2031,9 +2031,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Lord Castor", portraitId: "castor",
-            body: "The heir. (He doesn't reach for his sword yet.) I carried you gently, boy. Whoever comes after me won't. Ride away and I'll write that I never saw you." },
+            body: "(not reaching for his sword yet) The heir. I treated you gently, boy. Whoever comes after me won't. Ride away and I'll write that I never saw you." },
           { speaker: "Amar", portraitId: "amar", expression: "quiet_rage",
-            body: "You carried me gently to a knife, Castor. You're the first name on a list I wrote myself. (Draws.) No more reports. Squad: the escort breaks when he falls." }
+            body: "Gently or not, you were taking me to the man who sent Wren to kill me, Castor. You're the first name on a list I wrote myself. No more reports. Squad, the escort breaks when he falls." }
         ]
       },
       {
@@ -2041,9 +2041,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "imperial_knight" },
         beats: [
           { speaker: "Lord Castor", portraitId: "castor",
-            body: "Wren told me you'd started reading the lists. (Steel up.) So read your own, your highness. Every name on it will cost you a piece of the man who wrote it. I'm the cheap one." },
+            body: "Wren told me you'd started reading the lists. So read your own, your highness. Every name on it will cost you a piece of yourself. I'm the cheap one." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "I know the price, Castor. I did the arithmetic. (A breath.) I'm my mother's son after all." }
+            body: "I know what it costs, Castor. I've counted it. I guess I'm my mother's son after all." }
         ]
       },
       {
@@ -2051,9 +2051,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Castor goes down on the canyon road, and his escort scatters into the dark. Duty runs out where the pay does. The column's lanterns burn on the stones. Nobody speaks." },
+            body: "Castor falls on the canyon road, and his escort scatters into the dark. The column's dropped lanterns are still burning on the stones." },
           { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-            body: "(quietly) First name. (She folds the list back into his saddlebag.) I'll keep the ledger, Amar. Somebody who loves you should be the one counting." }
+            body: "(folding the list back into his saddlebag) That's the first name. I'll keep the ledger, Amar. If someone has to keep count, it should be someone who loves you." }
         ]
       }
     ]
@@ -2063,8 +2063,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The First Stone Laid",
-    intro: "Lucian's answer. The squad rides for the Anthros border, to Khonu's village, where people still remember Amar's father. The war has made the roads lawless, and raiders have been robbing the village for a month. The villagers will let you stay if you can hold the road.",
-    outro: "Three families fly an old flag from their doorposts that night. It is not the King's flag. It is not Dawn's flag. It is yours — if you can keep them safe. Rebuilding starts the way Lucian said everything starts: with one held road and one kept promise.",
+    intro: "Amar has chosen Lucian's answer: restoration. The squad rides for the Anthros border, to Khonu's village, where people still remember Amar's father. The war has made the roads lawless, and raiders have been robbing the village for a month. The villagers will let the squad stay if they can hold the road.",
+    outro: "That night, three families hang an old flag from their doorposts. It isn't the King's flag or Dawn's. It is Amar's, as long as he can keep them safe. The rebuilding starts the way Lucian said everything starts: by holding one road and keeping one promise.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -2101,9 +2101,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Lucian held a road like this once, for people he'd never met. (Draws.) These ones knew my father. Squad, nobody gets past us to the houses. Nobody." },
+            body: "Lucian held a road like this once, for people he'd never met. These people knew my father. Squad, nobody gets past us to the houses. Nobody." },
           { speaker: "Ning", portraitId: "ning", expression: "focused_bow",
-            body: "Six of them, no discipline; they're used to farmers. (String creaks.) They've never met a held line. Let's teach them what Thuling learned." }
+            body: "Six of them, and no discipline. They're used to farmers. They've never had to fight a line that holds. Let's show them what we learned in Thuling." }
         ]
       },
       {
@@ -2111,9 +2111,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "leo", unitB: "amar" },
         beats: [
           { speaker: "Leo", portraitId: "leo", expression: "cocky_smirk",
-            body: "Captain. The old man on the porch has been watching you fight for two rounds. (A beat.) He keeps nodding. Like he's checking your form against somebody he remembers." },
+            body: "Captain. The old man on the porch has been watching you fight for two rounds. He keeps nodding, like he's comparing your form to somebody he remembers." },
           { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
-            body: "Then let's not embarrass the memory. West flank, Leo. Go." }
+            body: "Then let's not disappoint him. West flank, Leo. Go." }
         ]
       },
       {
@@ -2121,9 +2121,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The last raider drops his blade and runs, and doesn't look back. The road is quiet. On the porches, one by one, doors that have been barred for a month come open." },
+            body: "The last raider drops his blade and runs. The road is quiet again. One by one, the villagers open doors that have been barred for a month." },
           { speaker: "Maya", portraitId: "maya", expression: "soft_genuine_smile",
-            body: "No throne. No arithmetic. Just a held road and people who can sleep. (Quietly.) I could learn to like your version, Amar." }
+            body: "No throne. No grand plan. Just a road we held and people who can sleep tonight. I could get used to your way of doing this, Amar." }
         ]
       }
     ]
@@ -2133,8 +2133,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "Burn the Granary",
-    intro: "Maya's answer. The imperial depot on the border road is where the colony's taxed grain sits before it ships to Archbold's field armies. Burn it, and the armies go hungry, the tax stops meaning anything, and every village on the road learns the empire can bleed. Maya has been planning this strike since before she met you.",
-    outro: "The granary burns, and the border garrison can see the smoke. Nobody new goes hungry; that grain was never coming back to the villages anyway. What spreads is the news: the empire can bleed. Within the week, Maya's prediction comes true.",
+    intro: "Amar has chosen Maya's answer: revolution. The imperial depot on the border road holds the colony's taxed grain before it ships to Archbold's armies. If the squad burns it, the armies go hungry, the tax stops meaning anything, and every village on the road learns the empire can be hurt. Maya has been planning this strike since before she met Amar.",
+    outro: "The granary burns, and the border garrison can see the smoke. No villagers go hungry because of it, since that grain was never going back to them anyway. What spreads is the news that the empire can be hurt. Within a week, Maya's prediction comes true.",
     music: MUSIC.danger,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -2172,9 +2172,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Maya", portraitId: "maya", expression: "calculating_side_glance",
-            body: "Commander at the north stores, six on the yard. Those sledges burn if a lamp tips. Steel, then one match, on my mark. Nine years I've known this yard." },
+            body: "Commander's at the north stores, six on the yard. Those sledges burn if a lamp tips over. We fight first, then I light it on my mark. I've known this yard nine years." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Then it's your strike. I'm just the sword in it. (Draws.) Squad, on Maya's plan. Break the commander; the garrison folds without him." }
+            body: "Then it's your strike. I'm just here to fight. Squad, follow Maya's plan. Take out the commander and the garrison falls apart without him." }
         ]
       },
       {
@@ -2184,7 +2184,7 @@ export const BATTLES: BattleNode[] = [
           { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
             body: "(between strikes) You could've been a king, and you're torching depots with me instead. No regrets yet?" },
           { speaker: "Amar", portraitId: "amar", expression: "warm_half_smile",
-            body: "Crowns are how this started, Maya. (Steel up.) Fires are how it ends. Watch the archer on your left." }
+            body: "A fight over a crown is how all this started, Maya. Maybe this is how it ends. Watch the archer on your left." }
         ]
       },
       {
@@ -2192,9 +2192,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The commander falls and the garrison breaks for the gate. Supply men don't die for warehouses. Maya walks the yard alone, unhurried, and sets one lamp against the tally post." },
+            body: "The commander falls and the garrison runs for the gate, unwilling to die for a warehouse. Maya walks across the yard alone, taking her time, and sets a lamp against the tally post." },
           { speaker: "Maya", portraitId: "maya", expression: "steel_cold_confession_face",
-            body: "For the villages that grew it and never ate it. (The light catches.) Burn well." }
+            body: "(as the fire catches) This is for the villages that grew it and never got to eat it." }
         ]
       }
     ]
@@ -2204,8 +2204,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "Reporting for Service",
-    intro: "Khonu's answer. The war has reached the border, and the rebellion's army needs officers more than symbols. Amar walks into the command tent in his father's old colors and accepts a captaincy, knowing what it means. His first command: a column too small to hold the border bridge it's been given. Hold it anyway.",
-    outro: "The bridge holds. Not everyone in the column survives. That night Amar writes three letters, in regulation format. He learns the names of three soldiers he will dream about for the rest of his life. Khonu would have told him: that is what being a captain is. The letters are the job.",
+    intro: "Amar has chosen Khonu's answer: duty. The war has reached the border, and the rebellion's army needs officers more than symbols. Amar walks into the command tent in his father's old colors and accepts a captaincy, knowing what it means. His first orders are to hold a border bridge with a column too small for the job.",
+    outro: "The bridge holds, but not everyone in the column survives. That night Amar writes three letters in regulation format and learns the names of the three soldiers who died. Khonu would have told him that this is what being a captain means. Writing the letters is part of the job.",
     music: MUSIC.battleTheme,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -2235,7 +2235,7 @@ export const BATTLES: BattleNode[] = [
       {
         round: 4,
         at: [{ x: 13, y: 3 }, { x: 13, y: 5 }],
-        announce: "The second file reaches the bridge.",
+        announce: "The second wave reaches the bridge.",
         units: () => [
           ENEMIES.royalGuard("dt_w1", 1937, 15),
           ENEMIES.royalArcher("dt_w2", 1938, 14)
@@ -2257,9 +2257,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Orders: the bridge holds until the relief column. Six rounds, maybe seven. We don't have to beat them. We have to still be here. That's the whole job." },
+            body: "Our orders: the bridge holds until the relief column gets here. Six rounds, maybe seven. We don't have to beat them. We just have to still be here. That's the whole job." },
           { speaker: "Maya", portraitId: "maya", expression: "guarded_neutral",
-            body: "Look at you. Regulation voice and everything. (Blades out.) Khonu would be insufferable about this. Line on the carts. Make them pay for every plank." }
+            body: "Look at you, regulation voice and everything. Khonu would be insufferable about this. Form the line on the carts. Make them pay for every plank." }
         ]
       },
       {
@@ -2277,9 +2277,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "Relief horns from the west road. The imperial push breaks off, deliberate as it came. The bridge belongs to a column too thin to hold it. It held." },
+            body: "Horns sound from the west road: the relief column is here. The imperial attack pulls back as steadily as it came. The column was too small to hold the bridge, but it held." },
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
-            body: "(quietly, to no one) Khonu. I read the order before I signed it. I'd sign it again. (A breath.) That's the part I didn't know about you until tonight." }
+            body: "(quietly, to himself) Khonu. I read the order before I signed it, and I'd sign it again. I didn't understand that about you until tonight." }
         ]
       }
     ]
@@ -2289,8 +2289,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Long Road North",
-    intro: "Tev's answer. Amar leaves the squad at camp and rides north alone for the cold country. He tells no one his route; he doesn't know it himself. Two days out, in a snow pass too steep to go around, three sets of tracks close in on his. The assassins found him anyway. Alone means alone.",
-    outro: "You bury them where they fell, because someone should, and there is no one else. You ride on. The country gets colder. One by one, the names you carried fade. The one the empire is hunting is the only one that won't.",
+    intro: "Amar has chosen Tev's answer: exile. He leaves the squad at camp and rides north alone toward the cold country. He tells no one his route; he doesn't know it himself. Two days out, in a snowy pass too steep to go around, three sets of tracks close in on his. The assassins have found him anyway, and he has to face them alone.",
+    outro: "Amar buries them where they fell, because someone should and there is no one else to do it. Then he rides on into the cold country. One by one, he stops using the names he has gone by. The only one he can't leave behind is the name the empire is hunting.",
     music: MUSIC.strongholdMemories,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_mountain",
@@ -2321,9 +2321,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { portraitId: "narrator",
-            body: "They don't call out and they don't offer terms. Professionals. The one up the pass ahead just nods, almost politely, and the two on the flanks start closing the jaws." },
+            body: "They don't call out or offer terms. These are professionals. The one up the pass ahead of Amar just nods, almost politely, and the two on the flanks start closing in." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
-            body: "(to the empty pass) I left the crown. I left the war. I left everyone who'd have stood here with me. That was the point. (Draws, alone.) So this one's just mine." }
+            body: "(to the empty pass) I left the crown. I left the war. I left everyone who would've stood here with me. That was the point. So this fight is just mine." }
         ]
       },
       {
@@ -2331,9 +2331,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The pass goes quiet the way only snow country goes quiet. Three men lie where the jaws failed to close. Amar stands alone in the middle of it, breathing hard, and no one cheers, because no one is there." },
+            body: "The pass goes quiet. The three killers lie in the snow where they tried to trap him. Amar stands alone among them, breathing hard. There is no one else there." },
           { speaker: "Amar", portraitId: "amar", expression: "wounded",
-            body: "(finding the shovel strapped to their packhorse) You came prepared to bury someone. (A long breath.) Fine. Someone gets buried." }
+            body: "(finding the shovel strapped to their packhorse) You came ready to bury someone. ...Fine. Someone gets buried." }
         ]
       }
     ]
@@ -2343,8 +2343,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "The Open Hand",
-    intro: "Yul's answer. Greywall Fort has tried to surrender three times: to the empire's own inspectors, to a rebel column, to anyone. Each time it was refused. This war is so old it has forgotten what surrender is for. Amar rides to the gate under his own banner and offers terms a fourth time. The garrison lays down its arms. Its captain does not.",
-    outro: "The garrison keeps its surrender. By morning the fort's armoury is a hospital, wounded from both armies in adjacent cots, fed from the same pot. At the edge of the lamplight, Selene watches a long time, says nothing, and is gone before dawn.",
+    intro: "Amar has chosen Yul's answer: mercy. Greywall Fort has tried to surrender three times, to the empire's own inspectors, to a rebel column, to anyone, and each time it was refused. Amar rides to the gate under his own banner and offers terms a fourth time. The garrison lays down its arms, but its captain refuses, and the squad has to subdue him.",
+    outro: "The garrison's surrender holds. By morning the fort's armoury has become a hospital, with wounded from both armies in cots side by side, fed from the same pot. Selene watches from the edge of the lamplight for a long time. She says nothing, and is gone before dawn.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_grude",
@@ -2382,9 +2382,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { speaker: "Holdout Captain", portraitId: "royal_guard", expression: "neutral",
-            body: "My garrison may kneel. I hold a King's commission, and it does not kneel to a colonial with a borrowed banner. (He draws, alone but for three.) Refuse MY terms, heir." },
+            body: "(drawing his sword) My garrison may kneel. I hold a King's commission, and I do not kneel to a colonial with a borrowed banner. Let's see you refuse MY terms, heir." },
           { speaker: "Amar", portraitId: "amar", expression: "resolute",
-            body: "Your men chose to live, Captain. I'm not here to take that from them, or from you, if you'll let me. (Draws.) Squad: bring him down. Nobody dies unless they insist on it." }
+            body: "Your men chose to live, Captain. I'm not here to take that from them, or from you, if you'll let me. Squad, bring him down. Nobody dies unless they insist on it." }
         ]
       },
       {
@@ -2392,9 +2392,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "adjacent_eot", unitA: "amar", unitB: "royal_captain" },
         beats: [
           { speaker: "Holdout Captain", portraitId: "royal_guard", expression: "neutral",
-            body: "(pressed, bleeding) Why won't you finish it? Mockery is worse than a blade, boy." },
+            body: "(bleeding) Why won't you finish it? Being mocked like this is worse than dying, boy." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
-            body: "Nobody's mocking you. Yul, a surgeon, taught me you can stop a man without killing him. She never once asked which side the wound was on. (Steel up.) Yield, Captain. The war doesn't need one more body." }
+            body: "Nobody's mocking you. Yul, a surgeon, taught me you can stop a man without killing him. She never once asked which side a wounded man fought for. Yield, Captain. This war doesn't need one more body." }
         ]
       },
       {
@@ -2402,9 +2402,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "The captain goes down and stays down: alive, disarmed, furious, breathing. On the walls, the garrison that watched the whole of it quietly lowers the last of its blades. The fourth surrender is accepted." },
+            body: "The captain goes down and stays down, alive, disarmed and furious. On the walls, the garrison that watched the whole fight quietly lowers the last of its blades. The fort's fourth surrender is accepted." },
           { speaker: "Ning", portraitId: "ning", expression: "startled",
-            body: "(low) Amar. The gate. (A scarred figure at the edge of the lamplight, watching, silent.) ...That's Selene." }
+            body: "(quietly) Amar, the gate. Someone with scars is standing at the edge of the lamplight, just watching. ...That's Selene." }
         ]
       }
     ]
@@ -2414,8 +2414,8 @@ export const BATTLES: BattleNode[] = [
     index: 19,
     title: "Nineteenth Battle",
     subtitle: "A Fisherman's Cottage",
-    intro: "Sera's answer. Amar rides for the southern coast and stops trying to be anyone. A cottage. A boat. A name that is not Amar. It lasts one season. Then three men with a sketch and a bounty notice come up the beach. The fisherman meets them at the waterline with a boat-hook and a soldier's hands.",
-    outro: "The squad arrives at dusk: too late to help, in time to see he didn't need it. They keep their word and go, leaving a sword and a potion by the door. You look at both all evening. Come morning, the sword stays. You go out with the boat.",
+    intro: "Amar has chosen Sera's answer: forgetting. He rides for the southern coast and stops trying to be anyone. He has a cottage, a boat, and a name that isn't Amar. It lasts one season. Then three men with a sketch and a bounty notice come up the beach. The fisherman meets them at the waterline with a boat-hook and a soldier's training.",
+    outro: "The squad arrives at dusk, too late to help but in time to see he didn't need it. They keep their word and leave, setting a sword and a potion by his door. He looks at both all evening. In the morning he leaves the sword where it is and goes out in the boat.",
     music: MUSIC.battleTheme2,
     prepMusic: MUSIC.battlePrep,
     backdropKey: "bg_thuling",
@@ -2446,9 +2446,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "round_start", round: 1 },
         beats: [
           { portraitId: "narrator",
-            body: "The one with the sketch looks from the paper to the fisherman and back, twice, and grins. The tide is out. The beach is long. Nobody on it but the four of them." },
+            body: "The man with the sketch looks from the paper to the fisherman and back, twice, and grins. The tide is out, and there is nobody on the long beach but the four of them." },
           { speaker: "Amar", portraitId: "amar", expression: "guarded",
-            body: "(setting down the net, picking up the boat-hook) You have the wrong man. (A breath.) I mean that more honestly than you will ever know. Last chance to believe me." }
+            body: "(setting down the net, picking up the boat-hook) You have the wrong man. I mean that more than you'll ever know. This is your last chance to believe me." }
         ]
       },
       {
@@ -2456,9 +2456,9 @@ export const BATTLES: BattleNode[] = [
         trigger: { kind: "before_victory" },
         beats: [
           { portraitId: "narrator",
-            body: "It's over fast. Whatever the fisherman forgets, his hands remember. The bounty men lie in the tide. At the treeline, four riders, his old squad, saw everything. They don't come down." },
+            body: "It's over fast. The fisherman has forgotten a lot, but not how to fight. The bounty men lie in the shallows. Four riders from his old squad watched it all from the treeline. They don't come down." },
           { portraitId: "narrator",
-            body: "By dark they're gone. On the doorstep in the morning: a sword he knows, a potion, and no note. A note would ask something of him, and they came all this way not to." }
+            body: "By dark the riders are gone. In the morning there is a sword he knows on the doorstep, with a potion and no note. They didn't leave a note because they didn't want to ask anything of him." }
         ]
       }
     ]
