@@ -403,6 +403,9 @@ export interface AttackResult {
   defenderKilled: boolean;
   counterTriggered: boolean;
   counterResult?: AttackResult;
+  // A counter rolled but not yet applied (resolveAttack's deferCounter):
+  // the animated exchange applies it on the counter's own swing.
+  counterRoll?: { hit: boolean; crit: boolean; damage: number };
   // Destruct ability: defender's death also killed the attacker.
   destructTriggered?: boolean;
   attackerKilled?: boolean;

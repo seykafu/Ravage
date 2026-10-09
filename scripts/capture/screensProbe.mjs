@@ -88,6 +88,12 @@ if (only.includes("prep")) {
   await go("BattlePrepScene", { battleId: "b01_palace_coup" });
   await step(45); await shot("prep_b01_tip");
   console.log("prep tip objects:", await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattlePrepScene").inventoryTip.length));
+  // Battle 1 only: the same fresh save at battle 2's prep shows no pointer.
+  await go("BattlePrepScene", { battleId: "b02_farmland" });
+  await step(10);
+  console.log("prep tip objects at b02:", await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattlePrepScene").inventoryTip.length));
+  await go("BattlePrepScene", { battleId: "b01_palace_coup" });
+  await step(10);
   await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattlePrepScene").dismissInventoryTip());
   await go("BattlePrepScene", { battleId: "b01_palace_coup" });
   await step(30); await shot("prep_b01_after");
@@ -105,6 +111,47 @@ if (only.includes("prep")) {
   await shot("b01_board");
   console.log("b01 enemies:", await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScene("BattleScene").state.units
     .filter((u) => u.faction === "enemy").map((u) => `${u.id}@${u.state.position.x},${u.state.position.y}`).join(" ")));
+}
+if (only.includes("crit")) {
+  // A real attack with the dice forced to a critical hit: the target's HP
+  // (and its health bar) must not move until the blow lands, after the
+  // cut-in and the lunge.
+  await go("BattleScene", { battleId: "b12_ravage" });
+  for (let i = 0; i < 10; i++) {
+    await step(20);
+    await page.evaluate(() => {
+      const g = window.__RAVAGE_GAME__;
+      const d = g.scene.getScene("BattleDialogueScene");
+      if (d && d.scene.isActive()) d.scene.stop();
+      const b = g.scene.getScene("BattleScene");
+      if (b && b.scene.isPaused()) b.scene.resume();
+    });
+  }
+  await page.evaluate(() => {
+    const b = window.__RAVAGE_GAME__.scene.getScene("BattleScene");
+    const amar = b.state.units.find((u) => u.id === "amar");
+    const foe = b.state.units.find((u) => u.faction === "enemy" && u.id !== "archbold_captain" && u.state.hp > 0);
+    // Stand Amar next to the target, and load the dice.
+    amar.state.position = { x: foe.state.position.x, y: foe.state.position.y + 1 };
+    b.refreshAllUnits();
+    const real = b.state.rng.rollPercent.bind(b.state.rng);
+    b.state.rng.rollPercent = () => true;
+    window.__crit = { foe, hp0: foe.state.hp, log: [], restore: () => { b.state.rng.rollPercent = real; } };
+    window.__critDone = false;
+    void b.animateAttack(amar, foe).then(() => { window.__critDone = true; window.__crit.restore(); });
+  });
+  for (let i = 0; i < 40; i++) {
+    await step(3);
+    const row = await page.evaluate(() => {
+      const b = window.__RAVAGE_GAME__.scene.getScene("BattleScene"); const c = window.__crit;
+      const v = b.unitViews.get(c.foe.id);
+      return `t=${Math.round(window.__cap.t - window.__cap.t0 || 0)} hp=${c.foe.state.hp}/${c.hp0} bar=${(v?.hpShown ?? 1).toFixed(2)} done=${window.__critDone}`;
+    });
+    if (i === 0) await page.evaluate(() => { window.__cap.t0 = window.__cap.t; });
+    if (i % 2 === 0) console.log("  " + row);
+    if (i === 12) await shot("crit_cutin");
+    if (i === 30) await shot("crit_landed");
+  }
 }
 if (only.includes("victory")) {
   await go("BattleScene", { battleId: "b12_ravage" });
