@@ -42,7 +42,7 @@ import {
   enterStance,
   interposeCandidates,
   moveUnit,
-  performAttack,
+  resolveAttack,
   reachableForUnit,
   rollAttackOnly,
   targetsForUnit,
@@ -5648,12 +5648,14 @@ export class BattleScene extends Phaser.Scene {
 
     if (!interposeAware) {
       // The outcome is rolled before the swing, so a critical blow can
-      // announce itself (critCutIn) before it lands; the board shows none
-      // of it until applyAttackEffects.
-      const result = performAttack(this.state, u, target);
-      if (result.crit && wantsCutIn(this, u)) await critCutIn(this, (o) => this.pin(o), u);
+      // announce itself (critCutIn) before it lands. Its damage is applied
+      // only once the swing connects, and a counter's only once the
+      // counter does: no health bar moves ahead of the blow that empties it.
+      const roll = rollAttackOnly(this.state, u, target, false);
+      if (roll.crit && wantsCutIn(this, u)) await critCutIn(this, (o) => this.pin(o), u);
       await this.lunge(u, target);
       u.state.apRemaining -= 1;
+      const result = resolveAttack(this.state, u, target, roll, true);
       this.applyAttackEffects(u, target, result);
       if (result.crit) await this.delay(90);
       if (result.destructTriggered && result.attackerKilled) {
@@ -5664,9 +5666,10 @@ export class BattleScene extends Phaser.Scene {
         }
         this.pushLog(`${target.name}'s last act drags ${u.name} down.`);
       }
-      if (result.counterTriggered && result.counterResult) {
+      if (result.counterTriggered && result.counterRoll) {
         await this.delay(260);
         await this.lunge(target, u);
+        result.counterResult = applyAttackOutcome(target, u, result.counterRoll);
         this.applyAttackEffects(target, u, result.counterResult);
         if (result.counterResult.crit) await this.delay(90);
       }

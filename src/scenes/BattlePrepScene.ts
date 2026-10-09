@@ -362,11 +362,12 @@ export class BattlePrepScene extends Phaser.Scene {
       }
     });
 
-    // A new player's first look at this screen: the squad's starting
-    // potions sit unassigned in the pool, and the Inventory button is easy
-    // to walk past on the way to "March to Battle".
+    // A new player's first look at this screen (battle 1 only): the
+    // squad's starting potions sit unassigned in the pool, and the
+    // Inventory button is easy to walk past on the way to "March to Battle".
     this.inventoryTip = [];
-    if (saveSnapshot.flags[INVENTORY_TIP_FLAG] !== true && (saveSnapshot.squadInventory?.length ?? 0) > 0) {
+    if (node.id === "b01_palace_coup" && saveSnapshot.flags[INVENTORY_TIP_FLAG] !== true
+      && (saveSnapshot.squadInventory?.length ?? 0) > 0) {
       this.showInventoryTip(invBtn);
     }
 

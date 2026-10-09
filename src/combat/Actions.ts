@@ -134,18 +134,31 @@ export const applyAttackOutcome = (
   };
 };
 
-const rollAttack = (
+export const performAttack = (state: BattleState, attacker: Unit, defender: Unit): AttackResult =>
+  resolveAttack(state, attacker, defender, rollAttackOnly(state, attacker, defender, false));
+
+/**
+ * Everything after an attack's roll: its damage, Destruct, and the
+ * defender's counter. performAttack is the roll and this in one call.
+ * With `deferCounter` the counter is rolled (same dice, same order) but
+ * its damage is left unapplied, in result.counterRoll: a caller animating
+ * the exchange lands it on the counter's own swing (applyAttackOutcome),
+ * so the attacker's health bar doesn't drop before they're struck back.
+ */
+export const resolveAttack = (
   state: BattleState,
   attacker: Unit,
   defender: Unit,
-  isCounter = false
+  roll: AttackRoll,
+  deferCounter = false
 ): AttackResult => {
-  const roll = rollAttackOnly(state, attacker, defender, isCounter);
-  return applyAttackOutcome(attacker, defender, roll);
-};
-
-export const performAttack = (state: BattleState, attacker: Unit, defender: Unit): AttackResult => {
-  const result = rollAttack(state, attacker, defender, false);
+  const result = applyAttackOutcome(attacker, defender, roll);
+  const counter = (): void => {
+    const counterRoll = rollAttackOnly(state, defender, attacker, true);
+    result.counterTriggered = true;
+    if (deferCounter) result.counterRoll = counterRoll;
+    else result.counterResult = applyAttackOutcome(defender, attacker, counterRoll);
+  };
 
   // Destruct: if the defender was killed and has the ability, the attacker also dies.
   if (result.defenderKilled && hasAbility(defender, "Destruct") && isAlive(attacker)) {
@@ -163,21 +176,15 @@ export const performAttack = (state: BattleState, attacker: Unit, defender: Unit
   // defender / still-living attacker can produce a counter.
   if (result.hit && !result.defenderKilled && isAlive(defender) && isAlive(attacker)) {
     if (canTriggerReadyCounter(defender, attacker, state.grid)) {
-      const counter = rollAttack(state, defender, attacker, true);
+      counter();
       // Ready spent — but from the combined stance this demotes to
       // "defensive", never stripping a Defend paid for with separate AP.
       spendReady(defender);
-      result.counterTriggered = true;
-      result.counterResult = counter;
     } else if (canTriggerSpeedCounter(defender, attacker)) {
-      const counter = rollAttack(state, defender, attacker, true);
-      result.counterTriggered = true;
-      result.counterResult = counter;
+      counter();
     } else if (canTriggerRelentlessCounter(defender, attacker)) {
       // Boss phase two: retaliates unconditionally, base damage.
-      const counter = rollAttack(state, defender, attacker, true);
-      result.counterTriggered = true;
-      result.counterResult = counter;
+      counter();
     }
   } else if (result.defenderKilled && canTriggerReadyCounter(defender, attacker, state.grid)) {
     // Defender died but had Ready ready to fire; clear the stance so the
