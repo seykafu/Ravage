@@ -71,6 +71,19 @@ if (only.includes("choice")) {
   });
   await step(36); await shot("choice_commit");
 }
+for (const road of ["exile", "mercy"]) {
+  if (!only.includes(`landfall_${road}`)) continue;
+  // The Seven Paths commit, then the landing film for that road.
+  await go("ChoiceScene"); await step(60);
+  await page.evaluate((road) => {
+    const c = window.__RAVAGE_GAME__.scene.getScene("ChoiceScene");
+    const name = road[0].toUpperCase() + road.slice(1);
+    c.selected = { path: road, name, honors: "", blurb: "", full: "", openerBattle: `b19_path_opener_${road}` };
+    c.commit();
+  }, road);
+  for (let i = 0; i < 17; i++) { await step(60); await shot(`landfall_${road}_${String(i * 2 + 2).padStart(2, "0")}s`); }
+  console.log(`landfall_${road} ends in:`, await page.evaluate(() => window.__RAVAGE_GAME__.scene.getScenes(true).map((s) => s.scene.key).join(",")));
+}
 if (only.includes("promo")) {
   await go("PromotionScene", { characterId: "veya", resumeKey: "" });
   for (const [n, name] of [[18, "promo_0_6s"], [27, "promo_1_5s"], [9, "promo_flash"], [24, "promo_name"], [45, "promo_3s"]]) { await step(n); await shot(name); }

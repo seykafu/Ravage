@@ -269,7 +269,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
         { body: "Whatever she offers him tomorrow, he needs his answer ready before he hears it. Otherwise he'll just agree with her. He's better than that. But she's better at this than anyone.", expression: "guarded_neutral" }
       ],
       paths: [
-        { body: "I spent eleven years steering him toward whatever Dawn wanted. Then I stood in a ship's hold and told him he doesn't have to do what anyone wants anymore. Best thing I've ever said out loud.", expression: "soft_genuine_smile" },
+        { body: "I spent months steering him toward whatever Dawn wanted. Then I stood in a ship's hold and told him he doesn't have to do what anyone wants anymore. Best thing I've ever said out loud.", expression: "soft_genuine_smile" },
         { body: "Ndara woke up on this ship. Khione carried her aboard two nights before the quay and told no one. I check everything, and I missed a whole marshal in the hold. That woman is a better spy than I am.", expression: "calculating_side_glance" },
         { body: "No warrant, no map, no handler, and no plan for after we land. I should be terrified. Ask me why I'm not and I'll deny I said any of this.", expression: "guarded_neutral" }
       ],
@@ -286,7 +286,7 @@ export const CAMP_TALK: Record<string, CharacterCampTalk> = {
       endgame: [
         { body: "They ran the numbers and walked away. I've spent twenty years being somebody's asset, and the one valuation I'm proud of is the one that said we weren't worth the trouble.", expression: "soft_genuine_smile" },
         { body: "The councils are arguing about a bridge. Just a bridge, and who pays for it. It's the most boring thing I've ever helped organize.", expression: "guarded_neutral" },
-        { body: "I reported on him for eleven years. Every grip he corrected, every night he didn't sleep. There's one line I never filed. I'm still not filing it. Don't ask.", expression: "tearful" }
+        { body: "I reported on him from the day I walked into Thuling. Every grip he corrected, every night he didn't sleep. There's one line I never filed. I'm still not filing it. Don't ask.", expression: "tearful" }
       ]
     }
   },

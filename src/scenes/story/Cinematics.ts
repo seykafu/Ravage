@@ -4,6 +4,8 @@ import { ensureDotTexture } from "../battle/Atmosphere";
 import { Reel, Z, type Fig } from "./Reel";
 import { sfxCineBell, sfxCineBoom, sfxCineChime, sfxCineClang, sfxCineRise, sfxClick } from "../../audio/Sfx";
 import type { CinematicId, StageId, StoryArc } from "../../story/beats";
+import type { SevenPath } from "../../data/contentIds";
+import { getSevenPath, loadSave } from "../../util/save";
 
 // ─────────────────────────────────────────────────────────────────────────
 // The story's cinematics — short films at the turns of the story, made of
@@ -16,6 +18,15 @@ import type { CinematicId, StageId, StoryArc } from "../../story/beats";
 //                under the moon, the crossing to Grude ahead
 //   grude_burns  the night the capital burns, before the battle for it
 //   sky_fleet    sunrise after the bell: the sky opens
+//   awakening    after the failed coup: the hospital, the next morning
+//   ten_months   the year in Thuling, before the mountain: the forge, the
+//                General's jobs, a flash of the throne hall, Leo
+//   landfall     after the Seven Paths choice: the beach nobody owns, and
+//                the road Amar picked (played by ChoiceScene)
+//   dawns_war    before Battle 20 on every war road: the rebels hold Grude,
+//                and the King's army comes to take it back
+//   sky_withdraws after the last battle on every war road: the flagship
+//                lifts off the processional and the fleet leaves
 //
 // A story arc plays one before its first beat (StoryArc.cinematic) or
 // after its last (StoryArc.endCinematic). "Skip ▸▸", Esc, or two clicks
@@ -344,11 +355,254 @@ const skyFleet: Script = async (r) => {
   await r.fadeOut(1000);
 };
 
-const SCRIPTS: Record<CinematicId, Script> = { coup, escape, grude_burns: grudeBurns, sky_fleet: skyFleet };
+// ---- the morning after (B1 → the hospital) --------------------------------------
+
+/** Dust turning in a shaft of window light. */
+const motes = (r: Reel, area: { x: number; y: number; w: number; h: number }, ms: number): void => {
+  r.add(r.scene.add.particles(0, 0, ensureDotTexture(r.scene), {
+    x: { min: area.x, max: area.x + area.w }, y: { min: area.y, max: area.y + area.h },
+    speedX: { min: -6, max: 6 }, speedY: { min: -8, max: -2 }, lifespan: { min: 2400, max: 4200 },
+    scale: { start: 0.18, end: 0 }, alpha: { start: 0.55, end: 0 }, tint: 0xfff0d0,
+    blendMode: Phaser.BlendModes.ADD, frequency: 160, duration: ms
+  }), Z.FRONT_FX);
+};
+
+const awakening: Script = async (r) => {
+  r.black();
+  r.letterbox();
+  await r.wait(300);
+  await r.narrate("The coup has failed.", 900, { boom: true });
+  await r.narrate("King Nebu's guards took Amar alive.", 900);
+  if (r.skipped) return;
+  r.cut();
+
+  // The ward the next morning, the light coming slowly up over the bed.
+  r.painting("backdrop:hospital", { zoom: 1.16, x: 0.6, y: 0.56 }, { zoom: 1.3, x: 0.34, y: 0.62 }, 15000, { fade: 1400, fallback: 0x6a5a48 });
+  const dim = r.grade(0x000000, 0.55, 0);
+  void r.tween({ targets: dim, alpha: 0, duration: 5200, ease: "Sine.easeOut" });
+  r.glow(W * 0.82, H * 0.36, 0xffe2a8, 3.4, 0.22, Z.GRADE + 0.5);
+  motes(r, { x: W * 0.45, y: H * 0.2, w: W * 0.5, h: H * 0.5 }, 14000);
+  sfxCineChime(0.8);
+  await r.wait(r.place("Para", "A hospital outside the palace, the next morning", 4200) + 200);
+  await r.wait(r.caption("Amar wakes up with no memory of who he is, or of the night before.", 3800) + 100);
+  await r.wait(r.caption("The King's men are treating him as one of their own.", 3200) + 100);
+  await r.slam("The Morning After", undefined, 1800, "#f4e4c8");
+  await r.fadeOut(900);
+};
+
+// ---- ten months in Thuling (before the mountain) ---------------------------------
+
+/** Sparks off an anvil. */
+const sparks = (r: Reel, x: number, y: number): void => {
+  if (r.skipped) return;
+  const e = r.add(r.scene.add.particles(x, y, ensureDotTexture(r.scene), {
+    speed: { min: 70, max: 200 }, angle: { min: 200, max: 340 }, gravityY: 320, lifespan: { min: 300, max: 650 },
+    scale: { start: 0.3, end: 0 }, tint: [0xfff0b0, 0xffb050, 0xff7a2a], blendMode: Phaser.BlendModes.ADD, emitting: false
+  }), Z.FRONT_FX);
+  e.explode(14);
+  sfxCineClang();
+  r.scene.time.delayedCall(800, () => e.destroy());
+};
+
+const tenMonths: Script = async (r) => {
+  r.black();
+  r.letterbox();
+  const FEET = 612;
+
+  // The forge: Amar at the anvil, Lucian and Ning at the line.
+  const forge = r.painting("backdrop:factory", { zoom: 1.14, x: 0.5, y: 0.62 }, { zoom: 1.2, x: 0.56, y: 0.64 }, 9000, { fade: 900, fallback: 0x2a1a10 });
+  if (forge instanceof Phaser.GameObjects.Image) {
+    const fire = r.glow(0, 0, 0xff8a30, 1.6, 0.4, Z.GRADE + 0.5);
+    r.onFrame(() => { const p = Reel.at(forge, 0.72, 0.76); fire.setPosition(p.x, p.y); });
+    void r.tween({ targets: fire, alpha: 0.6, duration: 240, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+  }
+  r.embers({ x: W * 0.45, y: H * 0.4, w: W * 0.4, h: H * 0.35 }, 9000, Z.FRONT_FX, 40);
+  const WARM = 0xffd2a8;
+  const amar = r.figure("amar", 640, FEET, { scale: 3, tint: WARM });
+  r.figure("lucian", 470, FEET - 8, { scale: 3, tint: WARM });
+  r.figure("ning", 830, FEET - 4, { scale: 3, left: true, tint: WARM });
+  for (let i = 0; i < 4; i++) {
+    r.scene.time.delayedCall(600 + i * 1100, () => {
+      if (r.skipped) return;
+      void amar.strike();
+      r.scene.time.delayedCall(200, () => sparks(r, 700, FEET - 50));
+    });
+  }
+  await r.wait(r.place("Thuling", "The forge", 3600) + 200);
+  await r.wait(r.caption("For ten months, Amar works the forge with Lucian and Ning.", 3400) + 100);
+  if (r.skipped) return;
+  r.cut();
+
+  // The fields at sunset: the squad on the road, on the General's business.
+  r.painting("backdrop:farmland", { zoom: 1.12, x: 0.4, y: 0.6 }, { zoom: 1.04, x: 0.55, y: 0.58 }, 8000, { fade: 700, fallback: 0x6a4a20 });
+  const SUN = 0xffc070;
+  const road = [["maya", 0], ["amar", 1], ["lucian", 2], ["ning", 3]] as const;
+  const walkers = road.map(([id, i]) => r.figure(id, -80 - i * 110, FEET - (i % 2) * 8, { scale: 3, dark: 0x2a1c18, rim: SUN, rimAlpha: 0.9 }));
+  walkers.forEach((f, i) => { void f.walkTo(1380 - i * 110, f.box.y, 7200); });
+  await r.wait(r.caption("Between shifts, the squad starts taking paid jobs from General Fergus.", 3600) + 100);
+  if (r.skipped) return;
+  r.cut();
+
+  // A flash of the throne hall: something Amar remembers.
+  r.flash(0xffffff, 0.7, 500);
+  r.painting("backdrop:throne_hall", { zoom: 1.2, x: 0.55, y: 0.5 }, { zoom: 1.3, x: 0.55, y: 0.5 }, 3200, { fade: 150, fallback: 0x2a1a14 });
+  r.grade(0x7a8ab8, 1, 0);
+  r.grade(0x101830, 0.3, 0, "add");
+  sfxCineRise();
+  await r.wait(r.caption("Sometimes, in flashes, Amar remembers a throne hall.", 2800) + 100);
+  r.flash(0xffffff, 0.6, 400);
+  if (r.skipped) return;
+  r.cut();
+
+  // The mountains: the next job, and the General's son.
+  r.painting("backdrop:mountain", { zoom: 1.12, x: 0.5, y: 0.6 }, { zoom: 1.04, x: 0.5, y: 0.55 }, 9000, { fade: 700, fallback: 0x5a6a7a });
+  const COLD = 0xdce8ff;
+  const squad = [["maya", 380], ["amar", 500], ["lucian", 620], ["ning", 740]] as const;
+  squad.forEach(([id, x], i) => r.figure(id, x, FEET - (i % 2) * 8, { scale: 3, tint: COLD }));
+  const leo = r.figure("leo", 1400, FEET - 6, { scale: 3, left: true, tint: COLD });
+  void leo.walkTo(900, FEET - 6, 1800);
+  await r.wait(r.caption("The next job is in the mountains, and the General is sending his son Leo along.", 3800) + 100);
+  await r.slam("The General's Work", undefined, 1700);
+  await r.fadeOut(900);
+};
+
+// ---- the road begins (after the Seven Paths choice) ------------------------------
+
+const ROAD: Record<SevenPath, { name: string; colour: string; line: string; alone: boolean }> = {
+  vengeance: { name: "Vengeance", colour: "#e0584a", alone: false, line: "From here, the squad rides inland with a list of names in Amar's saddlebag." },
+  restoration: { name: "Restoration", colour: "#e8c45a", alone: false, line: "From here, the squad rides inland to Khonu's village, to start rebuilding." },
+  revolution: { name: "Revolution", colour: "#d8743c", alone: false, line: "From here, the squad rides for the empire's grain depot on the border road." },
+  duty: { name: "Duty", colour: "#8fb0d8", alone: false, line: "From here, Amar rides to the border to join Dawn's army as an officer." },
+  exile: { name: "Exile", colour: "#b8c8d8", alone: true, line: "From here, Amar leaves the squad and rides north, alone." },
+  mercy: { name: "Mercy", colour: "#f0ece0", alone: false, line: "From here, the squad rides for Greywall Fort, which has tried to surrender three times." },
+  forgetting: { name: "Forgetting", colour: "#9ad0c4", alone: true, line: "From here, Amar leaves the squad and goes south, alone, to stop being anyone." }
+};
+
+const landfall: Script = async (r) => {
+  const road = ROAD[getSevenPath(loadSave()) ?? "mercy"];
+  r.black();
+  r.letterbox();
+  const beach = r.painting("backdrop:beach_landing", { zoom: 1.12, x: 0.44, y: 0.52 }, { zoom: 1.04, x: 0.52, y: 0.54 }, 17000, { fade: 1200, fallback: 0x8a7a60 });
+  if (beach instanceof Phaser.GameObjects.Image) {
+    // The sun low on the left; Khione's ship riding at anchor offshore.
+    const sun = r.glow(0, 0, 0xffd090, 1.6, 0.4, Z.GRADE + 0.5);
+    r.onFrame(() => { const p = Reel.at(beach, 0.23, 0.39); sun.setPosition(p.x, p.y); });
+    shipOn(r, beach, { fx: 0.64, fy: 0.47, scale: 0.085, tint: 0xf0dcc0 }, Z.BACK_FX + 0.3);
+  }
+  const FEET = 606;
+  const LIGHT = 0xffe8cc;
+  // Just out of the boats, on the open sand; Amar at the front.
+  const squad = [["leo", 700], ["ning", 790], ["maya", 880], ["amar", 980]] as const;
+  const figs = squad.map(([id, x], i) => {
+    const f = r.figure(id, x, FEET - (i % 2) * 8, { scale: 3, tint: LIGHT, rim: 0xffc070, rimAlpha: 0.4 });
+    f.box.setAlpha(0);
+    void r.tween({ targets: f.box, alpha: 1, duration: 900, delay: 500 + i * 250 });
+    return f;
+  });
+  const amar = figs[3]!;
+  await r.wait(r.place("The Beach Nobody Owns", "Four hours later", 4000) + 200);
+  await r.wait(r.caption("Khione's ship anchors off an empty beach, and the squad rows ashore.", 3600) + 100);
+  if (road.alone) {
+    // He goes on by himself; they watch him go.
+    void amar.walkTo(1420, amar.box.y, 4200);
+  } else {
+    figs.forEach((f, i) => { void f.walkTo(1420 + i * 30, f.box.y, 4600 - i * 200); });
+  }
+  await r.wait(r.caption(road.line, 3600) + 100);
+  await r.slam("The Road Begins", road.name, 1800, road.colour);
+  await r.fadeOut(900);
+};
+
+// ---- Dawn's war (before Battle 20, on every war road) ------------------------------
+
+const dawnsWar: Script = async (r) => {
+  r.black();
+  r.letterbox();
+  const city = r.painting("backdrop:grude", { zoom: 1.24, x: 0.38, y: 0.5 }, { zoom: 1.1, x: 0.48, y: 0.5 }, 9000, { fade: 1100, fallback: 0x4a4a5a });
+  r.grade(0xffe0c0, 1, 0);
+  if (city instanceof Phaser.GameObjects.Image) {
+    // Smoke over the districts the rebels took.
+    for (const [fx, fy] of [[0.27, 0.36], [0.44, 0.44], [0.58, 0.5], [0.36, 0.55]] as const) {
+      const p = Reel.at(city, fx, fy);
+      r.smoke(p.x, p.y, 9000, { width: 40, tint: 0x5a5048 });
+    }
+  }
+  await r.wait(r.place("Grude", "Some weeks after the landing", 4000) + 200);
+  await r.wait(r.caption("Dawn's rebellion has become open war, and the rebels now hold Grude.", 3800) + 100);
+  if (r.skipped) return;
+  r.cut();
+
+  // The field an hour from the city: two lines, and the squad between them.
+  r.painting("backdrop:farmland", { zoom: 1.1, x: 0.5, y: 0.62 }, { zoom: 1.16, x: 0.48, y: 0.64 }, 9000, { fade: 700, fallback: 0x6a4a20 });
+  r.grade(0xe8b890, 1, 0);
+  r.embers({ x: 0, y: H * 0.4, w: W, h: H * 0.4 }, 9000, Z.FRONT_FX, 20);
+  const FEET = 612;
+  const DUST = 0xe0c4a8;
+  const imperials = [0, 1, 2, 3].map((i) => r.figure("royal_guard", 1080 + i * 70, FEET - (i % 2) * 10, { scale: 2.6, left: true, tint: DUST }));
+  const rebels = [0, 1, 2, 3].map((i) => r.figure(i % 2 ? "archer" : "bandit_swordsman", 200 - i * 70, FEET - (i % 2) * 10, { scale: 2.6, tint: 0xc8e0b8 }));
+  const squad = [["amar", 620], ["maya", 540], ["ning", 700], ["leo", 460]] as const;
+  squad.forEach(([id, x], i) => r.figure(id, x, FEET + 2 - (i % 2) * 6, { scale: 3, tint: 0xffe8d0 }));
+  imperials.forEach((f, i) => { void f.walkTo(f.box.x - 160, f.box.y, 5000 + i * 200); });
+  rebels.forEach((f, i) => { void f.walkTo(f.box.x + 160, f.box.y, 5000 + i * 200); });
+  await r.wait(r.caption("King Archbold's western army, under General Serrick, is coming to take the city back.", 3800) + 100);
+  await r.wait(r.caption("Whatever the squad thinks of Dawn, today they fight in her army.", 3400) + 100);
+  await r.slam("Dawn's War", undefined, 1700, "#ffcf8a");
+  await r.fadeOut(900);
+};
+
+// ---- the sky withdraws (after the last battle, on every war road) ----------------
+
+const skyWithdraws: Script = async (r) => {
+  r.black();
+  r.letterbox();
+  r.painting("backdrop:grude", { zoom: 1.12, x: 0.45, y: 0.55 }, { zoom: 1.0, x: 0.5, y: 0.5 }, 16000, { fade: 1100, fallback: 0x3a4a5a });
+  // The city still in the flagship's shadow.
+  const shade = r.grade(0x3a4a58, 1, 0);
+  const green = r.grade(0x0c2e2a, 0.4, 0, "add");
+  const big = r.object("story:ravage_ship", W * 0.46, H * 0.4, 0.7, Z.FIGURES);
+  let ring: Phaser.GameObjects.Image | null = null;
+  if (big) {
+    big.setTint(0xb8c8c4);
+    ring = r.glow(big.x + big.displayWidth * 0.02, big.y + big.displayHeight * 0.34, 0x7affd9, 0.9, 0.35, Z.FIGURES + 0.1);
+  }
+  await r.wait(r.place("Grude", "The processional, after the last battle", 4000) + 200);
+  await r.wait(r.caption("The last battle is over, but the Ravage flagship still sits on the processional.", 3800) + 100);
+  // The engines change pitch, and it lifts.
+  sfxCineRise();
+  r.shake(3000, 0.0014);
+  if (big && ring) {
+    void r.tween({ targets: ring, alpha: 0.9, scale: 1.3, duration: 700, yoyo: true, repeat: 2 });
+    void r.tween({ targets: [big], y: -H * 0.4, scale: 0.42, duration: 7000, ease: "Sine.easeIn" });
+    void r.tween({ targets: [ring], y: -H * 0.3, alpha: 0, duration: 7000, ease: "Sine.easeIn" });
+    // Far ships climb away too.
+    for (const [x, s, d] of [[W * 0.16, 0.1, 600], [W * 0.82, 0.08, 1100], [W * 0.64, 0.06, 1500]] as const) {
+      r.scene.time.delayedCall(d, () => {
+        const far = r.object("story:ravage_ship", x, H * 0.3, s, Z.BACK_FX + 0.2);
+        if (!far) return;
+        far.setTint(0x8aa0b0).setAlpha(0.85);
+        void r.tween({ targets: far, y: -120, duration: 6000, ease: "Sine.easeIn" });
+      });
+    }
+  }
+  await r.wait(r.caption("Then its engines change pitch, and it lifts off.", 3200) + 100);
+  // The light comes back.
+  void r.tween({ targets: shade, alpha: 0, duration: 4000, ease: "Sine.easeInOut" });
+  void r.tween({ targets: green, alpha: 0, duration: 4000 });
+  sfxCineChime(1);
+  await r.wait(r.caption("Across the sky, the whole fleet leaves the way it came.", 3400) + 100);
+  await r.slam("The Sky Withdraws", undefined, 1900, "#e8f4ff");
+  await r.fadeOut(1000);
+};
+
+const SCRIPTS: Record<CinematicId, Script> = {
+  coup, escape, grude_burns: grudeBurns, sky_fleet: skyFleet,
+  awakening, ten_months: tenMonths, landfall, dawns_war: dawnsWar, sky_withdraws: skyWithdraws
+};
 
 /** What plays under each film (the arc's own music takes over after). */
 export const CINEMATIC_MUSIC: Record<CinematicId, StoryArc["music"]> = {
-  coup: "trailer", escape: "trailer", grude_burns: "danger", sky_fleet: "trailer"
+  coup: "trailer", escape: "trailer", grude_burns: "danger", sky_fleet: "trailer",
+  awakening: "emotional", ten_months: "adventureAnthros", landfall: "emotional", dawns_war: "danger", sky_withdraws: "trailer"
 };
 
 /** The art each film draws, to wait for when it is still streaming in. */
@@ -356,7 +610,12 @@ export const CINEMATIC_ART: Record<CinematicId, string[]> = {
   coup: ["backdrop:palaceCoup", "backdrop:throne_hall", "unit:spearton:idle", "unit:archer:idle"],
   escape: ["backdrop:harbor_night", "story:ship"],
   grude_burns: ["backdrop:grude"],
-  sky_fleet: ["backdrop:open_sea", "story:ravage_ship"]
+  sky_fleet: ["backdrop:open_sea", "story:ravage_ship"],
+  awakening: ["backdrop:hospital"],
+  ten_months: ["backdrop:factory", "backdrop:farmland", "backdrop:throne_hall", "backdrop:mountain"],
+  landfall: ["backdrop:beach_landing", "story:ship"],
+  dawns_war: ["backdrop:grude", "backdrop:farmland", "unit:royal_guard:idle"],
+  sky_withdraws: ["backdrop:grude", "story:ravage_ship"]
 };
 
 /**
