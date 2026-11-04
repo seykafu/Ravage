@@ -736,7 +736,9 @@ export const ravageMap: MapDef = buildMap("ravage", "Grude Harbor District", rav
     { x: 9,  y: 5 },  // Royal Guard behind east barricade
     { x: 7,  y: 6 }   // Royal Guard advancing south
   ]
-});
+  // The customs platform stands a step above the street, so it reads as a
+  // platform the captain holds rather than a pale stripe in the cobbles.
+}, (_x, _y, cell) => (cell.terrain === "marble" ? 1 : undefined));
 
 // ============== Battle 13 — Madame Dawn's Rebellion =====================
 // 14×11 cobblestone city plaza outside Archbold's nephew's residence
@@ -864,7 +866,8 @@ export const originMap: MapDef = buildMap("origin", "Safe-House Street, Grude", 
     { x: 7, y: 2 },  // Royal Guard, north-center east
     { x: 6, y: 3 }   // Royal Guard, advancing down the street
   ]
-});
+  // The safe house's doorstep is a step up off the street.
+}, (_x, _y, cell) => (cell.terrain === "marble" ? 1 : undefined));
 
 // ============== Battle 15 — A Coup Within a Coup =======================
 // 12×10 enclosed courtyard behind the candle-maker's shop — the same
