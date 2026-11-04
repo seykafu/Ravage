@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ravage — A tactical RPG of stances and steel</title>
-    <meta name="description" content="Ravage is a tactical RPG built on stances, the weapon triangle, and a twenty-nine-battle campaign. Seven paths, seven endings, thirty painted characters — the full campaign, free, in your browser. Published by Pencat Games." />
+    <title>Ravage: a tactical RPG you can play free in your browser</title>
+    <meta name="description" content="Ravage is a tactical RPG with a visual novel between every battle: twenty-nine battles, seven paths, seven endings and thirty painted characters. The whole campaign is free to play in your browser. Published by Pencat Games." />
 
     <!-- Open Graph / social cards. og-image points at one of the in-game
          backdrops so link previews look like the game. -->
-    <meta property="og:title" content="Ravage — A tactical RPG of stances and steel" />
-    <meta property="og:description" content="Stances, the weapon triangle, and a twenty-nine-battle campaign. Seven paths, seven endings, thirty painted characters — the full campaign, free, in your browser. Published by Pencat Games." />
+    <meta property="og:title" content="Ravage: a tactical RPG of stances and steel" />
+    <meta property="og:description" content="A tactical RPG with a visual novel between every battle. Twenty-nine battles, seven paths and seven endings, free to play in your browser." />
     <meta property="og:type" content="website" />
     <!-- Key art, cropped to the 1.91:1 social ratio. JPEG rather than WebP:
          several link-preview scrapers still refuse WebP, and a broken
@@ -87,6 +87,7 @@
         --gold: #c9b07a;
         --gold-bright: #f2d997;
         --blood: #b84141;
+        --ember: #e0763a;
         --steel: #6c7281;
         --parchment: #e8d8a6;
         --text: #e8eaf2;
@@ -96,6 +97,7 @@
 
       *, *::before, *::after { box-sizing: border-box; }
 
+      html { scroll-behavior: smooth; }
       html, body {
         margin: 0;
         padding: 0;
@@ -120,16 +122,60 @@
 
       .container { width: min(1100px, 92vw); margin: 0 auto; }
 
+      /* ---- STICKY PLAY BAR ----
+         Slides in once the hero's Play button has scrolled away, and out
+         again over the closing Play section, so a Play button is always
+         one click away without ever doubling up. */
+      .playbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9000;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 10px max(16px, calc((100vw - 1100px) / 2));
+        background: linear-gradient(180deg, rgba(8, 9, 14, 0.96), rgba(8, 9, 14, 0.88));
+        border-bottom: 1px solid rgba(201, 176, 122, 0.28);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(6px);
+        transform: translateY(-110%);
+        visibility: hidden;
+        transition: transform 260ms ease, visibility 0s linear 260ms;
+      }
+      .playbar.show {
+        transform: translateY(0);
+        visibility: visible;
+        transition: transform 260ms ease;
+      }
+      .playbar-mark {
+        font-family: "Cinzel Decorative", "Cinzel", serif;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: 0.06em;
+        color: var(--gold-bright);
+      }
+      .playbar-note {
+        flex: 1;
+        font-family: "EB Garamond", serif;
+        font-style: italic;
+        font-size: 16px;
+        color: var(--text-dim);
+      }
+      .playbar .cta { padding: 10px 24px; font-size: 14px; }
+
       /* ---- HERO ----
          Z-stack (back → front):
-           -3: static backdrop (palaceCoup) — instant fallback while video
-               buffers, plus what shows on autoplay-blocked / reduced-motion
-           -2: <video class="hero-video"> — the trailer; faded in via JS
+           -3: static backdrop (palaceCoup), the instant fallback while the
+               video buffers and what shows on autoplay-blocked / reduced-motion
+           -2: <video class="hero-video">, the trailer; faded in via JS
                once it can play, so a black frame never flashes
-           -1: gradient overlay — darkens whatever's behind so the gold
-               title stays readable
-            0: scanline texture — pure mood
-            1: content (eyebrow, title, tagline, CTA, scroll hint) */
+           -1: gradient overlay, so the gold title stays readable
+            0: scanline texture
+            1: embers rising off the burning city (canvas; skipped on
+               reduced motion, paused while the hero is off screen)
+            2: content (eyebrow, title, tagline, CTA, scroll hint) */
       .hero {
         position: relative;
         min-height: 100vh;
@@ -157,9 +203,6 @@
         pointer-events: none;
         opacity: 0;
         transition: opacity 900ms ease;
-        /* Subtle desaturation pulls it closer to the painted backdrop's
-           palette so the cut between video frames and the radial-glow
-           dark overlay reads as one image, not two layers. */
         filter: contrast(1.04) saturate(0.92) brightness(0.92);
         z-index: -2;
       }
@@ -184,18 +227,25 @@
         pointer-events: none;
         z-index: 0;
       }
-      /* Respect users who've asked the OS to reduce motion. */
+      .hero-embers {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
       @media (prefers-reduced-motion: reduce) {
-        .hero-video { display: none !important; }
+        .hero-video, .hero-embers { display: none !important; }
       }
 
-      .hero-inner { padding: 80px 20px; }
+      .hero-inner { position: relative; z-index: 2; padding: 80px 20px; }
 
-      /* Eyebrow is pinned to the top of the hero (not the centred content)
-         so it always sits clearly above the giant title — the title's glow
-         was previously bleeding into the eyebrow when stacked together. */
+      /* The eyebrow is pinned to the top of the hero rather than stacked on
+         the title, whose glow bled into it. */
       .hero-eyebrow {
         position: absolute;
+        z-index: 2;
         top: 36px;
         left: 50%;
         transform: translateX(-50%);
@@ -219,25 +269,34 @@
           0 4px 24px rgba(0, 0, 0, 0.85),
           0 0 60px rgba(220, 170, 90, 0.25);
         letter-spacing: 0.02em;
+        animation: title-in 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+      @keyframes title-in {
+        from { opacity: 0; letter-spacing: 0.18em; filter: blur(6px); }
+        to   { opacity: 1; letter-spacing: 0.02em; filter: blur(0); }
       }
 
       .hero-tagline {
-        font-family: "Cinzel", serif;
+        font-family: "EB Garamond", serif;
         font-weight: 500;
-        font-size: clamp(18px, 2.4vw, 26px);
+        font-size: clamp(19px, 2.2vw, 24px);
+        line-height: 1.5;
         color: var(--parchment);
-        margin: 22px auto 44px;
-        max-width: 680px;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        letter-spacing: 0.08em;
+        margin: 22px auto 40px;
+        max-width: 660px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.85);
       }
 
-      /* "Try V1" CTA — gold gradient, mirrors the in-game Skip Intro button */
+      /* The Play button: gold, mirrors the in-game Skip Intro button, with
+         a slow glint across it every few seconds. */
       .cta {
-        display: inline-block;
-        padding: 18px 44px;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 46px;
         font-family: "Cinzel", serif;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 20px;
         letter-spacing: 0.15em;
         color: #1a1408;
@@ -246,11 +305,38 @@
         border: 1px solid rgba(255, 217, 122, 0.7);
         border-radius: 2px;
         cursor: pointer;
+        overflow: hidden;
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.4),
           0 8px 24px rgba(0, 0, 0, 0.55),
           0 0 24px rgba(220, 170, 90, 0.3);
         transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      }
+      /* A play triangle, drawn rather than typed. */
+      .cta::before {
+        content: "";
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0.42em 0 0.42em 0.68em;
+        border-color: transparent transparent transparent currentColor;
+      }
+      .cta::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -60%;
+        width: 40%;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+        transform: skewX(-18deg);
+        animation: glint 4.2s ease-in-out 1.6s infinite;
+        pointer-events: none;
+      }
+      @keyframes glint {
+        0%   { left: -60%; }
+        28%  { left: 130%; }
+        100% { left: 130%; }
       }
       .cta:hover {
         color: #1a1408;
@@ -259,17 +345,39 @@
         box-shadow:
           inset 0 1px 0 rgba(255, 255, 255, 0.55),
           0 12px 30px rgba(0, 0, 0, 0.65),
-          0 0 36px rgba(220, 170, 90, 0.5);
+          0 0 40px rgba(230, 160, 80, 0.55);
       }
       .cta:active { transform: translateY(0); }
+      /* backwards, not both: a held end-state transform would cancel the
+         hover lift. */
+      .hero .cta { animation: rise-in 600ms ease 250ms backwards; }
+      @keyframes rise-in {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* A quieter second Play button, for the middle of the page. */
+      .cta-ghost {
+        padding: 14px 32px;
+        font-size: 15px;
+        color: var(--gold-bright);
+        background: rgba(13, 17, 28, 0.7);
+        border-color: rgba(201, 176, 122, 0.6);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+      }
+      .cta-ghost::after { display: none; }
+      .cta-ghost:hover {
+        color: #1a1408;
+        background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 100%);
+      }
 
       .cta-sub {
         margin-top: 18px;
-        font-family: "Inter", system-ui, sans-serif;
-        font-size: 13px;
+        font-family: "EB Garamond", serif;
+        font-size: 17px;
         font-style: italic;
         color: var(--gold);
-        letter-spacing: 0.12em;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
       }
 
       .hero-publisher {
@@ -290,7 +398,7 @@
       .cta-feedback {
         margin-top: 26px;
         font-family: "EB Garamond", "Georgia", serif;
-        font-size: 15px;
+        font-size: 16px;
         color: var(--text);
         opacity: 0.85;
         line-height: 1.5;
@@ -301,30 +409,42 @@
         text-decoration-color: rgba(242, 217, 151, 0.4);
         text-underline-offset: 3px;
       }
-      .cta-feedback a:hover {
-        text-decoration-color: var(--gold-bright);
-      }
+      .cta-feedback a:hover { text-decoration-color: var(--gold-bright); }
 
       .hero-scroll-hint {
         position: absolute;
+        z-index: 2;
         bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
         font-family: "Cinzel", serif;
         font-size: 11px;
         letter-spacing: 0.3em;
         color: var(--gold);
-        opacity: 0.6;
         text-transform: uppercase;
+        opacity: 0.7;
         animation: pulse 2.4s ease-in-out infinite;
       }
+      .hero-scroll-hint::after {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg);
+      }
+      .hero-scroll-hint:hover { color: var(--gold-bright); opacity: 1; }
       @keyframes pulse {
-        0%, 100% { opacity: 0.4; transform: translate(-50%, 0); }
-        50%      { opacity: 0.8; transform: translate(-50%, 6px); }
+        0%, 100% { opacity: 0.45; transform: translate(-50%, 0); }
+        50%      { opacity: 0.85; transform: translate(-50%, 6px); }
       }
 
       /* ---- SECTIONS ---- */
-      section { padding: 100px 20px; position: relative; }
+      section { padding: 100px 20px; position: relative; scroll-margin-top: 60px; }
       section + section { border-top: 1px solid rgba(201, 176, 122, 0.08); }
 
       .section-eyebrow {
@@ -349,6 +469,7 @@
         font-size: 19px;
         line-height: 1.65;
       }
+      .section-cta { text-align: center; margin-top: 34px; }
 
       /* ---- WHAT IT IS ---- */
       .pitch {
@@ -396,13 +517,14 @@
         margin-bottom: 10px;
         color: var(--gold-bright);
       }
-      .feature .glyph {
+      .feature .numeral {
         font-family: "Cinzel Decorative", serif;
-        font-size: 32px;
+        font-weight: 700;
+        font-size: 26px;
         color: var(--gold);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         display: block;
-        opacity: 0.85;
+        opacity: 0.75;
       }
       .feature p {
         margin: 0;
@@ -411,19 +533,19 @@
         line-height: 1.6;
       }
 
-      /* ---- STORY: PORTRAIT WALL + TAG CHIPS ---- */
+      /* ---- STORY: THE CAST, IN THEIR OWN WORDS ---- */
       .portrait-wall {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 18px;
-        margin-bottom: 50px;
       }
       .portrait-card {
         position: relative;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 4 / 5;
         background: var(--bg-panel);
         border: 1px solid rgba(201, 176, 122, 0.18);
         overflow: hidden;
+        margin: 0;
         transition: border-color 200ms ease, transform 200ms ease;
       }
       .portrait-card:hover {
@@ -436,59 +558,84 @@
         object-fit: cover;
         object-position: top center;
         display: block;
+        transition: transform 600ms ease;
       }
+      .portrait-card:hover img { transform: scale(1.04); }
       .portrait-card::after {
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, transparent 50%, rgba(5,6,10,0.92) 100%);
+        background: linear-gradient(180deg, transparent 38%, rgba(5,6,10,0.94) 88%);
         pointer-events: none;
       }
-      .portrait-card .label {
+      .portrait-card figcaption {
         position: absolute;
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
         z-index: 1;
         text-shadow: 0 2px 4px #000;
       }
-      .portrait-card .label .name {
+      .portrait-card .name {
         display: block;
         font-family: "Cinzel", serif;
         font-size: 13px;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
         color: var(--gold-bright);
         text-transform: uppercase;
       }
-      .portrait-card .label .expr {
-        display: block;
-        margin-top: 2px;
+      .portrait-card blockquote {
+        margin: 6px 0 0;
         font-family: "EB Garamond", serif;
         font-style: italic;
-        font-size: 13px;
+        font-size: 16px;
+        line-height: 1.35;
         color: var(--parchment);
-        opacity: 0.85;
       }
 
-      .story-tags {
+      /* ---- SEVEN PATHS ---- */
+      /* Centred rows, so a short last row sits in the middle instead of
+         hanging off the left: five across, then three over two, then two
+         to a row, then one. The two walk-away paths use the same widths. */
+      .paths {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 12px 14px;
-        margin-top: 12px;
+        gap: 16px;
       }
-      .story-tag {
-        font-family: "Cinzel", serif;
-        font-size: 12px;
-        letter-spacing: 0.22em;
+      /* (A pixel off each basis: subpixel rounding otherwise tips the
+         last card of a full row onto the next.) */
+      .paths .path { flex: 0 0 calc((100% - 64px) / 5 - 1px); min-width: 0; }
+      @media (max-width: 1180px) { .paths .path { flex-basis: calc((100% - 32px) / 3 - 1px); } }
+      @media (max-width: 640px)  { .paths .path { flex-basis: calc((100% - 16px) / 2 - 1px); } }
+      @media (max-width: 420px)  { .paths .path { flex-basis: 100%; } }
+      .paths-label {
+        margin: 0 0 14px;
+        text-align: center;
+        font-family: "EB Garamond", serif;
+        font-style: italic;
+        font-size: 18px;
         color: var(--gold);
-        text-transform: uppercase;
-        padding: 9px 18px;
-        border: 1px solid rgba(201, 176, 122, 0.3);
-        background: rgba(13, 17, 28, 0.55);
-        transition: border-color 180ms ease, color 180ms ease;
       }
-      .story-tag:hover { border-color: rgba(201, 176, 122, 0.7); color: var(--gold-bright); }
+      .paths + .paths-label { margin-top: 34px; }
+      .path {
+        position: relative;
+        padding: 22px 20px 20px;
+        background: linear-gradient(180deg, rgba(13, 17, 28, 0.9), rgba(7, 9, 15, 0.9));
+        border: 1px solid rgba(201, 176, 122, 0.2);
+        border-top: 2px solid rgba(201, 176, 122, 0.55);
+        transition: border-color 200ms ease, transform 200ms ease;
+      }
+      .path:hover { border-color: rgba(201, 176, 122, 0.55); transform: translateY(-3px); }
+      .path h3 {
+        font-size: 16px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .path p { margin: 0; color: var(--text-dim); font-size: 16px; line-height: 1.5; }
+      .path.walks { border-top-color: rgba(108, 114, 129, 0.8); }
+      .path.walks h3 { color: var(--parchment); }
 
       /* ---- WORLD GALLERY ---- */
       .gallery {
@@ -553,9 +700,17 @@
         padding-top: 4px;
       }
       .stage-label.now { color: var(--gold-bright); }
+      /* A live light beside "Now". */
       .stage-label.now::after {
-        content: " ●";
-        color: var(--blood);
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-left: 9px;
+        vertical-align: 2px;
+        border-radius: 50%;
+        background: var(--blood);
+        box-shadow: 0 0 8px rgba(184, 65, 65, 0.8);
         animation: blink 1.6s ease-in-out infinite;
       }
       @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -567,10 +722,16 @@
         text-align: center;
         padding: 120px 20px 100px;
         background:
-          radial-gradient(ellipse at 50% 30%, rgba(96, 60, 40, 0.25), transparent 70%),
+          radial-gradient(ellipse at 50% 30%, rgba(120, 60, 30, 0.32), transparent 70%),
           var(--bg-deep);
       }
-      .end-cta h2 { font-size: clamp(28px, 4vw, 42px); margin-bottom: 28px; }
+      .end-cta h2 { font-size: clamp(28px, 4vw, 42px); margin-bottom: 12px; }
+      .end-cta .end-lede {
+        max-width: 560px;
+        margin: 0 auto 32px;
+        color: var(--text-dim);
+        font-size: 19px;
+      }
 
       /* ---- FOOTER ---- */
       footer {
@@ -583,7 +744,13 @@
         border-top: 1px solid rgba(201, 176, 122, 0.08);
       }
       footer a { color: var(--gold); }
-      footer .made { margin-top: 6px; opacity: 0.7; }
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 32px;
+      }
+      footer .made { margin-top: 12px; opacity: 0.7; }
 
       /* ---- RESPONSIVE ---- */
       @media (max-width: 600px) {
@@ -591,8 +758,6 @@
         section { padding: 70px 18px; }
         .stage { grid-template-columns: 1fr; gap: 6px; }
         .stage-label { font-size: 12px; }
-        /* Allow the eyebrow to wrap on phones — the full single line gets
-           too long once the typography scales down. */
         .hero-eyebrow {
           white-space: normal;
           width: min(86vw, 360px);
@@ -601,22 +766,35 @@
           line-height: 1.5;
           top: 24px;
         }
+        .cta { padding: 17px 30px; font-size: 17px; }
+        .playbar { gap: 12px; }
+        .playbar-note { display: none; }
+        .playbar-mark { flex: 1; font-size: 19px; }
+        .playbar .cta { padding: 9px 18px; font-size: 13px; }
+        .portrait-wall { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .portrait-card blockquote { font-size: 14px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
         *, *::before, *::after { animation: none !important; transition: none !important; }
       }
     </style>
   </head>
   <body>
 
+    <!-- ============== STICKY PLAY BAR ============== -->
+    <nav class="playbar" aria-label="Play Ravage">
+      <a class="playbar-mark" href="#top">RAVAGE</a>
+      <span class="playbar-note">The whole campaign, free in your browser</span>
+      <a href="/play/" class="cta" data-play="bar" data-continue="Continue">Play now</a>
+    </nav>
+
     <!-- ============== HERO ============== -->
-    <header class="hero">
-      <!-- Trailer-style background. Muted + playsinline + (eventually)
-           autoplay are the magic combo every modern browser allows. The
-           <source> tags are intentionally absent here; the inline script
-           below attaches them based on the viewer's capabilities, so users
-           on prefers-reduced-motion get zero video bandwidth. -->
+    <header class="hero" id="top">
+      <!-- Trailer-style background. Muted + playsinline are what every
+           modern browser allows to autoplay. The <source> tags are added by
+           the script below, so reduced-motion visitors download no video. -->
       <video class="hero-video"
              muted
              loop
@@ -625,16 +803,17 @@
              aria-hidden="true"
              poster="/video/intro_poster.jpg"></video>
       <div class="hero-overlay"></div>
+      <canvas class="hero-embers" aria-hidden="true"></canvas>
 
-      <div class="hero-eyebrow">A tactical RPG · visual novel · full campaign live</div>
+      <div class="hero-eyebrow">A tactical RPG with a visual novel inside</div>
       <div class="hero-inner container">
         <h1 class="hero-title">RAVAGE</h1>
-        <p class="hero-tagline">A tactics game wrapped around a visual novel. Thirty painted characters who plot, plead, fall in love, and betray each other across a twenty-nine-battle campaign with seven endings — every one of which you can still lose.</p>
-        <a href="/play/" class="cta">Play Ravage →</a>
-        <div class="cta-sub">free · runs in your browser · suspend &amp; resume anywhere</div>
+        <p class="hero-tagline">Thirty painted characters scheme, fall in love and turn on each other over a twenty-nine-battle war. The story has seven endings, and you can still lose on the way to any of them.</p>
+        <a href="/play/" class="cta" data-play="hero" data-continue="Continue your campaign">Play free now</a>
+        <div class="cta-sub">It runs right here in your browser, with nothing to install and no account to make.</div>
         <div class="hero-publisher">Published by <a href="https://pencatgames.com" target="_blank" rel="noopener">Pencat Games</a></div>
       </div>
-      <div class="hero-scroll-hint">scroll</div>
+      <a class="hero-scroll-hint" href="#gameplay">See it in motion</a>
     </header>
 
     <!-- Hero-video bootstrap. Runs synchronously after the video element
@@ -646,8 +825,8 @@
         var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (reduced) { v.remove(); return; }
 
-        // Attach sources only now — keeps autoplay-blocked or no-JS users
-        // from paying the bandwidth cost.
+        // Attach sources only now, so autoplay-blocked or no-JS visitors
+        // don't pay for the download.
         var addSrc = function (src, type) {
           var s = document.createElement("source");
           s.src = src;
@@ -674,6 +853,93 @@
         }
       })();
     </script>
+
+    <!-- Embers drifting up off the burning city. A few dozen soft sprites on
+         a 2D canvas; drawn only while the hero is on screen and the tab is
+         visible, at no more than 1.5x the CSS size. -->
+    <script>
+      (function () {
+        var c = document.querySelector(".hero-embers");
+        if (!c || !c.getContext) return;
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { c.remove(); return; }
+        var ctx = c.getContext("2d");
+        var dpr = Math.min(1.5, window.devicePixelRatio || 1);
+        var W = 0, H = 0, motes = [], raf = 0, last = 0, onScreen = true;
+
+        var sprite = function (r, g, b) {
+          var s = document.createElement("canvas");
+          s.width = s.height = 32;
+          var x = s.getContext("2d");
+          var grd = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+          grd.addColorStop(0, "rgba(255,245,220,1)");
+          grd.addColorStop(0.25, "rgba(" + r + "," + g + "," + b + ",0.85)");
+          grd.addColorStop(1, "rgba(" + r + "," + g + "," + b + ",0)");
+          x.fillStyle = grd;
+          x.fillRect(0, 0, 32, 32);
+          return s;
+        };
+        var SPRITES = [sprite(255, 170, 80), sprite(240, 110, 50), sprite(255, 205, 120)];
+
+        var spawn = function (m, anywhere) {
+          m.x = Math.random() * W;
+          m.y = anywhere ? Math.random() * H : H + 12;
+          m.size = 3 + Math.random() * 7;
+          m.vy = 14 + Math.random() * 34;
+          m.sway = 8 + Math.random() * 26;
+          m.phase = Math.random() * 6.283;
+          m.freq = 0.5 + Math.random() * 1.1;
+          m.life = 0;
+          m.max = 5 + Math.random() * 7;
+          m.img = SPRITES[(Math.random() * SPRITES.length) | 0];
+          return m;
+        };
+        var resize = function () {
+          var r = c.getBoundingClientRect();
+          W = r.width; H = r.height;
+          c.width = Math.round(W * dpr);
+          c.height = Math.round(H * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          var want = W < 700 ? 26 : 54;
+          while (motes.length < want) motes.push(spawn({}, true));
+          motes.length = want;
+        };
+        var frame = function (t) {
+          var dt = last ? Math.min(0.05, (t - last) / 1000) : 0.016;
+          last = t;
+          ctx.clearRect(0, 0, W, H);
+          ctx.globalCompositeOperation = "lighter";
+          for (var i = 0; i < motes.length; i++) {
+            var m = motes[i];
+            m.life += dt;
+            m.y -= m.vy * dt;
+            m.phase += m.freq * dt;
+            if (m.y < -12 || m.life > m.max) { spawn(m, false); continue; }
+            var a = Math.min(1, m.life / 0.9) * Math.max(0, 1 - m.life / m.max);
+            var flicker = 0.75 + 0.25 * Math.sin(m.phase * 5.3);
+            ctx.globalAlpha = a * flicker * 0.9;
+            var s = m.size * (0.7 + 0.3 * flicker);
+            ctx.drawImage(m.img, m.x + Math.sin(m.phase) * m.sway - s, m.y - s, s * 2, s * 2);
+          }
+          ctx.globalAlpha = 1;
+          raf = requestAnimationFrame(frame);
+        };
+        var start = function () { if (!raf && onScreen && !document.hidden) { last = 0; raf = requestAnimationFrame(frame); } };
+        var stop = function () { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
+        resize();
+        var t;
+        window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(resize, 150); });
+        document.addEventListener("visibilitychange", function () { if (document.hidden) stop(); else start(); });
+        if ("IntersectionObserver" in window) {
+          new IntersectionObserver(function (es) {
+            onScreen = es[0].isIntersecting;
+            if (onScreen) start(); else stop();
+          }).observe(c);
+        }
+        start();
+      })();
+    </script>
+
     <!-- ============== GAMEPLAY, LIVE ============== -->
     <!-- First thing under the fold: real captured gameplay. The video
          carries no sources until it scrolls into view (IntersectionObserver
@@ -693,26 +959,29 @@
       .gameplay-frame video { display: block; width: 100%; height: auto; }
       .gameplay-cap {
         text-align: center;
-        color: #7a7165;
-        font-size: 13px;
+        color: #8a8070;
+        font-size: 15px;
+        font-style: italic;
         margin-top: 12px;
-        letter-spacing: 0.04em;
       }
     </style>
     <section id="gameplay">
       <div class="container">
         <div class="section-eyebrow">In Motion</div>
-        <h2 class="section-title">The first battle, uncut.</h2>
+        <h2 class="section-title">Watch the first battle</h2>
         <div class="gameplay-frame">
           <video id="gameplay-video"
                  muted
                  loop
                  playsinline
                  preload="none"
+                 width="1280"
+                 height="720"
                  poster="/video/gameplay_poster.jpg"
                  aria-label="Ravage gameplay: the Palace Coup battle, played live"></video>
         </div>
-        <div class="gameplay-cap">Battle One — The Palace Coup, captured live. No cuts, no staging.</div>
+        <div class="gameplay-cap">Battle 1, The Palace Coup, captured straight from the game.</div>
+        <div class="section-cta"><a href="/play/" class="cta cta-ghost" data-play="gameplay" data-continue="Back to your campaign">Play it yourself</a></div>
       </div>
     </section>
     <script>
@@ -720,7 +989,7 @@
         var v = document.getElementById("gameplay-video");
         if (!v || !("IntersectionObserver" in window)) return;
         var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (reduced) return; // poster only — no motion, no bandwidth
+        if (reduced) return; // poster only: no motion, no bandwidth
         var loaded = false;
         var io = new IntersectionObserver(function (entries) {
           entries.forEach(function (e) {
@@ -751,8 +1020,8 @@
     <section id="screens">
       <div class="container">
         <div class="section-eyebrow">In the Game</div>
-        <h2 class="section-title">Cinematics, cut-ins, and a camp to come home to.</h2>
-        <p class="section-lede">The story opens on a filmed coup, and every major boss gets an entrance and a finale. Critical hits cut in, promotions change a fighter's look, and between chapters the squad sits around the fire.</p>
+        <h2 class="section-title">The big moments get their own scenes</h2>
+        <p class="section-lede">The story opens on a filmed coup. Every major boss makes an entrance and goes down in a finale on the board. A critical hit cuts in with the attacker's face and battle cry, a promotion changes how a fighter looks, and between chapters the squad sits around the fire at camp.</p>
         <div class="gallery">
           <div class="shot"><img src="/assets/screens/coup.webp" alt="The opening cinematic: Selene, Ranatoli and Amar's name cards" loading="lazy" width="960" height="540" /><span class="shot-label">The opening coup</span></div>
           <div class="shot"><img src="/assets/screens/throne.webp" alt="Three rebels in the King's throne hall under the title The Palace Coup" loading="lazy" width="960" height="540" /><span class="shot-label">The throne hall</span></div>
@@ -771,80 +1040,78 @@
     <section>
       <div class="container">
         <div class="section-eyebrow">The Game</div>
-        <h2 class="section-title">Tactics that bite. Stories that stick.</h2>
+        <h2 class="section-title">Where you stand decides the fight</h2>
         <p class="pitch">
-          Every choice in battle is a posture. A <em>ready stance</em> counters a charge. A <em>brace</em> soaks the inevitable hit. A sword cuts a shieldbearer down — but a spear behind that shield gets you first. Then the swords sheathe and a full visual novel unfolds: thirty painted characters, a story that splits into seven paths, romance, humor, and the kind of plot twist you'll text your friend about.
+          Every attack depends on how both fighters are standing. A <em>ready stance</em> strikes back at whoever comes at it, and a <em>brace</em> takes the edge off a hit you can't avoid. Spears break shields, swords slip inside a spear's reach, and shields turn swords aside, so who you send matters as much as where you send them. When the fighting stops, a full visual novel takes over, with thirty painted characters, a story that splits seven ways, romance, jokes, and a twist or two you'll want to tell a friend about.
         </p>
       </div>
     </section>
 
     <!-- ============== STORY ============== -->
+    <!-- The cast, each with a line of their own from the game. -->
     <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.55) 50%, transparent 100%);">
       <div class="container">
         <div class="section-eyebrow">The Story</div>
-        <h2 class="section-title">A visual novel between every battle.</h2>
-        <p class="section-lede">Ravage isn't combat with cutscenes wedged in. It's a hand-painted visual novel that happens to have one of the meanest tactics engines we could build — thirty named characters who plot, plead, fall in love, and betray each other across more than a hundred painted expressions. The campaign turns on whether you trust the wrong person at the wrong moment.</p>
+        <h2 class="section-title">A visual novel between every battle</h2>
+        <p class="section-lede">Between the fights, Ravage is a hand-painted visual novel, and the tactics around it are as mean as we could make them. Thirty named characters plot, plead, fall in love and betray each other, with more than a hundred painted expressions between them. A lot of the campaign comes down to whether you trust the wrong person at the wrong moment.</p>
 
         <div class="portrait-wall">
-          <div class="portrait-card">
-            <img src="/assets/portraits/amar_warm_half_smile.webp" alt="Amar smiling warmly" loading="lazy" />
-            <div class="label"><span class="name">Amar</span><span class="expr">a warm half-smile</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/maya_tearful.webp" alt="Maya tearful" loading="lazy" />
-            <div class="label"><span class="name">Maya</span><span class="expr">tearful</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/fergus_unmasked_treachery.webp" alt="Fergus unmasked" loading="lazy" />
-            <div class="label"><span class="name">Fergus</span><span class="expr">unmasked treachery</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/leo_cocky_smirk.webp" alt="Leo smirking" loading="lazy" />
-            <div class="label"><span class="name">Leo</span><span class="expr">cocky smirk</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/dawn_mask_slipping.webp" alt="Dawn's mask slipping" loading="lazy" />
-            <div class="label"><span class="name">Dawn</span><span class="expr">the mask slipping</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/khione_revelation.webp" alt="Khione revelation" loading="lazy" />
-            <div class="label"><span class="name">Khione</span><span class="expr">revelation</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/veya_wry_smile.webp" alt="Veya with a wry smile" loading="lazy" />
-            <div class="label"><span class="name">Veya</span><span class="expr">an engineer's told-you-so</span></div>
-          </div>
-          <div class="portrait-card">
-            <img src="/assets/portraits/corin_quiet_grief.webp" alt="Corin in quiet grief" loading="lazy" />
-            <div class="label"><span class="name">Corin</span><span class="expr">quiet grief</span></div>
-          </div>
-        </div>
-
-        <div class="story-tags">
-          <span class="story-tag">♥ Romance</span>
-          <span class="story-tag">☺ Humor</span>
-          <span class="story-tag">⚡ Plot Twists</span>
-          <span class="story-tag">✦ Real Emotion</span>
-          <span class="story-tag">⚔ Betrayal</span>
-          <span class="story-tag">✶ Endings You Can Lose</span>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/amar_warm_half_smile.webp" alt="Amar, smiling" loading="lazy" />
+            <figcaption><span class="name">Amar</span><blockquote>Don't bleed if you don't have to. We're taking a country tonight.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/maya_calculating_side_glance.webp" alt="Maya, sizing someone up" loading="lazy" />
+            <figcaption><span class="name">Maya</span><blockquote>Your footwork. That's courtyard training. Nobody learns to step like that hauling wagons.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/selene_cold_contempt.webp" alt="Selene, cold and unimpressed" loading="lazy" />
+            <figcaption><span class="name">Selene</span><blockquote>If we don't break their line in the first minute, we never will. I'll hold the right.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/leo_cocky_smirk.webp" alt="Leo, smirking" loading="lazy" />
+            <figcaption><span class="name">Leo</span><blockquote>My father would have had me arrest them... I'm not arresting anyone today.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/fergus_unmasked_treachery.webp" alt="Fergus, unmasked" loading="lazy" />
+            <figcaption><span class="name">Fergus</span><blockquote>The orders aren't yours to weigh, Lucian. Disperse the crowd.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/dawn_mask_slipping.webp" alt="Madame Dawn, her composure slipping" loading="lazy" />
+            <figcaption><span class="name">Madame Dawn</span><blockquote>He thinks the plan is all his own. Let him keep thinking that.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/veya_wry_smile.webp" alt="Veya, with a wry smile" loading="lazy" />
+            <figcaption><span class="name">Veya</span><blockquote>One lens could only do so much. Seven can do a lot more.</blockquote></figcaption>
+          </figure>
+          <figure class="portrait-card">
+            <img src="/assets/portraits/corin_quiet_grief.webp" alt="Corin, grieving quietly" loading="lazy" />
+            <figcaption><span class="name">Corin</span><blockquote>An advance stops when it hits something that won't move. Today that's us.</blockquote></figcaption>
+          </figure>
         </div>
       </div>
     </section>
 
     <!-- ============== SEVEN PATHS ============== -->
+    <!-- Each card is the path's one-line summary from the in-game choice
+         screen (src/scenes/ChoiceScene.ts). -->
     <section>
       <div class="container">
         <div class="section-eyebrow">The Hinge</div>
-        <h2 class="section-title">Seven names. One choice.</h2>
-        <p class="section-lede">Halfway through the campaign, Amar finds out who his parents really are. A few days later, on the ship to the coast, he has to decide what he's going to do about it. Five of the seven paths fight on to the end of the war, each with its own climaxes and its own finale. Two walk away from the war entirely, and the game lets them.</p>
-        <div class="story-tags">
-          <span class="story-tag">Vengeance</span>
-          <span class="story-tag">Restoration</span>
-          <span class="story-tag">Revolution</span>
-          <span class="story-tag">Duty</span>
-          <span class="story-tag">Mercy</span>
-          <span class="story-tag">Exile</span>
-          <span class="story-tag">Forgetting</span>
+        <h2 class="section-title">One choice splits the story seven ways</h2>
+        <p class="section-lede">Halfway through the campaign, Amar learns who his parents really are. A few days later, on the ship to the coast, he has to decide what to do about it. Five of the seven paths fight on to the end of the war, each with its own climax and its own finale. The other two walk away from the war, and the game lets them.</p>
+        <div class="paths-label">Fight on</div>
+        <div class="paths">
+          <div class="path"><h3>Vengeance</h3><p>Amar kills Archbold himself. No throne and no deals.</p></div>
+          <div class="path"><h3>Restoration</h3><p>Rebuild Anthros as a free state, slowly, one village at a time.</p></div>
+          <div class="path"><h3>Revolution</h3><p>Bring down every throne, in Anthros and Grude. No kings anywhere.</p></div>
+          <div class="path"><h3>Duty</h3><p>Take the captaincy. Serve the cause from inside the army.</p></div>
+          <div class="path"><h3>Mercy</h3><p>Accept every surrender, spare everyone possible, heal the wounded.</p></div>
+        </div>
+        <div class="paths-label">Walk away</div>
+        <div class="paths paths-two">
+          <div class="path walks"><h3>Exile</h3><p>Ride north alone, leave the war behind, and become nobody.</p></div>
+          <div class="path walks"><h3>Forgetting</h3><p>Stop being Amar. Live by the sea under a name no one is hunting.</p></div>
         </div>
       </div>
     </section>
@@ -853,38 +1120,38 @@
     <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.6) 50%, transparent 100%);">
       <div class="container">
         <div class="section-eyebrow">What's inside</div>
-        <h2 class="section-title">Built on six honest systems.</h2>
-        <p class="section-lede">No gacha, no menus inside menus. Each system is small enough to teach in a sentence and deep enough to argue about for an hour.</p>
+        <h2 class="section-title">How a battle works</h2>
+        <p class="section-lede">There's no gacha and no menu buried inside another menu. You can explain each of these in a sentence and still be arguing about it an hour later.</p>
         <div class="features">
           <div class="feature">
-            <span class="glyph">⚔</span>
-            <h3>Weapon Triangle</h3>
-            <p>Sword beats spear, spear beats shield, shield beats sword. Bows ignore the dance — and pay for it up close. And one late ally's lens ignores everything, answering armor with light.</p>
+            <span class="numeral">I</span>
+            <h3>The weapon triangle</h3>
+            <p>Swords beat spears, spears beat shields, and shields beat swords. Bows sit outside the triangle and are the answer to dactyl riders. A late ally's lens ignores it too, and cuts through armor with focused light.</p>
           </div>
           <div class="feature">
-            <span class="glyph">⛨</span>
-            <h3>Stances &amp; Counters</h3>
-            <p>Ready a counter-zone; brace defensively; or stay neutral and swing first. Your stance changes every adjacent fight.</p>
+            <span class="numeral">II</span>
+            <h3>Stances and counters</h3>
+            <p>Take a Ready stance to hit back at whoever attacks you, brace to take less damage, or stay neutral and swing first. The stance you pick changes every fight next to you.</p>
           </div>
           <div class="feature">
-            <span class="glyph">✦</span>
-            <h3>Action Points</h3>
-            <p>Move, strike, or take a stance — two to four AP a turn, and a promotion raises the tempo for good. Turns are short. Decisions aren't.</p>
+            <span class="numeral">III</span>
+            <h3>Action points</h3>
+            <p>Moving, striking and taking a stance all spend AP. You get two to four a turn, and a promotion raises that for good. Turns go quickly even when the decisions don't.</p>
           </div>
           <div class="feature">
-            <span class="glyph">☗</span>
-            <h3>Cover &amp; Terrain</h3>
-            <p>Forest, rubble, and obstacles change defence and line-of-sight. The map is half your strategy.</p>
+            <span class="numeral">IV</span>
+            <h3>Cover and terrain</h3>
+            <p>Forest, rubble and obstacles change your defence and what you can see. Half of any plan is the map.</p>
           </div>
           <div class="feature">
-            <span class="glyph">♛</span>
-            <h3>Seven Paths</h3>
-            <p>At the campaign's hinge, Amar chooses one of seven answers to his own name. Five fight through to divergent finales; two walk away from the war — and the game honors the walking.</p>
+            <span class="numeral">V</span>
+            <h3>Promotions</h3>
+            <p>Your fighters promote into Tier 2 classes mid-campaign. Each promotion brings a new look on the board, a new ability, and one more action every turn.</p>
           </div>
           <div class="feature">
-            <span class="glyph">⚒</span>
-            <h3>Built in the open</h3>
-            <p>Every commit is on GitHub. Every system is small TypeScript. Procedural fallbacks for every asset.</p>
+            <span class="numeral">VI</span>
+            <h3>Save mid-fight</h3>
+            <p>Close the tab in the middle of a turn and the battle waits for you, exactly as you left it. Your saves stay on your own machine.</p>
           </div>
         </div>
       </div>
@@ -894,15 +1161,15 @@
     <section>
       <div class="container">
         <div class="section-eyebrow">The World</div>
-        <h2 class="section-title">From the King's palace to the streets of Grude.</h2>
-        <p class="section-lede">Each battle has its own map, its own mood, and its own music.</p>
+        <h2 class="section-title">From the King's palace to the streets of Grude</h2>
+        <p class="section-lede">Every battle is fought on its own map, first in Anthros and then across the sea in Grude.</p>
         <div class="gallery">
-          <div class="shot"><img src="/assets/backdrops/palaceCoup.webp" alt="Palace Coup" /><span class="shot-label">Palace Coup</span></div>
-          <div class="shot"><img src="/assets/backdrops/mountain.webp" alt="Mountain pass" /><span class="shot-label">Mountain Pass</span></div>
-          <div class="shot"><img src="/assets/backdrops/finalBoss.webp" alt="Final Boss" /><span class="shot-label">The Final Stand</span></div>
-          <div class="shot"><img src="/assets/backdrops/orinhal.webp" alt="Orinhal" /><span class="shot-label">Orinhal</span></div>
-          <div class="shot"><img src="/assets/backdrops/cliffs.webp" alt="Cliffs" /><span class="shot-label">The Cliffs of Para</span></div>
-          <div class="shot"><img src="/assets/backdrops/monastery.webp" alt="Monastery" /><span class="shot-label">The Monastery</span></div>
+          <div class="shot"><img src="/assets/backdrops/palaceCoup.webp" alt="Palace Coup" loading="lazy" /><span class="shot-label">Palace Coup</span></div>
+          <div class="shot"><img src="/assets/backdrops/mountain.webp" alt="Mountain pass" loading="lazy" /><span class="shot-label">Mountain Pass</span></div>
+          <div class="shot"><img src="/assets/backdrops/finalBoss.webp" alt="Final Boss" loading="lazy" /><span class="shot-label">The Final Stand</span></div>
+          <div class="shot"><img src="/assets/backdrops/orinhal.webp" alt="Orinhal" loading="lazy" /><span class="shot-label">Orinhal</span></div>
+          <div class="shot"><img src="/assets/backdrops/cliffs.webp" alt="Cliffs" loading="lazy" /><span class="shot-label">The Cliffs of Para</span></div>
+          <div class="shot"><img src="/assets/backdrops/monastery.webp" alt="Monastery" loading="lazy" /><span class="shot-label">The Monastery</span></div>
         </div>
       </div>
     </section>
@@ -911,28 +1178,28 @@
     <section style="background: linear-gradient(180deg, transparent 0%, rgba(13,17,28,0.5) 50%, transparent 100%);">
       <div class="container">
         <div class="section-eyebrow">Where we are</div>
-        <h2 class="section-title">The campaign is finished. Now it gets finer.</h2>
-        <p class="section-lede">What's live today is the whole game: twenty-nine battles on a full run (thirty-five across all seven paths), seven endings, an eight-strong endgame company, promotions into every Tier 2 class, and a soundtrack where every track earns its place. From here it's polish, not promises.</p>
+        <h2 class="section-title">The campaign is finished, and we're still polishing it</h2>
+        <p class="section-lede">The whole game is live today: twenty-nine battles on a full run (thirty-five across all seven paths), seven endings, an eight-strong company for the endgame, promotions into every Tier 2 class, and a full soundtrack. What's left is polish.</p>
         <div class="roadmap">
           <div class="stage">
             <div class="stage-label now">Now</div>
             <div>
               <h3>The full campaign, live</h3>
-              <p>Every battle, every path, every ending. Suspend a fight mid-turn and resume it later. A guided first battle. Animated sprites for every class and every boss, story cinematics, boss finales, and painted portraits with living expressions for the whole cast.</p>
+              <p>All of it, from the first battle to every ending on every path. You can suspend a fight mid-turn and pick it up later, and the first battle teaches you as you play. Every class and boss has animated sprites, the story has its own cinematics, bosses go out in finales, and the whole cast has painted portraits that change expression as they talk.</p>
             </div>
           </div>
           <div class="stage">
             <div class="stage-label">Next</div>
             <div>
               <h3>Polish from playtests</h3>
-              <p>Difficulty modes at New Game, and balance tuning from real runs.</p>
+              <p>Difficulty modes when you start a new game, and balance changes based on real runs.</p>
             </div>
           </div>
           <div class="stage">
             <div class="stage-label">Later</div>
             <div>
               <h3>Beyond the browser</h3>
-              <p>An itch.io release, then Steam, and the HD-2D presentation experiments if the appetite holds.</p>
+              <p>An itch.io release, then Steam, and some bigger visual experiments if there's an appetite for them.</p>
             </div>
           </div>
         </div>
@@ -943,11 +1210,11 @@
     <section class="end-cta">
       <div class="container">
         <h2>Ready to fight?</h2>
-        <a href="/play/" class="cta">Play Ravage →</a>
-        <div class="cta-sub">free · no sign-up needed · the whole campaign</div>
+        <p class="end-lede">The whole campaign is free. You don't need an account, and the first battle teaches you as you go.</p>
+        <a href="/play/" class="cta" data-play="end" data-continue="Continue your campaign">Play Ravage</a>
         <div class="cta-feedback">
-          Played it? Tell me what worked and what didn't —
-          <a href="mailto:kaseyfuwaterloo@gmail.com?subject=Ravage%20playtest%20feedback">kaseyfuwaterloo@gmail.com</a>
+          Played it? Tell me what worked and what didn't at
+          <a href="mailto:kaseyfuwaterloo@gmail.com?subject=Ravage%20playtest%20feedback">kaseyfuwaterloo@gmail.com</a>.
         </div>
       </div>
     </section>
@@ -955,7 +1222,7 @@
     <!-- ============== SUPPORT / KO-FI ============== -->
     <!-- Sits after the play CTA on purpose: ask only once the visitor has
          been offered the game itself, and never gate anything behind it.
-         A plain styled link rather than Ko-fi's widget script — no
+         A plain styled link rather than Ko-fi's widget script: no
          third-party JS, no extra requests, nothing to break the page. -->
     <style>
       .support {
@@ -1006,37 +1273,35 @@
       }
       .support-note {
         margin-top: 16px;
-        font-size: 13px;
-        color: #7a7165;
-        letter-spacing: 0.04em;
+        font-size: 14px;
+        font-style: italic;
+        color: #8a8070;
       }
     </style>
     <section class="support">
       <div class="container">
         <div class="support-panel">
           <div class="section-eyebrow">Support</div>
-          <h2>Ravage is free. It always will be.</h2>
+          <h2>Ravage is free and will stay free</h2>
           <p>
-            No paywall, no ads, no account required — twenty-nine battles and seven endings,
-            start to finish. If it was worth a few hours of your evening, you can put
-            something toward the next one.
+            There's no paywall, no ads and no account. All twenty-nine battles and seven
+            endings are yours to play. If it was worth a few hours of your evening, you can
+            put something toward the next one.
           </p>
           <a class="kofi" href="https://ko-fi.com/kaseyfu" target="_blank" rel="noopener"
              onclick="if(window.gtag)gtag('event','kofi_click',{event_category:'support'})">
-            ☕ Buy me a coffee
+            Buy me a coffee on Ko-fi
           </a>
-          <div class="support-note">Goes to art, music, and the hours after the day job.</div>
+          <div class="support-note">It pays for art, music and the hours after the day job.</div>
         </div>
       </div>
     </section>
 
     <!-- ============== KEY ART ============== -->
     <!-- Full-bleed band closing the page, immediately above the footer.
-         The art carries its own logo, so no text sits on top of it — the
-         only job here is to let it be big. Sized down for narrow screens
-         via <picture>, and lazy, which matters more down here than it did
-         under the hero: most visitors never scroll this far, and the ones
-         who do have already been served everything above it. -->
+         The art carries its own logo, so no text sits on top of it. Sized
+         down for narrow screens via <picture>, and lazy: most visitors
+         never scroll this far. -->
     <style>
       .keyart {
         margin: 0;
@@ -1059,39 +1324,86 @@
           linear-gradient(to bottom, rgba(5,6,10,0.85) 0%, rgba(5,6,10,0) 14%,
                           rgba(5,6,10,0) 86%, rgba(5,6,10,0.85) 100%);
       }
-      .keyart figcaption {
-        line-height: 1.5;
+      .keyart-caption {
         text-align: center;
-        color: #7a7165;
-        font-size: 13px;
-        letter-spacing: 0.05em;
-        padding: 14px 20px 0;
-        background: transparent;
+        color: #8a8070;
+        font-size: 15px;
+        font-style: italic;
+        margin: 14px 0 0;
       }
     </style>
     <figure class="keyart">
       <picture>
         <source media="(max-width: 1100px)" srcset="/assets/key/keyart_1100.webp" />
         <img src="/assets/key/keyart.webp" width="1672" height="941" loading="lazy" decoding="async"
-             alt="Ravage key art — Amar and Selene stand back to back with blades drawn in a burning Anthros street at sunset" />
+             alt="Ravage key art: Amar and Selene stand back to back with blades drawn in a burning Anthros street at sunset" />
       </picture>
     </figure>
-    <div class="container"><p class="keyart-caption" style="text-align:center;color:#7a7165;font-size:13px;letter-spacing:0.05em;margin:14px 0 0">Amar and Selene — the night the war stopped being someone else's.</p></div>
+    <div class="container"><p class="keyart-caption">Amar and Selene, the night the war stopped being someone else's.</p></div>
 
     <!-- ============== FOOTER ============== -->
     <footer>
-      <div>
-        <a href="https://github.com/seykafu/Ravage" target="_blank" rel="noopener">GitHub</a>
-        &nbsp;·&nbsp;
-        <a href="/play/">Play</a>
-        &nbsp;·&nbsp;
+      <nav class="footer-links" aria-label="Links">
+        <a href="/play/" data-play="footer">Play</a>
         <a href="mailto:kaseyfuwaterloo@gmail.com?subject=Ravage%20playtest%20feedback">Feedback</a>
-        &nbsp;·&nbsp;
         <a href="https://ko-fi.com/kaseyfu" target="_blank" rel="noopener"
            onclick="if(window.gtag)gtag('event','kofi_click',{event_category:'support',event_label:'footer'})">Ko-fi</a>
-      </div>
-      <div class="made">Published by <a href="https://pencatgames.com" target="_blank" rel="noopener">Pencat Games</a> · Made with steel and stubbornness · © 2026</div>
+        <a href="https://github.com/seykafu/Ravage" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <div class="made">&copy; 2026 <a href="https://pencatgames.com" target="_blank" rel="noopener">Pencat Games</a></div>
     </footer>
+
+    <!-- Returning players: the game keeps its saves in this origin's
+         localStorage (src/util/save.ts: the active mirror plus three slot
+         caches). If any save has a won battle, the Play buttons offer to
+         continue instead. Also: the sticky bar, and a Play-click event for
+         analytics (sent only if the visitor accepted the consent banner). -->
+    <script>
+      (function () {
+        var won = 0;
+        var read = function (key) {
+          try {
+            var s = JSON.parse(localStorage.getItem(key) || "null");
+            var n = s && s.completedBattles ? s.completedBattles.length : 0;
+            if (n > won) won = n;
+          } catch (e) { /* storage blocked or unreadable: treat as new */ }
+        };
+        read("ravage:save:v1");
+        for (var i = 1; i <= 3; i++) read("ravage:save:v1:slot" + i);
+        if (won > 0) {
+          document.querySelectorAll("[data-continue]").forEach(function (a) {
+            a.textContent = a.getAttribute("data-continue");
+          });
+          var sub = document.querySelector(".hero .cta-sub");
+          if (sub) sub.textContent = "Your squad has won " + won + (won === 1 ? " battle" : " battles") + " so far, and they're waiting where you left them.";
+        }
+
+        document.querySelectorAll("[data-play]").forEach(function (a) {
+          a.addEventListener("click", function () {
+            if (window.gtag) gtag("event", "play_click", { event_category: "play", event_label: a.getAttribute("data-play"), returning: won > 0 });
+          });
+        });
+
+        var bar = document.querySelector(".playbar");
+        var heroCta = document.querySelector(".hero .cta");
+        var endCta = document.querySelector(".end-cta .cta");
+        if (!bar || !heroCta || !("IntersectionObserver" in window)) return;
+        var heroSeen = true, endSeen = false;
+        new IntersectionObserver(function (es) {
+          es.forEach(function (e) {
+            if (e.target === heroCta) heroSeen = e.isIntersecting || e.boundingClientRect.top > 0;
+            else endSeen = e.isIntersecting;
+          });
+          bar.classList.toggle("show", !heroSeen && !endSeen);
+        }).observe(heroCta);
+        if (endCta) {
+          new IntersectionObserver(function (es) {
+            endSeen = es[0].isIntersecting;
+            bar.classList.toggle("show", !heroSeen && !endSeen);
+          }).observe(endCta);
+        }
+      })();
+    </script>
 
     <!-- ============== GDPR consent banner ============== -->
     <!-- Shown once per browser. Choice persisted in localStorage under

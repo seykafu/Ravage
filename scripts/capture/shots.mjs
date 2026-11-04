@@ -682,4 +682,95 @@ export const pick = [
   { name: "hover-legs", seconds: 0.5, settleFrames: 4, setup: fn(HOVER(20)), each: fn(HOVER(20)) }
 ];
 
-export const SHOTLISTS = { proof, reel, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, landing: [bossFinales[1], bossFinales[4]], ring, home: ring.slice(3) };
+// ---------------------------------------------------------------------
+// GAMEPLAY — the landing page's "Watch the first battle" clip (~24s,
+// public/video/gameplay.mp4). Battle 1 on the current board: the opening
+// and the King's entrance, two moves, a critical hit with its cut-in, then
+// the enemy's turn played by the AI. The save has the tutorial marked
+// done, so its pop-ups stay out of the footage. Encode for the web with:
+//   ffmpeg -i release/capture/ravage-gameplay-silent.mp4 -c:v libx264
+//     -preset slow -crf 27 -pix_fmt yuv420p -movflags +faststart
+//     public/video/gameplay.mp4
+// ---------------------------------------------------------------------
+const stepToward = `
+  const stepToward = (u, foe, steps) => {
+    const dest = { x: u.state.position.x, y: u.state.position.y };
+    if (foe) for (let k = 0; k < steps; k++) {
+      if (dest.y < foe.state.position.y - 1) dest.y++;
+      else if (dest.y > foe.state.position.y + 1) dest.y--;
+      else if (dest.x < foe.state.position.x) dest.x++;
+      else if (dest.x > foe.state.position.x) dest.x--;
+    }
+    return dest;
+  };
+  // A smooth version of frameOn: tween the scroll instead of jumping it.
+  const panTo = (a, ms) => {
+    const sc = battle(); const cam = sc.cameras.main;
+    const p = sc.projection.tileToWorld(a.state.position);
+    const vw = cam.displayWidth, vh = cam.displayHeight, bnd = cam.getBounds();
+    const sx = Math.min(Math.max(p.x + 146 - vw / 2, bnd.x), bnd.x + Math.max(0, bnd.width - vw));
+    const sy = Math.min(Math.max(p.y - vh / 2, bnd.y), bnd.y + Math.max(0, bnd.height - vh));
+    sc.tweens.add({ targets: cam, scrollX: sx, scrollY: sy, duration: ms, ease: "Sine.easeInOut" });
+  };
+`;
+export const gameplay = [
+  {
+    name: "open", seconds: 6.0, settleFrames: 20,
+    setup: fn(`
+      seedRun();
+      const s = cap.save.loadSave(); s.flags = { ...s.flags, tutorial_b01_done: true }; cap.save.writeSave(s);
+      cap.goto("BattleScene", { battleId: "b01_palace_coup" });
+    `),
+    // Ride the battle card and the King's entrance, then the first line
+    // of the round-one exchange; turn the page once so a second face shows.
+    each: fn(`
+      const d = S("BattleDialogueScene");
+      if (arg.i === 150 && d && d.scene.isActive() && d.advance) d.advance();
+    `)
+  },
+  {
+    name: "move", seconds: 2.4, settleFrames: 12,
+    setup: fn(`${stepToward}
+      closeDialogue(); zoomTo(1.75);
+      const b = battle(); const u = unit("amar") || side("player")[0];
+      const foe = nearestFoe(u);
+      frameOn(u, foe); b.enterMoveMode(u); void b.animateMove(u, stepToward(u, foe, 3));
+    `)
+  },
+  {
+    name: "selene", seconds: 2.2, settleFrames: 4,
+    setup: fn(`${stepToward}
+      const b = battle(); const u = unit("selene") || side("player")[1];
+      const foe = nearestFoe(u);
+      if (u) { frameOn(u, foe); b.enterMoveMode(u); void b.animateMove(u, stepToward(u, foe, 3)); }
+    `)
+  },
+  {
+    name: "crit", seconds: 4.6, settleFrames: 4,
+    setup: fn(`
+      const b = battle(); const u = unit("amar") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) {
+        closeWith(u, foe);
+        window.__realRoll = b.state.rng.rollPercent.bind(b.state.rng);
+        b.state.rng.rollPercent = () => true;
+        b.enterAttackMode(u);
+        frameOn(u, foe);
+        void b.animateAttack(u, foe).then(() => { b.state.rng.rollPercent = window.__realRoll; });
+      }
+    `)
+  },
+  {
+    name: "enemy", seconds: 7.0, settleFrames: 2,
+    // Hand the turn over and let the AI play its side out, the camera
+    // easing over to whoever is acting.
+    each: fn(`${stepToward}
+      closeDialogue();
+      const b = battle();
+      const u = b.initiative?.current?.();
+      if (arg.i % 6 === 0 && u && u.faction === "player" && b.fsm.current().tag !== "playerAnimating" && !b.spin) b.endCurrentTurn();
+      if (u && u.faction === "enemy" && window.__panned !== u.id) { window.__panned = u.id; panTo(u, 420); }
+    `)
+  }
+];
+
+export const SHOTLISTS = { proof, reel, gameplay, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, landing: [bossFinales[1], bossFinales[4]], ring, home: ring.slice(3) };
