@@ -25,7 +25,7 @@ from process_anim_sheet import ROOT, key_magenta, resize_premultiplied  # noqa: 
 
 OUT = os.path.join(ROOT, "public", "assets", "story")
 KEEP = os.path.join(ROOT, "art_sources", "story")
-PAINTINGS = ["throne_hall", "harbor_night", "open_sea"]
+PAINTINGS = ["throne_hall", "harbor_night", "open_sea", "beach_landing", "hospital"]
 # Long side in px: about 1.5x the largest the scenes draw them.
 OBJECTS = {"ship": 960, "ravage_ship": 1400}
 

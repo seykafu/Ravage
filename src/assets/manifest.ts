@@ -270,6 +270,8 @@ const storyEntries: ManifestEntry[] = [
   // The story's cinematics and stages (scenes/story/Cinematics).
   { id: "backdrop:harbor_night", path: "assets/story/harbor_night.webp", kind: "image" },
   { id: "backdrop:open_sea", path: "assets/story/open_sea.webp", kind: "image" },
+  { id: "backdrop:beach_landing", path: "assets/story/beach_landing.webp", kind: "image" },
+  { id: "backdrop:hospital", path: "assets/story/hospital.webp", kind: "image" },
   { id: "story:ship", path: "assets/story/ship.webp", kind: "image" },
   { id: "story:ravage_ship", path: "assets/story/ravage_ship.webp", kind: "image" }
 ];

@@ -7,6 +7,7 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { sfxCineBoom, sfxCineChime, sfxClick, sfxConfirm, sfxHover } from "../audio/Sfx";
 import { ensureDotTexture } from "./battle/Atmosphere";
 import { ensureGlow } from "./story/figures";
+import { playCinematic } from "./story/Cinematics";
 
 /** Each road's colour (the same seven the B18 finale raises round Amar). */
 const HUE: Record<SevenPath, number> = {
@@ -55,7 +56,7 @@ const PATHS: PathCard[] = [
     name: "Vengeance",
     honors: "for Selene",
     blurb: "Amar kills Archbold himself. No throne and no deals.",
-    full: "Selene's answer. Amar doesn't take a crown or rebuild a country. He hunts down Archbold and kills him personally, along with everyone who protects him on the way. It won't bring Lucian back or undo the burning of Thuling, and it isn't meant to. It's the one choice in this war that is only about what was taken from Amar.",
+    full: "Selene's answer. Amar doesn't take a crown or rebuild a country. He hunts down Archbold and kills him personally, along with everyone who protects him on the way. It won't bring Lucian or Rose back, and it isn't meant to. It's the one choice in this war that is only about what was taken from Amar.",
     openerBattle: "b19_path_opener_vengeance"
   },
   {
@@ -63,7 +64,7 @@ const PATHS: PathCard[] = [
     name: "Restoration",
     honors: "for Lucian",
     blurb: "Rebuild Anthros as a free state, slowly, one village at a time.",
-    full: "Lucian's answer. Instead of revenge or revolution, Amar sets out to repair the damage. He rides for the Anthros border and starts rebuilding the colony, securing one road and feeding one village at a time, under whatever flag the people choose to raise for him. It's the slowest path and the least heroic, and it's the one Lucian would have chosen with him.",
+    full: "Lucian's answer. Instead of revenge or revolution, Amar sets out to repair the damage. He starts with the villages near the landing, securing one road and feeding one village at a time, under whatever flag the people choose to raise for him. It's the slowest path and the least heroic, and it's the one Lucian would have chosen with him.",
     openerBattle: "b19_path_opener_restoration"
   },
   {
@@ -79,7 +80,7 @@ const PATHS: PathCard[] = [
     name: "Duty",
     honors: "for Khonu",
     blurb: "Take the captaincy. Serve the cause from inside the army.",
-    full: "Khonu's answer. Khonu was Amar's father's old sergeant, who taught him that a soldier serves something bigger than himself. Amar puts on a uniform again and accepts a command in Dawn's army, despite what he knows, and tries to be an officer who reads the orders before he signs them. He works to change the system from the inside, and hopes he changes it more than it changes him.",
+    full: "Khonu's answer. Khonu died in the palace coup. He had been the old sergeant of the man who raised Amar, and he taught Amar that a soldier serves something bigger than himself. Amar puts on a uniform again and accepts a command in Dawn's army, despite what he knows, and tries to be an officer who reads the orders before he signs them. He works to change the system from the inside, and hopes he changes it more than it changes him.",
     openerBattle: "b19_path_opener_duty"
   },
   {
@@ -103,7 +104,7 @@ const PATHS: PathCard[] = [
     name: "Forgetting",
     honors: "for Sera",
     blurb: "Stop being Amar. Live by the sea under a name no one is hunting.",
-    full: "Sera's answer. Sera was the woman at the hospital who told Amar the kindest thing his head wound did was let him leave his old life behind. He rides for the southern coast and stops trying to be anyone. He lives in a fisherman's cottage with a boat, under a name that isn't Amar. The squad will find him, leave a sword by the door, and go. He will spend a long evening looking at it, and decide again to leave it there.",
+    full: "Sera's answer. Sera was the rebel from the palace coup that nobody heard from afterward. She found Amar at the hospital and told him the kindest thing his head wound did was let him leave his old life behind. He rides for the southern coast and stops trying to be anyone. He lives in a fisherman's cottage with a boat, under a name that isn't Amar. The squad will find him, leave a sword by the door, and go. He will spend a long evening looking at it, and decide again to leave it there.",
     openerBattle: "b19_path_opener_forgetting"
   }
 ];
@@ -314,15 +315,28 @@ export class ChoiceScene extends Phaser.Scene {
       routed = true;
       this.scene.start("CampScene", { nextChapter: choice.openerBattle });
     };
-    const leave = (): void => {
-      this.cameras.main.fadeOut(600, 0, 0, 0);
-      this.cameras.main.once("camerafadeoutcomplete", go);
-      this.time.delayedCall(750, go);
+    // Then the landing: a short film of the beach and the road just chosen
+    // (Cinematics "landfall"), and on to camp when it ends or is skipped.
+    let left = false, filmed = false;
+    const film = (): void => {
+      if (filmed) return;
+      filmed = true;
+      this.cameras.main.resetFX();
+      void playCinematic(this, "landfall", 1000).catch(() => undefined).finally(go);
     };
-    // The chosen name has its moment first; the latch and this last timer
-    // still guarantee the player leaves even if the moment never ends.
+    const leave = (): void => {
+      if (left) return;
+      left = true;
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.cameras.main.once("camerafadeoutcomplete", film);
+      this.time.delayedCall(750, film);
+    };
+    // The chosen name has its moment first. The latches and these timers
+    // still guarantee the player leaves: the moment can't strand them, and
+    // the film can't either (it runs well under a minute).
     this.choiceMoment(choice, leave);
-    this.time.delayedCall(4500, go);
+    this.time.delayedCall(4500, leave);
+    this.time.delayedCall(90000, go);
   }
 
   /** Everything else goes; the chosen road's name blooms in its colour. */

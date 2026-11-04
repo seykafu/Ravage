@@ -47,6 +47,18 @@ IMPORTANT: no ships, no boats, no people, no birds, no text, no border, no frame
 
 IMPORTANT: no land, no ships, no boats, no people, no birds, no text, no border, no frame."""
     },
+    "beach_landing": {
+        "ref": "public/assets/backdrops/cliffs.webp",
+        "prompt": HEAD + "The image: " + PAINTING + """. A wild, empty coast in the early morning, seen from the beach itself looking out to sea. A wide beach of pale sand curves between two dark rocky headlands, left and right; small waves roll in and leave long, wet, mirror-like reflections on the sand. The sea beyond is calm and open, with the horizon at about 45% of the picture's height. Low green hills with scattered pine trees rise behind the beach on the right. The sky is pale gold near the horizon and soft blue above, with a few long thin clouds. In the foreground, left of centre, two small wooden rowing boats lie pulled up on the sand with their oars inside. It should feel quiet, untouched and owned by nobody: no buildings, no roads, no fences, no flags.
+
+IMPORTANT: no ships, no people, no figures, no birds, no text, no border, no frame."""
+    },
+    "hospital": {
+        "ref": "public/assets/backdrops/study.webp",
+        "prompt": HEAD + "The image: " + PAINTING + """. The inside of a small hospital ward in a royal city, early in the morning. A long whitewashed room with a high, dark wooden-beamed ceiling. A row of narrow iron beds with clean white sheets runs along the left wall into the distance; the nearest bed, large in the left foreground, has rumpled sheets pushed back as if someone has just woken in it. Tall arched windows along the right wall let in pale gold morning light that falls across the stone floor in long bright shapes. A small wooden table by the nearest bed holds a basin, folded cloths, a glass bottle and a candle burned down to a stub. Quiet, clean and calm.
+
+IMPORTANT: no people, no figures, no text, no border, no frame."""
+    },
     "ship": {
         "ref": "art_sources/camp/wagon_painted.webp",
         "prompt": HEAD + """The image: one sailing ship, in the richly painted style of the attached reference. A sturdy three-masted merchant ship seen exactly from the side (broadside), its bow pointing to the RIGHT. Full pale sails filled with wind, a dark weathered wooden hull with a gilded rail, a row of small lit portholes, a warm lantern hanging at the stern and another at the bow, rigging lines, and a long dark-red pennant flying from the main mast toward the left. The hull is cut off cleanly along a straight horizontal waterline at the bottom, as if it sits in the water, but no water is drawn. The whole ship fills about 85% of the picture's width.

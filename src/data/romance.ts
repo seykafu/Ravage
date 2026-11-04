@@ -41,7 +41,7 @@ export interface PathRomance {
 
 const MAYA: RomanceOption = {
   id: "maya", name: "Maya", portraitId: "maya",
-  blurb: "She spied on Amar for eleven years. It stopped being a job long ago."
+  blurb: "Dawn sent her to spy on Amar. It stopped being a job long ago."
 };
 const SELENE: RomanceOption = {
   id: "selene", name: "Selene", portraitId: "selene",
