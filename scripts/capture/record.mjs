@@ -55,9 +55,12 @@ const browser = await chromium.launch({
     "--mute-audio"
   ]
 });
+// CAP_DSF=2 captures 2560x1440 frames: the game sees a 2x display and
+// renders its native-res path, which leaves room to crop the vertical and
+// square ad cuts out of one recording.
 const page = await browser.newPage({
   viewport: { width: 1280, height: 720 },
-  deviceScaleFactor: 1
+  deviceScaleFactor: Number(process.env.CAP_DSF ?? 1)
 });
 
 page.on("console", (m) => {
@@ -182,9 +185,17 @@ for (const [si, shot] of shots.entries()) {
     for (let i = 0; i < settle; i++) await page.evaluate((e) => (e > 1 ? window.__cap.tick() : window.__cap.step()), EVERY);
   }
 
+  // leadFrames run the shot (its `each` included) without keeping any
+  // frames, so a shot can open partway into a long cut-scene.
+  const lead = shot.leadFrames ?? 0;
+  for (let j = 0; j < lead; j++) {
+    if (shot.each) await page.evaluate(shot.each, { i: j, n: n + lead, args: shot.args ?? null });
+    await page.evaluate((e) => (e > 1 ? window.__cap.tick() : window.__cap.step()), EVERY);
+  }
+
   for (let i = 0; i < n; i++) {
     if (shot.each) {
-      await page.evaluate(shot.each, { i, n, args: shot.args ?? null });
+      await page.evaluate(shot.each, { i: i + lead, n: n + lead, args: shot.args ?? null });
     }
     if (EVERY > 1 && i % EVERY !== 0) {
       await page.evaluate(() => window.__cap.tick());

@@ -773,4 +773,72 @@ export const gameplay = [
   }
 ];
 
-export const SHOTLISTS = { proof, reel, gameplay, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, landing: [bossFinales[1], bossFinales[4]], ring, home: ring.slice(3) };
+// ---------------------------------------------------------------------
+// AD — raw footage for the video ads. Record at 2x so the vertical and
+// square cuts can be cropped from the same frames:
+//   CAP_DSF=2 node scripts/capture/record.mjs ad
+// AD_SCOUT is the same list with every shot long, to pick the moments by
+// eye with CAP_EVERY sampling before paying for a full 2x record.
+// ---------------------------------------------------------------------
+const storyLine = (name, arcId, pred, seconds) => ({
+  name, seconds, settleFrames: 30, leadFrames: 2,
+  setup: fn(`cap.goto("StoryScene", { arcId: "${arcId}" });`),
+  each: fn(`if (arg.i === 0) toBeat(${pred});`)
+});
+export const adScout = [
+  gameplay[0], gameplay[1], gameplay[3],
+  storyLine("story_amar", "pre_palace", `(b) => b.speaker === "Amar" && /taking a country/.test(b.body)`, 4.5),
+  storyLine("story_dawn", "cold_open_dawn", `(b) => b.expression === "mask_slipping"`, 4.5),
+  { ...promoted[0], seconds: 0.2 }, promoted[1], promoted[2],
+  bossFinales[0], bossFinales[1], bossFinales[4],
+  campLife[1],
+  ringShot("maya", "revolution"),
+  ...camera,
+  { name: "overworld", seconds: 3.5, settleFrames: 45, setup: fn(`seedRun(); cap.goto("OverworldScene");`) }
+];
+
+// The ad footage proper, trimmed to the moments picked from AD_SCOUT.
+const seedSquad = `
+  const save = cap.save;
+  const { catchUpToSquad } = await import("/src/combat/Progression.ts");
+  const { ROSTER_ORDER } = await import("/src/data/activeRoster.ts");
+  const order = cap.battles.BATTLES.map((b) => b.id).filter((id) => !id.startsWith("b19_") || id === "b19_path_opener_vengeance");
+  let s = save.defaultSave();
+  s.completedBattles = order.slice(0, order.indexOf("b15_inner_coup"));
+  s.unlockedBattles = [...s.completedBattles, "b15_inner_coup"];
+  for (const { recordId, factory } of ROSTER_ORDER) {
+    const u = cap.unitApi.createUnit(factory(), { x: 0, y: 0 }); catchUpToSquad(u, 14);
+    s = save.setCharacterRecord(s, recordId, { level: u.level, xp: 0, stats: { ...u.stats } });
+  }
+  save.setCurrentSlot(1); save.writeSave(s);
+`;
+export const ad = [
+  { ...gameplay[0], name: "b01_open", seconds: 3.0, leadFrames: 50 },
+  // Selene opens the initiative order; hand the turn to Amar first, or the
+  // side panel captions his portrait with her name. No frames kept.
+  { name: "b01_amar_turn", seconds: 0, settleFrames: 20,
+    setup: fn(`closeDialogue(); const b = battle(); if (b.initiative.current()?.id !== "amar") b.endCurrentTurn();`) },
+  { ...gameplay[1], name: "b01_move" },
+  { ...gameplay[3], name: "b01_crit" },
+  storyLine("story_amar", "pre_palace", `(b) => b.speaker === "Amar" && /taking a country/.test(b.body)`, 4.5),
+  { name: "promo_veya", seconds: 5.5, settleFrames: 2,
+    setup: fn(`return (async () => { ${seedSquad} cap.goto("PromotionScene", { characterId: "veya", resumeKey: "" }); })();`) },
+  { ...camera[0], name: "b05_card", seconds: 1.6 },
+  { ...camera[4], name: "b05_spin", seconds: 2.0 },
+  // Long enough for the "Hold the Coast" card to clear.
+  { ...promoted[0], seconds: 0, leadFrames: 130,
+    setup: fn(`return (async () => { ${seedSquad} cap.goto("BattleScene", { battleId: "b26_coastal_hold" }); })();`) },
+  // Maya (now a Shinobi Master) is next after Selene, so she can take the
+  // kill on her own turn with the side panel naming her.
+  { name: "coast_maya_turn", seconds: 0, settleFrames: 20,
+    setup: fn(`closeDialogue(); const b = battle(); if (b.initiative.current()?.id !== "maya") b.endCurrentTurn();`) },
+  { name: "maya-kill", seconds: 2.2, settleFrames: 2,
+    setup: fn(`
+      const b = battle(); const u = unit("maya") || side("player")[0]; const foe = nearestFoe(u);
+      if (foe) { closeWith(u, foe); softenTarget(foe); zoomTo(2); frameOn(u, foe); void b.animateAttack(u, foe); }
+    `) },
+  { ...ringShot("maya", "revolution"), seconds: 4.0, leadFrames: 45 },
+  { ...campLife[1], seconds: 4.0 }
+];
+
+export const SHOTLISTS = { proof, reel, gameplay, adScout, ad, baseline, quick, probe, anim, scenes, promoted, camera, pick, camp, campLife, campCued: [campLife[1]], finales, finaleProbe: finales.slice(0, 2), finaleFix: [finales[1], finales[3], finales[4], finales[5]], bossFinales, landing: [bossFinales[1], bossFinales[4]], ring, home: ring.slice(3) };
