@@ -8,8 +8,8 @@ import { sfxCineClang, sfxCrit } from "../../audio/Sfx";
 //
 //   critCutIn  a critical hit: before the blow lands, a slanted band
 //              tears across the screen with the attacker's face in it,
-//              speed lines, and their battle cry. About two seconds,
-//              long enough to see who it is and read what they shout.
+//              speed lines, and their battle cry. About a second and a
+//              half, long enough to see who it is and read what they shout.
 //   bossIntro  a named boss takes the field: their portrait, name and
 //              title on a dark band, before the first turn. Click skips.
 //
@@ -140,20 +140,21 @@ export const critCutIn = async (scene: Phaser.Scene, ui: UiTag, u: Unit): Promis
   const flash = add(scene.add.rectangle(0, 0, W, H, 0xffffff, 1).setOrigin(0, 0).setDepth(DEPTH + 4)
     .setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD));
 
-  // Band in, then the face, then the words; a long hold on all of it;
-  // then out, and the blow lands.
-  const TOTAL = 2100;
+  // Band in, then the face, then the words; a hold on all of it; then
+  // out, and the blow lands. About 1.45s: the 2.1s cut it was gave the
+  // cry time to read but dragged on every crit of a long fight.
+  const TOTAL = 1450;
   const clock = { t: 0 };
-  const run = scene.tweens.add({ targets: clock, t: TOTAL, duration: TOTAL, onUpdate: () => drawLines(clock.t * 0.6) });
-  void tw(scene, { targets: flash, alpha: 0, duration: 380 });
-  void tw(scene, { targets: dim, alpha: 0.45, duration: 180 });
-  await tw(scene, { targets: band, scaleX: fromLeft ? 1 : -1, duration: 260, ease: "Cubic.easeOut" });
-  void tw(scene, { targets: face, alpha: 1, x: faceX, duration: 320, ease: "Cubic.easeOut" });
-  void tw(scene, { targets: face, x: faceX + dir * 22, duration: 1500, delay: 320 });
-  void tw(scene, { targets: [tag, name], alpha: 1, duration: 300, delay: 120 });
-  await tw(scene, { targets: cry, alpha: 1, scale: 1, duration: 300, delay: 200, ease: "Back.easeOut" });
-  await hold(scene, 1050);
-  await tw(scene, { targets: [band, face, tag, cry, name, lines, dim], alpha: 0, duration: 260 });
+  const run = scene.tweens.add({ targets: clock, t: TOTAL, duration: TOTAL, onUpdate: () => drawLines(clock.t * 0.7) });
+  void tw(scene, { targets: flash, alpha: 0, duration: 280 });
+  void tw(scene, { targets: dim, alpha: 0.45, duration: 130 });
+  await tw(scene, { targets: band, scaleX: fromLeft ? 1 : -1, duration: 180, ease: "Cubic.easeOut" });
+  void tw(scene, { targets: face, alpha: 1, x: faceX, duration: 220, ease: "Cubic.easeOut" });
+  void tw(scene, { targets: face, x: faceX + dir * 22, duration: 1050, delay: 220 });
+  void tw(scene, { targets: [tag, name], alpha: 1, duration: 200, delay: 80 });
+  await tw(scene, { targets: cry, alpha: 1, scale: 1, duration: 220, delay: 140, ease: "Back.easeOut" });
+  await hold(scene, 700);
+  await tw(scene, { targets: [band, face, tag, cry, name, lines, dim], alpha: 0, duration: 200 });
   run.remove();
   for (const o of made) o.destroy();
 };

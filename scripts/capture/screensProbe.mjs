@@ -162,7 +162,7 @@ if (only.includes("crit")) {
     });
     if (i === 0) await page.evaluate(() => { window.__cap.t0 = window.__cap.t; });
     if (i % 2 === 0) console.log("  " + row);
-    if (i === 12) await shot("crit_cutin");
+    if (i === 8) await shot("crit_cutin");
     if (i === 30) await shot("crit_landed");
   }
 }
