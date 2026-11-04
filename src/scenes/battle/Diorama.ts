@@ -509,7 +509,12 @@ export const buildDiorama = (
       // Brightness: a little per-cell jitter against wallpaper repetition,
       // plus height — high ground catches more light, sunk water less.
       const jitter = (hash >> 4) % (smooth ? 5 : 11);
-      const lum = Math.max(0xa0, Math.min(0xff, 0xf2 + jitter + Math.round(levelsUp * 5)));
+      // Marble is the palest ground in the game (mean luminance ~0.86):
+      // at full brightness, under torchlight and the bloom, a run of it
+      // drew as one blank white plate with no veins left. Toned down, it
+      // reads as stone.
+      const base = tile.terrain === "marble" ? 0xd2 : 0xf2;
+      const lum = Math.max(0xa0, Math.min(0xff, base + jitter + Math.round(levelsUp * 5)));
       // Capstone is cooler and paler than the warm flagstone it borrows.
       topImg.setTint(capped
         ? (Math.min(0xff, lum - 0x08) << 16) | (lum << 8) | Math.min(0xff, lum + 0x06)
@@ -638,6 +643,15 @@ export const buildDiorama = (
       if (opts.gridLines !== false) {
         rowG[y]!.lineStyle(1, 0x000000, tile.terrain === "water" ? 0.05 : 0.085);
         rowG[y]!.strokeRect(top.x + 0.5, top.y + 0.5, top.w - 1, top.h - 1);
+      }
+      // Marble is laid in slabs: a dark joint round each one and a hairline
+      // of light along its north edge, so a platform or a processional
+      // reads as dressed paving rather than a seamless sheet.
+      if (tile.terrain === "marble") {
+        rowG[y]!.lineStyle(1, 0x2a2316, 0.2);
+        rowG[y]!.strokeRect(top.x + 0.5, top.y + 0.5, top.w - 1, top.h - 1);
+        rowG[y]!.lineStyle(1, 0xfff6e4, 0.14);
+        rowG[y]!.lineBetween(top.x + 1.5, top.y + 1.5, top.x + top.w - 1.5, top.y + 1.5);
       }
 
       // ---- props -----------------------------------------------------
