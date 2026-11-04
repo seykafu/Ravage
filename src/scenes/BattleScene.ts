@@ -71,7 +71,7 @@ import {
   xpRewardFor,
   type LevelUpReport
 } from "../combat/Progression";
-import { trackBattleCompleted, trackBattleStarted, trackCharacterLeveledUp } from "../util/analytics";
+import { trackBattleCompleted, trackBattleStarted, trackCharacterLeveledUp, trackFirstBattleWon } from "../util/analytics";
 import { getMusic } from "../audio/Music";
 import {
   sfxAttackHit,
@@ -3643,6 +3643,7 @@ export class BattleScene extends Phaser.Scene {
     // Analytics — capture outcome + duration so we can see pacing issues
     // (e.g., a battle averaging 12+ rounds is probably overlong).
     trackBattleCompleted(this.battleId, v === "player" ? "victory" : "defeat", this.initiative.round);
+    if (v === "player" && this.battleId === "b01_palace_coup") trackFirstBattleWon();
 
     // before_victory dialogue check — fires after the victory condition
     // resolves to "player" but before the EndScene transition. Used for
