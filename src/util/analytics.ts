@@ -78,6 +78,13 @@ export const trackBattleCompleted = (
 ): void =>
   event("battle_completed", { battle_id: battleId, outcome, rounds });
 
+// Fired when battle 1 is won: the clearest sign that a visit (an ad click,
+// say) turned into someone actually playing. A named event of its own,
+// rather than battle_completed filtered on its parameters, so GA4 can mark
+// it a key event and Google Ads can import it as a conversion as it is.
+export const trackFirstBattleWon = (): void =>
+  event("first_battle_won", {});
+
 // Fired each time a player unit gains a level. Lets us see the leveling
 // curve in aggregate — if everyone hits L20 by B5 the curve is too fast,
 // if no one cracks L8 it's too slow.
