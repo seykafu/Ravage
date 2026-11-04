@@ -17,6 +17,7 @@ export const TILE_SIZE = 48;
 //   1 -> OFF (720p buffer, upscaled to the window — the old blurry path).
 //   2 -> render at 2x (2560x1440 buffer; the window scale becomes a crisp
 //        DOWNSCALE on typical displays instead of a blurry upscale).
+//   in between (quarter steps) -> chosen to match the window; see below.
 //
 // ON since the text-clarity pivot: the 720p-buffer upscale was the root
 // cause of soft/blurry text on every monitor larger than 1280x720, and no
@@ -28,7 +29,7 @@ export const TILE_SIZE = 48;
 // renderScale.ts stay valid comparisons whichever value is set here.
 //
 // Runtime escape hatch: `?rs=1` on the URL forces the old 720p path for a
-// session (and `?rs=2` forces native-res) without a rebuild — so a playtest
+// session (and `?rs=2` forces native-res, `?rs=1.5` anything between) without a rebuild — so a playtest
 // that hits any native-res regression can fall back instantly. The window
 // guard keeps this file importable under Node (vitest imports it through
 // the content graph).
@@ -52,9 +53,36 @@ const webglAvailable = (() => {
   }
 })();
 
+// Render at the size the game is actually SHOWN: the window's limiting
+// side (the canvas is FIT into it) in device pixels, as a multiple of the
+// 1280x720 design, to the nearest quarter between 1 and 2. Drawing more
+// pixels than the screen shows only costs GPU time: on a 1080p monitor the
+// fixed 2x drew a 2560x1440 buffer for a ~1835px-wide canvas, and an
+// integrated GPU fell to ~45fps in battle; at the shown size (1.5x there)
+// it holds 60 and looks the same. 1440p and high-DPI screens still get 2x.
+// Quarter steps keep the buffer, and TILE_SIZE x scale, whole pixels.
+const shownScale = (): number => {
+  if (typeof window === "undefined") return 2;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.min(window.innerWidth, (window.innerHeight * GAME_WIDTH) / GAME_HEIGHT) * dpr;
+  return Math.min(2, Math.max(1, Math.round((w / GAME_WIDTH) * 4) / 4));
+};
+
+// A machine whose GPU still couldn't hold the frame rate in battle at its
+// scale gets a lower cap for its next session (util/frameWatch.ts).
+export const RENDER_CAP_KEY = "ravage:renderCap";
+const renderCap = (() => {
+  try {
+    const v = Number(localStorage.getItem(RENDER_CAP_KEY));
+    return v >= 1 && v <= 2 ? v : 2;
+  } catch {
+    return 2;
+  }
+})();
+
 export const RENDER_SCALE: number =
-  rsOverride === 1 || rsOverride === 2 ? rsOverride
-  : webglAvailable ? 2 : 1;
+  rsOverride >= 1 && rsOverride <= 2 ? rsOverride
+  : webglAvailable ? Math.min(shownScale(), renderCap) : 1;
 
 
 // HD procedural-art supersampling factor. Every procedurally generated

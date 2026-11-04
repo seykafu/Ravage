@@ -29,6 +29,10 @@ uniform vec2 uTexel;
 uniform float uThreshold;
 uniform float uStrength;
 uniform float uRadius;
+// The scene's overall brightness lift, applied here rather than in a
+// separate colour-matrix pass (see CinematicFX): same result, one fewer
+// full-screen pass per frame.
+uniform float uGain;
 varying vec2 outTexCoord;
 
 // What glows: bright AND coloured. Flames, the Ravage aura, crit gold,
@@ -66,7 +70,7 @@ void main () {
   // grade after us (which un-premultiplies) zeroed it, and a back-row
   // torch's glow stopped dead at the board's silhouette.
   vec3 g = glow * uStrength;
-  gl_FragColor = vec4(base.rgb + g, max(base.a, min(1.0, max(g.r, max(g.g, g.b)))));
+  gl_FragColor = vec4((base.rgb + g) * uGain, max(base.a, min(1.0, max(g.r, max(g.g, g.b)))));
 }
 `;
 
@@ -79,6 +83,8 @@ export class BloomPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipelin
   strength = 0.5;
   /** Inner ring radius in buffer pixels (outer ring is 2.3×). */
   radius = 5;
+  /** Multiplies the final colour: the scene's brightness lift (1 = none). */
+  gain = 1;
 
   constructor(game: Phaser.Game) {
     super({ game, name: BLOOM_PIPELINE, fragShader: FRAG });
@@ -89,5 +95,6 @@ export class BloomPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipelin
     this.set1f("uThreshold", this.threshold);
     this.set1f("uStrength", this.strength);
     this.set1f("uRadius", this.radius);
+    this.set1f("uGain", this.gain);
   }
 }

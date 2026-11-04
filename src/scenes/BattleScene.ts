@@ -15,6 +15,7 @@ import { SUN, UNIT_FOOT_ORIGIN, castFrom, torchShadow, type Sun } from "../rende
 import { DIORAMA_PERSPECTIVE_K } from "../render/dioramaConfig";
 import { screenToSource, sourceToScreen, type KeystoneParams } from "../render/keystone";
 import { PERSPECTIVE_PIPELINE, PerspectivePipeline } from "../render/PerspectivePipeline";
+import { watchBattleFrames } from "../util/frameWatch";
 import { attachPostPipeline } from "../render/postPipelines";
 import type { BattleBackdropScene } from "./BattleBackdropScene";
 import { buildDiorama, faceColour, type DioramaGrid, type DioramaProp, type DioramaTop } from "./battle/Diorama";
@@ -1300,6 +1301,9 @@ export class BattleScene extends Phaser.Scene {
     // "surrounded by darkness". Dropping it also saves a full-screen
     // shader pass per frame at the native-res buffer size.
     applyCinematicFX(this);
+    // If this machine can't hold the frame rate at its render scale, the
+    // next session draws a smaller buffer (util/frameWatch.ts).
+    watchBattleFrames(this);
     const pipe = this.diorama
       ? attachPostPipeline(this.cameras.main, this.game, PERSPECTIVE_PIPELINE, PerspectivePipeline)
       : undefined;

@@ -66,20 +66,28 @@ export const applyCinematicFX = (
   const cfg = { ...DEFAULTS, ...opts };
   const cam = scene.cameras.main;
 
+  let bloom: BloomPipeline | undefined;
   if (cfg.bloomIntensity > 0) {
     // NOT Phaser's addBloom — see render/BloomPipeline.ts. Its final step
     // mixed the frame 50/50 with a dimmed blurred copy, which left every
     // battle ~25% darker and half-blurred, and dropped an opaque board's
     // alpha to ~0.75 (see-through over the ¾ board's backdrop). One pass
     // at the native-res buffer, where Phaser's cost four.
-    const bloom = attachPostPipeline(cam, scene.game, BLOOM_PIPELINE, BloomPipeline);
+    bloom = attachPostPipeline(cam, scene.game, BLOOM_PIPELINE, BloomPipeline);
     if (bloom) bloom.strength = cfg.bloomIntensity * 0.85;
   }
 
-  if (cfg.saturation !== 0 || cfg.brightness !== 1) {
-    const m = cam.postFX.addColorMatrix();
-    if (cfg.saturation !== 0) m.saturate(cfg.saturation);
-    if (cfg.brightness !== 1) m.brightness(cfg.brightness);
+  // The colour grade. Phaser's ColorMatrix methods REPLACE the matrix
+  // unless passed multiply=true, so the old saturate()-then-brightness()
+  // chain only ever applied the brightness: the saturation never showed.
+  // Brightness alone is a plain multiply, so with the bloom on it rides in
+  // the bloom shader (bloom.gain) instead of a ColorMatrix pass of its own.
+  // That pass cost about a quarter of the frame on integrated GPUs at the
+  // 2x buffer (45fps → 60fps in battle when it went).
+  if (bloom) {
+    bloom.gain = cfg.brightness;
+  } else if (cfg.brightness !== 1) {
+    cam.postFX.addColorMatrix().brightness(cfg.brightness);
   }
 
   if (cfg.vignette > 0) {
