@@ -21,6 +21,7 @@ import { drawPanel } from "../../ui/Panel";
 import { FAMILY_BODY, FAMILY_HEADING, GAME_HEIGHT, GAME_WIDTH } from "../../util/constants";
 import { loadSave, writeSave } from "../../util/save";
 import { sfxClick, sfxHover } from "../../audio/Sfx";
+import { trackTutorialStep } from "../../util/analytics";
 
 export type TutorialEvent =
   | "battleStart"
@@ -175,6 +176,7 @@ export class TutorialDirector {
 
   private show(step: TutorialStep): void {
     this.showing = true;
+    trackTutorialStep(this.idx + 1, step.title);
     // The body first: the card grows to fit it.
     const body = this.scene.add.text(0, 0, step.body, {
       fontFamily: FAMILY_BODY,

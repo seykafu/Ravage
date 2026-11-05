@@ -6,7 +6,8 @@ import { getMusic, MUSIC } from "../audio/Music";
 import { installAudioUnlock, sfxConfirm, unlockAudio } from "../audio/Sfx";
 import { ensureBackdropTexture, BACKDROPS } from "../art/BackdropArt";
 import { ensureDotTexture } from "./battle/Atmosphere";
-import { getCurrentSlot, slotsPastThePathFork } from "../util/save";
+import { getCurrentSlot, loadSave, slotsPastThePathFork } from "../util/save";
+import { trackGameContinued, trackGameReady } from "../util/analytics";
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -42,6 +43,9 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     installAudioUnlock(this);
+    // The first screen a player can act on: how long it took to get here,
+    // and whether WebGL was refused. Sent once per page load.
+    trackGameReady(this.game.renderer.type === Phaser.WEBGL ? "webgl" : "canvas");
 
     const bgKey = ensureBackdropTexture(this, "bg_title", BACKDROPS.thuling);
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, bgKey).setDisplaySize(GAME_WIDTH * 1.06, GAME_HEIGHT * 1.06);
@@ -143,6 +147,8 @@ export class TitleScene extends Phaser.Scene {
       onClick: () => {
         sfxConfirm();
         unlockAudio();
+        const save = loadSave();
+        trackGameContinued("resume_button", save.completedBattles.length, !!save.suspendedBattle);
         this.cameras.main.fadeOut(450, 0, 0, 0);
         // Route into the camp (the new home base), not directly to
         // the world map. CampScene's "Where to Next?" hotspot opens

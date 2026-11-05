@@ -27,6 +27,7 @@ import { RecapScene } from "./scenes/RecapScene";
 import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE } from "./util/constants";
 import { installCrispText } from "./util/crispText";
 import { installRenderScale } from "./util/renderScale";
+import { installErrorReporting, trackGameError } from "./util/analytics";
 
 const config: Phaser.Types.Core.GameConfig = {
   // AUTO, not WEBGL: on machines where WebGL context creation is refused
@@ -120,6 +121,23 @@ installCrispText();
 // src/util/renderScale.ts.
 installRenderScale();
 
+// Uncaught errors go to Analytics as game_error, tagged with the scenes
+// on screen at the time: loading, running, or paused under an overlay
+// (a battle under its dialogue). Installed before the game exists, so a
+// failure before the first scene is caught too (and tagged "boot").
+let gameRef: Phaser.Game | undefined;
+const BACKGROUND_SCENES = new Set(["AssetStreamScene", "BattleBackdropScene", "CampBackdropScene"]);
+installErrorReporting(() => {
+  if (!gameRef) return "boot";
+  return gameRef.scene.getScenes(false)
+    .filter((s) => {
+      const st = s.sys.settings.status;
+      return st >= Phaser.Scenes.LOADING && st <= Phaser.Scenes.PAUSED && !BACKGROUND_SCENES.has(s.scene.key);
+    })
+    .map((s) => s.scene.key)
+    .join("+") || "none";
+});
+
 // Wait for the self-hosted fonts BEFORE constructing the game. Phaser
 // measures every Text object against whatever font is available at
 // creation time and never re-measures — when the web fonts hadn't
@@ -152,6 +170,7 @@ const constructGame = (): Phaser.Game => {
   try {
     return new Phaser.Game(config);
   } catch (err) {
+    trackGameError("start", String(err instanceof Error ? err.message : err));
     const loaderEl = document.getElementById("loader");
     if (loaderEl) {
       loaderEl.innerHTML =
@@ -205,6 +224,7 @@ void fontsReady().then(() => {
     document.body.appendChild(note);
   }
   const game = constructGame();
+  gameRef = game;
   wireGame(game);
 });
 

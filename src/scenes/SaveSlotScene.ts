@@ -15,7 +15,7 @@ import {
 import { battleById } from "../data/battles";
 import type { BattleId } from "../data/contentIds";
 import { sfxClick, sfxConfirm, sfxCancel } from "../audio/Sfx";
-import { trackNewGameStarted } from "../util/analytics";
+import { trackGameContinued, trackNewGameStarted } from "../util/analytics";
 
 export class SaveSlotScene extends Phaser.Scene {
   private previews: SlotPreview[] = [];
@@ -200,7 +200,9 @@ export class SaveSlotScene extends Phaser.Scene {
     // button picks the fight up at the turn it was left on. The battle
     // must still resolve to a valid node — a suspend written by a newer
     // content version could name a battle this build doesn't have.
-    const suspended = loadSave().suspendedBattle;
+    const save = loadSave();
+    const suspended = save.suspendedBattle;
+    trackGameContinued("slot_picker", save.completedBattles.length, !!suspended);
     if (suspended && battleById(suspended.battleId as BattleId)) {
       this.scene.start("BattlePrepScene", { battleId: suspended.battleId });
       return;
