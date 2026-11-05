@@ -10,6 +10,7 @@
 
 import Phaser from "phaser";
 import { markFailed, markLoaded } from "./manifest";
+import { trackGameError } from "../util/analytics";
 
 export const wireLoaderBookkeeping = (scene: Phaser.Scene): void => {
   // BASE_URL is "/" on the normal build (assets at the site root even
@@ -31,5 +32,12 @@ export const wireLoaderBookkeeping = (scene: Phaser.Scene): void => {
   });
   scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
     markFailed(file.key);
+    // Only files the build found on disk carry a ?v= content hash (see
+    // versionedPath). A bare url is a registered file that hasn't been
+    // made yet, and its 404 is expected; a hashed one failing means a
+    // player is missing art or music they should have had.
+    if (typeof file.url === "string" && file.url.includes("?v=")) {
+      trackGameError("asset", `${file.key} (${file.xhrLoader?.status ?? 0})`);
+    }
   });
 };
